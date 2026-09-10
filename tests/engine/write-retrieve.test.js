@@ -34,9 +34,9 @@ function proposal(overrides = {}) {
 }
 
 async function store() {
-  const root = await mkdtemp(join(tmpdir(), 'supermem-wr-'));
+  const root = await mkdtemp(join(tmpdir(), 'dd-wr-'));
   return createMemoryStore({
-    supermemDir: join(root, '.supermem'),
+    ddDir: join(root, '.dd'),
     dataDir: join(root, 'data'),
   });
 }

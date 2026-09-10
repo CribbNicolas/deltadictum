@@ -14,9 +14,9 @@ describe('health stress (2000 atoms)', { timeout: 120000 }, () => {
   let gitBefore;
 
   before(async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-stress-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-stress-'));
     store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({
@@ -37,7 +37,7 @@ describe('health stress (2000 atoms)', { timeout: 120000 }, () => {
       lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
-    gitPath = join(root, '.supermem', 'atoms', 'memory', 'demo', 'required-fields.json');
+    gitPath = join(root, '.dd', 'atoms', 'memory', 'demo', 'required-fields.json');
     gitBefore = await readFile(gitPath, 'utf8');
     for (let i = 0; i < CORPUS; i += 1) {
       store.index.upsertAtom({

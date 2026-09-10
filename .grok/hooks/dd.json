@@ -1,5 +1,5 @@
 {
-  "description": "SuperMem capture, budgeted recall, and session banner. Failures must not block the host.",
+  "description": "DD capture, budgeted recall, and session banner. Failures must not block the host.",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,18 @@
             "type": "command",
             "command": "node ../../hooks/run.cjs session-start",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../../hooks/run.cjs pre-tool",
+            "timeout": 10
           }
         ]
       }

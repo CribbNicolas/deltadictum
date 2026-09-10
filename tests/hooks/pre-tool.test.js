@@ -7,10 +7,10 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { buildPreToolContext } from '../../src/hooks/pre-tool.js';
 
 describe('PreToolUse retrieve inject', () => {
-  test('skips supermem tools and injects compact hits for other tools', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-pretool-'));
+  test('skips dd tools and injects compact hits for other tools', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-pretool-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({

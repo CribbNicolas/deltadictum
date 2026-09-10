@@ -17,12 +17,12 @@ async function walkJsonFiles(dir, acc = []) {
   return acc;
 }
 
-export async function sourceFingerprint(supermemDir) {
+export async function sourceFingerprint(ddDir) {
   const files = [
-    ...await walkJsonFiles(join(supermemDir, 'atoms')),
-    ...await walkJsonFiles(join(supermemDir, 'archive')),
-    join(supermemDir, 'registry', 'topics.json'),
-    join(supermemDir, 'relations.json'),
+    ...await walkJsonFiles(join(ddDir, 'atoms')),
+    ...await walkJsonFiles(join(ddDir, 'archive')),
+    join(ddDir, 'registry', 'topics.json'),
+    join(ddDir, 'relations.json'),
   ].sort();
   const hash = createHash('sha256');
   for (const file of files) {

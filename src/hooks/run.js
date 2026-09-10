@@ -27,13 +27,13 @@ const command = process.argv[2];
 
 try {
   const payload = await readJsonStdin();
-  const { store, projectId, supermemDir } = await openStore();
+  const { store, projectId, ddDir } = await openStore();
 
   if (command === 'session-start') {
     const result = await buildSessionStartContext({
       store,
       projectId,
-      uiUrl: await readUiUrl(supermemDir),
+      uiUrl: await readUiUrl(ddDir),
     });
     store.close();
     ok(result);

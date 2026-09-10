@@ -22,9 +22,9 @@ function proposal() {
 
 describe('MCP tool handlers', () => {
   test('propose, list, admit, retrieve, delete', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-mcp-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-mcp-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
@@ -52,9 +52,9 @@ describe('MCP tool handlers', () => {
   });
 
   test('status includes audit UI url', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-status-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-status-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7735 });
@@ -67,9 +67,9 @@ describe('MCP tool handlers', () => {
   });
 
   test('health reports healthy empty project without retrieve', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });

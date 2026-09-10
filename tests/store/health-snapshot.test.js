@@ -7,9 +7,9 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 
 describe('health snapshot', () => {
   test('loads compact atom columns and retrieval events without payload', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({
@@ -59,9 +59,9 @@ describe('health snapshot', () => {
   });
 
   test('store.assessDeterioration does not dirty git or bump activation', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({
@@ -82,7 +82,7 @@ describe('health snapshot', () => {
       lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
-    const gitPath = join(root, '.supermem', 'atoms', 'memory', 'admission', 'required-fields.json');
+    const gitPath = join(root, '.dd', 'atoms', 'memory', 'admission', 'required-fields.json');
     const before = await readFile(gitPath, 'utf8');
     const report = await store.assessDeterioration('demo', { now: '2026-09-10T00:00:00.000Z' });
     assert.equal(report.status, 'healthy');
@@ -95,9 +95,9 @@ describe('health snapshot', () => {
   });
 
   test('config health.live_bloat.watch override is honored', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     for (let i = 0; i < 5; i += 1) {
@@ -128,9 +128,9 @@ describe('health snapshot', () => {
   });
 
   test('fifty health runs do not bump activation or retrieval events', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({

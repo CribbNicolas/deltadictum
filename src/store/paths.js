@@ -17,23 +17,23 @@ export function assertTopicKeyPath(topicKey) {
   return parts;
 }
 
-export function atomFilePath(supermemDir, topicKey) {
+export function atomFilePath(ddDir, topicKey) {
   const parts = assertTopicKeyPath(topicKey);
-  return join(supermemDir, 'atoms', ...parts) + '.json';
+  return join(ddDir, 'atoms', ...parts) + '.json';
 }
 
-export function archiveFilePath(supermemDir, id) {
+export function archiveFilePath(ddDir, id) {
   if (!id || String(id).includes('..') || String(id).includes('/') || String(id).includes('\\')) {
     throw new Error('invalid_atom_id');
   }
-  return join(supermemDir, 'archive', `${id}.json`);
+  return join(ddDir, 'archive', `${id}.json`);
 }
 
 export const LIVE_STATES = ['candidate', 'active', 'contested'];
 export const ARCHIVE_STATES = ['superseded', 'archived', 'rejected'];
 
-export function topicKeyFromAtomFile(supermemDir, filePath) {
-  const rel = relative(join(supermemDir, 'atoms'), filePath).replaceAll('\\', '/');
+export function topicKeyFromAtomFile(ddDir, filePath) {
+  const rel = relative(join(ddDir, 'atoms'), filePath).replaceAll('\\', '/');
   if (!rel.endsWith('.json')) return null;
   const key = rel.slice(0, -'.json'.length);
   assertTopicKeyPath(key);
@@ -41,16 +41,16 @@ export function topicKeyFromAtomFile(supermemDir, filePath) {
   return key;
 }
 
-export function registryPath(supermemDir) {
-  return join(supermemDir, 'registry', 'topics.json');
+export function registryPath(ddDir) {
+  return join(ddDir, 'registry', 'topics.json');
 }
 
-export function relationsPath(supermemDir) {
-  return join(supermemDir, 'relations.json');
+export function relationsPath(ddDir) {
+  return join(ddDir, 'relations.json');
 }
 
-export function configPath(supermemDir) {
-  return join(supermemDir, 'config.json');
+export function configPath(ddDir) {
+  return join(ddDir, 'config.json');
 }
 
 export function observationsPath(dataDir) {

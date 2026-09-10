@@ -53,14 +53,14 @@ function emptyRegistry() {
   return { entries: [], aliases: [], vocabularies: [] };
 }
 
-export function createGitFileStore(supermemDir) {
+export function createGitFileStore(ddDir) {
   async function loadConfig() {
-    const stored = await readJson(configPath(supermemDir), {});
+    const stored = await readJson(configPath(ddDir), {});
     return { ...DEFAULT_CONFIG, ...stored, auto_admit: { ...DEFAULT_CONFIG.auto_admit, ...stored.auto_admit } };
   }
 
   async function saveConfig(config) {
-    await writeJson(configPath(supermemDir), config);
+    await writeJson(configPath(ddDir), config);
     return config;
   }
 
@@ -68,14 +68,14 @@ export function createGitFileStore(supermemDir) {
     const key = String(idOrKey ?? '');
     if (key.includes('/')) {
       try {
-        const live = await readJson(atomFilePath(supermemDir, key), null);
+        const live = await readJson(atomFilePath(ddDir, key), null);
         if (live && (!projectId || live.project_id === projectId)) return live;
       } catch {
         return null;
       }
     }
     try {
-      const archived = await readJson(archiveFilePath(supermemDir, key), null);
+      const archived = await readJson(archiveFilePath(ddDir, key), null);
       if (archived && (!projectId || archived.project_id === projectId)) return archived;
     } catch {
       // invalid id — fall through to the live walk for UUID lookup
@@ -86,8 +86,8 @@ export function createGitFileStore(supermemDir) {
 
   async function listAtoms({ projectId, lifecycleStates } = {}) {
     const files = [
-      ...await walkJsonFiles(join(supermemDir, 'atoms')),
-      ...await walkJsonFiles(join(supermemDir, 'archive')),
+      ...await walkJsonFiles(join(ddDir, 'atoms')),
+      ...await walkJsonFiles(join(ddDir, 'archive')),
     ];
     const atoms = [];
     for (const file of files) {
@@ -103,7 +103,7 @@ export function createGitFileStore(supermemDir) {
   async function listByTopicLive(projectId, topicKey) {
     let live;
     try {
-      live = await readJson(atomFilePath(supermemDir, topicKey), null);
+      live = await readJson(atomFilePath(ddDir, topicKey), null);
     } catch {
       return [];
     }
@@ -131,8 +131,8 @@ export function createGitFileStore(supermemDir) {
       updated_at: now,
       schema_version: atom.schema_version ?? 6,
     };
-    const livePath = atomFilePath(supermemDir, stored.topic_key);
-    const archivedPath = archiveFilePath(supermemDir, stored.id);
+    const livePath = atomFilePath(ddDir, stored.topic_key);
+    const archivedPath = archiveFilePath(ddDir, stored.id);
     if (ARCHIVE_STATES.includes(stored.lifecycle_state)) {
       await writeJson(archivedPath, stored);
       const live = await readJson(livePath, null);
@@ -145,17 +145,17 @@ export function createGitFileStore(supermemDir) {
   }
 
   async function deleteAtom(atom) {
-    await rm(atomFilePath(supermemDir, atom.topic_key), { force: true });
-    await rm(archiveFilePath(supermemDir, atom.id), { force: true });
+    await rm(atomFilePath(ddDir, atom.topic_key), { force: true });
+    await rm(archiveFilePath(ddDir, atom.id), { force: true });
     return true;
   }
 
   async function loadRegistry() {
-    return readJson(registryPath(supermemDir), emptyRegistry());
+    return readJson(registryPath(ddDir), emptyRegistry());
   }
 
   async function saveRegistry(registry) {
-    await writeJson(registryPath(supermemDir), {
+    await writeJson(registryPath(ddDir), {
       entries: registry.entries ?? [],
       aliases: registry.aliases ?? [],
       vocabularies: registry.vocabularies ?? [],
@@ -163,15 +163,15 @@ export function createGitFileStore(supermemDir) {
   }
 
   async function loadRelations() {
-    return readJson(relationsPath(supermemDir), []);
+    return readJson(relationsPath(ddDir), []);
   }
 
   async function saveRelations(relations) {
-    await writeJson(relationsPath(supermemDir), relations);
+    await writeJson(relationsPath(ddDir), relations);
   }
 
   return {
-    supermemDir,
+    ddDir,
     loadConfig,
     saveConfig,
     getAtom,

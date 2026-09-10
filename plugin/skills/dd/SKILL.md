@@ -14,7 +14,7 @@ DD - loaded for `<project_id>` (N active).
 DD - Audit UI: <ui_url>
 ```
 
-Never write SuperMem or DeltaDictum in chat.
+Never write DeltaDictum in chat.
 
 ## Session start
 

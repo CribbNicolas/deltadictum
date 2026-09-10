@@ -26,14 +26,14 @@ const atomPayload = {
   authority: z.string().optional(),
 };
 
-const { store, projectId, supermemDir } = await openStore();
+const { store, projectId, ddDir } = await openStore();
 let uiPort = 7733;
 let uiUrl = `http://127.0.0.1:${uiPort}`;
 try {
   const ui = await startUiServer({ store, projectId });
   uiPort = ui.port;
   uiUrl = ui.url;
-  await writeUiUrl(supermemDir, { url: uiUrl, port: uiPort });
+  await writeUiUrl(ddDir, { url: uiUrl, port: uiPort });
 } catch {
   // MCP tools still work if the audit UI port cannot bind.
 }

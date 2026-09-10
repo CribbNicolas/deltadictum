@@ -7,9 +7,9 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { createToolHandlers } from '../../src/mcp/tools.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 
-const CORPUS = Math.max(200, Number(process.env.SUPERMEM_STRESS_ATOMS ?? 2000));
-const ROUNDS = Math.max(10, Number(process.env.SUPERMEM_STRESS_ROUNDS ?? 40));
-const CONCURRENCY = Math.max(4, Number(process.env.SUPERMEM_STRESS_CONCURRENCY ?? 16));
+const CORPUS = Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
+const ROUNDS = Math.max(10, Number(process.env.DD_STRESS_ROUNDS ?? 40));
+const CONCURRENCY = Math.max(4, Number(process.env.DD_STRESS_CONCURRENCY ?? 16));
 
 function estimateTokens(text) {
   return Math.max(1, Math.ceil(String(text ?? '').length / 4));
@@ -81,13 +81,13 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
   let gitBefore;
 
   before(async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-stress-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-stress-'));
     store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom(needleAtom('demo'));
-    gitPath = join(root, '.supermem', 'atoms', 'memory', 'demo', 'required-fields.json');
+    gitPath = join(root, '.dd', 'atoms', 'memory', 'demo', 'required-fields.json');
     gitBefore = await readFile(gitPath, 'utf8');
     for (let i = 0; i < CORPUS; i += 1) {
       store.index.upsertAtom(fillerAtom(i, 'demo', '2099-01-01T00:00:00.000Z'));

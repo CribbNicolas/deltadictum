@@ -31,7 +31,7 @@ function atom(overrides = {}) {
 
 describe('GitFileStore', () => {
   test('round-trips an atom to a nested json file', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     const stored = await store.putAtom(atom());
     assert.equal(stored.topic_key, 'memory/admission/required-fields');
@@ -44,7 +44,7 @@ describe('GitFileStore', () => {
   });
 
   test('enforces live topic uniqueness across different ids', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     await store.putAtom(atom());
     await assert.rejects(
@@ -54,7 +54,7 @@ describe('GitFileStore', () => {
   });
 
   test('allows updating the same live atom', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     await store.putAtom(atom());
     const updated = await store.putAtom(atom({ what: 'Updated what' }));
@@ -64,7 +64,7 @@ describe('GitFileStore', () => {
   });
 
   test('does not leak another project', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     await store.putAtom(atom());
     await store.putAtom(atom({
@@ -78,7 +78,7 @@ describe('GitFileStore', () => {
   });
 
   test('default config uses the 0.02 vpt threshold', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     const config = await store.loadConfig();
     assert.equal(DEFAULT_CONFIG.vpt_threshold, 0.02);
@@ -86,7 +86,7 @@ describe('GitFileStore', () => {
   });
 
   test('looks up a live atom by topic_key without listing the corpus', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     await store.putAtom(atom());
     for (let i = 0; i < 40; i += 1) {
@@ -105,7 +105,7 @@ describe('GitFileStore', () => {
   });
 
   test('rejects path traversal in topic_key', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-git-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-git-'));
     const store = createGitFileStore(root);
     await assert.rejects(
       () => store.putAtom(atom({ topic_key: '../../etc/passwd' })),
