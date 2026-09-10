@@ -1,0 +1,35 @@
+{
+  "name": "supermem",
+  "version": "0.1.0",
+  "description": "Behavioral memory plugin for Grok Build, Claude Code, Codex, and OpenCode. Ports Orquesta memory-api V2–V6a contracts without the Docker stack.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "supermem": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/engine/**/*.test.js tests/store/**/*.test.js tests/mcp/**/*.test.js tests/ui/**/*.test.js tests/hooks/**/*.test.js",
+    "test:engine": "node --test --test-concurrency=1 tests/engine/**/*.test.js",
+    "test:store": "node --test --test-concurrency=1 tests/store/**/*.test.js",
+    "test:mcp": "node --test --test-concurrency=1 tests/mcp/**/*.test.js",
+    "test:ui": "node --test --test-concurrency=1 tests/ui/**/*.test.js",
+    "test:hooks": "node --test --test-concurrency=1 tests/hooks/**/*.test.js",
+    "test:stress": "node --test --test-concurrency=1 tests/stress/**/*.test.js",
+    "test:all": "npm test && npm run test:stress",
+    "start": "node src/cli.js",
+    "mcp": "node src/mcp/server.js"
+  },
+  "files": [
+    "src",
+    "plugin",
+    "adapters",
+    "docs"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.0"
+  }
+}

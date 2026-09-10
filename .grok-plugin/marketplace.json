@@ -1,0 +1,12 @@
+{
+  "name": "supermem",
+  "description": "Behavioral memory plugin for coding agents",
+  "owner": { "name": "SuperMem" },
+  "plugins": [
+    {
+      "name": "supermem",
+      "description": "Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit in a local UI. Share via git.",
+      "source": { "type": "local", "path": "./" }
+    }
+  ]
+}

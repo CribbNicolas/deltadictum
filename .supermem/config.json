@@ -1,0 +1,12 @@
+{
+  "project_id": "supermem",
+  "budget_tokens": 600,
+  "vpt_threshold": 0.005,
+  "auto_admit": {
+    "lesson": "candidate",
+    "anti_memory": "active",
+    "procedure": "candidate",
+    "decision": "candidate",
+    "claim": "candidate"
+  }
+}

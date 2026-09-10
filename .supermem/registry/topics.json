@@ -1,0 +1,24 @@
+{
+  "entries": [
+    {
+      "id": "415e7baa-6cd8-4118-b139-d87453cda92d",
+      "project_id": "supermem",
+      "canonical_key": "memory/admission/required-fields",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-09T22:37:11.396Z",
+      "updated_at": "2026-09-09T22:37:11.396Z"
+    }
+  ],
+  "aliases": [],
+  "vocabularies": [
+    {
+      "id": "a65814cb-be15-4838-984a-1bc5459fed55",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "memory",
+      "status": "active",
+      "created_at": "2026-09-09T22:37:06.636Z"
+    }
+  ]
+}
