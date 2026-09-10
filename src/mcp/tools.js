@@ -3,7 +3,7 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { decideAdmission } from '../engine/v2/admission.js';
 
 function jsonResult(data) {
-  return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+  return { content: [{ type: 'text', text: JSON.stringify(data) }] };
 }
 
 function errorResult(message) {

@@ -1,11 +1,13 @@
 ---
 name: supermem-save
-description: Explicitly save a user-stated memory through SuperMem admission. Use when the user says remember, save this decision, or never do X again.
+description: Save a durable SuperMem memory through admission. Use when the user says remember, and also at session end if exactly one reusable lesson exists.
 ---
 
 # supermem-save
 
-Turn the user's statement into a `supermem_propose` payload. Do not write files yourself.
+Turn a reusable lesson into a `supermem_propose` payload. Do not write files yourself.
+
+Use this when the user says remember **and** at session Stop if the session produced exactly one reusable lesson, anti-memory, or decision. If nothing should change next time, do not propose. Never dump the transcript.
 
 Map:
 

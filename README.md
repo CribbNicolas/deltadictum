@@ -8,13 +8,18 @@ This repo ports the Orquesta `memory-api` V2–V6a **contracts** (admission, evi
 
 ## Status
 
-v1 engine, git+SQLite store, MCP tools, hooks, skills, and localhost audit UI are in this repo.
+v1: git+SQLite store, compact FTS retrieve (max 8 hits, VPT 0.02), data-only deterioration health, MCP tools, hooks, skills, localhost audit UI.
 
 ```bash
-npm test    # 108 tests
-npm start   # audit UI (from the target project cwd)
-npm run mcp # MCP stdio server
+npm test              # unit gate
+npm run test:stress   # 2k-atom retrieve + health scale
+npm run test:all      # both
+npm start             # audit UI (from the target project cwd)
+npm run mcp           # MCP stdio server
+node src/cli.js health
 ```
+
+Retrieve is O(hits). Opening the store still rebuilds the SQLite index from git (startup cost, not retrieve cost).
 
 ## Principles
 
@@ -26,14 +31,14 @@ npm run mcp # MCP stdio server
 ## Layout
 
 ```
-src/engine/     copied Orquesta v2–v6 pure modules
+src/engine/     V2–V6 admission/retrieve plus health/
 src/store/      git files + SQLite index (source of truth is the repo)
-src/mcp/        MCP server
-src/hooks/      SessionStart / prompt / observation / stop
+src/mcp/        MCP server (compact JSON tool results)
+src/hooks/      SessionStart / prompt retrieve / observation / Stop capture
 src/ui/         localhost audit UI
 plugin/         Grok / Claude Code plugin manifests
 adapters/       Codex / OpenCode
-docs/           memory contract copied from Orquesta
+docs/           memory contract, specs, test catalog
 ```
 
 ## Install
@@ -68,16 +73,29 @@ node C:\dev\supermem\src\cli.js
 
 Admitted atoms are written to `<your-project>/.supermem/atoms/` so they show up in `git diff`.
 
+## How retrieve and capture work
+
+- **Retrieve:** call `supermem_retrieve` with the coming action. Hits are compact (`content` only). Grok ignores SessionStart stdout, so retrieve must be a tool call (or the UserPromptSubmit hook).
+- **Health:** `supermem_health` / `node src/cli.js health` scores live-set deterioration from SQLite. No LLM, no git writes.
+- **Capture:** on Stop, the host is asked to `supermem_propose` **at most once** if there is a reusable lesson. Admission still decides write/observe/block. This is not a session dump.
+
 ## Memory files (team share)
 
 Admitted atoms live in the consuming project:
 
 ```
-.supermem/atoms/<topic_key>.md
+.supermem/atoms/<topic_key>.json
 .supermem/registry/topics.json
 .supermem/relations.json
 ```
 
-Observations stay on the machine, not in git.
+Observations and SQLite stay on the machine, not in git.
 
-See `docs/SUPERMEM.md` for which Orquesta docs still apply.
+## Docs
+
+| Doc | What |
+|---|---|
+| `docs/SUPERMEM.md` | What binds vs what does not |
+| `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md` | Compact retrieve + FTS |
+| `docs/specs/2026-09-10-memory-deterioration-detection.md` | Health definition |
+| `docs/specs/2026-09-10-memory-quality-and-performance-tests.md` | Test catalog |

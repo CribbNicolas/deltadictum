@@ -62,6 +62,96 @@
       "notes": null,
       "created_at": "2026-09-10T05:52:06.327Z",
       "updated_at": "2026-09-10T05:52:06.327Z"
+    },
+    {
+      "id": "1a6f4bee-7212-4874-ba85-39fc00ff0dbe",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/git-hooks",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.337Z",
+      "updated_at": "2026-09-10T07:39:35.337Z"
+    },
+    {
+      "id": "768ace99-1983-46b4-84c0-114e1fb52658",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/pg-migrations",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.418Z",
+      "updated_at": "2026-09-10T07:39:35.418Z"
+    },
+    {
+      "id": "5b63fed4-2871-4fc1-8e5d-27cd288f61c2",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/think-tags",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.529Z",
+      "updated_at": "2026-09-10T07:39:35.529Z"
+    },
+    {
+      "id": "d2248563-8851-4761-831e-5cfde8f7554d",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/project-filter",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.620Z",
+      "updated_at": "2026-09-10T07:39:35.620Z"
+    },
+    {
+      "id": "3d91f16f-4d04-4c05-924b-05fa45fe292a",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/compact-json",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.721Z",
+      "updated_at": "2026-09-10T07:39:35.721Z"
+    },
+    {
+      "id": "a4f2503c-66b9-4a15-b177-23fd135f621e",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/plugin-tests",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.824Z",
+      "updated_at": "2026-09-10T07:39:35.824Z"
+    },
+    {
+      "id": "4664a133-3a42-497e-8793-a1d732ef36dc",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/audit-ui",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:35.934Z",
+      "updated_at": "2026-09-10T07:39:35.934Z"
+    },
+    {
+      "id": "bde6ff6f-64e6-48be-b5e9-596327fd5917",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/live-topic",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:36.051Z",
+      "updated_at": "2026-09-10T07:39:36.051Z"
+    },
+    {
+      "id": "4d61392c-ecf0-49a1-bd6a-9cc188c34e02",
+      "project_id": "supermem",
+      "canonical_key": "eval/inject/budget-abstain",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:36.177Z",
+      "updated_at": "2026-09-10T07:39:36.177Z"
+    },
+    {
+      "id": "89b1489f-5f6f-40a7-9929-3bc7a59ba11a",
+      "project_id": "supermem",
+      "canonical_key": "eval/decoy/pasta",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T07:39:36.312Z",
+      "updated_at": "2026-09-10T07:39:36.312Z"
     }
   ],
   "aliases": [],
@@ -105,6 +195,14 @@
       "value": "testing",
       "status": "active",
       "created_at": "2026-09-10T05:52:06.266Z"
+    },
+    {
+      "id": "4b0abee0-bb3f-4a88-bfbc-935742843735",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "eval",
+      "status": "active",
+      "created_at": "2026-09-10T07:39:35.275Z"
     }
   ]
 }

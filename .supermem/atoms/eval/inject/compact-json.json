@@ -1,0 +1,31 @@
+{
+  "id": "fc574874-8b68-47ad-bf35-781ba674da7f",
+  "schema_version": 6,
+  "authority": "inferred",
+  "confidence": 0.7,
+  "scope": "project",
+  "valid_from": "2026-09-10T07:39:35.720Z",
+  "project_id": "supermem",
+  "memory_type": "lesson",
+  "title": "Compact MCP JSON",
+  "trigger": "when serializing MCP retrieve results",
+  "behavior_delta": "emit compact JSON without pretty-print",
+  "what": "Compact MCP JSON.",
+  "why": "Eval fixture for retrieve quality. Safe to delete later.",
+  "topic_key": "eval/inject/compact-json",
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "tests/engine/health/abstention-eval.test.js",
+      "summary": "quality eval fixture"
+    }
+  ],
+  "retrieval_forms": {
+    "micro": "Compact MCP JSON.",
+    "short": "emit compact JSON without pretty-print"
+  },
+  "registry_key_id": "3d91f16f-4d04-4c05-924b-05fa45fe292a",
+  "lifecycle_state": "active",
+  "created_at": "2026-09-10T07:39:35.811Z",
+  "updated_at": "2026-09-10T07:39:35.816Z"
+}
