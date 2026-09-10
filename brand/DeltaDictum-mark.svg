@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="DeltaDoctrine">
+  <title>DeltaDictum mark: two Ds sharing a stem</title>
+  <rect width="128" height="128" fill="#fff"/>
+  <!-- Two capital Ds sharing the vertical stem = circle + diameter (theta). -->
+  <g fill="none" stroke="#111" stroke-width="12" stroke-linejoin="round">
+    <circle cx="64" cy="64" r="36"/>
+    <line x1="64" y1="28" x2="64" y2="100" stroke-linecap="square"/>
+  </g>
+</svg>

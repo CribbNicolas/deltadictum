@@ -1,4 +1,6 @@
-# SuperMem contract
+# DeltaDictum contract
+
+Formerly SuperMem. Chat identity is **DD**. On-disk path remains `.supermem/`.
 
 These documents are the memory contract. They were copied from Orquesta (`.docs/memory`, invariants, failures, V2–V6a specs).
 
@@ -35,7 +37,7 @@ Deterioration detection (data only): `docs/specs/2026-09-10-memory-deterioration
 
 Quality and performance catalog: `docs/specs/2026-09-10-memory-quality-and-performance-tests.md`.
 
-MCP tool results are compact JSON (no pretty-print). Capture at Stop is at most one `supermem_propose`; admission still gates the write. Grok injects retrieve via PreToolUse (`additionalContext`); SessionStart stdout and UserPromptSubmit context are discarded by that host.
+MCP tool results are compact JSON (no pretty-print). Capture at Stop is at most one `propose`; admission still gates the write. Grok injects retrieve via PreToolUse (`additionalContext`); SessionStart stdout and UserPromptSubmit context are discarded by that host. Chat lines from the plugin start with `DD - `.
 
 v1 cuts in `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md` and `docs/specs/2026-09-10-memory-deterioration-detection.md` are implemented. Rows marked `later` in the test catalog are not v1.
 

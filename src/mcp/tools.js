@@ -12,7 +12,7 @@ function errorResult(message) {
 
 export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
   return {
-    async supermem_retrieve({ action, query, budget_tokens }) {
+    async retrieve({ action, query, budget_tokens }) {
       const result = await retrieveMemories({
         project_id: projectId,
         action,
@@ -23,18 +23,18 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       return jsonResult(result);
     },
 
-    async supermem_get({ id }) {
+    async get({ id }) {
       const atom = await store.getAtom(id, projectId);
       if (!atom) return errorResult(`not found: ${id}`);
       return jsonResult(atom);
     },
 
-    async supermem_propose(payload) {
+    async propose(payload) {
       const result = await proposeMemory({ ...payload, project_id: payload.project_id ?? projectId }, { store });
       return jsonResult(result);
     },
 
-    async supermem_list({ lifecycle_state, memory_type } = {}) {
+    async list({ lifecycle_state, memory_type } = {}) {
       const atoms = await store.listAtoms({
         projectId,
         lifecycleStates: lifecycle_state ? [lifecycle_state] : undefined,
@@ -50,14 +50,14 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       })));
     },
 
-    async supermem_update({ id, ...fields }) {
+    async update({ id, ...fields }) {
       const atom = await store.getAtom(id, projectId);
       if (!atom) return errorResult(`not found: ${id}`);
       const result = await proposeMemory({ ...atom, ...fields, id: atom.id, project_id: projectId }, { store });
       return jsonResult(result);
     },
 
-    async supermem_delete({ id, confirm }) {
+    async delete({ id, confirm }) {
       const atom = await store.getAtom(id, projectId);
       if (!atom) return errorResult(`not found: ${id}`);
       if (atom.authority === 'canonical' && confirm !== true) {
@@ -67,7 +67,7 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       return jsonResult({ deleted: true, id });
     },
 
-    async supermem_admit({ id }) {
+    async admit({ id }) {
       const atom = await store.getAtom(id, projectId);
       if (!atom) return errorResult(`not found: ${id}`);
       const gate = decideAdmission(atom);
@@ -78,21 +78,21 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       return jsonResult(stored);
     },
 
-    async supermem_reject({ id }) {
+    async reject({ id }) {
       const atom = await store.getAtom(id, projectId);
       if (!atom) return errorResult(`not found: ${id}`);
       const stored = await store.putAtom({ ...atom, lifecycle_state: 'rejected' });
       return jsonResult(stored);
     },
 
-    async supermem_contradict({ id, contradicts }) {
+    async contradict({ id, contradicts }) {
       const atom = await store.getAtom(id, projectId);
       if (!atom) return errorResult(`not found: ${id}`);
       const result = await proposeMemory({ ...atom, contradicts, project_id: projectId }, { store });
       return jsonResult(result);
     },
 
-    async supermem_resolve({ winner_id, loser_id }) {
+    async resolve({ winner_id, loser_id }) {
       const winner = await store.getAtom(winner_id, projectId);
       const loser = await store.getAtom(loser_id, projectId);
       if (!winner || !loser) return errorResult('both atoms required');
@@ -118,11 +118,11 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       return jsonResult({ winner_id, loser_id });
     },
 
-    async supermem_ui() {
+    async ui() {
       return jsonResult({ url: `http://127.0.0.1:${uiPort}` });
     },
 
-    async supermem_status() {
+    async status() {
       const { counts, total } = await store.countByLifecycle(projectId);
       return jsonResult({
         project_id: projectId,
@@ -132,7 +132,7 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       });
     },
 
-    async supermem_health() {
+    async health() {
       const report = await store.assessDeterioration(projectId);
       return jsonResult(report);
     },

@@ -1,5 +1,5 @@
 {
-  "description": "Nested plugin/ layout. Prefer installing the repository root.",
+  "description": "DD nested plugin layout. Prefer installing the repository root.",
   "hooks": {
     "SessionStart": [
       {

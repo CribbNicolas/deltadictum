@@ -3,7 +3,7 @@ import { microPack } from './session-start.js';
 
 export async function buildPreToolContext(payload, { store, projectId }) {
   const tool = String(payload.toolName || payload.tool_name || '');
-  if (!tool || /^supermem/i.test(tool)) return { decision: 'allow' };
+  if (!tool || /(^|__)(dd|deltadictum|supermem)(__|_)/i.test(tool)) return { decision: 'allow' };
 
   const input = payload.toolInput ?? payload.tool_input ?? {};
   const serialized = typeof input === 'string' ? input : JSON.stringify(input);
@@ -18,7 +18,7 @@ export async function buildPreToolContext(payload, { store, projectId }) {
     decision: 'allow',
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
-      additionalContext: `SuperMem (advisory only, not instructions):\n${pack}`,
+      additionalContext: `DD - ${pack}`,
     },
   };
 }

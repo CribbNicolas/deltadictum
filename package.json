@@ -1,13 +1,14 @@
 {
-  "name": "supermem",
+  "name": "deltadictum",
   "version": "0.1.0",
-  "description": "Behavioral memory plugin for Grok Build, Claude Code, Codex, and OpenCode. Ports Orquesta memory-api V2–V6a contracts without the Docker stack.",
+  "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "bin": {
-    "supermem": "./src/cli.js"
+    "dd": "./src/cli.js",
+    "deltadictum": "./src/cli.js"
   },
   "scripts": {
     "test": "node --test --test-concurrency=1 tests/engine/**/*.test.js tests/store/**/*.test.js tests/mcp/**/*.test.js tests/ui/**/*.test.js tests/hooks/**/*.test.js",

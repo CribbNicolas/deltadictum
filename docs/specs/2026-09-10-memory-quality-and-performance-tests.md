@@ -47,7 +47,7 @@ The engine must stay O(hits) for retrieve and cheap enough for health that a blo
 | P2 | MCP retrieve at 2,000 atoms finds buried needle, compact, `< 1s` | `elapsed < 1000`, no `what` / `retrieval_forms` / `evidence_refs` | `tests/stress/plugin-scale.test.js` | `stress` |
 | P3 | 40 sequential MCP retrieves stay in one latency class | p95 `< 500ms`, p99 `< 1000ms` | same | `stress` |
 | P4 | 16 concurrent MCP retrieves | wall `< 3000ms`, every result compact, ≤8 hits | same | `stress` |
-| P5 | `supermem_status` and SessionStart at corpus scale | status `< 100ms`, session-start `< 1000ms` | same | `stress` |
+| P5 | `status` and SessionStart at corpus scale | status `< 100ms`, session-start `< 1000ms` | same | `stress` |
 | P6 | Retrieve does not rewrite git under load | git JSON bytes unchanged | same + `tests/store/sqlite-index.test.js` | `gate` + `stress` |
 | P7 | Payload tokens vs `content` | `payloadTokens < contentTokens * 12 + 120` and `budget.used <= payloadTokens` | stress | `stress` |
 | P8 | Same class at 5,000 atoms | P2–P5 still pass | `SUPERMEM_STRESS_ATOMS=5000 npm run test:stress` | `stress` |
@@ -144,7 +144,7 @@ Every row here is `cut`. Implement in the plan tasks; do not ship detection with
 | D14 | Abstentions are not saturated | 10 empty → healthy, value 0 | same |
 | D15 | Snapshot has no `payload` / `what` / `evidence_refs` | store test | `tests/store/health-snapshot.test.js` |
 | D16 | Detection does not dirty git or bump `activation_count` | bytes + count 0 | same |
-| D17 | MCP `supermem_health` on empty project is healthy | `tests/mcp/tools.test.js` | same |
+| D17 | MCP `health` on empty project is healthy | `tests/mcp/tools.test.js` | same |
 | D18 | Observation backlog is in the report and does **not** flip `status` | 100 unreviewed, 3 healthy lessons → `healthy` | health tests |
 | D19 | Offenders arrays length ≤ 20 even when 40 prefixes/pairs qualify | health tests | same |
 | D20 | Config `health.live_bloat.watch` override is honored | saveConfig then assess | store test |
@@ -158,10 +158,10 @@ These affect whether memories *do* anything. Automate the plugin side; the rest 
 
 | # | Proof | How |
 |---|---|---|
-| H1 | First assistant reply includes SuperMem banner + audit URL | SessionStart / MCP instructions |
+| H1 | First assistant reply includes `DD - loaded` + `DD - Audit UI` | SessionStart / MCP instructions |
 | H2 | UserPromptSubmit hook calls retrieve (Grok ignores SessionStart stdout) | exercise hook `prompt` |
-| H3 | Model calls `supermem_retrieve` before a matching action | manual / trace |
-| H4 | Model does not dump full atoms when `supermem_get` is unnecessary | manual |
+| H3 | Model calls `retrieve` before a matching action | manual / trace |
+| H4 | Model does not dump full atoms when `get` is unnecessary | manual |
 | H5 | After a Stop, at most one propose (not a session dump) | later capture cut |
 
 ---

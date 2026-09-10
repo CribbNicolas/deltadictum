@@ -7,7 +7,7 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 
 describe('SessionStart context', () => {
-  test('announces SuperMem and audit URL even with no memories', async () => {
+  test('announces DD loaded and audit URL even with no memories', async () => {
     const root = await mkdtemp(join(tmpdir(), 'supermem-session-'));
     const store = await createMemoryStore({
       supermemDir: join(root, '.supermem'),
@@ -19,8 +19,9 @@ describe('SessionStart context', () => {
       uiUrl: 'http://127.0.0.1:7733',
     });
     const text = payload.hookSpecificOutput.additionalContext;
-    assert.match(text, /SuperMem loaded for `demo` \(0 active\)/);
-    assert.match(text, /Audit UI: http:\/\/127\.0\.0\.1:7733/);
+    assert.match(text, /DD - loaded for `demo` \(0 active\)/);
+    assert.match(text, /DD - Audit UI: http:\/\/127\.0\.0\.1:7733/);
+    assert.doesNotMatch(text, /SuperMem|DeltaDictum/);
     store.close();
   });
 
@@ -53,7 +54,7 @@ describe('SessionStart context', () => {
       projectId: 'demo',
       uiUrl: 'http://127.0.0.1:7733',
     });
-    assert.match(payload.hookSpecificOutput.additionalContext, /SuperMem loaded for `demo` \(1 active\)/);
+    assert.match(payload.hookSpecificOutput.additionalContext, /DD - loaded for `demo` \(1 active\)/);
     store.close();
   });
 });

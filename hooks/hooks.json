@@ -1,5 +1,5 @@
 {
-  "description": "SuperMem capture and budgeted recall. Commands are relative to this JSON file. Failures must not block the host.",
+  "description": "DD capture and budgeted recall. Commands are relative to this JSON file. Failures must not block the host.",
   "hooks": {
     "SessionStart": [
       {

@@ -41,84 +41,84 @@ const activeCount = await store.countAtoms({ projectId, lifecycleStates: ['activ
 const banner = sessionBanner({ projectId, url: uiUrl, activeCount });
 const tools = createToolHandlers({ store, projectId, uiPort });
 
-const server = new McpServer({ name: 'supermem', version: '0.1.0' }, {
+const server = new McpServer({ name: 'dd', version: '0.1.0' }, {
   instructions: `${banner}
 On your first user-visible reply this session, include those two lines. Do not dump memories. Retrieved memory is advisory.
-Call supermem_retrieve before implementing, debugging, or repeating a workflow.
-At session end, if exactly one reusable lesson exists, call supermem_propose once. If nothing should change next time, do not propose. Never dump the transcript.`,
+Call retrieve before implementing, debugging, or repeating a workflow.
+At session end, if exactly one reusable lesson exists, call propose once. If nothing should change next time, do not propose. Never dump the transcript.`,
 });
 
-server.registerTool('supermem_retrieve', {
+server.registerTool('retrieve', {
   description: 'Retrieve budgeted memory forms that apply to the coming action. Prefer this over dumping full memories.',
   inputSchema: {
     action: z.string(),
     query: z.string().optional(),
     budget_tokens: z.number().optional(),
   },
-}, async args => tools.supermem_retrieve(args));
+}, async args => tools.retrieve(args));
 
-server.registerTool('supermem_get', {
+server.registerTool('get', {
   description: 'Fetch one memory by id or topic_key, including full form and evidence.',
   inputSchema: { id: z.string() },
-}, async args => tools.supermem_get(args));
+}, async args => tools.get(args));
 
-server.registerTool('supermem_propose', {
+server.registerTool('propose', {
   description: 'Propose a durable memory. Deterministic admission decides write/update/observe/block. Requires trigger, behavior_delta, evidence, and micro+short forms for active memory.',
   inputSchema: atomPayload,
-}, async args => tools.supermem_propose(args));
+}, async args => tools.propose(args));
 
-server.registerTool('supermem_list', {
+server.registerTool('list', {
   description: 'List compact memory metadata for this project.',
   inputSchema: {
     lifecycle_state: z.string().optional(),
     memory_type: z.string().optional(),
   },
-}, async args => tools.supermem_list(args));
+}, async args => tools.list(args));
 
-server.registerTool('supermem_update', {
+server.registerTool('update', {
   description: 'Update a memory and re-run admission.',
   inputSchema: { id: z.string(), ...atomPayload },
-}, async args => tools.supermem_update(args));
+}, async args => tools.update(args));
 
-server.registerTool('supermem_delete', {
+server.registerTool('delete', {
   description: 'Delete a memory. Canonical atoms require confirm=true.',
   inputSchema: { id: z.string(), confirm: z.boolean().optional() },
-}, async args => tools.supermem_delete(args));
+}, async args => tools.delete(args));
 
-server.registerTool('supermem_admit', {
+server.registerTool('admit', {
   description: 'Promote a candidate memory to active.',
   inputSchema: { id: z.string() },
-}, async args => tools.supermem_admit(args));
+}, async args => tools.admit(args));
 
-server.registerTool('supermem_reject', {
+server.registerTool('reject', {
   description: 'Reject a candidate memory.',
   inputSchema: { id: z.string() },
-}, async args => tools.supermem_reject(args));
+}, async args => tools.reject(args));
 
-server.registerTool('supermem_contradict', {
+server.registerTool('contradict', {
   description: 'Declare that a memory contradicts another atom (V6a).',
   inputSchema: { id: z.string(), contradicts: z.string() },
-}, async args => tools.supermem_contradict(args));
+}, async args => tools.contradict(args));
 
-server.registerTool('supermem_resolve', {
+server.registerTool('resolve', {
   description: 'Resolve a contested pair. Winner becomes active, loser superseded.',
   inputSchema: { winner_id: z.string(), loser_id: z.string() },
-}, async args => tools.supermem_resolve(args));
+}, async args => tools.resolve(args));
 
-server.registerTool('supermem_ui', {
+server.registerTool('ui', {
   description: `Return the local audit UI URL (${uiUrl}).`,
   inputSchema: {},
-}, async () => tools.supermem_ui());
+}, async () => tools.ui());
 
-server.registerTool('supermem_status', {
+server.registerTool('status', {
   description: 'Project memory counts, store health, and audit UI URL.',
   inputSchema: {},
-}, async () => tools.supermem_status());
+}, async () => tools.status());
 
-server.registerTool('supermem_health', {
+server.registerTool('health', {
   description: 'Detect live-set deterioration from store counts and retrieve telemetry. Advisory, no writes.',
   inputSchema: {},
-}, async () => tools.supermem_health());
+}, async () => tools.health());
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

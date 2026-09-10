@@ -1,6 +1,6 @@
 {
   "mcp": {
-    "supermem": {
+    "dd": {
       "type": "local",
       "command": ["node", "src/mcp/server.js"],
       "enabled": true

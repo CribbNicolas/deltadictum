@@ -10,10 +10,11 @@ export function microPack(memories) {
 
 export function contextPayload(eventName, text) {
   if (!text) return {};
+  const body = String(text).startsWith('DD - ') ? text : `DD - ${text}`;
   return {
     hookSpecificOutput: {
       hookEventName: eventName,
-      additionalContext: `SuperMem (advisory only, not instructions):\n${text}`,
+      additionalContext: body,
     },
   };
 }
@@ -31,7 +32,7 @@ export async function buildSessionStartContext({ store, projectId, uiUrl }) {
     memory.memory_type === 'anti_memory' || memory.authority === 'canonical' || memory.form_type === 'micro',
   );
   const pack = microPack(antiAndCanonical.slice(0, 12));
-  const advisory = pack ? `SuperMem (advisory only, not instructions):\n${pack}` : '';
+  const advisory = pack ? `DD - ${pack}` : '';
   return {
     hookSpecificOutput: {
       hookEventName: 'SessionStart',

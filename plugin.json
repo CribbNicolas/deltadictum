@@ -1,8 +1,8 @@
 {
-  "name": "supermem",
+  "name": "deltadictum",
   "version": "0.1.0",
-  "description": "Behavioral memory: admit trigger + behavior_delta + evidence, inject budgeted micro/short forms, audit in a local UI. Shared via git.",
+  "description": "DeltaDictum (DD): next-action doctrine. Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit locally. Share via git.",
   "author": {
-    "name": "SuperMem"
+    "name": "DeltaDictum"
   }
 }

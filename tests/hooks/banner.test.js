@@ -12,8 +12,9 @@ describe('session banner', () => {
       url: 'http://127.0.0.1:7733',
       activeCount: 0,
     });
-    assert.match(text, /SuperMem loaded for `supermem` \(0 active\)/);
-    assert.match(text, /Audit UI: http:\/\/127\.0\.0\.1:7733/);
+    assert.match(text, /DD - loaded for `supermem` \(0 active\)/);
+    assert.match(text, /DD - Audit UI: http:\/\/127\.0\.0\.1:7733/);
+    assert.doesNotMatch(text, /SuperMem|DeltaDictum/);
   });
 
   test('persists and reads the live audit URL', async () => {
