@@ -64,6 +64,25 @@ describe('propose + retrieve', () => {
     db.close();
   });
 
+  test('reports trigger collisions against other live atoms', async () => {
+    const db = await store();
+    const first = await proposeMemory(proposal({
+      trigger: 'writing durable memory tests',
+      topic_key: 'eval/collide/one',
+    }), { store: db });
+    await db.putAtom({ ...first.atom, lifecycle_state: 'active' });
+    const second = await proposeMemory(proposal({
+      id: 'atom-2',
+      title: 'Sister lesson',
+      trigger: 'writing durable unit tests',
+      topic_key: 'eval/collide/two',
+    }), { store: db });
+    assert.equal(second.decision, 'write');
+    assert.equal(second.collides_with.length, 1);
+    assert.equal(second.collides_with[0].id, first.atom.id);
+    db.close();
+  });
+
   test('does not activate a proposal missing trigger', async () => {
     const db = await store();
     const result = await proposeMemory(proposal({ trigger: '' }), { store: db });

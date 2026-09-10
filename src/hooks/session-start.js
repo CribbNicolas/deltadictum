@@ -1,7 +1,7 @@
 import { retrieveMemories } from '../engine/retrieve.js';
 import { sessionBanner } from './banner.js';
 
-function microPack(memories) {
+export function microPack(memories) {
   return memories.map(memory => {
     const flag = memory.memory_type === 'anti_memory' ? 'ANTI' : memory.memory_type.toUpperCase();
     return `[${flag}] ${memory.content || memory.retrieval_forms?.micro || memory.title}`;

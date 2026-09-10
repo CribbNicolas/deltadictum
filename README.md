@@ -19,7 +19,7 @@ npm run mcp           # MCP stdio server
 node src/cli.js health
 ```
 
-Retrieve is O(hits). Opening the store still rebuilds the SQLite index from git (startup cost, not retrieve cost).
+Retrieve is O(hits). Opening the store hashes git atoms/registry/relations and skips SQLite rebuild when the fingerprint matches.
 
 ## Principles
 
@@ -75,7 +75,7 @@ Admitted atoms are written to `<your-project>/.supermem/atoms/` so they show up 
 
 ## How retrieve and capture work
 
-- **Retrieve:** call `supermem_retrieve` with the coming action. Hits are compact (`content` only). Grok ignores SessionStart stdout, so retrieve must be a tool call (or the UserPromptSubmit hook).
+- **Retrieve:** call `supermem_retrieve` with the coming action. Hits are compact (`content` only). On Grok, SessionStart stdout and UserPromptSubmit `additionalContext` are discarded — injection is a `PreToolUse` hook plus the model calling `supermem_retrieve`.
 - **Health:** `supermem_health` / `node src/cli.js health` scores live-set deterioration from SQLite. No LLM, no git writes.
 - **Capture:** on Stop, the host is asked to `supermem_propose` **at most once** if there is a reusable lesson. Admission still decides write/observe/block. This is not a session dump.
 

@@ -5,6 +5,7 @@ import { openStore, readJsonStdin } from '../project.js';
 import { readUiUrl } from './banner.js';
 import { buildSessionStartContext, contextPayload } from './session-start.js';
 import { STOP_CAPTURE_PROMPT } from './capture.js';
+import { buildPreToolContext } from './pre-tool.js';
 
 function ok(payload) {
   process.stdout.write(JSON.stringify(payload));
@@ -34,6 +35,12 @@ try {
       projectId,
       uiUrl: await readUiUrl(supermemDir),
     });
+    store.close();
+    ok(result);
+  }
+
+  if (command === 'pre-tool') {
+    const result = await buildPreToolContext(payload, { store, projectId });
     store.close();
     ok(result);
   }

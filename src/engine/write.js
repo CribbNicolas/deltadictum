@@ -7,6 +7,7 @@ import { decideSupersession } from './v6/supersession.js';
 import { PREDOMINANCE_WIN_BUMP } from './v6/predominance.js';
 import { validateExplicitContradiction } from './v6/contradiction.js';
 import { domainOf } from './v5/vocab.js';
+import { triggerJaccard } from './health/deterioration.js';
 
 const TEXT_FIELDS = ['title', 'trigger', 'behavior_delta', 'what', 'why'];
 
@@ -34,6 +35,26 @@ async function ensureDomainVocab(store, projectId, topicKey, tags = []) {
       await store.createVocabularyValue(projectId, 'tag', tag);
     }
   }
+}
+
+async function withCollisions(store, result) {
+  if (!result?.atom) return result;
+  const peers = await store.listAtoms({
+    projectId: result.atom.project_id,
+    lifecycleStates: ['active', 'contested'],
+  });
+  const collides_with = [];
+  for (const peer of peers) {
+    if (peer.id === result.atom.id) continue;
+    const jaccard = triggerJaccard(peer.trigger, result.atom.trigger);
+    if (jaccard < 0.5) continue;
+    collides_with.push({
+      id: peer.id,
+      topic_key: peer.topic_key,
+      jaccard: Math.round(jaccard * 1000) / 1000,
+    });
+  }
+  return { ...result, collides_with };
 }
 
 function applyAutoAdmit(atom, config) {
@@ -121,7 +142,7 @@ export async function proposeMemory(rawPayload, { store }) {
     const supersession = decideSupersession(existing, gated);
     if (supersession.action === 'update') {
       const updated = await store.putAtom({ ...existing, ...gated, id: existing.id });
-      return { decision: 'update', reasons: supersession.reasons, atom: updated };
+      return withCollisions(store, { decision: 'update', reasons: supersession.reasons, atom: updated });
     }
 
     const snapshot = { ...existing };
@@ -152,7 +173,7 @@ export async function proposeMemory(rawPayload, { store }) {
         winner_atom_id: stored.id,
         reasons: supersession.reasons,
       });
-      return { decision: 'write', reasons: supersession.reasons, atom: stored, superseded: existing.id };
+      return withCollisions(store, { decision: 'write', reasons: supersession.reasons, atom: stored, superseded: existing.id });
     } catch (err) {
       await store.putAtom(snapshot);
       throw err;
@@ -182,7 +203,7 @@ export async function proposeMemory(rawPayload, { store }) {
       action: 'contested',
       reasons: ['explicit_contradiction'],
     });
-    return { decision: 'contest', reasons: ['explicit_contradiction'], atom: stored };
+    return withCollisions(store, { decision: 'contest', reasons: ['explicit_contradiction'], atom: stored });
   }
 
   const config = await store.loadConfig();
@@ -191,5 +212,5 @@ export async function proposeMemory(rawPayload, { store }) {
     lifecycle_state: gated.lifecycle_state ?? 'active',
   }, config);
   const stored = await store.putAtom(admitted);
-  return { decision: 'write', reasons: admission.reasons, atom: stored };
+  return withCollisions(store, { decision: 'write', reasons: admission.reasons, atom: stored });
 }
