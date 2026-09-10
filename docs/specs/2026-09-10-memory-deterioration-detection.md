@@ -21,7 +21,7 @@ Status: **Implemented** (detection-only). LLM prune and auto-archive stay deferr
 
 ## Context
 
-SuperMem's thesis is **few memories, expensive to write, cheap to read, activated by the next action**. Retrieve is now O(hits). Forgetting is still missing. A bloated live set will not melt retrieve, but it will fill the 8-hit cap with noise.
+DeltaDictum's thesis is **few memories, expensive to write, cheap to read, activated by the next action**. Retrieve is now O(hits). Forgetting is still missing. A bloated live set will not melt retrieve, but it will fill the 8-hit cap with noise.
 
 This spec defines **deterioration** so a detector can fire from SQLite counts and telemetry. No model in the loop. A later pass may hand the report to the host LLM to prune; detection must work first, including on a store that has never been retrieved.
 

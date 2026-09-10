@@ -21,7 +21,7 @@ Status: **Implemented** (P0/P1 cut). Later phases stay deferred.
 
 ## Context
 
-SuperMem's differentiator is not "remember the chat". It is **behavioral memory**: `trigger` + `behavior_delta` + evidence, admitted deterministically, injected only when the next action activates it, shared as git files, audited in a local UI.
+DeltaDictum's differentiator is not "remember the chat". It is **behavioral memory**: `trigger` + `behavior_delta` + evidence, admitted deterministically, injected only when the next action activates it, shared as git files, audited in a local UI.
 
 That contract is real. The 2026 memory market (claude-mem, Mem0, Zep/Graphiti, Letta, CLAUDE.md) already covers session dumps, vector fact layers, temporal graphs, and always-on markdown. Copying those would erase the thesis.
 
@@ -31,7 +31,7 @@ This spec records an honest performance reading of v1 as implemented, and the fi
 
 | Question | Answer |
 |---|---|
-| Fewer tokens than claude-mem / Mem0 / pasting history? | **On paper, injection yes** (budget 600, `micro`/`short`, abstain). **In practice, unmeasured.** MCP `supermem_retrieve` returned the **full atom JSON**, so the tool result could dwarf the compact `content`. |
+| Fewer tokens than claude-mem / Mem0 / pasting history? | **On paper, injection yes** (budget 600, `micro`/`short`, abstain). **In practice, unmeasured.** MCP `retrieve` returned the **full atom JSON**, so the tool result could dwarf the compact `content`. |
 | More interesting memories? | **Schema yes. Capture no.** Observations are not promoted. Quality depends on the host LLM calling `propose` well. |
 | Scale to ~1,000 atoms? | **Files are fine. The read path is not.** Retrieve did a full git JSON walk and scored every atom in JS. FTS5 existed and was unused. |
 
@@ -49,7 +49,7 @@ Trigger score was `shared_tokens / trigger_tokens` including stopwords. `before 
 
 ### Indexing as implemented (before this cut)
 
-- Git files under `.supermem/atoms/` are the source of truth (correct for team share).
+- Git files under `.dd/atoms/` are the source of truth (correct for team share).
 - SQLite FTS5 indexes `title`, `trigger`, `what`, `why`, `topic_key`, `micro`, `short`.
 - `store.search()` existed.
 - `retrieveMemories` called `store.listAtoms` → **git walk of atoms + archive**, parse every JSON, score in JS.
@@ -75,7 +75,7 @@ Out of scope: embeddings, admission-schema changes, auto-extract from observatio
 
 ### 1. Compact retrieve
 
-`retrieveMemories` (and therefore `supermem_retrieve`) returns hits shaped as:
+`retrieveMemories` (and therefore `retrieve`) returns hits shaped as:
 
 ```text
 id, topic_key, memory_type, title, trigger,
@@ -83,7 +83,7 @@ form_type, content, token_estimate,
 activation_score, contested, lifecycle_state
 ```
 
-`what`, `why`, `evidence_refs`, `retrieval_forms`, timestamps, and registry ids stay on disk. `supermem_get` remains the full form.
+`what`, `why`, `evidence_refs`, `retrieval_forms`, timestamps, and registry ids stay on disk. `get` remains the full form.
 
 ### 2. FTS candidate generation + caps
 
@@ -124,7 +124,7 @@ A test writes 1,000 active atoms plus one needle. Retrieve by the needle trigger
 | Item | Why later |
 |---|---|
 | Optional embeddings + RRF | V7 in the router doc. FTS is enough at 1k. |
-| Observation → at most one Stop candidate | Stop hook asks for at most one `supermem_propose`. Observations are still not promoted. |
+| Observation → at most one Stop candidate | Stop hook asks for at most one `propose`. Observations are still not promoted. |
 | Decay / auto-archive unused inferred atoms | Auto-archive still later. Detection is spec 2026-09-10-memory-deterioration-detection.md. |
 | Use-feedback on memories | Requires a signal we do not collect yet. |
 | Eval harness remainder | Abstention F1 is in `npm test`. Payload/content ratio under 4x and host traces stay later (catalog Q15, H1-H5). |

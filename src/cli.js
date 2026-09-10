@@ -5,7 +5,7 @@ import { startUiServer } from './ui/server.js';
 const [command] = process.argv.slice(2);
 
 async function main() {
-  const { store, projectId, supermemDir, dataDir } = await openStore();
+  const { store, projectId, ddDir, dataDir } = await openStore();
   if (command === 'reindex') {
     const result = await store.reindex();
     console.log(`reindexed ${result.atoms} atoms`);
@@ -16,7 +16,7 @@ async function main() {
     const { counts, total } = await store.countByLifecycle(projectId);
     console.log(JSON.stringify({
       project_id: projectId,
-      supermemDir,
+      ddDir,
       dataDir,
       total,
       by_state: counts,

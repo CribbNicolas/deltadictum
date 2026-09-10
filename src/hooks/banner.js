@@ -14,18 +14,18 @@ export function sessionBanner({ projectId, url, activeCount = 0 }) {
   ].join('\n');
 }
 
-export function uiStatusPath(supermemDir) {
-  return join(supermemDir, 'ui.json');
+export function uiStatusPath(ddDir) {
+  return join(ddDir, 'ui.json');
 }
 
-export async function writeUiUrl(supermemDir, { url, port }) {
-  await mkdir(supermemDir, { recursive: true });
-  await writeFile(uiStatusPath(supermemDir), `${JSON.stringify({ url, port }, null, 2)}\n`, 'utf8');
+export async function writeUiUrl(ddDir, { url, port }) {
+  await mkdir(ddDir, { recursive: true });
+  await writeFile(uiStatusPath(ddDir), `${JSON.stringify({ url, port }, null, 2)}\n`, 'utf8');
 }
 
-export async function readUiUrl(supermemDir) {
+export async function readUiUrl(ddDir) {
   try {
-    const data = JSON.parse(await readFile(uiStatusPath(supermemDir), 'utf8'));
+    const data = JSON.parse(await readFile(uiStatusPath(ddDir), 'utf8'));
     if (typeof data.url === 'string' && data.url.trim()) return data.url.trim();
   } catch {
     // missing or invalid runtime file

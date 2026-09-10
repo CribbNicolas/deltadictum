@@ -9,4 +9,4 @@ description: Open or summarize the DeltaDictum audit UI so a human can list, edi
 2. Call `ui` and give the user the localhost URL as `DD - Audit UI: <url>`.
 3. For edits/deletes the user requests, use `update`, `admit`, `reject`, or `delete` (canonical delete needs `confirm: true`).
 
-Do not write SuperMem or DeltaDictum in chat. Use `DD - `.
+Do not write DeltaDictum in chat. Use `DD - `.

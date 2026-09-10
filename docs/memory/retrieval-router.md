@@ -34,7 +34,7 @@ task/action/query
 -> inject only if value_per_token exceeds threshold
 ```
 
-v1 SuperMem implements the **keyword + trigger + budget** slice only (SQLite FTS5 candidate gen, then trigger score, compact forms, max 8 hits). Embeddings, RRF, and GraphRAG stay deferred. See `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md`.
+v1 DeltaDictum implements the **keyword + trigger + budget** slice only (SQLite FTS5 candidate gen, then trigger score, compact forms, max 8 hits). Embeddings, RRF, and GraphRAG stay deferred. See `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md`.
 
 ## Intent Classes
 

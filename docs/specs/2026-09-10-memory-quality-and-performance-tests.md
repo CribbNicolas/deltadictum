@@ -23,7 +23,7 @@ Commands:
 npm test              # gate (~10s)
 npm run test:stress   # performance at 2k atoms (~12s)
 npm run test:all      # both
-SUPERMEM_STRESS_ATOMS=5000 npm run test:stress
+DD_STRESS_ATOMS=5000 npm run test:stress
 ```
 
 Status legend:
@@ -50,7 +50,7 @@ The engine must stay O(hits) for retrieve and cheap enough for health that a blo
 | P5 | `status` and SessionStart at corpus scale | status `< 100ms`, session-start `< 1000ms` | same | `stress` |
 | P6 | Retrieve does not rewrite git under load | git JSON bytes unchanged | same + `tests/store/sqlite-index.test.js` | `gate` + `stress` |
 | P7 | Payload tokens vs `content` | `payloadTokens < contentTokens * 12 + 120` and `budget.used <= payloadTokens` | stress | `stress` |
-| P8 | Same class at 5,000 atoms | P2–P5 still pass | `SUPERMEM_STRESS_ATOMS=5000 npm run test:stress` | `stress` |
+| P8 | Same class at 5,000 atoms | P2–P5 still pass | `DD_STRESS_ATOMS=5000 npm run test:stress` | `stress` |
 | P9 | `assessDeterioration` on 200 live atoms with distinct triggers | `< 100ms` | `tests/engine/health/deterioration.test.js` | `cut` |
 | P10 | `assessDeterioration` on 2,000 live atoms | `< 1000ms`; still returns a report; offenders cap 20 | `tests/stress/health-scale.test.js` | `cut` |
 | P11 | `loadHealthSnapshot` at 2,000 atoms | `< 200ms`; no `payload`/`what` on rows | `tests/store/health-snapshot.test.js` or stress | `cut` |

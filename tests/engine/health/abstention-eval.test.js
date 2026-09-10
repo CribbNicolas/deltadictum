@@ -151,9 +151,9 @@ const SHOULD_ABSTAIN = [
 
 describe('abstention eval harness', () => {
   test('F1 of should-inject vs should-abstain is at least 0.8', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-eval-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-eval-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     for (const atom of FIXTURES) store.index.upsertAtom(atom);

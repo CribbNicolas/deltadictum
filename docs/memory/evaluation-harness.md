@@ -58,6 +58,6 @@ Final QA accuracy is insufficient. The harness instruments:
 
 External benchmarks are signals, not substitutes for Orquesta regression tests: LoCoMo, LongMemEval (extraction, multi-session, temporal, knowledge-update, abstention), StructMemEval (structured memory), RAGChecker (fine-grained retrieval/generation diagnostics), BenchmarkQED. Internal task replay remains the primary regression signal.
 
-## SuperMem concrete catalog
+## DeltaDictum concrete catalog
 
 The row-level checklist (what already runs, what the deterioration cut must add, what stays later) lives in `docs/specs/2026-09-10-memory-quality-and-performance-tests.md`. That file is the executable list; this document stays the category/metrics theory.

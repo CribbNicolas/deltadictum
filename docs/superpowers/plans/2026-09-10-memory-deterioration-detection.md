@@ -4,9 +4,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Detect SuperMem live-set deterioration from SQLite counts and retrieval telemetry, with no LLM and no git writes.
+**Goal:** Detect DeltaDictum live-set deterioration from SQLite counts and retrieval telemetry, with no LLM and no git writes.
 
-**Architecture:** Pure function `assessDeterioration(snapshot, now, thresholds)` scores layer A (atoms) and layer B (retrieval events). SQLite loads a compact snapshot (no `payload`). MCP `supermem_health` and CLI `health` print the report. Detection never calls `retrieveMemories`.
+**Architecture:** Pure function `assessDeterioration(snapshot, now, thresholds)` scores layer A (atoms) and layer B (retrieval events). SQLite loads a compact snapshot (no `payload`). MCP `health` and CLI `health` print the report. Detection never calls `retrieveMemories`.
 
 **Tech Stack:** Node 22+, `node:test`, `node:sqlite`, existing `contentTokens` in `src/engine/v4/trigger-match.js`.
 
@@ -548,9 +548,9 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 
 describe('health snapshot', () => {
   test('loads compact atom columns and retrieval events without payload', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({
@@ -642,9 +642,9 @@ git commit -m "feat: sqlite compact snapshot for health detection"
 import { readFile } from 'node:fs/promises';
 
 test('store.assessDeterioration does not dirty git or bump activation', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+  const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
   const store = await createMemoryStore({
-    supermemDir: join(root, '.supermem'),
+    ddDir: join(root, '.dd'),
     dataDir: join(root, 'data'),
   });
   await store.putAtom({
@@ -665,7 +665,7 @@ test('store.assessDeterioration does not dirty git or bump activation', async ()
     lifecycle_state: 'active',
     retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
   });
-  const gitPath = join(root, '.supermem', 'atoms', 'memory', 'admission', 'required-fields.json');
+  const gitPath = join(root, '.dd', 'atoms', 'memory', 'admission', 'required-fields.json');
   const before = await readFile(gitPath, 'utf8');
   const report = await store.assessDeterioration('demo', { now: '2026-09-10T00:00:00.000Z' });
   assert.equal(report.status, 'healthy');
@@ -743,10 +743,10 @@ git commit -m "feat: store.assessDeterioration read-only health report"
 
 ---
 
-### Task 6: MCP `supermem_health` and CLI `health`
+### Task 6: MCP `health` and CLI `health`
 
 **Files:**
-- Modify: `src/mcp/tools.js` (add handler after `supermem_status`)
+- Modify: `src/mcp/tools.js` (add handler after `status`)
 - Modify: `src/mcp/server.js` (register tool)
 - Modify: `src/cli.js` (command `health`)
 - Modify: `tests/mcp/tools.test.js`
@@ -754,19 +754,19 @@ git commit -m "feat: store.assessDeterioration read-only health report"
 
 **Interfaces:**
 - Consumes: `store.assessDeterioration(projectId, { now })`
-- Produces: MCP tool `supermem_health` with empty input schema; CLI `node src/cli.js health` prints JSON
+- Produces: MCP tool `health` with empty input schema; CLI `node src/cli.js health` prints JSON
 
 - [ ] **Step 1: Write the failing MCP test** (append to `tests/mcp/tools.test.js`)
 
 ```js
 test('health reports healthy empty project without retrieve', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+  const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
   const store = await createMemoryStore({
-    supermemDir: join(root, '.supermem'),
+    ddDir: join(root, '.dd'),
     dataDir: join(root, 'data'),
   });
   const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
-  const health = JSON.parse((await tools.supermem_health()).content[0].text);
+  const health = JSON.parse((await tools.dd_health()).content[0].text);
   assert.equal(health.status, 'healthy');
   assert.equal(health.live.total, 0);
   assert.ok(health.indicators.some(row => row.id === 'live_bloat'));
@@ -778,26 +778,26 @@ test('health reports healthy empty project without retrieve', async () => {
 
 Run: `node --test --test-concurrency=1 tests/mcp/tools.test.js`
 
-Expected: FAIL `tools.supermem_health is not a function`.
+Expected: FAIL `tools.dd_health is not a function`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `tools.js`:
 
 ```js
-async supermem_health() {
+async health() {
   const report = await store.assessDeterioration(projectId);
   return jsonResult(report);
 },
 ```
 
-`server.js` after `supermem_status`:
+`server.js` after `status`:
 
 ```js
-server.registerTool('supermem_health', {
+server.registerTool('health', {
   description: 'Detect live-set deterioration from store counts and retrieve telemetry. Advisory, no writes.',
   inputSchema: {},
-}, async () => tools.supermem_health());
+}, async () => tools.dd_health());
 ```
 
 `cli.js` after `status`:
@@ -823,7 +823,7 @@ Expected: PASS.
 
 ```bash
 git add src/mcp/tools.js src/mcp/server.js src/cli.js src/store/paths.js tests/mcp/tools.test.js
-git commit -m "feat: supermem_health MCP tool and CLI health command"
+git commit -m "feat: health MCP tool and CLI health command"
 ```
 
 ---
@@ -922,9 +922,9 @@ Append to `tests/store/health-snapshot.test.js`:
 
 ```js
 test('config health.live_bloat.watch override is honored (D20)', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+  const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
   const store = await createMemoryStore({
-    supermemDir: join(root, '.supermem'),
+    ddDir: join(root, '.dd'),
     dataDir: join(root, 'data'),
   });
   for (let i = 0; i < 5; i += 1) {
@@ -955,9 +955,9 @@ test('config health.live_bloat.watch override is honored (D20)', async () => {
 });
 
 test('fifty health runs do not bump activation or retrieval events (P12)', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'supermem-health-'));
+  const root = await mkdtemp(join(tmpdir(), 'dd-health-'));
   const store = await createMemoryStore({
-    supermemDir: join(root, '.supermem'),
+    ddDir: join(root, '.dd'),
     dataDir: join(root, 'data'),
   });
   await store.putAtom({
@@ -1008,9 +1008,9 @@ describe('health stress (2000 atoms)', { timeout: 120000 }, () => {
   let gitBefore;
 
   before(async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-health-stress-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-health-stress-'));
     store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({
@@ -1031,7 +1031,7 @@ describe('health stress (2000 atoms)', { timeout: 120000 }, () => {
       lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
-    gitPath = join(root, '.supermem', 'atoms', 'memory', 'demo', 'required-fields.json');
+    gitPath = join(root, '.dd', 'atoms', 'memory', 'demo', 'required-fields.json');
     gitBefore = await readFile(gitPath, 'utf8');
     for (let i = 0; i < CORPUS; i += 1) {
       store.index.upsertAtom({
@@ -1141,6 +1141,6 @@ git commit -m "test: deterioration catalog cut rows and health scale"
 
 **Placeholders:** none.
 
-**Type consistency:** `assessDeterioration(snapshot, nowIso, thresholds)` in engine; `store.assessDeterioration(projectId, { now })` on the store; MCP `supermem_health()` with no args.
+**Type consistency:** `assessDeterioration(snapshot, nowIso, thresholds)` in engine; `store.assessDeterioration(projectId, { now })` on the store; MCP `health()` with no args.
 
 Do not implement auto-prune, UI charts, or embeddings in any task.

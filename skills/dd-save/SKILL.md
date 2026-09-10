@@ -9,7 +9,7 @@ Turn a reusable lesson into a `propose` payload. Do not write files yourself.
 
 Use this when the user says remember **and** at session Stop if the session produced exactly one reusable lesson, anti-memory, or decision. If nothing should change next time, do not propose. Never dump the transcript.
 
-In chat, prefix plugin lines with `DD - `. Do not write DeltaDictum or SuperMem in chat.
+In chat, prefix plugin lines with `DD - `. Do not write DeltaDictum in chat.
 
 Map:
 

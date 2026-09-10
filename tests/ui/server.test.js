@@ -14,9 +14,9 @@ async function json(url, opts) {
 
 describe('audit UI HTTP', () => {
   test('lists, admits, edits, and deletes an atom on disk', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-ui-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const written = await proposeMemory({

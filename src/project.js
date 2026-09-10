@@ -15,7 +15,7 @@ async function exists(path) {
 export async function findRepoRoot(start = process.cwd()) {
   let dir = start;
   for (;;) {
-    if (await exists(join(dir, '.supermem')) || await exists(join(dir, '.git'))) return dir;
+    if (await exists(join(dir, '.dd')) || await exists(join(dir, '.git'))) return dir;
     const parent = dirname(dir);
     if (parent === dir) return start;
     dir = parent;
@@ -28,19 +28,19 @@ export function projectSlug(repoRoot) {
 
 export async function openStore({ cwd = process.cwd() } = {}) {
   const repoRoot = await findRepoRoot(cwd);
-  const supermemDir = join(repoRoot, '.supermem');
+  const ddDir = join(repoRoot, '.dd');
   const slug = projectSlug(repoRoot);
-  const dataDir = process.env.SUPERMEM_DATA
+  const dataDir = process.env.DD_DATA
     || process.env.GROK_PLUGIN_DATA
     || process.env.CLAUDE_PLUGIN_DATA
-    || join(homedir(), '.supermem', slug);
-  const store = await createMemoryStore({ supermemDir, dataDir });
+    || join(homedir(), '.dd', slug);
+  const store = await createMemoryStore({ ddDir, dataDir });
   const config = await store.loadConfig();
   if (!config.project_id) {
     config.project_id = slug;
     await store.saveConfig(config);
   }
-  return { store, repoRoot, supermemDir, dataDir, config, projectId: config.project_id };
+  return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id };
 }
 
 export async function readJsonStdin() {

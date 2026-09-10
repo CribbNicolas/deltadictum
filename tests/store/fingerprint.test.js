@@ -30,22 +30,22 @@ function atom(overrides = {}) {
 
 describe('source fingerprint reindex skip', () => {
   test('unchanged git source keeps the fingerprint and a git-only new file is picked up on reopen', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-fp-'));
-    const supermemDir = join(root, '.supermem');
+    const root = await mkdtemp(join(tmpdir(), 'dd-fp-'));
+    const ddDir = join(root, '.dd');
     const dataDir = join(root, 'data');
-    const first = await createMemoryStore({ supermemDir, dataDir });
+    const first = await createMemoryStore({ ddDir, dataDir });
     await first.putAtom(atom());
     const fp = first.index.getMeta('source_fingerprint');
     assert.ok(fp);
-    assert.equal(fp, await sourceFingerprint(supermemDir));
+    assert.equal(fp, await sourceFingerprint(ddDir));
     first.close();
 
-    const second = await createMemoryStore({ supermemDir, dataDir });
+    const second = await createMemoryStore({ ddDir, dataDir });
     assert.equal(second.index.getMeta('source_fingerprint'), fp);
     assert.equal((await second.getAtom('atom-1', 'demo')).title, 'Require trigger');
     second.close();
 
-    const extraDir = join(supermemDir, 'atoms', 'memory', 'other');
+    const extraDir = join(ddDir, 'atoms', 'memory', 'other');
     await mkdir(extraDir, { recursive: true });
     await writeFile(join(extraDir, 'topic.json'), `${JSON.stringify({
       ...atom({
@@ -57,7 +57,7 @@ describe('source fingerprint reindex skip', () => {
       updated_at: '2026-09-10T00:00:00.000Z',
     }, null, 2)}\n`);
 
-    const third = await createMemoryStore({ supermemDir, dataDir });
+    const third = await createMemoryStore({ ddDir, dataDir });
     assert.notEqual(third.index.getMeta('source_fingerprint'), fp);
     assert.equal((await third.getAtom('atom-2', 'demo')).title, 'Other topic');
     third.close();

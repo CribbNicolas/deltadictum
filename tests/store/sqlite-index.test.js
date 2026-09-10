@@ -31,9 +31,9 @@ function atom(overrides = {}) {
 
 describe('MemoryStore sqlite index', () => {
   test('indexes git atoms and searches without crossing projects', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-idx-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-idx-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom(atom());
@@ -50,16 +50,16 @@ describe('MemoryStore sqlite index', () => {
   });
 
   test('rebuilds the index from files', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-idx-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-idx-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom(atom());
     store.close();
 
     const reopened = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const loaded = await reopened.getAtom('atom-1', 'demo');
@@ -70,13 +70,13 @@ describe('MemoryStore sqlite index', () => {
   });
 
   test('retrieve does not rewrite git atoms for activation telemetry', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-idx-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-idx-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom(atom());
-    const gitPath = join(root, '.supermem', 'atoms', 'memory', 'admission', 'required-fields.json');
+    const gitPath = join(root, '.dd', 'atoms', 'memory', 'admission', 'required-fields.json');
     const before = await readFile(gitPath, 'utf8');
     const retrieved = await retrieveMemories({
       project_id: 'demo',
@@ -96,9 +96,9 @@ describe('MemoryStore sqlite index', () => {
   });
 
   test('getAtom reads sqlite and does not fall back to a git walk', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-idx-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-idx-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom(atom());
@@ -108,9 +108,9 @@ describe('MemoryStore sqlite index', () => {
   });
 
   test('registry, relations, live topic, and counts read from sqlite', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-idx-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-idx-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const entry = await store.createRegistryEntry('demo', 'memory/compaction', 'provisional');
@@ -149,9 +149,9 @@ describe('MemoryStore sqlite index', () => {
   });
 
   test('retrieve honors config vpt_threshold', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-idx-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-idx-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom(atom());

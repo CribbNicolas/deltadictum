@@ -1,12 +1,12 @@
 # DeltaDictum contract
 
-Formerly SuperMem. Chat identity is **DD**. On-disk path remains `.supermem/`.
+Chat identity is **DD**. On-disk path is `.dd/`.
 
 These documents are the memory contract. They were copied from Orquesta (`.docs/memory`, invariants, failures, V2–V6a specs).
 
 They apply as **behavior**, not as infrastructure.
 
-## What binds SuperMem
+## What binds DeltaDictum
 
 - Durable memory is behavioral: `trigger` + `behavior_delta` + evidence.
 - LLMs propose. Deterministic admission commits.
@@ -19,11 +19,11 @@ They apply as **behavior**, not as infrastructure.
 
 Orquesta Compose, Postgres, Qdrant, Redis, n8n, llama.cpp, `--parallel 1`, and the 65k local KV-cache budget.
 
-SuperMem v1 stores atoms as files in the project (git source of truth) and indexes them with SQLite. A later `RemoteStore` may speak Orquesta `memory-api` HTTP without changing the atom schema.
+v1 stores atoms as files in the project (git source of truth) and indexes them with SQLite. A later `RemoteStore` may speak Orquesta `memory-api` HTTP without changing the atom schema.
 
 ## Mapped invariants
 
-| Orquesta | SuperMem |
+| Orquesta | DeltaDictum |
 |---|---|
 | INV-01 / INV-02 project + namespace isolation | `project_id` on every atom; retrieval always filters project first |
 | INV-04 memory is not chat history | observations stay local; only admitted atoms are retrievable |

@@ -11,7 +11,7 @@ DD - loaded for `<project>` (N active).
 DD - Audit UI: http://127.0.0.1:7733
 ```
 
-Formerly SuperMem. On-disk store remains `.supermem/` so existing git atoms keep working.
+On-disk store is `.dd/` (git-shared atoms) plus a local SQLite index.
 
 This repo ports the Orquesta `memory-api` V2–V6a **contracts** (admission, evidence, trigger retrieval, topic registry, contradiction/supersession). It does **not** port the Docker stack.
 
@@ -59,7 +59,7 @@ Requires Node 22+. From this checkout:
 **Grok Build**
 
 ```bash
-grok plugin marketplace add C:\dev\supermem
+grok plugin marketplace add <checkout>
 grok plugin install deltadictum --trust
 ```
 
@@ -68,7 +68,7 @@ Or point `[plugins].paths` at this repo. The plugin root is the repository (skil
 **Claude Code**
 
 ```bash
-claude plugin install C:\dev\supermem
+claude plugin install <checkout>
 ```
 
 **Codex / OpenCode**
@@ -79,10 +79,10 @@ Copy `adapters/AGENTS.md` into the target repo and register the MCP server from 
 
 ```bash
 cd <your-project>
-node C:\dev\supermem\src\cli.js
+node <checkout>/src/cli.js
 ```
 
-Admitted atoms are written to `<your-project>/.supermem/atoms/` so they show up in `git diff`.
+Admitted atoms are written to `<your-project>/.dd/atoms/` so they show up in `git diff`.
 
 ## How retrieve and capture work
 
@@ -95,9 +95,9 @@ Admitted atoms are written to `<your-project>/.supermem/atoms/` so they show up 
 Admitted atoms live in the consuming project:
 
 ```
-.supermem/atoms/<topic_key>.json
-.supermem/registry/topics.json
-.supermem/relations.json
+.dd/atoms/<topic_key>.json
+.dd/registry/topics.json
+.dd/relations.json
 ```
 
 Observations and SQLite stay on the machine, not in git.
@@ -106,7 +106,7 @@ Observations and SQLite stay on the machine, not in git.
 
 | Doc | What |
 |---|---|
-| `docs/SUPERMEM.md` | What binds vs what does not |
+| `docs/DD.md` | What binds vs what does not |
 | `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md` | Compact retrieve + FTS |
 | `docs/specs/2026-09-10-memory-deterioration-detection.md` | Health definition |
 | `docs/specs/2026-09-10-memory-quality-and-performance-tests.md` | Test catalog |

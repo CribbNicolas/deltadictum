@@ -20,11 +20,11 @@ function healthThresholdsFromConfig(config) {
   return base;
 }
 
-export async function createMemoryStore({ supermemDir, dataDir }) {
+export async function createMemoryStore({ ddDir, dataDir }) {
   await mkdir(dataDir, { recursive: true });
-  await mkdir(supermemDir, { recursive: true });
+  await mkdir(ddDir, { recursive: true });
 
-  const git = createGitFileStore(supermemDir);
+  const git = createGitFileStore(ddDir);
   const index = createSqliteIndex(sqlitePath(dataDir));
   await index.migrate();
 
@@ -35,15 +35,15 @@ export async function createMemoryStore({ supermemDir, dataDir }) {
       git.loadRelations(),
     ]);
     index.rebuild(atoms, registry, relations);
-    index.setMeta('source_fingerprint', await sourceFingerprint(supermemDir));
+    index.setMeta('source_fingerprint', await sourceFingerprint(ddDir));
     return { atoms: atoms.length };
   }
 
   async function refreshFingerprint() {
-    index.setMeta('source_fingerprint', await sourceFingerprint(supermemDir));
+    index.setMeta('source_fingerprint', await sourceFingerprint(ddDir));
   }
 
-  const currentFp = await sourceFingerprint(supermemDir);
+  const currentFp = await sourceFingerprint(ddDir);
   if (index.getMeta('source_fingerprint') !== currentFp) {
     await reindex();
   }

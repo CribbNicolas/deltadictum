@@ -2,9 +2,9 @@ node_modules/
 .env
 .env.*
 !.env.example
-.supermem/observations.jsonl
-.supermem/index.sqlite
-.supermem/ui.json
+.dd/observations.jsonl
+.dd/index.sqlite
+.dd/ui.json
 *.sqlite
 *.sqlite-journal
 *.log

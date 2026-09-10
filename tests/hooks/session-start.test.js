@@ -8,9 +8,9 @@ import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 
 describe('SessionStart context', () => {
   test('announces DD loaded and audit URL even with no memories', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-session-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     const payload = await buildSessionStartContext({
@@ -21,14 +21,14 @@ describe('SessionStart context', () => {
     const text = payload.hookSpecificOutput.additionalContext;
     assert.match(text, /DD - loaded for `demo` \(0 active\)/);
     assert.match(text, /DD - Audit UI: http:\/\/127\.0\.0\.1:7733/);
-    assert.doesNotMatch(text, /SuperMem|DeltaDictum/);
+    assert.doesNotMatch(text, /DeltaDictum/);
     store.close();
   });
 
   test('counts active atoms without listing the corpus', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'supermem-session-'));
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
     const store = await createMemoryStore({
-      supermemDir: join(root, '.supermem'),
+      ddDir: join(root, '.dd'),
       dataDir: join(root, 'data'),
     });
     await store.putAtom({
