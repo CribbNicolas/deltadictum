@@ -16,6 +16,13 @@ describe('V4 intent classifier', () => {
   test('classifies temporal intent from time vocabulary', () => {
     assert.strictEqual(classifyIntent({ query: 'when did retrieval change' }), 'temporal');
     assert.strictEqual(classifyIntent({ query: 'historial de cambios del esquema' }), 'temporal');
+    assert.strictEqual(classifyIntent({ query: 'timeline since the last migration' }), 'temporal');
+  });
+
+  test('does not treat before/when action phrasing as temporal', () => {
+    assert.strictEqual(classifyIntent({ action: 'before writing durable memory' }), 'factual');
+    assert.strictEqual(classifyIntent({ action: 'when calling supermem_retrieve or changing retrieve' }), 'factual');
+    assert.strictEqual(classifyIntent({ action: 'when installing git hooks' }), 'factual');
   });
 
   test('classifies policy intent from rule vocabulary', () => {

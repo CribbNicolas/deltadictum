@@ -20,7 +20,7 @@ Do not dump memories in that greeting. `title` and `topic_key` are required on e
 
 ## Retrieve first
 
-Before implementing, debugging, or repeating a workflow, call `supermem_retrieve` with the action you are about to take.
+Before implementing, debugging, or repeating a workflow, call `supermem_retrieve` with the action you are about to take. Do not wait for the user to ask.
 
 - Use the returned `micro`/`short` forms only (`content`). Hits are compact: no evidence dump.
 - If `abstained` is true, do not invent memories.
@@ -28,7 +28,9 @@ Before implementing, debugging, or repeating a workflow, call `supermem_retrieve
 
 ## Propose, don't dump
 
-When the session produced a reusable lesson, anti-memory, decision, claim, or procedure, call `supermem_propose` with:
+At session end, and whenever the user asks to remember something, if there is **exactly one** reusable lesson, anti-memory, or decision, call `supermem_propose` once even if the user did not say "remember". If nothing should change next time, do not propose.
+
+When proposing, include:
 
 - `memory_type`
 - `title`, `trigger`, `behavior_delta`, `what`, `why`

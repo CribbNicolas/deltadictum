@@ -4,6 +4,7 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { openStore, readJsonStdin } from '../project.js';
 import { readUiUrl } from './banner.js';
 import { buildSessionStartContext, contextPayload } from './session-start.js';
+import { STOP_CAPTURE_PROMPT } from './capture.js';
 
 function ok(payload) {
   process.stdout.write(JSON.stringify(payload));
@@ -71,7 +72,7 @@ try {
     store.close();
     ok(contextPayload(
       'Stop',
-      'If this session produced a reusable lesson, anti-memory, or decision, call supermem_propose with trigger, behavior_delta, evidence_refs, and micro+short forms. Do not dump the transcript.',
+      STOP_CAPTURE_PROMPT,
     ));
   }
 

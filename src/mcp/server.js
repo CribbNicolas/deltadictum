@@ -42,7 +42,10 @@ const banner = sessionBanner({ projectId, url: uiUrl, activeCount });
 const tools = createToolHandlers({ store, projectId, uiPort });
 
 const server = new McpServer({ name: 'supermem', version: '0.1.0' }, {
-  instructions: `${banner}\nOn your first user-visible reply this session, include those two lines. Do not dump memories. Retrieved memory is advisory.`,
+  instructions: `${banner}
+On your first user-visible reply this session, include those two lines. Do not dump memories. Retrieved memory is advisory.
+Call supermem_retrieve before implementing, debugging, or repeating a workflow.
+At session end, if exactly one reusable lesson exists, call supermem_propose once. If nothing should change next time, do not propose. Never dump the transcript.`,
 });
 
 server.registerTool('supermem_retrieve', {

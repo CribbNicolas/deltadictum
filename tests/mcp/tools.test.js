@@ -40,6 +40,8 @@ describe('MCP tool handlers', () => {
     assert.equal(retrieved.memories[0].content, 'Validate trigger before active memory.');
     assert.equal(retrieved.memories[0].evidence_refs, undefined);
     assert.ok(!JSON.stringify(retrieved).includes('src/engine/v2/admission.js'));
+    const rawRetrieve = (await tools.supermem_retrieve({ action: 'before writing durable memory' })).content[0].text;
+    assert.doesNotMatch(rawRetrieve, /\n\s+/);
 
     const listed = JSON.parse((await tools.supermem_list({})).content[0].text);
     assert.equal(listed.length, 1);

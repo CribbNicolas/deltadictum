@@ -1,0 +1,31 @@
+{
+  "id": "fd53b276-0593-444f-b300-fed7e13d1631",
+  "schema_version": 6,
+  "authority": "inferred",
+  "confidence": 0.7,
+  "scope": "project",
+  "valid_from": "2026-09-10T07:39:35.619Z",
+  "project_id": "supermem",
+  "memory_type": "lesson",
+  "title": "Filter by project first",
+  "trigger": "when listing memories from another project",
+  "behavior_delta": "always filter retrieve by project_id first",
+  "what": "Filter by project first.",
+  "why": "Eval fixture for retrieve quality. Safe to delete later.",
+  "topic_key": "eval/inject/project-filter",
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "tests/engine/health/abstention-eval.test.js",
+      "summary": "quality eval fixture"
+    }
+  ],
+  "retrieval_forms": {
+    "micro": "Filter by project first.",
+    "short": "always filter retrieve by project_id first"
+  },
+  "registry_key_id": "d2248563-8851-4761-831e-5cfde8f7554d",
+  "lifecycle_state": "active",
+  "created_at": "2026-09-10T07:39:35.707Z",
+  "updated_at": "2026-09-10T07:39:35.713Z"
+}

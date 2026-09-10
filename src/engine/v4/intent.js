@@ -13,7 +13,7 @@ const RULES = [
   { intent: 'debug', pattern: /\b(error|fail|failing|fails|bug|crash|broken|exception|falla|fallo|fallando|rompe|roto)\b/ },
   { intent: 'causal', pattern: /\b(why|cause|causa|reason|razon)\b|por\s?que\b/ },
   { intent: 'policy', pattern: /\b(policy|politica|rule|regla|invariant|invariante|forbidden|prohibido|permitido|allowed)\b/ },
-  { intent: 'temporal', pattern: /\b(when|history|historial|timeline|since|desde|before|antes|after|despues|cuando)\b/ },
+  { intent: 'temporal', pattern: /\b(history|historial|timeline|since|desde)\b|\bwhen did\b|\bbefore we\b|\bafter we\b/ },
   { intent: 'global', pattern: /\b(overview|resumen|everything|catch me up|panorama)\b/ },
 ];
 

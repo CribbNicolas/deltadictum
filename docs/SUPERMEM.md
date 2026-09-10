@@ -31,4 +31,10 @@ SuperMem v1 stores atoms as files in the project (git source of truth) and index
 
 Scale and token-budget reading of v1, plus the FTS/compact-retrieve cut: `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md`.
 
+Deterioration detection (data only): `docs/specs/2026-09-10-memory-deterioration-detection.md`.
+
+Quality and performance catalog: `docs/specs/2026-09-10-memory-quality-and-performance-tests.md`.
+
+MCP tool results are compact JSON (no pretty-print). Capture at Stop is at most one `supermem_propose`; admission still gates the write.
+
 Engine modules under `src/engine/v2`–`v6` are copied from `services/memory-api/memory/` with import paths unchanged inside the engine tree.

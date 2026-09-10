@@ -82,12 +82,13 @@ Measured once on this machine (not a pass bar, a baseline to beat):
 | Q8 | Form selection never upgrades; downgrades full→short→micro | `tests/engine/v4/forms.test.js` | `gate` |
 | Q9 | Cross-project retrieve is empty | `memories.length === 0` | write-retrieve + stress | `gate` + `stress` |
 | Q10 | Shared-stopword flood cannot fill past 8 | `memories.length <= 8` | stress | `stress` |
-| Q11 | Abstention F1 on a labeled fixture set (should-inject vs should-abstain, ≥20 cases) | F1 `>= 0.8` | `tests/engine/health/abstention-eval.test.js` or eval harness | `later` |
-| Q12 | Tool-result tokens and `budget.used` stay within 4× of sum(`token_estimate`) after dropping pretty-print | ratio `< 4` | stress, after payload trim | `later` |
+| Q11 | Abstention F1 on a labeled fixture set (should-inject vs should-abstain, ≥20 cases) | F1 `>= 0.8` | `tests/engine/health/abstention-eval.test.js` | `gate` |
+| Q12 | MCP retrieve JSON is compact (no pretty-print indent) | no `\\n\\s+` in tool text | `tests/mcp/tools.test.js` | `gate` |
 | Q13 | `superseded` / `rejected` / `archived` never appear in normal retrieve | no those ids in hits | new retrieve test | `later` |
 | Q14 | Contested hits include `contradicts` ids from sqlite relations | `hit.contradicts` includes peer | new retrieve test | `later` |
+| Q15 | Tool-result tokens stay within 4× of sum(`token_estimate`) | ratio `< 4` | stress | `later` |
 
-Q11 is the quality test the hot-path spec deferred. Detection (cap_saturation) is a proxy, not a substitute.
+Q11 is the labeled abstention harness (`tests/engine/health/abstention-eval.test.js`).
 
 ---
 
@@ -176,4 +177,4 @@ Do not merge detection unless:
 3. `npm run test:stress` green (P2–P8).
 4. No new call path from health → `retrieveMemories` or `putAtom`.
 
-`later` rows (Q11–Q14, W11, L6, H5) are not merge blockers for detection. They are the next quality bar after the detector exists.
+`later` rows (Q13–Q15, W11, L6, H5) are not merge blockers for detection.
