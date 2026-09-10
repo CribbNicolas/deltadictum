@@ -2,20 +2,22 @@
 artifact_class: authored
 owner_domain: memory
 artifact_type: spec
-stability: draft
-last_validated: 2026-09-09
+stability: implemented
+last_validated: 2026-09-10
 depends_on:
   - memory/retrieval-router.md
   - architecture/invariants.md
   - failures/context-explosion.md
   - failures/memory-contamination.md
-used_by: []
+used_by:
+  - specs/2026-09-10-memory-deterioration-detection.md
+  - specs/2026-09-10-memory-quality-and-performance-tests.md
 ---
 
 # Retrieval hot path, token budget, and scale
 
 Date: 2026-09-09
-Status: Accepted for the P0/P1 cut (this spec). Later phases stay deferred.
+Status: **Implemented** (P0/P1 cut). Later phases stay deferred.
 
 ## Context
 
@@ -122,10 +124,10 @@ A test writes 1,000 active atoms plus one needle. Retrieve by the needle trigger
 | Item | Why later |
 |---|---|
 | Optional embeddings + RRF | V7 in the router doc. FTS is enough at 1k. |
-| Observation → at most one Stop candidate | Capture gap; must not become session dump. |
+| Observation → at most one Stop candidate | Stop hook asks for at most one `supermem_propose`. Observations are still not promoted. |
 | Decay / auto-archive unused inferred atoms | Auto-archive still later. Detection is spec 2026-09-10-memory-deterioration-detection.md. |
 | Use-feedback on memories | Requires a signal we do not collect yet. |
-| Eval harness (abstention F1, tokens of tool result vs `content`) | Spec exists in `evaluation-harness.md`; wire after the hot path is honest. |
+| Eval harness remainder | Abstention F1 is in `npm test`. Payload/content ratio under 4x and host traces stay later (catalog Q15, H1-H5). |
 
 ## Success for this cut
 

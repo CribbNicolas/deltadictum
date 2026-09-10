@@ -2,7 +2,7 @@
 artifact_class: authored
 owner_domain: memory
 artifact_type: spec
-stability: draft
+stability: implemented
 last_validated: 2026-09-10
 depends_on:
   - specs/2026-09-09-retrieval-hot-path-and-scale.md
@@ -17,7 +17,7 @@ used_by:
 # Memory deterioration detection (data only)
 
 Date: 2026-09-10
-Status: Accepted for the detection-only cut (this spec). LLM prune stays deferred.
+Status: **Implemented** (detection-only). LLM prune and auto-archive stay deferred.
 
 ## Context
 
@@ -175,4 +175,4 @@ No `what`, `why`, `evidence_refs`, or retrieval forms. Detection is ids + metric
 
 Full catalog (gate / stress / cut / later): `docs/specs/2026-09-10-memory-quality-and-performance-tests.md`.
 
-This cut must land every row marked `cut` (D1–D21, P9–P13). `npm test` and `npm run test:stress` must stay green. Abstention F1 and host traces are `later`.
+`cut` rows D1–D21 and P9–P13 landed. `npm test` and `npm run test:stress` must stay green. Host traces (H1–H5) and catalog `later` rows remain out of this cut.

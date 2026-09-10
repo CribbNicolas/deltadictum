@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: testing
 stability: draft
-last_validated: 2026-05-30
+last_validated: 2026-09-10
 depends_on:
   - memory/evidence-ledger.md
   - memory/memory-orchestrator.md

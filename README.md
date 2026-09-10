@@ -8,7 +8,9 @@ This repo ports the Orquesta `memory-api` V2–V6a **contracts** (admission, evi
 
 ## Status
 
-v1: git+SQLite store, compact FTS retrieve (max 8 hits, VPT 0.02), data-only deterioration health, MCP tools, hooks, skills, localhost audit UI.
+v1 **shipped** (2026-09-10): git+SQLite store, compact FTS retrieve (max 8 hits, VPT 0.02), data-only deterioration health, MCP tools, Grok/Claude hooks (PreToolUse retrieve, Stop capture), skills, localhost audit UI.
+
+Deferred on purpose (see specs): embeddings, observation→candidate, auto-archive, use-feedback, V6b LLM contradiction judge, RemoteStore.
 
 ```bash
 npm test              # unit gate

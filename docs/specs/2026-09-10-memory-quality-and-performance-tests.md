@@ -15,7 +15,7 @@ used_by:
 # Memory quality and performance tests
 
 Date: 2026-09-10
-Status: Catalog. Run the `gate` + `stress` rows now. Write the `cut` rows with deterioration detection. `later` stays out of that implementation.
+Status: **Implemented** for `gate`, `stress`, and `cut`. Rows marked `later` are not part of v1.
 
 Commands:
 
@@ -32,10 +32,8 @@ Status legend:
 |---|---|
 | `gate` | Already in `npm test`. Must stay green. |
 | `stress` | Already in `npm run test:stress`. |
-| `cut` | Required when implementing deterioration detection. Not optional. |
-| `later` | Needed for memory quality, not in the detection cut. |
-
-Pass criteria are the numbers to assert. If a row has no file yet, the implementer creates it under the path in **Where**.
+| `cut` | Required with deterioration detection. Landed. |
+| `later` | Not v1. Tests or features still deferred. |
 
 ---
 

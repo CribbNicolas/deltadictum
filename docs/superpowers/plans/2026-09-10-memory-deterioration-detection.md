@@ -1,5 +1,7 @@
 # Memory deterioration detection Implementation Plan
 
+**Implemented 2026-09-10** in this tree (engine health, sqlite snapshot, MCP/CLI, catalog `cut` rows, stress). Do not re-execute unless the tree diverges from the spec.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Detect SuperMem live-set deterioration from SQLite counts and retrieval telemetry, with no LLM and no git writes.
