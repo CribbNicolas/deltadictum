@@ -406,6 +406,18 @@ export function createSqliteIndex(dbPath) {
     }
   }
 
+  function getMeta(key) {
+    const row = db.prepare('SELECT value FROM index_meta WHERE key = ?').get(key);
+    return row?.value ?? null;
+  }
+
+  function setMeta(key, value) {
+    db.prepare(`
+      INSERT INTO index_meta (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(key, value);
+  }
+
   function close() {
     db.close();
   }
@@ -432,6 +444,8 @@ export function createSqliteIndex(dbPath) {
     getAliasesForRegistryIds,
     findAliasOccurrences,
     incrementActivation,
+    getMeta,
+    setMeta,
     rebuild,
     close,
   };

@@ -128,6 +128,11 @@ CREATE TABLE IF NOT EXISTS memory_retrieval_events (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS index_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS memory_contradiction_log (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { createGitFileStore } from './git-file-store.js';
 import { observationsPath, sqlitePath } from './paths.js';
 import { createSqliteIndex } from './sqlite-index.js';
+import { sourceFingerprint } from './fingerprint.js';
 import { assessDeterioration, DEFAULT_HEALTH_THRESHOLDS } from '../engine/health/deterioration.js';
 
 function nowIso() {
@@ -34,20 +35,30 @@ export async function createMemoryStore({ supermemDir, dataDir }) {
       git.loadRelations(),
     ]);
     index.rebuild(atoms, registry, relations);
+    index.setMeta('source_fingerprint', await sourceFingerprint(supermemDir));
     return { atoms: atoms.length };
   }
 
-  await reindex();
+  async function refreshFingerprint() {
+    index.setMeta('source_fingerprint', await sourceFingerprint(supermemDir));
+  }
+
+  const currentFp = await sourceFingerprint(supermemDir);
+  if (index.getMeta('source_fingerprint') !== currentFp) {
+    await reindex();
+  }
 
   async function putAtom(atom) {
     const stored = await git.putAtom(atom);
     index.upsertAtom(stored);
+    await refreshFingerprint();
     return stored;
   }
 
   async function deleteAtom(atom) {
     await git.deleteAtom(atom);
     index.removeAtom(atom.id);
+    await refreshFingerprint();
     return true;
   }
 
