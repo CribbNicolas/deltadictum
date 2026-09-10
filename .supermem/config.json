@@ -1,7 +1,7 @@
 {
   "project_id": "supermem",
   "budget_tokens": 600,
-  "vpt_threshold": 0.005,
+  "vpt_threshold": 0.02,
   "auto_admit": {
     "lesson": "candidate",
     "anti_memory": "active",

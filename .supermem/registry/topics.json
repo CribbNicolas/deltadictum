@@ -8,6 +8,60 @@
       "notes": null,
       "created_at": "2026-09-09T22:37:11.396Z",
       "updated_at": "2026-09-09T22:37:11.396Z"
+    },
+    {
+      "id": "88f4e687-338b-40d9-9c43-dbb4018f3e90",
+      "project_id": "supermem",
+      "canonical_key": "host/injection/prompt-retrieve",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T05:51:18.874Z",
+      "updated_at": "2026-09-10T05:51:18.874Z"
+    },
+    {
+      "id": "31cc69c0-05cd-4cba-b211-4f1ff318d0fa",
+      "project_id": "supermem",
+      "canonical_key": "memory/retrieval/compact-fts",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T05:52:06.041Z",
+      "updated_at": "2026-09-10T05:52:06.041Z"
+    },
+    {
+      "id": "8a15a68b-64e5-4461-a819-c8976339cc68",
+      "project_id": "supermem",
+      "canonical_key": "memory/retrieval/sqlite-telemetry",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T05:52:06.086Z",
+      "updated_at": "2026-09-10T05:52:06.086Z"
+    },
+    {
+      "id": "5458261b-fea1-45c5-b797-e0ff7fa5f6ff",
+      "project_id": "supermem",
+      "canonical_key": "memory/health/data-not-llm",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T05:52:06.140Z",
+      "updated_at": "2026-09-10T05:52:06.140Z"
+    },
+    {
+      "id": "0fae826c-2be6-4430-ae4e-27f06a7b78ba",
+      "project_id": "supermem",
+      "canonical_key": "memory/product/not-embeddings",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T05:52:06.203Z",
+      "updated_at": "2026-09-10T05:52:06.203Z"
+    },
+    {
+      "id": "bf85fdcc-1c13-401a-8180-f114b3db8f75",
+      "project_id": "supermem",
+      "canonical_key": "testing/gate-and-stress",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-10T05:52:06.327Z",
+      "updated_at": "2026-09-10T05:52:06.327Z"
     }
   ],
   "aliases": [],
@@ -19,6 +73,38 @@
       "value": "memory",
       "status": "active",
       "created_at": "2026-09-09T22:37:06.636Z"
+    },
+    {
+      "id": "29b8d510-436d-4b4f-b4cb-64f7f16a9c63",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "host",
+      "status": "active",
+      "created_at": "2026-09-10T05:51:18.646Z"
+    },
+    {
+      "id": "3273b188-dea9-47ca-9055-fc8bf940a931",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "host",
+      "status": "active",
+      "created_at": "2026-09-10T05:51:18.746Z"
+    },
+    {
+      "id": "7fe008e4-355a-48b1-afae-0b88534307d5",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "retrieval",
+      "status": "active",
+      "created_at": "2026-09-10T05:51:18.841Z"
+    },
+    {
+      "id": "068ea066-238b-408a-a942-7816b8f7e8d0",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "testing",
+      "status": "active",
+      "created_at": "2026-09-10T05:52:06.266Z"
     }
   ]
 }

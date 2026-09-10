@@ -1,0 +1,36 @@
+{
+  "id": "d0776c3c-42d9-4a8c-a16a-3f772734e6d0",
+  "schema_version": 6,
+  "authority": "inferred",
+  "confidence": 0.7,
+  "scope": "project",
+  "valid_from": "2026-09-10T05:52:06.139Z",
+  "memory_type": "procedure",
+  "title": "Detect deterioration from store data first",
+  "trigger": "when checking whether the memory store is deteriorating",
+  "behavior_delta": "Run supermem_health or node src/cli.js health before asking a model to prune. Do not judge truth with an LLM first.",
+  "what": "Deterioration is live-set failure: bloat, prefix crowding, trigger Jaccard, dead inferred, contest, churn, cap saturation.",
+  "why": "Detection must work on a cold store. The model prunes from the report.",
+  "topic_key": "memory/health/data-not-llm",
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/health/deterioration.js",
+      "summary": "Deterministic assessDeterioration"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "docs/specs/2026-09-10-memory-deterioration-detection.md",
+      "summary": "Data-only deterioration spec"
+    }
+  ],
+  "retrieval_forms": {
+    "micro": "Health is counts, not an LLM.",
+    "short": "Use supermem_health. Detect with SQLite metrics, then optionally ask the model to prune."
+  },
+  "project_id": "supermem",
+  "registry_key_id": "5458261b-fea1-45c5-b797-e0ff7fa5f6ff",
+  "lifecycle_state": "active",
+  "created_at": "2026-09-10T05:52:06.189Z",
+  "updated_at": "2026-09-10T05:52:06.195Z"
+}
