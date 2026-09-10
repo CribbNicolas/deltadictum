@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.supermem/observations.jsonl
+.supermem/index.sqlite
+.supermem/ui.json
+*.sqlite
+*.sqlite-journal
+*.log
+coverage/
+.DS_Store
+Thumbs.db

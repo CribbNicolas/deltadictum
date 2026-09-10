@@ -1,0 +1,311 @@
+import { appendFile, mkdir } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { createGitFileStore } from './git-file-store.js';
+import { observationsPath, sqlitePath } from './paths.js';
+import { createSqliteIndex } from './sqlite-index.js';
+import { assessDeterioration, DEFAULT_HEALTH_THRESHOLDS } from '../engine/health/deterioration.js';
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function healthThresholdsFromConfig(config) {
+  const base = structuredClone(DEFAULT_HEALTH_THRESHOLDS);
+  const override = config?.health;
+  if (!override) return base;
+  for (const key of Object.keys(base)) {
+    if (override[key] && typeof override[key] === 'object') Object.assign(base[key], override[key]);
+  }
+  return base;
+}
+
+export async function createMemoryStore({ supermemDir, dataDir }) {
+  await mkdir(dataDir, { recursive: true });
+  await mkdir(supermemDir, { recursive: true });
+
+  const git = createGitFileStore(supermemDir);
+  const index = createSqliteIndex(sqlitePath(dataDir));
+  await index.migrate();
+
+  async function reindex() {
+    const [atoms, registry, relations] = await Promise.all([
+      git.listAtoms(),
+      git.loadRegistry(),
+      git.loadRelations(),
+    ]);
+    index.rebuild(atoms, registry, relations);
+    return { atoms: atoms.length };
+  }
+
+  await reindex();
+
+  async function putAtom(atom) {
+    const stored = await git.putAtom(atom);
+    index.upsertAtom(stored);
+    return stored;
+  }
+
+  async function deleteAtom(atom) {
+    await git.deleteAtom(atom);
+    index.removeAtom(atom.id);
+    return true;
+  }
+
+  async function putObservation(observation) {
+    const row = {
+      id: observation.id ?? randomUUID(),
+      project_id: observation.project_id,
+      source_type: observation.source_type,
+      source_ref: observation.source_ref,
+      raw_preview: String(observation.raw_preview ?? '').slice(0, 4000),
+      observed_at: observation.observed_at ?? nowIso(),
+      promotion_status: observation.promotion_status ?? 'unreviewed',
+      sanitization_status: observation.sanitization_status ?? 'sanitized',
+      metadata: observation.metadata ?? {},
+    };
+    await mkdir(dataDir, { recursive: true });
+    await appendFile(observationsPath(dataDir), `${JSON.stringify(row)}\n`, 'utf8');
+    index.db.prepare(`
+      INSERT INTO memory_observations (
+        id, project_id, source_type, source_ref, raw_preview, observed_at,
+        promotion_status, sanitization_status, metadata
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      row.id, row.project_id, row.source_type, row.source_ref, row.raw_preview,
+      row.observed_at, row.promotion_status, row.sanitization_status, JSON.stringify(row.metadata),
+    );
+    return row;
+  }
+
+  async function logAdmission(entry) {
+    index.db.prepare(`
+      INSERT INTO memory_admission_decisions (id, project_id, decision, reasons, score, atom_id, observation_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      entry.project_id ?? null,
+      entry.decision,
+      JSON.stringify(entry.reasons ?? []),
+      entry.score ?? null,
+      entry.atom_id ?? null,
+      entry.observation_id ?? null,
+      nowIso(),
+    );
+  }
+
+  async function logContradiction(entry) {
+    index.db.prepare(`
+      INSERT INTO memory_contradiction_log (
+        id, project_id, atom_a_id, atom_b_id, detection_source, action, winner_atom_id, actor_ref, reasons, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      entry.project_id,
+      entry.atom_a_id,
+      entry.atom_b_id ?? null,
+      entry.detection_source,
+      entry.action,
+      entry.winner_atom_id ?? null,
+      entry.actor_ref ?? null,
+      JSON.stringify(entry.reasons ?? []),
+      nowIso(),
+    );
+  }
+
+  async function incrementActivation(ids = []) {
+    index.incrementActivation(ids);
+  }
+
+  async function logRetrieval(entry) {
+    index.db.prepare(`
+      INSERT INTO memory_retrieval_events (
+        id, project_id, query, action, intent, returned_atom_ids, abstained, value_per_token, budget_used, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      entry.project_id,
+      entry.query ?? null,
+      entry.action ?? null,
+      entry.intent ?? null,
+      JSON.stringify(entry.returned_atom_ids ?? []),
+      entry.abstained ? 1 : 0,
+      entry.value_per_token ?? null,
+      entry.budget_used ?? 0,
+      nowIso(),
+    );
+  }
+
+  async function getVocabulary(projectId) {
+    return index.getVocabulary(projectId);
+  }
+
+  async function getVocabularyValue(projectId, kind, value) {
+    return index.getVocabularyValue(projectId, kind, value);
+  }
+
+  async function getRegistryEntryByKey(projectId, key) {
+    return index.getRegistryEntryByKey(projectId, key);
+  }
+
+  async function getAliasByName(projectId, alias) {
+    return index.getAliasByName(projectId, alias);
+  }
+
+  async function getRegistryEntryById(id) {
+    return index.getRegistryEntryById(id);
+  }
+
+  async function getAliasesForRegistry(registryId) {
+    return index.getAliasesForRegistry(registryId);
+  }
+
+  async function getAliasesForRegistryIds(ids) {
+    return index.getAliasesForRegistryIds(ids);
+  }
+
+  async function findAliasOccurrences(projectId, normalizedText) {
+    return index.findAliasOccurrences(projectId, normalizedText);
+  }
+
+  async function persistRegistry(mutator) {
+    const registry = await git.loadRegistry();
+    const result = await mutator(registry);
+    await git.saveRegistry(registry);
+    await reindex();
+    return result;
+  }
+
+  async function createRegistryEntry(projectId, key, status) {
+    return persistRegistry(registry => {
+      const entry = {
+        id: randomUUID(),
+        project_id: projectId,
+        canonical_key: key,
+        status,
+        notes: null,
+        created_at: nowIso(),
+        updated_at: nowIso(),
+      };
+      registry.entries.push(entry);
+      return entry;
+    });
+  }
+
+  async function createAlias(registryId, projectId, alias, kind, lang) {
+    return persistRegistry(registry => {
+      const row = {
+        id: randomUUID(),
+        registry_id: registryId,
+        project_id: projectId,
+        alias,
+        kind: kind ?? 'alias',
+        lang: lang ?? null,
+        created_at: nowIso(),
+      };
+      registry.aliases.push(row);
+      return row;
+    });
+  }
+
+  async function createVocabularyValue(projectId, kind, value) {
+    return persistRegistry(registry => {
+      const row = {
+        id: randomUUID(),
+        project_id: projectId,
+        kind,
+        value,
+        status: 'active',
+        created_at: nowIso(),
+      };
+      registry.vocabularies.push(row);
+      return row;
+    });
+  }
+
+  async function updateRegistryStatus(projectId, key, status) {
+    return persistRegistry(registry => {
+      const entry = registry.entries.find(e => e.project_id === projectId && e.canonical_key === key);
+      if (!entry) return null;
+      entry.status = status;
+      entry.updated_at = nowIso();
+      return entry;
+    });
+  }
+
+  async function renameRegistryEntry(id, newKey) {
+    return persistRegistry(registry => {
+      const entry = registry.entries.find(e => e.id === id);
+      if (!entry) return null;
+      entry.canonical_key = newKey;
+      entry.updated_at = nowIso();
+      return entry;
+    });
+  }
+
+  async function listRelations(opts = {}) {
+    return index.listRelations(opts);
+  }
+
+  async function putRelation(relation) {
+    const relations = await git.loadRelations();
+    const row = {
+      id: relation.id ?? randomUUID(),
+      confidence: 0.5,
+      created_at: nowIso(),
+      ...relation,
+    };
+    const idx = relations.findIndex(r =>
+      r.source_atom_id === row.source_atom_id &&
+      r.relation_type === row.relation_type &&
+      r.target_atom_id === row.target_atom_id,
+    );
+    if (idx >= 0) relations[idx] = { ...relations[idx], ...row };
+    else relations.push(row);
+    await git.saveRelations(relations);
+    await reindex();
+    return row;
+  }
+
+  return {
+    git,
+    index,
+    reindex,
+    loadConfig: () => git.loadConfig(),
+    saveConfig: config => git.saveConfig(config),
+    getAtom: async (id, projectId) => index.getAtom(id, projectId),
+    listAtoms: opts => Promise.resolve(index.listAtoms(opts)),
+    listByTopicLive: (projectId, topicKey) => Promise.resolve(index.listByTopicLive(projectId, topicKey)),
+    search: opts => Promise.resolve(index.search(opts)),
+    countAtoms: opts => Promise.resolve(index.countAtoms(opts)),
+    countByLifecycle: projectId => Promise.resolve(index.countByLifecycle(projectId)),
+    loadHealthSnapshot: projectId => Promise.resolve(index.loadHealthSnapshot(projectId)),
+    assessDeterioration: async (projectId, { now } = {}) => {
+      const snapshot = index.loadHealthSnapshot(projectId);
+      const config = await git.loadConfig();
+      return assessDeterioration(snapshot, now ?? nowIso(), healthThresholdsFromConfig(config));
+    },
+    putAtom,
+    deleteAtom,
+    putObservation,
+    logAdmission,
+    logRetrieval,
+    logContradiction,
+    incrementActivation,
+    getVocabulary,
+    getVocabularyValue,
+    getRegistryEntryByKey,
+    getAliasByName,
+    getRegistryEntryById,
+    getAliasesForRegistry,
+    getAliasesForRegistryIds,
+    findAliasOccurrences,
+    createRegistryEntry,
+    createAlias,
+    createVocabularyValue,
+    updateRegistryStatus,
+    renameRegistryEntry,
+    listRelations,
+    putRelation,
+    close: () => index.close(),
+  };
+}

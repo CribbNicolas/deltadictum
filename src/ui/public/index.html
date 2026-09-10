@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SuperMem audit</title>
+  <style>
+    :root { color-scheme: dark light; --bg: #101014; --fg: #e8e8ea; --muted: #9a9aaa; --card: #1b1b22; --acc: #7c9cff; --danger: #ff6b6b; --ok: #6dd6a2; }
+    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+    header { padding: 16px 20px; border-bottom: 1px solid #2a2a33; display: flex; gap: 12px; align-items: center; }
+    h1 { font-size: 16px; margin: 0; }
+    #status { color: var(--muted); }
+    nav { display: flex; gap: 8px; }
+    button, select { background: var(--card); color: var(--fg); border: 1px solid #333; border-radius: 6px; padding: 6px 10px; }
+    button.danger { border-color: var(--danger); color: var(--danger); }
+    button.ok { border-color: var(--ok); color: var(--ok); }
+    main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 58px); }
+    #list { border-right: 1px solid #2a2a33; overflow: auto; }
+    .item { padding: 10px 14px; border-bottom: 1px solid #2a2a33; cursor: pointer; }
+    .item:hover, .item.active { background: var(--card); }
+    .item small { display: block; color: var(--muted); }
+    #detail { padding: 20px; overflow: auto; }
+    label { display: block; margin: 10px 0 4px; color: var(--muted); }
+    input, textarea { width: 100%; box-sizing: border-box; background: var(--card); color: var(--fg); border: 1px solid #333; border-radius: 6px; padding: 8px; }
+    textarea { min-height: 70px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .empty { padding: 40px; color: var(--muted); }
+    .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: #2a2a33; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SuperMem</h1>
+    <span id="status">loading…</span>
+    <nav>
+      <select id="filter">
+        <option value="">all</option>
+        <option value="candidate">candidates</option>
+        <option value="active">active</option>
+        <option value="contested">contested</option>
+        <option value="rejected">rejected</option>
+        <option value="superseded">superseded</option>
+      </select>
+      <button id="reload">Reload</button>
+    </nav>
+  </header>
+  <main>
+    <section id="list"></section>
+    <section id="detail" class="empty">Select a memory.</section>
+  </main>
+  <script>
+    const listEl = document.getElementById('list');
+    const detailEl = document.getElementById('detail');
+    const statusEl = document.getElementById('status');
+    const filterEl = document.getElementById('filter');
+    let atoms = [];
+    let selected = null;
+
+    async function api(path, opts) {
+      const res = await fetch(path, opts);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+
+    async function load() {
+      const status = await api('/api/status');
+      statusEl.textContent = `${status.project_id} · ${status.total} memories`;
+      const q = filterEl.value ? `?lifecycle=${filterEl.value}` : '';
+      atoms = await api('/api/atoms' + q);
+      renderList();
+      if (!atoms.length) {
+        selected = null;
+        detailEl.className = 'empty';
+        detailEl.textContent = 'No memories yet. Propose one from the agent, then admit it here.';
+      } else if (selected) {
+        const still = atoms.find(a => a.id === selected.id);
+        if (still) select(still.id);
+      }
+    }
+
+    function renderList() {
+      listEl.innerHTML = atoms.map(atom => `
+        <div class="item ${selected && selected.id === atom.id ? 'active' : ''}" data-id="${atom.id}">
+          <strong>${escapeHtml(atom.title)}</strong>
+          <small><span class="badge">${atom.lifecycle_state}</span> ${escapeHtml(atom.topic_key)}</small>
+        </div>
+      `).join('');
+    }
+
+    function field(name, value, area) {
+      if (area) {
+        return `<label>${name}</label><textarea name="${name}">${escapeHtml(value ?? '')}</textarea>`;
+      }
+      return `<label>${name}</label><input name="${name}" value="${escapeHtml(value ?? '')}" />`;
+    }
+
+    async function select(id) {
+      selected = await api('/api/atoms/' + encodeURIComponent(id));
+      detailEl.className = '';
+      detailEl.innerHTML = `
+        <p><span class="badge">${selected.lifecycle_state}</span> <span class="badge">${selected.memory_type}</span> ${escapeHtml(selected.id)}</p>
+        ${field('title', selected.title)}
+        ${field('topic_key', selected.topic_key)}
+        ${field('trigger', selected.trigger, true)}
+        ${field('behavior_delta', selected.behavior_delta, true)}
+        ${field('what', selected.what, true)}
+        ${field('why', selected.why, true)}
+        <div class="row">
+          ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
+          <button data-act="save">Save</button>
+          <button class="danger" data-act="delete">Delete</button>
+        </div>
+        <p id="msg"></p>
+      `;
+      renderList();
+    }
+
+    function formValues() {
+      const data = {};
+      detailEl.querySelectorAll('input, textarea').forEach(el => { data[el.name] = el.value; });
+      return data;
+    }
+
+    detailEl.addEventListener('click', async (ev) => {
+      const act = ev.target.dataset.act;
+      if (!act || !selected) return;
+      const msg = document.getElementById('msg');
+      try {
+        if (act === 'save') {
+          await api('/api/atoms/' + encodeURIComponent(selected.id), {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(formValues()),
+          });
+          msg.textContent = 'Saved. Git will show the diff.';
+        } else if (act === 'admit') {
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST' });
+        } else if (act === 'reject') {
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/reject', { method: 'POST' });
+        } else if (act === 'delete') {
+          const confirmCanonical = selected.authority === 'canonical' ? 'true' : 'false';
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '?confirm=' + confirmCanonical, { method: 'DELETE' });
+          selected = null;
+        }
+        await load();
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    });
+
+    listEl.addEventListener('click', (ev) => {
+      const item = ev.target.closest('.item');
+      if (item) select(item.dataset.id);
+    });
+    filterEl.addEventListener('change', load);
+    document.getElementById('reload').addEventListener('click', load);
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+    load();
+  </script>
+</body>
+</html>

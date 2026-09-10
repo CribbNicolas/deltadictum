@@ -1,0 +1,8 @@
+{
+  "name": "supermem",
+  "version": "0.1.0",
+  "description": "Behavioral memory: admit trigger + behavior_delta + evidence, inject budgeted micro/short forms, audit in a local UI. Shared via git.",
+  "author": {
+    "name": "SuperMem"
+  }
+}
