@@ -1,0 +1,36 @@
+{
+  "id": "b8f17c0c-5752-4c83-9f14-3ee9977d2812",
+  "schema_version": 6,
+  "authority": "inferred",
+  "confidence": 0.7,
+  "scope": "project",
+  "valid_from": "2026-09-10T05:52:06.039Z",
+  "memory_type": "lesson",
+  "title": "Retrieve compact FTS hits, never full atoms",
+  "trigger": "when calling supermem_retrieve or changing retrieve",
+  "behavior_delta": "Return compact micro/short hits from FTS candidates, cap 8, VPT 0.02. Use supermem_get only when full evidence is required.",
+  "what": "MCP retrieve used to dump full atom JSON, so the tool result dwarfed the injected content.",
+  "why": "The token saving is the compact payload the model actually reads, not the form budget on paper.",
+  "topic_key": "memory/retrieval/compact-fts",
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/retrieve.js",
+      "summary": "compactHit and FTS candidate path"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "docs/specs/2026-09-09-retrieval-hot-path-and-scale.md",
+      "summary": "Hot path spec"
+    }
+  ],
+  "retrieval_forms": {
+    "micro": "Retrieve compact hits, never full atoms.",
+    "short": "supermem_retrieve: FTS top 50, trigger score, VPT 0.02, max 8 compact hits. supermem_get for full."
+  },
+  "project_id": "supermem",
+  "registry_key_id": "31cc69c0-05cd-4cba-b211-4f1ff318d0fa",
+  "lifecycle_state": "active",
+  "created_at": "2026-09-10T05:52:06.072Z",
+  "updated_at": "2026-09-10T05:52:06.078Z"
+}
