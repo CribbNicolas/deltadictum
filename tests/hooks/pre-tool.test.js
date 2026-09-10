@@ -32,7 +32,7 @@ describe('PreToolUse retrieve inject', () => {
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
 
-    const skip = await buildPreToolContext({ toolName: 'supermem_retrieve' }, { store, projectId: 'demo' });
+    const skip = await buildPreToolContext({ toolName: 'dd__retrieve' }, { store, projectId: 'demo' });
     assert.equal(skip.decision, 'allow');
     assert.equal(skip.hookSpecificOutput, undefined);
 

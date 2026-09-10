@@ -31,7 +31,7 @@ async function main() {
     return;
   }
   const ui = await startUiServer({ store, projectId });
-  console.log(`SuperMem UI ${ui.url}`);
+  console.log(`DD - UI ${ui.url}`);
 }
 
 main().catch(err => {

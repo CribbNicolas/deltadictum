@@ -9,8 +9,8 @@ export function auditUiUrl(port = 7733) {
 
 export function sessionBanner({ projectId, url, activeCount = 0 }) {
   return [
-    `SuperMem loaded for \`${projectId}\` (${activeCount} active).`,
-    `Audit UI: ${url}`,
+    `DD - loaded for \`${projectId}\` (${activeCount} active).`,
+    `DD - Audit UI: ${url}`,
   ].join('\n');
 }
 

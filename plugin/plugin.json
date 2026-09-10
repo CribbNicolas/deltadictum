@@ -1,5 +1,5 @@
 {
-  "name": "supermem",
+  "name": "deltadictum",
   "version": "0.1.0",
-  "description": "Behavioral memory plugin (nested layout). Prefer installing the repository root."
+  "description": "DeltaDictum nested layout. Prefer installing the repository root."
 }

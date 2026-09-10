@@ -21,7 +21,7 @@ describe('V4 intent classifier', () => {
 
   test('does not treat before/when action phrasing as temporal', () => {
     assert.strictEqual(classifyIntent({ action: 'before writing durable memory' }), 'factual');
-    assert.strictEqual(classifyIntent({ action: 'when calling supermem_retrieve or changing retrieve' }), 'factual');
+    assert.strictEqual(classifyIntent({ action: 'when calling retrieve or changing retrieve' }), 'factual');
     assert.strictEqual(classifyIntent({ action: 'when installing git hooks' }), 'factual');
   });
 

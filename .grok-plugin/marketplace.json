@@ -1,10 +1,10 @@
 {
-  "name": "supermem",
-  "description": "Behavioral memory plugin for coding agents",
-  "owner": { "name": "SuperMem" },
+  "name": "deltadictum",
+  "description": "DeltaDictum (DD): next-action doctrine for coding agents",
+  "owner": { "name": "DeltaDictum" },
   "plugins": [
     {
-      "name": "supermem",
+      "name": "deltadictum",
       "description": "Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit in a local UI. Share via git.",
       "source": { "type": "local", "path": "./" }
     }

@@ -37,7 +37,7 @@ describe('audit UI HTTP', () => {
 
     const home = await fetch(base + '/');
     assert.equal(home.status, 200);
-    assert.match(await home.text(), /SuperMem audit/);
+    assert.match(await home.text(), /DeltaDictum audit/);
 
     const list = await json(base + '/api/atoms');
     assert.equal(list.status, 200);

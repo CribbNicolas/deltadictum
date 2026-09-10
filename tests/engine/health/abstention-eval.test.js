@@ -99,7 +99,7 @@ const FIXTURES = [
     title: 'Audit UI',
     topic_key: 'eval/inject/audit-ui',
     trigger: 'when opening the audit UI',
-    behavior_delta: 'use supermem_ui for the local URL',
+    behavior_delta: 'use the ui tool for the local URL',
     what: 'Audit is local HTTP.',
     why: 'Humans edit memories.',
   }),

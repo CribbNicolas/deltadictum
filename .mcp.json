@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "supermem": {
+    "dd": {
       "type": "stdio",
       "command": "node",
       "args": ["mcp.js"]

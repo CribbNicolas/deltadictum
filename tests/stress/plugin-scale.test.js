@@ -104,7 +104,7 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
 
   test('MCP retrieve finds the buried needle, stays compact, and finishes well under a second', async () => {
     const started = Date.now();
-    const retrieved = parseTool(await tools.supermem_retrieve({ action: 'before writing durable memory' }));
+    const retrieved = parseTool(await tools.retrieve({ action: 'before writing durable memory' }));
     const elapsed = Date.now() - started;
 
     assert.equal(retrieved.abstained, false);
@@ -128,7 +128,7 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
     const samples = [];
     for (let i = 0; i < ROUNDS; i += 1) {
       const started = Date.now();
-      const retrieved = parseTool(await tools.supermem_retrieve({ action: 'before writing durable memory' }));
+      const retrieved = parseTool(await tools.retrieve({ action: 'before writing durable memory' }));
       samples.push(Date.now() - started);
       assert.equal(retrieved.abstained, false);
       assert.ok(retrieved.memories.length <= 8);
@@ -144,7 +144,7 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
   test('concurrent MCP retrieve does not explode or leak full atoms', async () => {
     const started = Date.now();
     const results = await Promise.all(
-      Array.from({ length: CONCURRENCY }, () => tools.supermem_retrieve({ action: 'before writing durable memory' })),
+      Array.from({ length: CONCURRENCY }, () => tools.retrieve({ action: 'before writing durable memory' })),
     );
     const wall = Date.now() - started;
     for (const raw of results) {
@@ -158,7 +158,7 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
   });
 
   test('unrelated actions still abstain against a bloated store', async () => {
-    const retrieved = parseTool(await tools.supermem_retrieve({ action: 'unrelated cooking recipe' }));
+    const retrieved = parseTool(await tools.retrieve({ action: 'unrelated cooking recipe' }));
     assert.equal(retrieved.abstained, true);
     assert.equal(retrieved.memories.length, 0);
     assert.equal(retrieved.budget.used, 0);
@@ -175,14 +175,14 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
         retrieval_forms: { micro: `Overlap ${i}.`, short: `Before writing overlap ${i}.` },
       });
     }
-    const retrieved = parseTool(await tools.supermem_retrieve({ action: 'before writing tests' }));
+    const retrieved = parseTool(await tools.retrieve({ action: 'before writing tests' }));
     assert.ok(retrieved.memories.length <= 8);
     assert.ok(retrieved.memories.every(hit => hit.evidence_refs === undefined));
   });
 
   test('status and SessionStart stay cheap at corpus scale', async () => {
     const statusStarted = Date.now();
-    const status = parseTool(await tools.supermem_status());
+    const status = parseTool(await tools.status());
     const statusMs = Date.now() - statusStarted;
     assert.ok(status.total >= CORPUS + 1);
     assert.ok(status.counts.active >= CORPUS + 1);
@@ -195,22 +195,22 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
       uiUrl: 'http://127.0.0.1:7733',
     });
     const sessionMs = Date.now() - sessionStarted;
-    assert.match(session.hookSpecificOutput.additionalContext, /SuperMem loaded for `demo`/);
+    assert.match(session.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
     assert.ok(sessionMs < 1000, `session-start took ${sessionMs}ms`);
     console.log(`[stress] status_ms=${statusMs} session_start_ms=${sessionMs} total=${status.total}`);
   });
 
   test('retrieve does not dirty git atoms under load', async () => {
-    await tools.supermem_retrieve({ action: 'before writing durable memory' });
+    await tools.retrieve({ action: 'before writing durable memory' });
     const after = await readFile(gitPath, 'utf8');
     assert.equal(after, gitBefore);
   });
 
   test('another project cannot see this corpus', async () => {
     const otherTools = createToolHandlers({ store, projectId: 'other', uiPort: 7733 });
-    const retrieved = parseTool(await otherTools.supermem_retrieve({ action: 'before writing durable memory' }));
+    const retrieved = parseTool(await otherTools.retrieve({ action: 'before writing durable memory' }));
     assert.equal(retrieved.memories.length, 0);
-    const status = parseTool(await otherTools.supermem_status());
+    const status = parseTool(await otherTools.status());
     assert.equal(status.counts.active, 200);
   });
 });
