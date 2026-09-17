@@ -1,216 +1,117 @@
+import { createHash, randomUUID } from 'node:crypto';
+import { isAbsolute, relative } from 'node:path';
 import { classifyIntent, profileFor } from './v4/intent.js';
-import { triggerActivationScore } from './v4/trigger-match.js';
 import { ftsQuery } from './v4/fts-query.js';
-import { selectForm } from './v4/forms.js';
 import { expandTopicTerms } from './v5/expander.js';
 import { formsList } from './forms-util.js';
+import { activationScore, assessApplicability, conceptTokens } from './activation.js';
+import { checkEvidenceFreshness } from './evidence.js';
+import { boundedBudget, estimateTokens } from './budget.js';
+import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, requiredActivation, usageFactors } from './ranking.js';
 
-const AUTHORITY_WEIGHT = {
-  canonical: 1.0,
-  validated: 0.85,
-  inferred: 0.6,
-  observed: 0.5,
-  deprecated: 0,
-};
-
-const DEFAULT_BUDGET_TOKENS = 600;
-const DEFAULT_VPT_THRESHOLD = 0.02;
-const MAX_INJECTED = 8;
-const CANDIDATE_LIMIT = 50;
-
-function numericOrNull(value) {
-  if (value == null || value === '') return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
-
-async function resolveVptThreshold(store, vptThreshold) {
-  const explicit = numericOrNull(vptThreshold);
-  if (explicit != null) return explicit;
-  const env = numericOrNull(process.env.MEMORY_V4_VPT_THRESHOLD);
-  if (env != null) return env;
-  if (typeof store.loadConfig === 'function') {
-    try {
-      const fromConfig = numericOrNull((await store.loadConfig())?.vpt_threshold);
-      if (fromConfig != null) return fromConfig;
-    } catch {
-      // missing or unreadable config falls through to the engine default
-    }
-  }
-  return DEFAULT_VPT_THRESHOLD;
-}
-
-function emptyResult(intent, requested) {
-  return {
-    error: null,
-    intent,
-    memories: [],
-    injected: false,
-    abstained: true,
-    budget: { requested, used: 0 },
-  };
-}
-
-function isExpired(atom, now) {
-  return atom.valid_until && Date.parse(atom.valid_until) <= now;
-}
-
-function compactHit(candidate, form, value_per_token) {
-  return {
-    id: candidate.id,
-    topic_key: candidate.topic_key,
-    memory_type: candidate.memory_type,
-    title: candidate.title,
-    trigger: candidate.trigger,
-    lifecycle_state: candidate.lifecycle_state,
-    form_type: form.form_type,
-    content: form.content,
-    token_estimate: form.token_estimate,
-    activation_score: candidate.activation_score,
-    contested: candidate.lifecycle_state === 'contested',
-    value_per_token,
-  };
-}
-
-async function loadCandidates(store, request, lifecycle, memoryTypes, activationText) {
-  const query = ftsQuery(activationText);
-  if (query && typeof store.search === 'function') {
-    try {
-      return await store.search({
-        projectId: request.project_id,
-        query,
-        lifecycleStates: lifecycle,
-        memoryTypes,
-        limit: CANDIDATE_LIMIT,
-      });
-    } catch {
-      // invalid MATCH or missing FTS — fall through to filtered list
-    }
-  }
-  const listed = await store.listAtoms({
-    projectId: request.project_id,
-    lifecycleStates: lifecycle,
-    memoryTypes,
-  });
-  return listed.slice(0, CANDIDATE_LIMIT);
-}
+const ORDER = { full: ['full', 'short', 'micro'], short: ['short', 'micro'], micro: ['micro'] };
+const ACTIVATION_FLOOR = 0.35;
+const revisionOf = atom => createHash('sha256').update(JSON.stringify([atom.updated_at, atom.lifecycle_state,
+  atom.evidence_state, atom.retrieval_forms, atom.assumptions, atom.revisit_when])).digest('hex').slice(0, 16);
 
 export async function retrieveMemories(request = {}, { store, vptThreshold } = {}) {
   if (!request.project_id) return { error: { code: 400, message: 'project_id is required' } };
-  if (!request.action || !String(request.action).trim()) {
-    return { error: { code: 400, message: 'action is required' } };
-  }
-  if (request.budget_tokens != null && (!Number.isFinite(Number(request.budget_tokens)) || Number(request.budget_tokens) <= 0)) {
-    return { error: { code: 400, message: 'budget_tokens must be a positive number' } };
-  }
-
-  const requestedBudget = request.budget_tokens != null ? Number(request.budget_tokens) : DEFAULT_BUDGET_TOKENS;
-  const threshold = await resolveVptThreshold(store, vptThreshold);
+  if (!String(request.action ?? '').trim()) return { error: { code: 400, message: 'action is required' } };
+  request = { ...request, files: (request.files ?? []).map(file => isAbsolute(file) ? relative(store.repoRoot, file).replaceAll('\\', '/') : file) };
+  const config = await store.loadConfig();
+  let budget;
+  try { budget = boundedBudget(request.budget_tokens, config.budget_tokens ?? 600); }
+  catch (err) { return { error: { code: 400, message: err.message } }; }
+  const requestedThreshold = Number(vptThreshold ?? process.env.MEMORY_V4_VPT_THRESHOLD ?? config.vpt_threshold ?? 0.02);
+  const threshold = Number.isFinite(requestedThreshold) && requestedThreshold >= 0 && requestedThreshold <= 1 ? requestedThreshold : 0.02;
   const intent = classifyIntent(request);
   const profile = profileFor(intent);
-  const now = Date.now();
-
-  let expansion = null;
+  const result = { error: null, intent, memories: [], injected: false, abstained: true,
+    budget: { requested: budget, used: 0 } };
+  const activationText = [request.action, request.query, ...(request.files ?? []), ...(request.components ?? []), request.operation].filter(Boolean).join(' ').slice(0, 4000);
+  const expansion = await expandTopicTerms(request.project_id, activationText, { repository: store }).catch(() => null);
+  const query = ftsQuery(`${activationText} ${conceptTokens(activationText).join(' ')} ${(expansion?.terms ?? []).join(' ')}`);
+  let candidates;
   try {
-    expansion = await expandTopicTerms(request.project_id, `${request.action} ${request.query ?? ''}`, { repository: store });
-    if (expansion && (expansion.terms?.length ?? 0) === 0) expansion = null;
-  } catch {
-    expansion = null;
-  }
+    candidates = query ? await store.search({ projectId: request.project_id, query, lifecycleStates: ['active', 'contested'],
+      memoryTypes: request.memory_types, limit: 50 }) : [];
+  } catch { candidates = []; } // Never replace a failed search with arbitrary newest memories.
 
-  if (intent === 'abstain') {
-    await store.logRetrieval({
-      project_id: request.project_id,
-      query: request.query,
-      action: request.action,
-      intent,
-      returned_atom_ids: [],
-      abstained: true,
-      budget_used: 0,
-    });
-    return emptyResult(intent, requestedBudget);
-  }
+  const effective = candidates.filter(a => a.authority !== 'deprecated');
+  const usage = usageFactors(effective);
+  const scored = effective.map((atom, index) => {
+    const applicability = assessApplicability(atom, request);
+    const activation = applicability.applies ? activationScore(atom, activationText, applicability.contextScore) : 0;
+    return { atom, applicability, activation, floor: requiredActivation(atom, ACTIVATION_FLOOR),
+      value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
+  }).filter(c => c.activation >= c.floor).sort((a, b) => b.value - a.value || a.atom.id.localeCompare(b.atom.id));
 
-  const lifecycle = request.lifecycle_states ?? ['active', 'contested'];
-  const memoryTypes = request.memory_types ?? profile.memory_types ?? undefined;
-  const activationText = `${request.action} ${request.query ?? ''} ${(expansion?.terms ?? []).join(' ')}`;
-  let candidates = await loadCandidates(store, request, lifecycle, memoryTypes, activationText);
-
-  if (request.scopes?.length) {
-    candidates = candidates.filter(atom => request.scopes.includes(atom.scope));
-  }
-
-  candidates = candidates.filter(atom => atom.authority !== 'deprecated' && !isExpired(atom, now));
-
-  const scored = candidates.map(memory => {
-    const activation_score = triggerActivationScore(activationText, memory.trigger);
-    const authorityWeight = AUTHORITY_WEIGHT[memory.authority] ?? 0.5;
-    return {
-      ...memory,
-      activation_score,
-      value_score: activation_score * Number(memory.confidence ?? 0.5) * authorityWeight,
-      contested_hint: memory.lifecycle_state === 'contested',
-    };
-  });
-
-  scored.sort((a, b) => {
-    const aAnti = a.memory_type === 'anti_memory' && a.activation_score > 0 ? 1 : 0;
-    const bAnti = b.memory_type === 'anti_memory' && b.activation_score > 0 ? 1 : 0;
-    if (aAnti !== bAnti) return bAnti - aAnti;
-    const aContested = a.contested_hint ? 1 : 0;
-    const bContested = b.contested_hint ? 1 : 0;
-    if (aContested !== bContested) return aContested - bContested;
-    return b.value_score - a.value_score;
-  });
-
-  let remaining = requestedBudget;
-  let bestVpt = null;
-  const injected = [];
-
+  const selected = [];
+  // A memory that contradicts one already selected cannot join it: an injected
+  // pack that argues with itself is worse than a smaller one.
+  const excluded = new Set();
+  const feedback = store.feedbackSummary ? await store.feedbackSummary(scored.map(c => c.atom.id), request.project_id) : {};
   for (const candidate of scored) {
-    if (injected.length >= MAX_INJECTED) break;
-    const form = selectForm(formsList(candidate), profile.form_type, remaining);
-    if (!form) continue;
-    const value_per_token = candidate.value_score / Math.max(1, Number(form.token_estimate));
-    if (value_per_token < threshold) continue;
-    remaining -= Number(form.token_estimate);
-    if (bestVpt === null || value_per_token > bestVpt) bestVpt = value_per_token;
-    injected.push(compactHit(candidate, form, value_per_token));
-  }
+    if (result.memories.length >= 8) break;
+    const { atom, applicability, value } = candidate;
+    if (excluded.has(atom.id)) continue;
+    const penalty = redundancyPenalty(atom, selected.map(s => s.atom));
+    if (penalty >= NEAR_DUPLICATE) continue;
+    const marginal = applyRedundancy(value, penalty);
+    const freshness = await checkEvidenceFreshness(atom, store);
+    const revisionReasons = [...(applicability.revisions ?? []), ...freshness];
+    if (feedback[atom.id]?.refuted > 0) revisionReasons.push('reported counterevidence; review the outcome before reuse');
+    const reviewRequired = revisionReasons.length > 0;
+    const contested = atom.lifecycle_state === 'contested';
+    const relations = contested ? await store.listRelations({ atomIds: [atom.id] }) : [];
+    const relatedIds = relations.filter(r => r.relation_type === 'contradicts')
+      .map(r => r.source_atom_id === atom.id ? r.target_atom_id : r.source_atom_id);
+    const peers = await Promise.all(relatedIds.map(id => store.getAtom(id, request.project_id)));
+    const contradicts = peers.filter(a => a && ['active', 'contested'].includes(a.lifecycle_state)).map(a => a.id);
+    const state = reviewRequired ? 'review_required' : contested ? 'contested' : 'active';
+    const contextRevision = createHash('sha256').update(JSON.stringify([state, revisionReasons,
+      applicability.constraints, applicability.warnings, contradicts])).digest('hex').slice(0, 16);
+    const revision = revisionOf(atom) + contextRevision;
+    if (request.session_id && !request.repeat && store.wasDelivered
+        && await store.wasDelivered(request.project_id, request.session_id, atom.id, revision)) continue;
 
-  if (injected.some(memory => memory.contested)) {
-    const relations = await store.listRelations({
-      atomIds: injected.filter(memory => memory.contested).map(memory => memory.id),
-    });
-    for (const memory of injected) {
-      if (!memory.contested) continue;
-      memory.contradicts = relations
-        .filter(rel => rel.relation_type === 'contradicts' && (rel.source_atom_id === memory.id || rel.target_atom_id === memory.id))
-        .map(rel => rel.source_atom_id === memory.id ? rel.target_atom_id : rel.source_atom_id);
+    const options = reviewRequired
+      ? [{ form_type: 'micro', content: `Review ${atom.topic_key}: ${revisionReasons.join('; ')}. Fetch this memory before applying its advice.` }]
+      : (ORDER[request.form_type ?? profile.form_type] ?? ORDER.short)
+        .map(type => formsList(atom).find(f => f.form_type === type)).filter(Boolean);
+    for (const form of options) {
+      // Try a smaller form when the preferred form is too expensive OR too dilute.
+      // Compact forms cannot remove the scope/assumptions that make advice valid.
+      let content = form.content;
+      if (contested) content = `DISPUTED; do not treat as settled. ${content}`;
+      if (!reviewRequired && applicability.constraints?.length) content += ` Only within: ${applicability.constraints.join('; ')}.`;
+      if (!reviewRequired && applicability.warnings?.length) content += ` Check: ${applicability.warnings.join('; ')}.`;
+      const contentTokens = estimateTokens(content);
+      if (!reviewRequired && marginal / Math.max(1, estimateTokens(form.content)) < threshold) continue;
+      const hit = { id: atom.id, topic_key: atom.topic_key, memory_type: atom.memory_type,
+        form_type: form.form_type, content, token_estimate: contentTokens,
+        ...(state !== 'active' ? { lifecycle_state: state } : {}),
+        ...(contested ? { contested: true, contradicts } : {}) };
+      const trial = { ...result, memories: [...result.memories, hit], injected: true, abstained: false,
+        budget: { requested: budget, used: budget } };
+      if (estimateTokens(trial) > budget) continue;
+      result.memories.push(hit);
+      selected.push({ atom, revision });
+      for (const id of contradicts) excluded.add(id);
+      break;
     }
   }
-
-  if (injected.length > 0 && typeof store.incrementActivation === 'function') {
-    await store.incrementActivation(injected.map(memory => memory.id));
+  result.injected = result.memories.length > 0;
+  result.abstained = !result.injected;
+  // The empty envelope is a fixed protocol cost, including when the caller asks
+  // for less than that cost. No memory content is emitted in that case.
+  result.budget.used = estimateTokens({ ...result, budget: { requested: budget, used: budget } });
+  if (request.session_id && store.markDelivered) for (const item of selected) {
+    await store.markDelivered(request.project_id, request.session_id, item.atom.id, item.revision);
   }
-
-  await store.logRetrieval({
-    project_id: request.project_id,
-    query: request.query,
-    action: request.action,
-    intent,
-    returned_atom_ids: injected.map(memory => memory.id),
-    abstained: injected.length === 0,
-    value_per_token: bestVpt,
-    budget_used: requestedBudget - remaining,
-  });
-
-  return {
-    error: null,
-    intent,
-    memories: injected,
-    injected: injected.length > 0,
-    abstained: injected.length === 0,
-    budget: { requested: requestedBudget, used: requestedBudget - remaining },
-  };
+  if (selected.length) await store.incrementActivation(selected.map(s => s.atom.id));
+  if (request.telemetry !== false) await store.logRetrieval({ id: randomUUID(), project_id: request.project_id,
+    action: request.action, query: request.query, intent, returned_atom_ids: selected.map(s => s.atom.id),
+    abstained: result.abstained, budget_used: result.budget.used });
+  return result;
 }

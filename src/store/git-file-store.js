@@ -1,187 +1,106 @@
-import { copyFile, mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import {
-  ARCHIVE_STATES,
-  archiveFilePath,
-  atomFilePath,
-  configPath,
-  DEFAULT_CONFIG,
-  LIVE_STATES,
-  registryPath,
-  relationsPath,
-} from './paths.js';
+import { readdir } from 'node:fs/promises';
+import { join, relative } from 'node:path';
+import { ARCHIVE_STATES, archiveFilePath, atomFilePath, candidateFilePath, configPath,
+  DEFAULT_CONFIG, registryPath, relationsPath } from './paths.js';
+import { commitTransaction, createWriteLock, readJson, recoverTransaction, writeJson } from './transactions.js';
 
-async function readJson(path, fallback) {
-  try {
-    return JSON.parse(await readFile(path, 'utf8'));
-  } catch (err) {
-    if (err.code === 'ENOENT') return fallback;
-    throw err;
-  }
-}
-
-async function writeJson(path, value) {
-  await mkdir(dirname(path), { recursive: true });
-  const tmp = `${path}.${randomUUID()}.tmp`;
-  await writeFile(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
-  try {
-    await rename(tmp, path);
-  } catch {
-    await copyFile(tmp, path);
-    await rm(tmp, { force: true });
-  }
-}
-
-async function walkJsonFiles(dir, acc = []) {
+async function walk(dir) {
   let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch (err) {
-    if (err.code === 'ENOENT') return acc;
-    throw err;
-  }
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) await walkJsonFiles(full, acc);
-    else if (entry.isFile() && entry.name.endsWith('.json')) acc.push(full);
-  }
-  return acc;
-}
-
-function emptyRegistry() {
-  return { entries: [], aliases: [], vocabularies: [] };
+  try { entries = await readdir(dir, { withFileTypes: true }); }
+  catch (err) { if (err.code === 'ENOENT') return []; throw err; }
+  const nested = await Promise.all(entries.map(entry => entry.isDirectory() ? walk(join(dir, entry.name))
+    : entry.isFile() && entry.name.endsWith('.json') ? [join(dir, entry.name)] : []));
+  return nested.flat();
 }
 
 export function createGitFileStore(ddDir) {
-  async function loadConfig() {
-    const stored = await readJson(configPath(ddDir), {});
-    return { ...DEFAULT_CONFIG, ...stored, auto_admit: { ...DEFAULT_CONFIG.auto_admit, ...stored.auto_admit } };
+  const withWriteLock = createWriteLock(ddDir);
+  const effective = atom => ['active', 'contested'].includes(atom.lifecycle_state);
+  const rel = path => relative(ddDir, path).replaceAll('\\', '/');
+  function destination(atom) {
+    if (atom.lifecycle_state === 'candidate') return candidateFilePath(ddDir, atom.id);
+    if (ARCHIVE_STATES.includes(atom.lifecycle_state)) return archiveFilePath(ddDir, atom.id);
+    return atomFilePath(ddDir, atom.topic_key);
   }
 
-  async function saveConfig(config) {
-    await writeJson(configPath(ddDir), config);
-    return config;
+  async function listAtoms({ projectId, lifecycleStates, memoryTypes } = {}) {
+    const files = (await Promise.all(['atoms', 'candidates', 'archive'].map(dir => walk(join(ddDir, dir))))).flat();
+    const atoms = await Promise.all(files.map(file => readJson(file, null)));
+    return atoms.filter(atom => atom && (!projectId || atom.project_id === projectId)
+      && (!lifecycleStates || lifecycleStates.includes(atom.lifecycle_state))
+      && (!memoryTypes || memoryTypes.includes(atom.memory_type)));
   }
 
   async function getAtom(idOrKey, projectId) {
     const key = String(idOrKey ?? '');
-    if (key.includes('/')) {
-      try {
-        const live = await readJson(atomFilePath(ddDir, key), null);
-        if (live && (!projectId || live.project_id === projectId)) return live;
-      } catch {
-        return null;
-      }
-    }
-    try {
-      const archived = await readJson(archiveFilePath(ddDir, key), null);
-      if (archived && (!projectId || archived.project_id === projectId)) return archived;
-    } catch {
-      // invalid id — fall through to the live walk for UUID lookup
+    const paths = key.includes('/') ? [atomFilePath(ddDir, key)]
+      : [candidateFilePath(ddDir, key), archiveFilePath(ddDir, key)];
+    for (const path of paths) {
+      const atom = await readJson(path, null);
+      if (atom && (!projectId || atom.project_id === projectId)) return atom;
     }
     const atoms = await listAtoms({ projectId });
-    return atoms.find(atom => atom.id === key || atom.topic_key === key) ?? null;
-  }
-
-  async function listAtoms({ projectId, lifecycleStates } = {}) {
-    const files = [
-      ...await walkJsonFiles(join(ddDir, 'atoms')),
-      ...await walkJsonFiles(join(ddDir, 'archive')),
-    ];
-    const atoms = [];
-    for (const file of files) {
-      const atom = await readJson(file, null);
-      if (!atom) continue;
-      if (projectId && atom.project_id !== projectId) continue;
-      if (lifecycleStates && !lifecycleStates.includes(atom.lifecycle_state)) continue;
-      atoms.push(atom);
-    }
-    return atoms;
+    return atoms.find(atom => atom.id === key)
+      ?? atoms.filter(atom => atom.topic_key === key).sort((a, b) => Number(effective(b)) - Number(effective(a)))[0] ?? null;
   }
 
   async function listByTopicLive(projectId, topicKey) {
-    let live;
-    try {
-      live = await readJson(atomFilePath(ddDir, topicKey), null);
-    } catch {
-      return [];
-    }
-    if (!live) return [];
-    if (projectId && live.project_id !== projectId) return [];
-    if (!['candidate', 'active'].includes(live.lifecycle_state)) return [];
-    return [live];
+    const atom = await readJson(atomFilePath(ddDir, topicKey), null);
+    return atom && atom.project_id === projectId && effective(atom) ? [atom] : [];
   }
 
-  async function putAtom(atom) {
-    if (!atom?.id || !atom.project_id || !atom.topic_key) {
-      throw new Error('atom_missing_identity');
-    }
-    const live = await listByTopicLive(atom.project_id, atom.topic_key);
-    const conflict = live.find(existing => existing.id !== atom.id);
-    if (conflict && ['candidate', 'active'].includes(atom.lifecycle_state)) {
-      const err = new Error('live_topic_conflict');
-      err.existing = conflict;
-      throw err;
-    }
-    const now = new Date().toISOString();
-    const stored = {
-      ...atom,
-      created_at: atom.created_at ?? now,
-      updated_at: now,
-      schema_version: atom.schema_version ?? 6,
-    };
-    const livePath = atomFilePath(ddDir, stored.topic_key);
-    const archivedPath = archiveFilePath(ddDir, stored.id);
-    if (ARCHIVE_STATES.includes(stored.lifecycle_state)) {
-      await writeJson(archivedPath, stored);
-      const live = await readJson(livePath, null);
-      if (live?.id === stored.id) await rm(livePath, { force: true });
-    } else {
-      await writeJson(livePath, stored);
-      await rm(archivedPath, { force: true });
-    }
-    return stored;
-  }
-
-  async function deleteAtom(atom) {
-    await rm(atomFilePath(ddDir, atom.topic_key), { force: true });
-    await rm(archiveFilePath(ddDir, atom.id), { force: true });
-    return true;
-  }
-
-  async function loadRegistry() {
-    return readJson(registryPath(ddDir), emptyRegistry());
-  }
-
-  async function saveRegistry(registry) {
-    await writeJson(registryPath(ddDir), {
-      entries: registry.entries ?? [],
-      aliases: registry.aliases ?? [],
-      vocabularies: registry.vocabularies ?? [],
+  async function commit({ atoms = [], deleteAtoms = [], relations } = {}) {
+    return withWriteLock(async () => {
+      await recoverTransaction(ddDir);
+      const operations = new Map();
+      const now = new Date().toISOString();
+      const stored = atoms.map(atom => {
+        if (!atom?.id || !atom.project_id || !atom.topic_key) throw new Error('atom_missing_identity');
+        atomFilePath(ddDir, atom.topic_key);
+        archiveFilePath(ddDir, atom.id);
+        return { ...atom, created_at: atom.created_at ?? now, updated_at: now, schema_version: atom.schema_version ?? 6 };
+      });
+      const destinations = new Set();
+      for (const atom of stored) {
+        const target = destination(atom);
+        if (destinations.has(target)) throw new Error('live_topic_conflict');
+        destinations.add(target);
+        if (effective(atom)) {
+          const current = await readJson(atomFilePath(ddDir, atom.topic_key), null);
+          const replaced = stored.find(next => next.id === current?.id && !effective(next));
+          if (current && current.id !== atom.id && effective(current) && !replaced
+              && !deleteAtoms.some(old => old.id === current.id)) throw new Error('live_topic_conflict');
+        }
+      }
+      // Remove only files that belong to this identity, including legacy candidates.
+      for (const atom of [...stored, ...deleteAtoms]) {
+        for (const path of [atomFilePath(ddDir, atom.topic_key), candidateFilePath(ddDir, atom.id), archiveFilePath(ddDir, atom.id)]) {
+          const previous = await readJson(path, null);
+          if (previous?.id === atom.id && previous.project_id === atom.project_id) operations.set(rel(path), null);
+        }
+      }
+      for (const atom of stored) operations.set(rel(destination(atom)), atom);
+      if (relations !== undefined) operations.set('relations.json', relations);
+      await commitTransaction(ddDir, [...operations].map(([path, value]) => ({ path, value })));
+      return stored;
     });
   }
 
-  async function loadRelations() {
-    return readJson(relationsPath(ddDir), []);
-  }
-
-  async function saveRelations(relations) {
-    await writeJson(relationsPath(ddDir), relations);
+  async function loadConfig() {
+    const stored = await readJson(configPath(ddDir), {});
+    return Object.fromEntries(Object.entries({ ...DEFAULT_CONFIG, ...stored }).map(([key, value]) =>
+      [key, value && typeof value === 'object' && !Array.isArray(value) ? { ...DEFAULT_CONFIG[key], ...value } : value]));
   }
 
   return {
-    ddDir,
-    loadConfig,
-    saveConfig,
-    getAtom,
-    listAtoms,
-    listByTopicLive,
-    putAtom,
-    deleteAtom,
-    loadRegistry,
-    saveRegistry,
-    loadRelations,
-    saveRelations,
+    ddDir, withWriteLock, commit, getAtom, listAtoms, listByTopicLive, loadConfig,
+    recover: () => withWriteLock(() => recoverTransaction(ddDir)),
+    saveConfig: config => withWriteLock(async () => { await writeJson(configPath(ddDir), config); return config; }),
+    putAtom: async atom => (await commit({ atoms: [atom] }))[0],
+    deleteAtom: async atom => { await commit({ deleteAtoms: [atom] }); return true; },
+    loadRegistry: () => readJson(registryPath(ddDir), { entries: [], aliases: [], vocabularies: [] }),
+    saveRegistry: registry => withWriteLock(() => writeJson(registryPath(ddDir), registry)),
+    loadRelations: () => readJson(relationsPath(ddDir), []),
+    saveRelations: relations => withWriteLock(() => writeJson(relationsPath(ddDir), relations)),
   };
 }

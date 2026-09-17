@@ -31,9 +31,10 @@ CREATE TABLE IF NOT EXISTS memory_atoms (
   updated_at TEXT NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_memory_atoms_project_topic_live
+DROP INDEX IF EXISTS uq_memory_atoms_project_topic_live;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_memory_atoms_project_topic_effective
   ON memory_atoms(project_id, topic_key)
-  WHERE lifecycle_state IN ('candidate','active');
+  WHERE lifecycle_state IN ('active','contested');
 
 CREATE INDEX IF NOT EXISTS idx_memory_atoms_project_lifecycle
   ON memory_atoms(project_id, lifecycle_state, memory_type, updated_at);
@@ -131,6 +132,48 @@ CREATE TABLE IF NOT EXISTS memory_retrieval_events (
 CREATE TABLE IF NOT EXISTS index_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS memory_feedback (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  atom_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  outcome TEXT NOT NULL CHECK (outcome IN ('helped','failed','refuted','not_applicable')),
+  summary TEXT NOT NULL,
+  evidence TEXT NOT NULL,
+  verification TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(project_id, atom_id, task_id)
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_project_atom ON memory_feedback(project_id, atom_id, created_at);
+
+CREATE TABLE IF NOT EXISTS session_deliveries (
+  project_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  atom_id TEXT NOT NULL,
+  revision TEXT NOT NULL,
+  delivered_at TEXT NOT NULL,
+  PRIMARY KEY(project_id, session_id, atom_id)
+);
+-- Legacy quota state is retained for compatibility/retention, but never gates writes.
+CREATE TABLE IF NOT EXISTS capture_sessions (
+  project_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  proposals INTEGER NOT NULL DEFAULT 0,
+  stopped INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY(project_id, session_id)
+);
+
+-- Automatic reminders have independent turn state; explicit proposals do not touch it.
+CREATE TABLE IF NOT EXISTS capture_prompts (
+  project_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  stopped INTEGER NOT NULL DEFAULT 0,
+  evidence_ids TEXT NOT NULL DEFAULT '[]',
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY(project_id, session_id)
 );
 
 CREATE TABLE IF NOT EXISTS memory_contradiction_log (

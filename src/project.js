@@ -1,6 +1,7 @@
 import { homedir } from 'node:os';
-import { join, basename, dirname } from 'node:path';
-import { access, readFile } from 'node:fs/promises';
+import { join, basename, dirname, resolve } from 'node:path';
+import { createHash, randomUUID } from 'node:crypto';
+import { access } from 'node:fs/promises';
 import { createMemoryStore } from './store/create-store.js';
 
 async function exists(path) {
@@ -13,11 +14,11 @@ async function exists(path) {
 }
 
 export async function findRepoRoot(start = process.cwd()) {
-  let dir = start;
+  let dir = resolve(start);
   for (;;) {
     if (await exists(join(dir, '.dd')) || await exists(join(dir, '.git'))) return dir;
     const parent = dirname(dir);
-    if (parent === dir) return start;
+    if (parent === dir) return resolve(start);
     dir = parent;
   }
 }
@@ -26,20 +27,22 @@ export function projectSlug(repoRoot) {
   return basename(repoRoot).toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
 }
 
-export async function openStore({ cwd = process.cwd() } = {}) {
+export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cwd() } = {}) {
   const repoRoot = await findRepoRoot(cwd);
   const ddDir = join(repoRoot, '.dd');
   const slug = projectSlug(repoRoot);
-  const dataDir = process.env.DD_DATA
-    || process.env.GROK_PLUGIN_DATA
-    || process.env.CLAUDE_PLUGIN_DATA
-    || join(homedir(), '.dd', slug);
-  const store = await createMemoryStore({ ddDir, dataDir });
-  const config = await store.loadConfig();
-  if (!config.project_id) {
-    config.project_id = slug;
-    await store.saveConfig(config);
-  }
+  const identity = createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12);
+  const dataBase = process.env.GROK_PLUGIN_DATA || process.env.CLAUDE_PLUGIN_DATA || join(homedir(), '.dd');
+  const dataDir = process.env.DD_DATA || join(dataBase, `${slug}-${identity}`);
+  const store = await createMemoryStore({ ddDir, dataDir, repoRoot });
+  const config = await store.withWriteLock(async () => {
+    const current = await store.loadConfig();
+    if (!current.project_id) {
+      current.project_id = `${slug}-${randomUUID().slice(0, 8)}`;
+      await store.saveConfig(current);
+    }
+    return current;
+  });
   return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id };
 }
 

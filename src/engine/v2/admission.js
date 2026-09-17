@@ -37,7 +37,7 @@ export function decideAdmission(payload = {}) {
   if (!hasMinimumForms(payload.retrieval_forms)) reasons.push('missing_retrieval_forms');
   if (containsUnsafePayload(payload)) reasons.push('unsafe_memory_content');
 
-  if (payload.memory_type === 'anti_memory' && !/\b(do not|don't|avoid|block|warn|stop|reject|prevent)\b/i.test(payload.behavior_delta ?? '')) {
+  if (payload.memory_type === 'anti_memory' && !/\b(do not|don't|avoid|block|warn|stop|reject|prevent|no|nunca|evitar|evita|impedir|rechazar)\b/i.test(payload.behavior_delta ?? '')) {
     reasons.push('anti_memory_requires_preventive_delta');
   }
 

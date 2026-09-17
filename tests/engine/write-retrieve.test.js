@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { proposeMemory } from '../../src/engine/write.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
+import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 
 function proposal(overrides = {}) {
   return {
@@ -54,8 +55,7 @@ describe('propose + retrieve', () => {
       action: 'before writing durable memory',
     }, { store: db });
     assert.equal(retrieved.abstained, false);
-    assert.equal(retrieved.memories[0].form_type, 'short');
-    assert.equal(retrieved.memories[0].content, 'Validate trigger before active memory.');
+    assert.match(retrieved.memories[0].content, /validate trigger, behavior_delta, evidence, and forms first/);
     assert.equal(retrieved.memories[0].topic_key, 'memory/admission/required-fields');
     assert.equal(retrieved.memories[0].evidence_refs, undefined);
     assert.equal(retrieved.memories[0].retrieval_forms, undefined);
@@ -111,7 +111,7 @@ describe('propose + retrieve', () => {
     db.close();
   });
 
-  test('supersedes a live topic and bumps predominance', async () => {
+  test('keeps the active topic until its replacement is reviewed', async () => {
     const db = await store();
     const first = await proposeMemory(proposal(), { store: db });
     await db.putAtom({ ...first.atom, lifecycle_state: 'active' });
@@ -121,8 +121,9 @@ describe('propose + retrieve', () => {
       what: 'The gate is stricter now.',
     }), { store: db });
     assert.equal(second.decision, 'write');
-    assert.equal(second.superseded, first.atom.id);
-    assert.ok(second.atom.predominance >= 0.25);
+    assert.equal(second.atom.replaces, first.atom.id);
+    assert.equal((await db.getAtom(first.atom.id, 'demo')).lifecycle_state, 'active');
+    await admitMemory(second.atom.id, { store: db, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Reviewed stricter gate.' });
     const old = await db.getAtom(first.atom.id, 'demo');
     assert.equal(old.lifecycle_state, 'superseded');
     db.close();

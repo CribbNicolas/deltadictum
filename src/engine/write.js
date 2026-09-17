@@ -1,216 +1,58 @@
-import { randomUUID } from 'node:crypto';
-import { sanitizeText } from './v2/sanitizer.js';
 import { decideAdmission } from './v2/admission.js';
-import { decideV3Admission } from './v3/admission.js';
 import { prepareV5Write } from './v5/admission.js';
-import { decideSupersession } from './v6/supersession.js';
-import { PREDOMINANCE_WIN_BUMP } from './v6/predominance.js';
-import { validateExplicitContradiction } from './v6/contradiction.js';
 import { domainOf } from './v5/vocab.js';
 import { triggerJaccard } from './health/deterioration.js';
+import { normalizeProposal, sameKnowledge, validateContract } from './contract.js';
+import { stampRevisionFiles, verifyReferences } from './evidence.js';
 
-const TEXT_FIELDS = ['title', 'trigger', 'behavior_delta', 'what', 'why'];
-
-function sanitizePayload(payload) {
-  const next = { ...payload };
-  for (const field of TEXT_FIELDS) {
-    if (next[field] != null) next[field] = sanitizeText(next[field]);
-  }
-  if (next.retrieval_forms && !Array.isArray(next.retrieval_forms)) {
-    next.retrieval_forms = Object.fromEntries(
-      Object.entries(next.retrieval_forms).map(([key, value]) => [key, sanitizeText(value)]),
-    );
-  }
-  return next;
-}
-
-async function ensureDomainVocab(store, projectId, topicKey, tags = []) {
-  const vocab = await store.getVocabulary(projectId);
-  const domain = domainOf(topicKey);
-  if (domain && !(vocab.domains ?? []).includes(domain)) {
-    await store.createVocabularyValue(projectId, 'domain', domain);
-  }
-  for (const tag of tags) {
-    if (tag && !(vocab.tags ?? []).includes(tag)) {
-      await store.createVocabularyValue(projectId, 'tag', tag);
+export async function proposeMemory(rawPayload, { store, captureSource = 'agent' }) {
+  return store.withWriteLock(async () => {
+    const payload = normalizeProposal(rawPayload, rawPayload.project_id, { captureSource });
+    const invalid = validateContract(payload);
+    const base = decideAdmission(payload);
+    const reasons = [...invalid, ...base.reasons.filter(r => r !== 'durable_contract_satisfied')];
+    if (invalid.length || base.decision === 'block') {
+      await store.logAdmission({ project_id: payload.project_id, decision: 'block', reasons });
+      return { decision: 'block', reasons, atom: null };
     }
-  }
-}
+    if (base.decision !== 'write') {
+      const observation = await store.putObservation({ project_id: payload.project_id,
+        source_type: 'proposal', source_ref: payload.id, raw_preview: payload.behavior_delta || payload.title || 'Incomplete proposal',
+        metadata: { reasons, provenance: captureSource === 'local_ui' ? 'local_ui' : 'agent_claim',
+          capture_origin: payload.capture_origin, capture_source: payload.capture_source } });
+      await store.logAdmission({ project_id: payload.project_id, decision: 'observe', reasons });
+      return { decision: 'observe', reasons, observation, atom: null };
+    }
+    const domain = domainOf(payload.topic_key);
+    const vocab = await store.getVocabulary(payload.project_id);
+    if (domain && !vocab.domains.includes(domain)) await store.createVocabularyValue(payload.project_id, 'domain', domain);
+    for (const tag of payload.tags) if (!vocab.tags.includes(tag)) await store.createVocabularyValue(payload.project_id, 'tag', tag);
+    const prepared = await prepareV5Write(payload, { repository: store });
+    if (prepared.error) return { decision: 'block', reasons: [prepared.error.message], atom: null };
+    Object.assign(payload, prepared.payload, { registry_key_id: prepared.registry_key_id });
+    if (prepared.needs_registration) payload.registry_key_id = (await store.createRegistryEntry(payload.project_id, payload.topic_key, 'provisional')).id;
 
-async function withCollisions(store, result) {
-  if (!result?.atom) return result;
-  const peers = await store.listAtoms({
-    projectId: result.atom.project_id,
-    lifecycleStates: ['active', 'contested'],
+    const existing = (await store.listByTopicLive(payload.project_id, payload.topic_key))[0];
+    const candidates = (await store.listAtoms({ projectId: payload.project_id, lifecycleStates: ['candidate'] }))
+      .filter(a => a.topic_key === payload.topic_key);
+    // Model-supplied evidence hashes, approval labels and lifecycle fields are ignored.
+    payload.evidence_state = await verifyReferences(payload.evidence_refs, { store, projectId: payload.project_id });
+    if (payload.evidence_state.artifacts.some(a => a.status === 'out_of_scope')) {
+      return { decision: 'block', reasons: ['evidence_scope_violation'], atom: null };
+    }
+    if (existing) payload.replaces = existing.id;
+    if (rawPayload.requested_authority === 'canonical' || rawPayload.authority === 'canonical') payload.requested_authority = 'canonical';
+    await stampRevisionFiles(payload, store);
+    const evidenceSignature = atom => JSON.stringify([(atom.evidence_state?.artifacts ?? []).map(a => [a.source_ref, a.hash, a.status]),
+      (atom.revisit_when ?? []).map(rule => rule.hash ?? null)]);
+    const duplicate = [existing, ...candidates].find(a => a && sameKnowledge(a, payload) && evidenceSignature(a) === evidenceSignature(payload));
+    // A repeated request does not create knowledge or rewrite its original capture attribution.
+    if (duplicate) return { decision: 'ignore', reasons: ['equivalent_knowledge_exists'], atom: duplicate };
+    const atom = await store.putAtom(payload);
+    const peers = await store.listAtoms({ projectId: atom.project_id, lifecycleStates: ['active', 'contested'] });
+    const collides_with = peers.filter(a => a.id !== atom.id).map(peer => ({ id: peer.id, topic_key: peer.topic_key,
+      jaccard: Math.round(triggerJaccard(peer.trigger, atom.trigger) * 1000) / 1000 })).filter(p => p.jaccard >= 0.5).slice(0, 20);
+    await store.logAdmission({ project_id: atom.project_id, decision: 'write', reasons: ['pending_review'], atom_id: atom.id });
+    return { decision: 'write', reasons: ['pending_review'], atom, collides_with };
   });
-  const collides_with = [];
-  for (const peer of peers) {
-    if (peer.id === result.atom.id) continue;
-    const jaccard = triggerJaccard(peer.trigger, result.atom.trigger);
-    if (jaccard < 0.5) continue;
-    collides_with.push({
-      id: peer.id,
-      topic_key: peer.topic_key,
-      jaccard: Math.round(jaccard * 1000) / 1000,
-    });
-  }
-  return { ...result, collides_with };
-}
-
-function applyAutoAdmit(atom, config) {
-  const policy = config?.auto_admit ?? {};
-  const target = policy[atom.memory_type];
-  if (atom.authority === 'canonical' && (atom.memory_type === 'decision' || atom.memory_type === 'claim')) {
-    return { ...atom, lifecycle_state: 'candidate' };
-  }
-  if (target && atom.lifecycle_state === 'active' && target !== 'active') {
-    return { ...atom, lifecycle_state: target };
-  }
-  return atom;
-}
-
-export async function proposeMemory(rawPayload, { store }) {
-  const payload = sanitizePayload({
-    id: rawPayload.id ?? randomUUID(),
-    schema_version: 6,
-    authority: rawPayload.authority ?? 'inferred',
-    confidence: rawPayload.confidence ?? 0.7,
-    scope: rawPayload.scope ?? 'project',
-    valid_from: rawPayload.valid_from ?? new Date().toISOString(),
-    ...rawPayload,
-  });
-
-  if (!payload.project_id) {
-    return { decision: 'block', reasons: ['missing_project_id'], atom: null };
-  }
-
-  await ensureDomainVocab(
-    store,
-    payload.project_id,
-    payload.topic_key ?? 'memory/unspecified/topic',
-    payload.tags ?? [],
-  );
-
-  const prepared = await prepareV5Write(payload, { repository: store });
-  if (prepared.error) {
-    await store.logAdmission({
-      project_id: payload.project_id,
-      decision: 'block',
-      reasons: [prepared.error.message],
-    });
-    return { decision: 'block', reasons: [prepared.error.message], error: prepared.error, atom: null };
-  }
-
-  const gated = { ...payload, ...prepared.payload, registry_key_id: prepared.registry_key_id };
-  if (prepared.needs_registration && gated.topic_key) {
-    const entry = await store.createRegistryEntry(gated.project_id, gated.topic_key, 'provisional');
-    gated.registry_key_id = entry.id;
-  }
-
-  const capsules = Array.isArray(gated.evidence_capsules) ? gated.evidence_capsules : [];
-  const admission = capsules.length
-    ? decideV3Admission(gated, capsules)
-    : decideAdmission(gated);
-
-  await store.logAdmission({
-    project_id: gated.project_id,
-    decision: admission.decision,
-    reasons: admission.reasons,
-    score: admission.score,
-    atom_id: gated.id,
-  });
-
-  if (admission.decision === 'block' || admission.decision === 'ignore') {
-    return { decision: admission.decision, reasons: admission.reasons, atom: null };
-  }
-
-  if (admission.decision === 'observe' || admission.decision === 'warn') {
-    const observation = await store.putObservation({
-      project_id: gated.project_id,
-      source_type: gated.source_type ?? 'user_statement',
-      source_ref: gated.source_ref ?? gated.id,
-      raw_preview: gated.what || gated.title || gated.trigger || 'observation',
-      metadata: { reasons: admission.reasons, topic_key: gated.topic_key },
-    });
-    return { decision: admission.decision, reasons: admission.reasons, observation, atom: null };
-  }
-
-  const live = await store.listByTopicLive(gated.project_id, gated.topic_key);
-  const existing = live.find(atom => atom.id !== gated.id) ?? live.find(atom => atom.id === gated.id) ?? null;
-
-  if (existing && existing.id !== gated.id) {
-    const supersession = decideSupersession(existing, gated);
-    if (supersession.action === 'update') {
-      const updated = await store.putAtom({ ...existing, ...gated, id: existing.id });
-      return withCollisions(store, { decision: 'update', reasons: supersession.reasons, atom: updated });
-    }
-
-    const snapshot = { ...existing };
-    await store.putAtom({
-      ...existing,
-      lifecycle_state: 'superseded',
-      superseded_by: gated.id,
-    });
-    try {
-      const config = await store.loadConfig();
-      const admitted = applyAutoAdmit({
-        ...gated,
-        lifecycle_state: gated.lifecycle_state ?? 'active',
-        predominance: Number(gated.predominance ?? 0) + PREDOMINANCE_WIN_BUMP,
-      }, config);
-      const stored = await store.putAtom(admitted);
-      await store.putRelation({
-        source_atom_id: stored.id,
-        relation_type: 'supersedes',
-        target_atom_id: existing.id,
-      });
-      await store.logContradiction({
-        project_id: gated.project_id,
-        atom_a_id: existing.id,
-        atom_b_id: stored.id,
-        detection_source: 'same_key_supersede',
-        action: 'superseded',
-        winner_atom_id: stored.id,
-        reasons: supersession.reasons,
-      });
-      return withCollisions(store, { decision: 'write', reasons: supersession.reasons, atom: stored, superseded: existing.id });
-    } catch (err) {
-      await store.putAtom(snapshot);
-      throw err;
-    }
-  }
-
-  if (gated.contradicts) {
-    const other = await store.getAtom(gated.contradicts, gated.project_id);
-    const check = validateExplicitContradiction(gated, other);
-    if (!check.valid) {
-      return { decision: 'block', reasons: [check.reason], atom: null };
-    }
-    const config = await store.loadConfig();
-    const first = applyAutoAdmit({ ...gated, lifecycle_state: 'contested', contested_at: new Date().toISOString() }, config);
-    const stored = await store.putAtom(first);
-    await store.putAtom({ ...other, lifecycle_state: 'contested', contested_at: first.contested_at });
-    await store.putRelation({
-      source_atom_id: stored.id,
-      relation_type: 'contradicts',
-      target_atom_id: other.id,
-    });
-    await store.logContradiction({
-      project_id: gated.project_id,
-      atom_a_id: stored.id,
-      atom_b_id: other.id,
-      detection_source: 'explicit',
-      action: 'contested',
-      reasons: ['explicit_contradiction'],
-    });
-    return withCollisions(store, { decision: 'contest', reasons: ['explicit_contradiction'], atom: stored });
-  }
-
-  const config = await store.loadConfig();
-  const admitted = applyAutoAdmit({
-    ...gated,
-    lifecycle_state: gated.lifecycle_state ?? 'active',
-  }, config);
-  const stored = await store.putAtom(admitted);
-  return withCollisions(store, { decision: 'write', reasons: admission.reasons, atom: stored });
 }
