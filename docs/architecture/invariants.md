@@ -3,79 +3,86 @@ artifact_class: authored
 owner_domain: architecture
 artifact_type: reference
 stability: stable
-last_validated: 2026-04-26
+last_validated: 2026-09-17
 depends_on:
-  - runtime/runtime-assumptions-v1.md
-used_by:
-  - runtime/project-resolution
-  - runtime/retrieval-injection
-  - failures/memory-contamination
-  - failures/parallel-inference-collision
-  - decisions/DECISION-001-memory-namespaces
-  - decisions/DECISION-002-single-inference-runtime
+  - architecture/plugin-constraints.md
 do_not_co_load_with: []
 ---
 
 # Invariants
 
-Architectural invariants — properties that must remain true at all times. These are non-negotiable constraints derived from the v1 planning artifacts. Violating an invariant is a system-level failure.
+Properties that must remain true at all times. Violating one is a system-level failure, not a
+regression to be traded off.
 
-## INV-01: Project Isolation Mandatory
+> The earlier version of this file carried invariants about a llama.cpp inference service, a separate
+> embedding service and a Docker Compose stack. DD is a harness plugin and has none of those; those
+> invariants were removed rather than restated. See
+> [plugin constraints](plugin-constraints.md).
 
-Every project must have isolated memory scope, isolated retrieval rules, isolated agent permissions, and isolated vector collections. Projects must NOT share memory state directly. Cross-project cognition requires explicit decision artifacts.
+## INV-01: Project isolation is mandatory
 
-**Source:** `architecture.md` "Project Isolation" section; `repository-structure.md` "Project Layer"; `memory-task.md` namespace isolation.
+Every project has an isolated knowledge scope. Knowledge from one project must never reach another
+project's retrieval. The project identifier is resolved from the repository and is the first filter on
+every read and every write, not a field applied afterwards.
 
-## INV-02: Namespace Isolation
+**Enforced by:** `project_id` on every store query; `validateExplicitContradiction` refuses a
+cross-project pair; evidence paths are confined to the repository root.
 
-Memory namespaces isolate projects (`memories_tme`, `memories_automation`, `memories_infra`). Cross-namespace retrieval requires explicit decision. Namespace boundaries prevent semantic contamination between project memory spaces.
+## INV-02: Retrieval is project-scoped first
 
-**Source:** `architecture.md` recommended Qdrant collections; `memory-task.md` namespace isolation recommendation.
+Retrieval never searches without a project filter. The order is fixed: project filter → lifecycle and
+type filter → candidate generation → applicability gate → ranking → budgeted injection. There is no
+global search and no cross-project fallback.
 
-## INV-03: Single Inference
+## INV-03: Memory is not chat history
 
-The local reasoning model serves a single active inference at a time. Parallel inference collisions are forbidden by design. The llama.cpp service runs with `--parallel 1`. An inference queue protection layer enforces 1 active inference max with automatic queueing.
+Knowledge is conditional engineering guidance: when it applies, what to do differently, why, and on
+what evidence. It is not a transcript, not raw model output, and not a dump of everything observed.
 
-**Source:** `architecture.md` "single-task execution only"; `ia-task.md` "single execution only", "parallel inference collisions".
+## INV-04: Model output never mutates state
 
-## INV-04: Memory Is Not Chat History
+A model proposes; deterministic code validates and commits. No MCP argument, no proposal field and no
+reported outcome can set lifecycle state, authority, confidence or approval. Promotion happens only
+through local human review.
 
-Memory is structured engineering cognition — persistent, structured, and purpose-built for long-term learning. It is not a log of conversations. Memory contains compressed cognitive representations (summaries of decisions, architecture notes), not raw conversation transcripts.
+**Enforced by:** `normalizeProposal` overwrites every epistemic field; `admitMemory` requires a
+capability that no transport can construct; `recordOutcome` writes telemetry only.
 
-**Source:** `architecture.md` "Memory is NOT chat history"; `memory-task.md` "compressed cognitive representations".
+## INV-05: Evidence establishes integrity, not support
 
-## INV-05: Embedding Separation
+A verified reference means the artifact exists and its bytes were checked. It never means the claim
+follows from it. Only review establishes support.
 
-Embedding workloads run on a dedicated service separate from the reasoning model. Embedding requests must never block reasoning inference. A blocked reasoning model destroys throughput. The embedding service uses significantly lighter resources (8192 context, 2048 batch size, 8 threads) compared to the reasoning model (65536 context, 4096 batch size, 24 threads).
+## INV-06: One live memory per topic key
 
-**Source:** `architecture.md` embedding section; `ia-task.md` "embedding model separated is VERY important", "your 35B stays blocked doing embeddings".
+At most one memory per project and topic key is `active` or `contested`. A replacement supersedes;
+it never silently coexists.
 
-## INV-06: Retrieval Is Project-Scoped First
+**Enforced by:** a unique partial index in the store, and a matching guard in the git file store.
 
-Retrieval must NEVER search globally first. The retrieval flow is strictly ordered: project filter -> memory type filter -> semantic retrieval -> importance ranking -> context injection. Global retrieval (no project filter) is forbidden.
+## INV-07: Injected context is advisory and self-consistent
 
-**Source:** `architecture.md` "Retrieval should NEVER search globally first"; retrieval flow specification.
+Retrieved knowledge is content, never a command, and can never raise its own priority above the host's
+instructions or the user's intent. An injected pack never carries both sides of a known contradiction.
 
-## INV-07: Modular Compose
+## INV-08: The host is never blocked
 
-The Docker Compose stack is intentionally split into multiple compose files (`core.yml`, `memory.yml`, `ai.yml`, `orchestration.yml`, `queue.yml`, `observability.yml`). Benefits include easier maintenance, optional subsystems, cleaner debugging, modular scaling, and reusable infrastructure blocks. A `compose.override.yml` handles machine-specific overrides without breaking the portable base architecture.
+A hook that fails, times out or returns malformed output must degrade to silence. No memory benefit
+justifies damaging the session it runs in.
 
-**Source:** `architecture.md` "Docker Compose Strategy"; `compose-task.md` modular compose with profiles.
+## INV-09: Git is the authority, SQLite is derived
 
-## INV-08: Separation of Concerns
+Knowledge lives in git-tracked files. The SQLite index is a rebuildable projection plus local
+telemetry. Losing the index must never lose knowledge.
 
-The infrastructure separates: reasoning, embeddings, orchestration, memory, agents, rules, artifacts, and observability. Each concern has a distinct responsibility boundary. This separation prevents memory contamination, reasoning bottlenecks, agent drift, infrastructure coupling, and prompt chaos.
+## Authority resolution order
 
-**Source:** `architecture.md` "Core Architecture Philosophy" separation table; `orchestration-task.md` cognition vs working code separation.
+When artifacts define overlapping constraints, resolve in this order:
 
-## Authority Resolution Order
+1. **Plugin constraints** (`plugin-constraints.md`) — the boundary everything operates inside
+2. **Invariants** (this file) — non-negotiable
+3. **Current contract** (`../DD.md`) — the behaviour DD guarantees today
+4. **Decisions** (`../decisions/`) — accepted architectural choices
+5. **Reference and specs** — design records, historical unless marked implemented
 
-When multiple artifacts define overlapping constraints, resolve authority in this order:
-
-1. **Invariants** (this file) — non-negotiable, must never be violated
-2. **Anti-goals** (`.docs/architecture/anti-goals.md`) — forbidden trajectories
-3. **Decisions** (`.docs/decisions/`) — accepted architectural choices
-4. **Runtime assumptions** (`.docs/runtime/`) — design assumptions subject to revision
-5. **Glossary** (`.docs/glossary/`) — terminology definitions
-
-Conflicts between invariants and lower-authority artifacts are resolved in favor of the invariant.
+Conflicts are resolved in favour of the higher authority.

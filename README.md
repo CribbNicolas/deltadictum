@@ -1,112 +1,130 @@
 # DeltaDictum
 
-Next-action doctrine for Grok Build, Claude Code, Codex, and OpenCode.
+DD supplies project context and conditional engineering knowledge to coding agents. It preserves decisions, rationale, assumptions and evidence, then recalls the applicable knowledge before an action.
 
-It does not store chat history. It stores **what should change next time**, with a trigger, a behavior delta, and evidence. The goal is less context, lower cost, and faster work — by injecting only the lessons that apply.
+**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** It runs from hooks and a local MCP server, stores knowledge as git-tracked files in the project it describes, and requires no database engine, no vector store, no inference server and no cloud account. The seven constraints that follow from being a plugin are stated in [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md).
 
-In chat, the plugin identifies as **DD** only:
+Version **0.2.0** implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). The engine is local and provider independent: no model call, embeddings service or cloud account is required.
 
-```
-DD - loaded for `<project>` (N active).
-DD - Audit UI: http://127.0.0.1:7733
-```
+## What the agent receives
 
-On-disk store is `.dd/` (git-shared atoms) plus a local SQLite index.
+- `orient`: bounded manifest facts, repository structure, source pointers and relevant decisions.
+- `retrieve`: action-specific advice, including applicability conditions and explicit dispute/review notices.
+- `get`: the rationale, alternatives and evidence for a particular memory.
 
-This repo ports the Orquesta `memory-api` V2–V6a **contracts** (admission, evidence, trigger retrieval, topic registry, contradiction/supersession). It does **not** port the Docker stack.
+The default retrieval budget is **600 estimated tokens for the JSON result**, including metadata. Estimates use UTF-8 bytes/3; actual token counts depend on the model tokenizer. MCP accepts budgets from 128 to 8,000. Unchanged advice is suppressed within an explicitly supplied session ID; use `repeat: true` after context compaction.
 
-## Status
+## Knowledge lifecycle
 
-v1 **shipped** (2026-09-10): git+SQLite store, compact FTS retrieve (max 8 hits, VPT 0.02), data-only deterioration health, MCP tools (`dd` server), Grok/Claude hooks (PreToolUse retrieve, Stop capture), skills, localhost audit UI.
+`propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal remains a candidate until local review, including anti-memories.
 
-Deferred on purpose (see specs): embeddings, observation→candidate, auto-archive, use-feedback, V6b LLM contradiction judge, RemoteStore.
+Each memory records `capture_origin`: `model_initiated` or `user_explicit` (the user asked to save that knowledge). Missing origins default to `user_explicit`, including older memories. Agents and capture hooks explicitly mark autonomous discoveries as `model_initiated`. `capture_source` records the engine's entry point: `agent` or `local_ui`; an absent historical channel remains `unknown`. Capture origin is not proof of human approval. Audit lists and the UI can filter by origin.
 
-```bash
-npm test              # unit gate
-npm run test:stress   # 2k-atom retrieve + health scale
-npm run test:all      # both
-npm start             # audit UI (from the target project cwd)
-npm run mcp           # MCP stdio server
-node src/cli.js health
-```
+An existing active decision remains effective while a replacement is pending. Approval publishes the new decision and archives the old version together. Git writes use a recoverable journal and a project lock. Deleting an old version checks its identity before touching any current file.
 
-Retrieve is O(hits). Opening the store hashes git atoms/registry/relations and skips SQLite rebuild when the fingerprint matches.
+Local evidence references receive content hashes computed by DD. A verified file means the artifact exists and its bytes were checked; it does not establish that the lesson follows logically. The local reviewer assesses that support and records a rationale. Model-supplied approval labels and hashes cannot authorize promotion through MCP.
 
-## Principles
+Changes to verified files, revision conditions or supported counterevidence produce a review notice. Contradictions remain visible in both tool results and hooks.
 
-1. Save context (and therefore tokens).
-2. Speed up development with precise, on-demand doctrine.
-3. Humans can audit, edit, and delete lessons.
-4. Teams share via git (live server later, same schema).
+## Quick start
 
-## Layout
+For a local Codex project, use the [Codex installer and verification guide](docs/integrations/codex.md). It configures MCP, skills and hooks for the selected project.
 
-```
-src/engine/     V2–V6 admission/retrieve plus health/
-src/store/      git files + SQLite index (source of truth is the repo)
-src/mcp/        MCP server `dd` (compact JSON tool results)
-src/hooks/      SessionStart / prompt retrieve / observation / Stop capture
-src/ui/         localhost audit UI
-plugin/         Grok / Claude Code plugin manifests
-adapters/       Codex / OpenCode
-docs/           doctrine contract, specs, test catalog
+Install dependencies with `npm install`, then register this entrypoint with the host's MCP configuration:
+
+```json
+{
+  "command": "node",
+  "args": ["<absolute-plugin-path>/src/mcp/server.js"],
+  "env": { "DD_PROJECT_DIR": "<absolute-project-path>" }
+}
 ```
 
-## Install
+Use an absolute script path. `DD_PROJECT_DIR` identifies the consuming project independently of the plugin's working directory. If omitted, the consuming project's cwd is used. Host-provided hook cwd takes precedence for that hook.
 
-Requires Node 22+. From this checkout:
+The repository includes root/nested plugin manifests, hooks, and [generic host instructions](adapters/AGENTS.md). Native host installation and hook event support must be verified in each host; the automated suite checks DD's MCP protocol and hook processes.
 
-**Grok Build**
+Run the standalone audit UI from the target project:
 
-```bash
-grok plugin marketplace add <checkout>
-grok plugin install deltadictum --trust
+```text
+node <absolute-plugin-path>/src/cli.js
 ```
 
-Or point `[plugins].paths` at this repo. The plugin root is the repository (skills, hooks, `.mcp.json`, `plugin.json`).
+The MCP process also starts the audit UI. Read-only hooks reuse that resident process when available and fall back to opening the local store. Neither path blocks the host on plugin failure.
 
-**Claude Code**
+## Propose a decision
 
-```bash
-claude plugin install <checkout>
+```json
+{
+  "session_id": "host-session-id",
+  "proposals": [{
+    "memory_type": "decision",
+    "capture_origin": "model_initiated",
+    "topic_key": "payments/retry/idempotency",
+    "trigger": "when retrying payment requests",
+    "behavior_delta": "Reuse the original idempotency key.",
+    "why": "The provider may have accepted the first request before its response timed out.",
+    "applies_to": { "components": ["payments"] },
+    "assumptions": [{
+      "key": "provider.idempotency",
+      "equals": true,
+      "description": "The provider supports idempotency keys."
+    }],
+    "revisit_when": [{
+      "kind": "file_changed",
+      "path": "docs/payment-provider.md",
+      "description": "The provider contract changes."
+    }],
+    "evidence_refs": [{
+      "source_type": "file",
+      "source_ref": "docs/payment-provider.md",
+      "summary": "Provider retry contract"
+    }]
+  }]
+}
 ```
 
-**Codex / OpenCode**
+Required authored fields: `topic_key`, `trigger`, `behavior_delta`, `why`, `evidence_refs`. Type defaults to `lesson`; title and compact forms are derived. A same-topic proposal requests a revision. Agent tools do not expose approval, resolution or deletion; use the local review UI.
 
-Copy `adapters/AGENTS.md` into the target repo and register the MCP server from `adapters/opencode.json` (cwd = this checkout, run the agent in the project being developed).
+## Feedback and capture
 
-**Audit UI**
+`feedback` records an outcome for a memory and task: `helped`, `failed`, `refuted` or `not_applicable`. Retrieval frequency and agent-reported success never raise confidence or authority. A task ID prevents repeated submission of the same outcome from inflating counts.
 
-```bash
-cd <your-project>
-node <checkout>/src/cli.js
+Hooks retain small failure diagnostics and explicit validation results. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
+
+Automatic capture reminders are separate from writes: the Stop hook avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point. Old `capture.max_proposals` settings and exhausted session counters no longer restrict writes.
+
+## Storage and migration
+
+```text
+<project>/.dd/
+  atoms/<topic_key>.json       effective decisions
+  candidates/<id>.json        pending proposals
+  archive/<id>.json           historical/rejected versions
+  registry/topics.json
+  relations.json
+  config.json
 ```
 
-Admitted atoms are written to `<your-project>/.dd/atoms/` so they show up in `git diff`.
+Commit these knowledge files to share them with a team. Ignore runtime files `ui.json`, `.write-lock`, `.pending-write.json` and `*.tmp`. DD creates a local ignore file automatically.
 
-## How retrieve and capture work
+SQLite, observations, feedback and session deliveries live under a cache directory identified by the resolved project path. `DD_DATA` explicitly overrides that directory; use a separate directory for each project.
 
-- **Retrieve:** call `retrieve` with the coming action. Hits are compact (`content` only). On Grok, SessionStart stdout and UserPromptSubmit `additionalContext` are discarded — injection is a `PreToolUse` hook plus the model calling `retrieve`.
-- **Health:** `health` / `node src/cli.js health` scores live-set deterioration from SQLite. No LLM, no git writes.
-- **Capture:** on Stop, the host is asked to `propose` **at most once** if there is a reusable lesson. Admission still decides write/observe/block. This is not a session dump.
+Existing V6 knowledge stays readable. A legacy candidate is relocated on its next lifecycle transition; it cannot replace effective knowledge merely by being proposed. SQLite is rebuilt when its format or source fingerprint changes. The previous v1 observation JSONL is no longer appended; legacy files remain available for manual audit. Version 0.2 uses a separate default cache identity, so v1 local telemetry is not automatically imported.
 
-## Doctrine files (team share)
+The MCP write API changed from a single payload to `propose({proposals:[...]})`. `admit`, `resolve`, `reject`, `delete` and `update` are no longer advertised to models. Submit revisions through `propose` and use local review for lifecycle changes.
 
-Admitted atoms live in the consuming project:
+## Validation
 
+```text
+npm test
+npm run test:stress
+npm run eval
+npm run sync:plugin
 ```
-.dd/atoms/<topic_key>.json
-.dd/registry/topics.json
-.dd/relations.json
-```
 
-Observations and SQLite stay on the machine, not in git.
+The replay covers 24 authored scenarios: exact matches, paraphrases, Spanish, incompatible scope, changed facts, retired advice and unrelated actions. It measures retrieval correctness and estimated context cost; it is not evidence of improved code quality across model families.
 
-## Docs
+A provider-neutral [model evaluation runner](docs/evaluation/model-evaluation.md) compares no memory, static instructions and DD while preserving actual usage supplied by an adapter. Real model runs and repository task trials are required before claiming equal effectiveness across models or improved development outcomes.
 
-| Doc | What |
-|---|---|
-| `docs/DD.md` | What binds vs what does not |
-| `docs/specs/2026-09-09-retrieval-hot-path-and-scale.md` | Compact retrieve + FTS |
-| `docs/specs/2026-09-10-memory-deterioration-detection.md` | Health definition |
-| `docs/specs/2026-09-10-memory-quality-and-performance-tests.md` | Test catalog |
+Imported Orquesta V2–V10 documents are historical design references. The current authority is [docs/DD.md](docs/DD.md); the [implementation plan](docs/plans/2026-09-10-project-cognition.md) maps delivery and validation.

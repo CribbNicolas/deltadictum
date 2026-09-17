@@ -15,10 +15,10 @@ do_not_co_load_with: []
 
 ## Trigger Conditions
 - Retrieval operates without a project filter as the first step (global retrieval)
-- Memory namespaces are not enforced at the Qdrant collection level
+- Namespace isolation is a filter applied late rather than a boundary applied first
 - Cross-namespace retrieval occurs without explicit decision artifacts
 - Memory objects lack proper `project` field, making them unscoped
-- Namespace isolation is bypassed via direct Qdrant API calls
+- The project identifier is taken from the caller instead of resolved from the repository
 
 ## Symptoms
 - Retrieved memories from unrelated projects appear in context
@@ -28,15 +28,15 @@ do_not_co_load_with: []
 - Retrieval quality degrades as irrelevant memories compete for injection slots
 
 ## Prevention
-- Enforce INV-06: retrieval must always start with project filter
-- Create dedicated Qdrant collections per project (`memories_<project>`)
+- Enforce INV-02: retrieval must always start with project filter
+- Keep each project knowledge in the `.dd/` directory of its own repository
 - Require explicit decision artifacts for any cross-namespace operation
 - Validate memory objects have correct `project` field on ingestion
-- Implement namespace boundary checks in the memory API layer
+- Confine evidence references to the repository root, rejecting escapes at write time
 
 ## Recovery
 - Immediately abort the contaminated retrieval and clear the context
 - Identify which foreign memories were injected (check memory metadata)
 - Remove contaminated memories from context; retry with strict project filter
 - Audit the memory ingestion pipeline for missing project validation
-- If systemic, rebuild affected Qdrant collections with proper namespace isolation
+- If systemic, rebuild the local index from the git-tracked files, which remain the authority

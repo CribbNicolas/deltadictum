@@ -6,7 +6,6 @@ stability: implemented
 last_validated: 2026-09-10
 depends_on:
   - specs/2026-09-09-retrieval-hot-path-and-scale.md
-  - memory/lifecycle-policies.md
   - memory/contradiction-supersession.md
   - failures/context-explosion.md
 used_by:

@@ -14,6 +14,9 @@ do_not_co_load_with: []
 
 # Memory Admission Control
 
+> Scope: DD is a harness plugin. Everything here operates inside
+> [the plugin constraints](../architecture/plugin-constraints.md).
+
 Summary: Policy for deciding when observed experience becomes durable memory.
 
 ## Admission Decision

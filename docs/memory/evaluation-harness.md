@@ -6,14 +6,15 @@ stability: draft
 last_validated: 2026-09-10
 depends_on:
   - memory/evidence-ledger.md
-  - memory/memory-orchestrator.md
-  - memory/retrieval-router.md
 used_by:
   - specs/2026-09-10-memory-quality-and-performance-tests.md
 do_not_co_load_with: []
 ---
 
 # Evaluation Harness
+
+> Scope: DD is a harness plugin. Everything here operates inside
+> [the plugin constraints](../architecture/plugin-constraints.md).
 
 Summary: Memory quality is verified through write-path, read-path, cleanliness, retrieval, safety, and lifecycle tests.
 
@@ -41,7 +42,7 @@ V2 requires tests proving required behavioral fields, evidence references, typed
 
 ## Benchmark Direction
 
-Later phases should adapt ideas from LongMemEval, LoCoMo, StructMemEval, RAGChecker, and internal task replay. External benchmarks are signals, not substitutes for Orquesta-specific regression tests.
+Later phases may adapt ideas from LongMemEval, LoCoMo and internal task replay. External benchmarks are signals, not substitutes for DD-specific regression tests, and most of them measure a conversational assistant rather than a coding-agent plugin.
 
 ## Metrics Catalog
 
@@ -52,11 +53,11 @@ Final QA accuracy is insufficient. The harness instruments:
 - **Truth/time** — contradiction rate; unresolved-contradiction time; share of superseded memories still retrieved by error; temporal freshness.
 - **Cost/latency** — tokens injected; utility-per-token; p50/p95/p99 retrieval latency.
 - **Abstention** — abstention F1 (correctly declining to inject memory).
-- **Security** — poisoning resistance; cross-tenant isolation; sensitive-content reconstruction rate in red-team tests (cross-links to `memory-security.md`).
+- **Security** — poisoning resistance; cross-project isolation; source-reliability caps holding under volume (cross-links to `memory-security.md`).
 
 ## Benchmark Roster
 
-External benchmarks are signals, not substitutes for Orquesta regression tests: LoCoMo, LongMemEval (extraction, multi-session, temporal, knowledge-update, abstention), StructMemEval (structured memory), RAGChecker (fine-grained retrieval/generation diagnostics), BenchmarkQED. Internal task replay remains the primary regression signal.
+External benchmarks are signals, not substitutes for DD regression tests: LoCoMo and LongMemEval (extraction, multi-session, temporal, knowledge-update, abstention) are the closest, and neither is representative of plugin use. The deterministic replay harness in `src/eval/` remains the primary regression signal. Fix the metric before measuring: strict token-F1 and LLM-as-judge disagree by tens of points on the same system.
 
 ## DeltaDictum concrete catalog
 

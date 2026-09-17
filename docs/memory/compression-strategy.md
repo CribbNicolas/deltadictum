@@ -9,7 +9,6 @@ sources:
   - .archive/planning/architecture-tasks.md (Task 5)
 depends_on: []
 used_by:
-  - memory/lifecycle-policies
   - memory/artifacts-vs-memories
 do_not_co_load_with: []
 ---
@@ -77,49 +76,6 @@ Merge process:
 5. Set importance = max(source importances)
 6. Archive source memories (do not delete)
 
-### Token Budget Enforcement
-
-From `.docs/decisions/DECISION-006-65k-context-budget.md`:
-
-Total context budget: 65,536 tokens. Memory injection must fit within this budget alongside:
-- System prompt
-- Project cognition
-- Task description
-- Retrieved memories (compressed)
-- Agent instructions
-
-Memory injection budget allocation:
-- System/project cognition: ~10,000 tokens
-- Task description: ~2,000 tokens
-- Retrieved memories: ~40,000 tokens (max)
-- Agent instructions: ~5,000 tokens
-- Safety margin: ~8,536 tokens
-
-## Compression Service
-
-From `memory-task.md` suggested structure:
-
-```
-memory-api/
-├── memory/
-│   ├── summarization/
-│   │   └── summarize.js
-│   └── compression/
-│       └── compress.js
-```
-
-Summarization service:
-- Generates concise summaries of long memories
-- Uses LLM-based summarization (llama-cpp or Claude)
-- Preserves structured metadata
-- Stores both full and summarized versions
-
-Compression service:
-- Merges redundant memories
-- Applies token budget constraints
-- Manages archival of full content
-- Maintains reference links between merged memories
-
 ## Compression in Retrieval Pipeline
 
 From `workflows/retrieval-injection-pipeline.md`:
@@ -135,3 +91,25 @@ semantic search → importance rank → compress to fit budget → inject into c
 3. Compress each memory to fit within remaining context budget
 4. Inject compressed summaries into agent context
 5. Full content available on-demand if agent requests it
+
+## Budget Enforcement
+
+The budget is the serialized retrieval result, not the host context window. DD does not know, and must
+not assume, how large the host window is or what else occupies it.
+
+- Default: 600 estimated tokens for the whole JSON result, metadata included.
+- Accepted range: 128 to 8,000.
+- Estimate: UTF-8 bytes divided by three, provider independent and deliberately approximate.
+- Enforcement is greedy with form downgrade: a memory that does not fit as `full` is tried as
+  `short`, then `micro`, and is skipped if even the smallest form does not earn its tokens.
+
+The empty envelope is a fixed protocol cost. When nothing clears the bar, DD returns that envelope and
+abstains; it never pads the result to look useful.
+
+## Deriving Compact Forms
+
+Compact forms are derived deterministically from the authored statement, with no model call
+([plugin constraints](../architecture/plugin-constraints.md), L1 and L3). A compact form may drop
+rationale and alternatives; it may never drop the scope, assumptions or revision conditions that make
+the advice valid. Compression that removes the conditions does not produce a shorter memory, it
+produces a wrong one.

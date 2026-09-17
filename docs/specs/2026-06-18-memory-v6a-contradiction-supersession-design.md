@@ -6,11 +6,9 @@ stability: draft
 last_validated: 2026-06-18
 depends_on:
   - architecture/invariants.md
-  - memory/memory-v1-to-v10-roadmap.md
+  - memory/roadmap.md
   - memory/behavioral-memory-schema.md
-  - memory/memory-orchestrator.md
   - memory/evidence-ledger.md
-  - memory/lifecycle-policies.md
   - specs/2026-06-11-memory-v5-authority-registry-design.md
 used_by:
   - memory/contradiction-supersession.md
@@ -18,6 +16,13 @@ do_not_co_load_with: []
 ---
 
 # Memory V6a Contradiction and Supersession Core
+
+> **Historical design record.** This spec predates the move to a harness plugin and may name
+> infrastructure DD does not have (a service write path, an inference queue, a hybrid retriever) and
+> invariant numbers that have since changed. It is kept for the reasoning it records, not as a
+> description of current behaviour. The boundary in force is
+> [`architecture/plugin-constraints.md`](../architecture/plugin-constraints.md); current behaviour is
+> [`DD.md`](../DD.md).
 
 Summary: V6a is the deterministic, inference-free half of the V6 Contradiction and Supersession Engine. It handles two write-path events without calling the reasoning model — same-key supersession (a new write replaces an existing live memory on the same canonical key) and explicitly declared contradictions (a caller asserts that a new memory contradicts a named atom). It contests declared conflicts, supersedes replaced memories, stores a decaying `predominance` track-record, surfaces contested pairs in retrieval, and exposes Level 3 resolution endpoints. Auto-discovery of novel semantic contradictions and automatic scoring are deferred to V6b, which is where the LLM judge lives.
 
@@ -130,8 +135,8 @@ V6a does not add a `memory/v6/admission.js` LLM path; it extends the existing de
 
 ## Documentation
 
-- New `.docs/memory/contradiction-supersession.md` — reference for the contradiction/supersession model, contested lifecycle, predominance, and the ranking order. Synthesizes the relation and lifecycle content currently spread across `evidence-ledger.md`, `memory-orchestrator.md`, and `lifecycle-policies.md`.
-- Update `memory-v1-to-v10-roadmap.md` V6 section to note the a/b split and what each batch covers.
+- New `.docs/memory/contradiction-supersession.md` — reference for the contradiction/supersession model, contested lifecycle, predominance, and the ranking order. Synthesizes the relation and lifecycle content currently spread across `evidence-ledger.md` and the lifecycle documents of the time.
+- Update `roadmap.md` V6 section to note the a/b split and what each batch covers.
 - Regenerate `.docs/index.md` after the documentation changes.
 
 ## Testing

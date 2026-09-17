@@ -6,8 +6,6 @@ stability: draft
 last_validated: 2026-06-19
 depends_on:
   - memory/evidence-ledger.md
-  - memory/lifecycle-policies.md
-  - memory/memory-orchestrator.md
 used_by: []
 do_not_co_load_with: []
 ---
@@ -57,7 +55,7 @@ V6a stores and bumps predominance and applies this order in manual resolution. T
 
 ## Inference Boundary
 
-V6a is fully deterministic and inference-free, consistent with INV-03 (single active inference). The `memory-api` write path calls no reasoning model in V6a.
+V6a is fully deterministic and inference-free: the write path calls no model. This is what lets it run inside a hook process (see [plugin constraints](../architecture/plugin-constraints.md)).
 
 The only inline contradiction V6a can confirm deterministically is one a caller **explicitly declares** against a named atom. Same-key write collisions are handled as deterministic supersession based on a content comparison, not an LLM judgment.
 
@@ -82,13 +80,13 @@ V6b routes inference through the background worker queue, keeping the synchronou
 - `reasons` — text array capturing the stated rationale (required for Level 3 resolution).
 - `created_at` — immutable; log rows are never deleted.
 
-The log is the basis for stale-decision analysis in V6b and satisfies the `memory-orchestrator.md` requirement that Level 3 resolution events leave an auditable trail.
+The log is the basis for stale-decision analysis in V6b and satisfies the requirement that Level 3 resolution events leave an auditable trail (`behavioral-memory-architecture.md`, Autonomy Levels).
 
 ## V6a Endpoints
 
 - `POST /api/v6/memories` — supersession-aware write; detects same-key collision and applies supersession or update-in-place depending on whether the change is material.
 - `POST /api/v6/contradictions/declare` — caller asserts a cross-key contradiction against a named atom; both sides enter `contested`.
-- `GET /api/v6/contradictions` — lists open contested pairs for review (always project-scoped; INV-06).
+- `GET /api/v6/contradictions` — lists open contested pairs for review (always project-scoped; INV-02).
 - `POST /api/v6/contradictions/resolve` — Level 3 human/policy resolution; picks the winner, supersedes the loser, bumps predominance, clears `contested_at`, appends a `resolved` log row.
 
-All mutation endpoints are deterministic. Level 3 resolution satisfies the `memory-orchestrator.md` rule that resolving strong contradictions and deprecating canonical memory require human or policy review rather than autonomous action.
+All mutation endpoints are deterministic. Level 3 resolution satisfies the rule (`behavioral-memory-architecture.md`, Autonomy Levels) that resolving strong contradictions and deprecating canonical memory require human or policy review rather than autonomous action.

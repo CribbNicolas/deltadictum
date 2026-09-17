@@ -7,12 +7,14 @@ last_validated: 2026-05-30
 depends_on:
   - memory/behavioral-memory-schema.md
 used_by:
-  - memory/retrieval-router.md
   - memory/evaluation-harness.md
 do_not_co_load_with: []
 ---
 
 # Evidence Ledger
+
+> Scope: DD is a harness plugin. Everything here operates inside
+> [the plugin constraints](../architecture/plugin-constraints.md).
 
 Summary: Durable memory is claim plus evidence plus temporal validity.
 

@@ -6,9 +6,8 @@ stability: draft
 last_validated: 2026-06-11
 depends_on:
   - architecture/invariants.md
-  - memory/memory-v1-to-v10-roadmap.md
+  - memory/roadmap.md
   - memory/behavioral-memory-schema.md
-  - memory/retrieval-router.md
   - memory/memory-admission-control.md
   - specs/2026-06-05-memory-v3-evidence-capsules-design.md
 used_by:
@@ -17,6 +16,13 @@ do_not_co_load_with: []
 ---
 
 # Memory V4 Trigger-Based Retrieval Design
+
+> **Historical design record.** This spec predates the move to a harness plugin and may name
+> infrastructure DD does not have (a service write path, an inference queue, a hybrid retriever) and
+> invariant numbers that have since changed. It is kept for the reasoning it records, not as a
+> description of current behaviour. The boundary in force is
+> [`architecture/plugin-constraints.md`](../architecture/plugin-constraints.md); current behaviour is
+> [`DD.md`](../DD.md).
 
 Summary: V4 shifts retrieval from similarity-only search to action-triggered recall with intent classification, authority/TTL filtering, budgeted forms, and a value-per-token injection gate. Includes a closing review check of V2, V3, and V4 with all tests green against real Postgres.
 
@@ -118,7 +124,7 @@ TDD per component. New tests:
 
 1. Start Postgres via docker compose, set `PG_TEST_URL`.
 2. Run `test:v2`, `test:v3`, `test:v4`, `test:unit`, `test:integration` — required result: **0 fail, 0 skip**.
-3. Doc-by-doc implementation review: V2 against `memory-admission-control.md` + `behavioral-memory-schema.md`, V3 against `evidence-ledger.md`, V4 against `retrieval-router.md` (V4 read path section). Any gap is fixed or logged to `.tasks/state/known-issues.md`.
+3. Doc-by-doc implementation review: V2 against `memory-admission-control.md` + `behavioral-memory-schema.md`, V3 against `evidence-ledger.md`, V4 against the read path recorded in this spec. Any gap is fixed or logged to `.tasks/state/known-issues.md`.
 4. Update `.tasks/state/session-resume.md`, `.tasks/state/migration-progress.md`, and `depends_on`/`used_by`/`last_validated` metadata on affected `.docs/memory/` docs.
 
 ## Out of Scope

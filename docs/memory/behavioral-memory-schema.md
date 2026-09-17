@@ -9,11 +9,13 @@ depends_on:
 used_by:
   - specs/2026-06-11-memory-v5-authority-registry-design.md
   - memory/evidence-ledger.md
-  - memory/retrieval-router.md
 do_not_co_load_with: []
 ---
 
 # Behavioral Memory Schema
+
+> Scope: DD is a harness plugin. Everything here operates inside
+> [the plugin constraints](../architecture/plugin-constraints.md).
 
 Summary: Target durable memory shape for V2 and phased expansion through V10.
 
@@ -22,7 +24,7 @@ Summary: Target durable memory shape for V2 and phased expansion through V10.
 ```json
 {
   "id": "uuid",
-  "project_id": "orquesta",
+  "project_id": "dd",
   "memory_type": "claim|decision|lesson|anti_memory|procedure",
   "scope": "project|user|agent|workflow|file|service",
   "title": "short searchable title",
@@ -55,7 +57,7 @@ Observations can be stored with weaker requirements. They are not durable memory
 ```json
 {
   "id": "uuid",
-  "project_id": "orquesta",
+  "project_id": "dd",
   "observation_type": "trace|artifact|tool_output|test_result|user_statement",
   "summary": "sanitized short observation",
   "source_ref": "trace-or-artifact-ref",

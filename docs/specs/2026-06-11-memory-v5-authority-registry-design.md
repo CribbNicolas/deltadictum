@@ -6,9 +6,8 @@ stability: draft
 last_validated: 2026-06-12
 depends_on:
   - architecture/invariants.md
-  - memory/memory-v1-to-v10-roadmap.md
+  - memory/roadmap.md
   - memory/behavioral-memory-schema.md
-  - memory/memory-orchestrator.md
   - specs/2026-06-11-memory-v4-trigger-retrieval-design.md
 used_by:
   - plans/2026-06-11-memory-v5-authority-registry-plan.md
@@ -16,6 +15,13 @@ do_not_co_load_with: []
 ---
 
 # Memory V5 Authority Registry Design
+
+> **Historical design record.** This spec predates the move to a harness plugin and may name
+> infrastructure DD does not have (a service write path, an inference queue, a hybrid retriever) and
+> invariant numbers that have since changed. It is kept for the reasoning it records, not as a
+> description of current behaviour. The boundary in force is
+> [`architecture/plugin-constraints.md`](../architecture/plugin-constraints.md); current behaviour is
+> [`DD.md`](../DD.md).
 
 Summary: V5 introduces library-style authority control over memory naming: canonical topic keys with stable registry IDs, aliases (including renames and es/en translations), controlled vocabularies for key format/domain segments/tags, and a deterministic heading-proposal endpoint. The registry normalizes the write path and expands the V4 read path so queries using old or translated names still recall canonical memories.
 
@@ -109,7 +115,7 @@ POST /api/v5/memories
 
 ## Proposal Auto-Approve Matrix
 
-Deterministic; maps to memory-orchestrator autonomy levels.
+Deterministic; maps to the autonomy levels in `behavioral-memory-architecture.md`.
 
 | Proposal | Outcome |
 |---|---|
@@ -164,7 +170,7 @@ TDD per component:
 
 1. Start Postgres via docker compose, set `PG_TEST_URL` (orquesta_test DB).
 2. Run `test:v2` through `test:v5`, `test:unit` (`--test-concurrency=1`), `test:integration` — required result: **0 fail, 0 skip**.
-3. Doc-by-doc review: V5 against `memory-v1-to-v10-roadmap.md` §V5 and `memory-orchestrator.md` (autonomy levels). Gaps fixed or logged to `.tasks/state/known-issues.md`.
+3. Doc-by-doc review: V5 against `roadmap.md` and the autonomy levels in `behavioral-memory-architecture.md`. Gaps fixed or logged to `.tasks/state/known-issues.md`.
 4. Update `.tasks/state/session-resume.md`, `.tasks/state/migration-progress.md`, and `depends_on`/`used_by`/`last_validated` on affected `.docs/memory/` docs.
 
 ## Out of Scope

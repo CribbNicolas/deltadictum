@@ -3,121 +3,64 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: reference
 stability: stable
-last_validated: 2026-04-26
-sources:
-  - .archive/planning/architecture.md (Project Isolation, Memory Architecture)
-  - .archive/planning/memory-task.md (namespace isolation)
-  - .docs/decisions/DECISION-001-memory-namespaces.md
+last_validated: 2026-09-17
 depends_on:
-  - decisions/DECISION-001-memory-namespaces
-used_by:
-  - memory/memory-object-format
-  - memory/lifecycle-policies
-  - workflows/retrieval-injection-pipeline
+  - architecture/plugin-constraints.md
+  - architecture/invariants.md
 do_not_co_load_with: []
 ---
 
 # Memory Namespaces
 
-## V2-V10 Scope Extension
+Summary: knowledge is scoped to a project, and the project filter is the first boundary on every read
+and every write.
 
-Namespace isolation remains mandatory. V2-V10 add scope inside the project namespace: `project`, `user`, `agent`, `workflow`, `file`, and `service`.
+> The earlier version of this file described per-project Qdrant collections (`memories_<project>`) and
+> a namespace service that resolved them. DD is a harness plugin with no vector store and no service;
+> the mechanism below is what actually enforces isolation. See
+> [plugin constraints](../architecture/plugin-constraints.md).
 
-Scope never permits cross-project retrieval by default. Project filter remains the first retrieval and write boundary.
+## Why isolation comes first
 
-Project-isolated memory namespaces for Qdrant collections and retrieval scoping.
+Different projects use the same words for different things. A retry policy that is correct in one
+repository is wrong in another, and advice that crosses that boundary is worse than no advice: it is
+confident and wrong. Isolation is therefore structural, not a ranking preference.
 
-## Project Isolation Requirement
+## How a namespace is realised
 
-From `architecture.md`:
+A namespace is a project identifier plus the `.dd` directory of that repository:
 
-> Every project must have:
-> - isolated memory scope
-> - isolated retrieval rules
-> - isolated agent permissions
-> - isolated vector collections
+- Knowledge lives in git-tracked files under the project's own `.dd/` directory, so a repository
+  carries its knowledge with it and a clone carries nothing else.
+- Every store query is filtered by `project_id`; there is no query path that omits it.
+- The project identifier is resolved from the repository root, not supplied by the caller as a label
+  that could be spoofed.
+- Evidence references are confined to that repository: a path that escapes the root is rejected at
+  write time, not at read time.
 
-This prevents semantic contamination between projects — memories from one project must not leak into another project's retrieval context.
+## Retrieval flow
 
-## Recommended Qdrant Collections
-
-From `architecture.md` and `memory-task.md`:
-
-| Collection | Project | Purpose |
-|-----------|---------|---------|
-| `memories_tme` | tme | Trade management engine project memories |
-| `memories_automation` | automation | Automation project memories |
-| `memories_infra` | infra | Infrastructure project memories |
-
-Pattern: `memories_<project>`
-
-Each collection is a fully isolated Qdrant collection with its own vectors, payloads, and indexing.
-
-## Cross-Namespace Retrieval Rules
-
-From `architecture.md` — Retrieval Strategy:
-
-> Retrieval should NEVER search globally first.
-
-### Retrieval Flow
-
-```
+```text
 project filter
-    ↓
-memory type filter
-    ↓
-semantic retrieval (within project namespace only)
-    ↓
-importance ranking
-    ↓
-context injection
+  -> lifecycle and memory-type filter
+  -> candidate generation (local full-text index)
+  -> applicability gate (scope, assumptions, validity window)
+  -> ranking (activation, reliability, usage)
+  -> budgeted injection
 ```
 
-### Rules
+There is no global search, and no fallback that widens the scope when a project returns too little.
+Returning nothing is a correct answer.
 
-1. **Primary scope**: Always query the project-specific namespace first (`memories_<active_project>`)
-2. **Fallback**: Only if project namespace returns insufficient results, query shared namespace
-3. **Never**: Search all collections globally without project filter
-4. **Always**: Apply memory type filter before semantic search
-5. **Always**: Rank by importance before context injection
+## Cross-project knowledge
 
-### Shared Cognition Fallback
+Cross-project cognition requires an explicit decision artifact; it is never an automatic fallback.
+See `../decisions/DECISION-003-shared-vs-project-cognition.md` for the rule that project knowledge
+overrides shared knowledge, and `../decisions/DECISION-001-memory-namespaces.md` for the isolation
+decision itself.
 
-From `.docs/decisions/DECISION-003-shared-vs-project-cognition.md`:
+## Failure this prevents
 
-- Shared cognition lives in a separate namespace (no project prefix)
-- Shared memories are queried only as fallback when project-specific retrieval is insufficient
-- Shared memories have lower importance scores by default
-- Shared memories cannot override project-specific memories
-
-## Namespace Service
-
-From `memory-task.md` suggested structure:
-
-```
-memory-api/
-└── services/
-    └── namespace.service.js
-```
-
-Responsibilities:
-- Resolve project → collection name mapping
-- Validate namespace access permissions
-- Manage collection lifecycle (create, delete, snapshot)
-- Handle cross-namespace retrieval routing
-
-## Project Registry Mapping
-
-From `orchestration-task.md`:
-
-```json
-{
-  "tme": {
-    "workspace": "/workspace/tme",
-    "memory_namespace": "memories_tme",
-    "default_agent": "architect"
-  }
-}
-```
-
-The project registry maps project identifiers to their memory namespaces, enabling dynamic namespace resolution at runtime.
+See `../failures/memory-contamination.md`. The contamination failure is not primarily a privacy
+problem; it is a correctness problem, and secondarily a retrieval-quality one — irrelevant knowledge
+competing for a small number of injection slots.

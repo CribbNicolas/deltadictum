@@ -9,12 +9,14 @@ sources:
   - .archive/planning/memory-task.md (artifacts vs memories)
 depends_on: []
 used_by:
-  - memory/lifecycle-policies
   - memory/compression-strategy
 do_not_co_load_with: []
 ---
 
 # Artifacts vs Memories
+
+> Scope: DD is a harness plugin. Everything here operates inside
+> [the plugin constraints](../architecture/plugin-constraints.md).
 
 ## V2-V10 Boundary
 
@@ -73,13 +75,13 @@ projects/<project>/artifacts/
 
 ## Memories
 
-Memories are compressed, structured cognitive representations stored in Qdrant for semantic retrieval.
+Memories are compressed, structured representations of what should change next time, stored as git-tracked files and indexed locally for retrieval.
 
 ### Characteristics
 
 | Property | Value |
 |----------|-------|
-| Storage | Qdrant (vector) + PostgreSQL (metadata) |
+| Storage | Git-tracked JSON under the project `.dd/` directory, plus a rebuildable local index |
 | Lifespan | Temporary (subject to lifecycle policies) |
 | Format | Structured JSON object with importance score |
 | Retrieval | Semantic search within project namespace |
@@ -143,7 +145,7 @@ Memories should NEVER be stored as raw artifacts. If a memory needs full-text pr
 | Aspect | Artifacts | Memories |
 |--------|-----------|----------|
 | Purpose | Human reference | Machine retrieval |
-| Storage | Filesystem | Qdrant + PostgreSQL |
+| Storage | Filesystem | Git-tracked `.dd/` plus a rebuildable local index |
 | Format | Raw documents | Structured JSON |
 | Lifespan | Permanent | Temporary (lifecycle-managed) |
 | Retrieval | Direct access | Semantic search |

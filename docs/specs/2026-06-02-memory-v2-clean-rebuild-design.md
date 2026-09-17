@@ -6,13 +6,11 @@ stability: draft
 last_validated: 2026-06-02
 depends_on:
   - architecture/invariants.md
-  - memory/memory-v1-to-v10-roadmap.md
+  - memory/roadmap.md
   - memory/behavioral-memory-architecture.md
   - memory/memory-admission-control.md
   - memory/behavioral-memory-schema.md
   - memory/evidence-ledger.md
-  - memory/memory-orchestrator.md
-  - memory/retrieval-router.md
   - memory/evaluation-harness.md
   - memory/memory-security.md
 used_by: []
@@ -20,6 +18,13 @@ do_not_co_load_with: []
 ---
 
 # Memory V2 Clean Rebuild Design
+
+> **Historical design record.** This spec predates the move to a harness plugin and may name
+> infrastructure DD does not have (a service write path, an inference queue, a hybrid retriever) and
+> invariant numbers that have since changed. It is kept for the reasoning it records, not as a
+> description of current behaviour. The boundary in force is
+> [`architecture/plugin-constraints.md`](../architecture/plugin-constraints.md); current behaviour is
+> [`DD.md`](../DD.md).
 
 Status: approved design. This spec authorizes planning for V2 implementation. It does not by itself authorize code changes, schema migration execution, or destructive database operations without an implementation plan and verification gates.
 

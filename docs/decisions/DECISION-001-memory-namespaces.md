@@ -19,23 +19,23 @@ Status: Accepted
 
 ## Context
 
-The system manages multiple projects (tme, automation, infra) that each generate engineering cognition over time. Without isolation, memory from one project would contaminate retrieval for another. The v1 planning identified namespace isolation as critical infrastructure.
+A developer works across many repositories, each generating engineering knowledge over time. Without isolation, knowledge from one project contaminates retrieval in another: the same words mean different things in different codebases, so advice that crosses the boundary arrives confident and wrong.
 
 Memory is structured engineering cognition — not chat history. It contains compressed cognitive representations: summaries of decisions, architecture notes, implementation lessons. Each project needs its own isolated memory space to prevent semantic contamination.
 
 ## Decision
 
-Each project gets a dedicated memory namespace (Qdrant collection): `memories_tme`, `memories_automation`, `memories_infra`. Cross-namespace retrieval requires an explicit decision artifact. The `project-resolver` component maps each project to its memory namespace at runtime.
+Each project gets a dedicated knowledge namespace: the git-tracked `.dd/` directory of that repository, with every store query filtered by the project identifier resolved from the repository root. Cross-namespace retrieval requires an explicit decision artifact.
 
-Memory ingestion, retrieval, ranking, summarization, compression, and lifecycle management all operate within the project's namespace boundary.
+Write, retrieval, ranking and lifecycle all operate inside that boundary. There is no query path that omits the project filter.
 
 ## Consequences
 
 - Retrieval engine must always include a project filter as the first step
-- Memory API services (memory-api, memory-worker) receive `ACTIVE_PROJECT` environment variable
-- Qdrant collections are created per-project, not globally
+- Knowledge is stored in the repository it describes, so a clone carries its own knowledge and nothing else
+- The project identifier is derived from the repository, never supplied by the caller as a label that could be spoofed
 - Cross-project cognition requires explicit decision artifacts and manual namespace mapping
-- Memory importance scoring prevents explosion within each namespace independently
+- Growth is bounded per project, so one busy repository cannot crowd out another
 
 ## Tradeoffs
 
@@ -44,5 +44,5 @@ Memory ingestion, retrieval, ranking, summarization, compression, and lifecycle 
 
 ## Rejected Alternatives
 
-1. **Single shared memory with project tags** — Rejected because tags don't prevent semantic contamination at the vector level. Different projects may use similar terms with different meanings.
-2. **Project-scoped Qdrant instances** — Rejected because it multiplies infrastructure cost and complexity. Namespace isolation within a single Qdrant instance provides equivalent isolation at lower cost.
+1. **One shared store with project tags** — Rejected because a tag is a ranking signal, not a boundary: a filter that can be forgotten will be forgotten. Isolation has to be structural.
+2. **A central store outside the repositories** — Rejected because it breaks the plugin shape. Knowledge that does not travel with the repository cannot be reviewed in a pull request, shared through git, or removed by removing the project.

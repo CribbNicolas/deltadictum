@@ -5,7 +5,6 @@ artifact_type: spec
 stability: implemented
 last_validated: 2026-09-10
 depends_on:
-  - memory/retrieval-router.md
   - architecture/invariants.md
   - failures/context-explosion.md
   - failures/memory-contamination.md

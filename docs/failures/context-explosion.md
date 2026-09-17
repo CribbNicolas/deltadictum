@@ -21,19 +21,20 @@ do_not_co_load_with: []
 
 ## Symptoms
 - Inference latency increases dramatically (tokens/sec drops below acceptable threshold)
-- GPU VRAM usage spikes, potentially causing OOM errors or thermal throttling
-- Model output quality degrades (hallucinations, lost context, truncated responses)
-- Queue wait time increases as each inference takes longer
+- Host context fills with advice the task did not need, crowding out the code the agent came to read
+- Answer quality degrades: the more advice competes for attention, the less any of it steers behaviour
+- Hook latency rises on a path that runs on every tool call
 
 ## Prevention
-- Enforce 65k token context budget default (`--ctx-size 65536`)
-- Apply memory importance scoring (0.0–1.0) before retrieval injection; only include memories above threshold
-- Compress and summarize long memories before inclusion in context
-- Bound the number of retrieved memories (e.g., top-N by importance)
-- Require decision artifact for any configuration exceeding 80k tokens
+- Budget the serialized retrieval result, not the host window: DD cannot know what else occupies it
+- Require every candidate to clear both an activation floor and a value-per-token floor
+- Downgrade to a smaller compact form before spending more budget
+- Bound the number of injected memories with a hard cap, independent of how many matched
+- Suppress advice already delivered unchanged in the same session
+- Suppress near-duplicate advice inside one pack: the second copy costs tokens and adds nothing
 
 ## Recovery
-- Reduce context budget mid-inference is not possible; abort current inference and retry with fewer retrieved memories
-- Kill the stalled inference via llama.cpp API (`/v1/chat/completions` cancellation)
-- Clear the KV cache (`--cache-reuse` parameters) to free VRAM
-- Review memory compression policies — increase summarization aggressiveness
+- Lower `budget_tokens` for the affected call; the caller always outranks the default
+- Check `cap_saturation` in the health report: a live set that repeatedly fills the hit cap is the
+  cause, and the fix is on the write path, not the read path
+- Review what is being admitted; a context explosion is usually an admission failure arriving late
