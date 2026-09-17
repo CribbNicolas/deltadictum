@@ -1,20 +1,27 @@
 ---
 name: dd-save
-description: Save a durable DeltaDictum lesson through admission. Use when the user says remember, and also at session end if exactly one reusable lesson exists.
+description: Propose reusable project decisions or lessons when the user asks to remember something or a completed task produces evidence-backed learning.
 ---
 
-# dd-save
+# Save useful project knowledge
 
-Turn a reusable lesson into a `propose` payload. Do not write files yourself.
+Select independent lessons with a future behavioral consequence. Capture supported knowledge at meaningful checkpoints; there is no proposal count limit per call or session. For large transfers, split calls when useful for managing context. A session without reusable learning needs no write.
 
-Use this when the user says remember **and** at session Stop if the session produced exactly one reusable lesson, anti-memory, or decision. If nothing should change next time, do not propose. Never dump the transcript.
+Call `propose` with a `proposals` array and the host `session_id`. Each item contains:
 
-In chat, prefix plugin lines with `DD - `. Do not write DeltaDictum in chat.
+- `topic_key`: stable domain/area/topic; reuse it to propose a revision.
+- `trigger`: when this becomes relevant.
+- `behavior_delta`: what to do.
+- `why`: why the evidence supports it.
+- `evidence_refs`: source_type, source_ref and summary.
+- `capture_origin`: `user_explicit` when the user explicitly asked to save this knowledge; otherwise `model_initiated`.
 
-Map:
+Use `decision` for an explicit project choice and `lesson` for a learned pattern. Add `applies_to`, `assumptions`, `revisit_when` and discarded `alternatives` when they define the limits of the advice. A one-off successful fix does not establish a universal rule.
 
-- "remember we decided X" → `memory_type: decision`
-- "never do X" / "don't repeat X" → `memory_type: anti_memory` with preventive `behavior_delta`
-- "next time do X" → `memory_type: lesson` or `procedure`
+A user-requested development task or project choice is not itself a request to store memory. Classify each proposal separately, even in a mixed batch. Capture origin is independent of approval and authority; DD records the capture channel.
 
-Always include trigger, behavior_delta, evidence (`source_type: user_approval`), and micro+short forms. Then tell the user the admission decision and that they can edit it in the audit UI (`ui`).
+DD defaults missing origins to `user_explicit` for compatibility. Always send `capture_origin` explicitly so autonomous captures are classified correctly.
+
+Reference actual project files or host observation IDs. Describe user statements accurately; never label an inferred conclusion as user approval. Do not submit chat transcripts, full logs, code dumps or hand-authored compact forms.
+
+Report the returned pending-review status. `ui` provides the local review surface; proposing a replacement preserves the current decision until review.

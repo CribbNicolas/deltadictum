@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DeltaDictum audit</title>
+  <meta name="dd-review-token" content="__DD_REVIEW_TOKEN__" />
   <style>
     :root { color-scheme: dark light; --bg: #101014; --fg: #e8e8ea; --muted: #9a9aaa; --card: #1b1b22; --acc: #7c9cff; --danger: #ff6b6b; --ok: #6dd6a2; }
     body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
@@ -26,6 +27,11 @@
     .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
     .empty { padding: 40px; color: var(--muted); }
     .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: #2a2a33; }
+    .notice { padding: 12px; border-left: 3px solid var(--acc); background: var(--card); white-space: pre-wrap; }
+    .warning { border-color: var(--danger); }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    #project { padding: 12px 20px; color: var(--muted); border-bottom: 1px solid #2a2a33; }
+    @media (max-width: 760px) { main { grid-template-columns: 1fr; } #list { max-height: 240px; } header { flex-wrap: wrap; } }
   </style>
 </head>
 <body>
@@ -41,9 +47,15 @@
         <option value="rejected">rejected</option>
         <option value="superseded">superseded</option>
       </select>
+      <select id="origin-filter" aria-label="Capture origin">
+        <option value="">all origins</option>
+        <option value="model_initiated">model initiative</option>
+        <option value="user_explicit">explicit user request</option>
+      </select>
       <button id="reload">Reload</button>
     </nav>
   </header>
+  <div id="project"></div>
   <main>
     <section id="list"></section>
     <section id="detail" class="empty">Select a memory.</section>
@@ -53,11 +65,12 @@
     const detailEl = document.getElementById('detail');
     const statusEl = document.getElementById('status');
     const filterEl = document.getElementById('filter');
+    const originFilterEl = document.getElementById('origin-filter');
     let atoms = [];
     let selected = null;
 
     async function api(path, opts) {
-      const res = await fetch(path, opts);
+      const res = await fetch(path, { ...opts, headers: { 'x-dd-review-token': document.querySelector('meta[name="dd-review-token"]').content, ...opts?.headers } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
       return data;
@@ -66,49 +79,82 @@
     async function load() {
       const status = await api('/api/status');
       statusEl.textContent = `${status.project_id} · ${status.total} memories`;
-      const q = filterEl.value ? `?lifecycle=${filterEl.value}` : '';
-      atoms = await api('/api/atoms' + q);
+      const project = await api('/api/project');
+      document.getElementById('project').textContent = `${project.purpose || project.name} · Sources: ${project.sources.join(', ') || 'repository structure'}`;
+      const q = new URLSearchParams();
+      if (filterEl.value) q.set('lifecycle', filterEl.value);
+      if (originFilterEl.value) q.set('capture_origin', originFilterEl.value);
+      atoms = await api('/api/atoms?' + q);
       renderList();
       if (!atoms.length) {
         selected = null;
         detailEl.className = 'empty';
-        detailEl.textContent = 'No memories yet. Propose one from the agent, then admit it here.';
+        detailEl.textContent = filterEl.value || originFilterEl.value ? 'No memories match these filters.' : 'No memories yet. Propose one from the agent, then admit it here.';
       } else if (selected) {
         const still = atoms.find(a => a.id === selected.id);
-        if (still) select(still.id);
+        if (still) await select(still.id);
+        else { selected = null; detailEl.textContent = 'Select a memory.'; }
       }
     }
 
     function renderList() {
       listEl.innerHTML = atoms.map(atom => `
-        <div class="item ${selected && selected.id === atom.id ? 'active' : ''}" data-id="${atom.id}">
+        <div class="item ${selected && selected.id === atom.id ? 'active' : ''}" data-id="${escapeHtml(atom.id)}">
           <strong>${escapeHtml(atom.title)}</strong>
-          <small><span class="badge">${atom.lifecycle_state}</span> ${escapeHtml(atom.topic_key)}</small>
+          <small><span class="badge">${escapeHtml(atom.lifecycle_state)}</span> ${escapeHtml(atom.topic_key)}</small>
+          <small>${escapeHtml(captureLabel(atom))}</small>
         </div>
       `).join('');
     }
 
     function field(name, value, area) {
+      const labels = { topic_key: 'Topic', trigger: 'When this applies', behavior_delta: 'Recommended action', why: 'Rationale', trigger_variants: 'Other ways this situation is described (one per line)',
+        applies_to: 'File, component and operation scope', assumptions: 'Assumptions', revisit_when: 'When to reconsider', alternatives: 'Alternatives considered',
+        evidence_refs: 'Evidence references', review_rationale: 'Your review rationale', loser_id: 'Conflicting memory to supersede' };
+      const label = labels[name] || name;
       if (area) {
-        return `<label>${name}</label><textarea name="${name}">${escapeHtml(value ?? '')}</textarea>`;
+        return `<label for="field-${name}">${label}</label><textarea id="field-${name}" name="${name}">${escapeHtml(value ?? '')}</textarea>`;
       }
-      return `<label>${name}</label><input name="${name}" value="${escapeHtml(value ?? '')}" />`;
+      return `<label for="field-${name}">${label}</label><input name="${name}" value="${escapeHtml(value ?? '')}" id="field-${name}" />`;
+    }
+
+    function captureLabel(atom) {
+      const origin = { model_initiated: 'Model initiative', user_explicit: 'Explicit user request' }[atom.capture_origin ?? 'user_explicit'] || 'Unknown origin';
+      const source = { agent: 'agent reported', local_ui: 'local UI' }[atom.capture_source];
+      return source ? `${origin} · ${source}` : origin;
     }
 
     async function select(id) {
       selected = await api('/api/atoms/' + encodeURIComponent(id));
+      const outcomes = await api('/api/feedback?atom=' + encodeURIComponent(id));
       detailEl.className = '';
       detailEl.innerHTML = `
-        <p><span class="badge">${selected.lifecycle_state}</span> <span class="badge">${selected.memory_type}</span> ${escapeHtml(selected.id)}</p>
+        <p><span class="badge">${escapeHtml(selected.lifecycle_state)}</span> <span class="badge">${escapeHtml(selected.memory_type)}</span> ${escapeHtml(selected.id)}</p>
+        <p>Capture: ${escapeHtml(captureLabel(selected))}. Approval is recorded separately.</p>
+        ${selected.lifecycle_state === 'candidate' && selected.replaces ? `<p class="notice">Pending replacement of ${escapeHtml(selected.replaces)}. The current decision stays effective until approval.</p>` : ''}
+        ${selected.freshness.length ? `<p class="notice warning">Review required: ${escapeHtml(selected.freshness.join('; '))}</p>` : ''}
+        ${selected.lifecycle_state === 'contested' ? '<p class="notice warning">Disputed knowledge. Inspect the conflicting memory before choosing a winner.</p>' : ''}
         ${field('title', selected.title)}
         ${field('topic_key', selected.topic_key)}
         ${field('trigger', selected.trigger, true)}
         ${field('behavior_delta', selected.behavior_delta, true)}
-        ${field('what', selected.what, true)}
         ${field('why', selected.why, true)}
+        ${field('trigger_variants', (selected.trigger_variants || []).join('\n'), true)}
+        ${field('applies_to', JSON.stringify(selected.applies_to || {}, null, 2), true)}
+        ${field('assumptions', JSON.stringify(selected.assumptions || [], null, 2), true)}
+        ${field('revisit_when', JSON.stringify(selected.revisit_when || [], null, 2), true)}
+        ${field('alternatives', JSON.stringify(selected.alternatives || [], null, 2), true)}
+        ${field('evidence_refs', JSON.stringify(selected.evidence_refs || [], null, 2), true)}
+        <details open><summary>Evidence and review</summary><pre>${escapeHtml(JSON.stringify({ evidence: selected.evidence_state || selected.evidence_refs, review: selected.review }, null, 2))}</pre></details>
+        <details><summary>Derived compact forms</summary><pre>${escapeHtml(JSON.stringify(selected.retrieval_forms, null, 2))}</pre></details>
+        <details open><summary>Task outcomes (${outcomes.length})</summary>${outcomes.map(o => `<p>${escapeHtml(o.outcome)} · ${escapeHtml(o.summary)} · ${escapeHtml(o.verification)} <button data-feedback="${escapeHtml(o.id)}" data-accept="true">Accept evidence</button> <button data-feedback="${escapeHtml(o.id)}" data-accept="false">Dismiss report</button></p>`).join('')}</details>
+        ${field('review_rationale', '', true)}
+        <small>Explain why the evidence supports this decision. Saving edits creates a new proposal.</small>
+        ${selected.lifecycle_state === 'contested' ? `<label for="field-loser_id">Conflicting decision to supersede</label><select id="field-loser_id" name="loser_id">${selected.opponents.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.topic_key)} · ${escapeHtml(a.title)}</option>`).join('')}</select><button data-act="inspect-opponent">Inspect selected conflict</button>` : ''}
         <div class="row">
           ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
           <button data-act="save">Save</button>
+          ${selected.lifecycle_state === 'contested' ? '<button class="ok" data-act="resolve">Keep this decision and supersede the other</button>' : ''}
           <button class="danger" data-act="delete">Delete</button>
         </div>
         <p id="msg"></p>
@@ -119,29 +165,44 @@
     function formValues() {
       const data = {};
       detailEl.querySelectorAll('input, textarea').forEach(el => { data[el.name] = el.value; });
+      for (const key of ['applies_to', 'assumptions', 'revisit_when', 'alternatives', 'evidence_refs']) data[key] = JSON.parse(data[key]);
+      data.trigger_variants = data.trigger_variants.split('\n').filter(Boolean);
+      delete data.review_rationale; delete data.loser_id;
       return data;
     }
 
     detailEl.addEventListener('click', async (ev) => {
+      if (ev.target.dataset.feedback) {
+        try {
+          await api('/api/feedback/review', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: ev.target.dataset.feedback, accepted: ev.target.dataset.accept === 'true' }) });
+          return await select(selected.id);
+        } catch (err) { document.getElementById('msg').textContent = err.message; return; }
+      }
       const act = ev.target.dataset.act;
       if (!act || !selected) return;
       const msg = document.getElementById('msg');
       try {
         if (act === 'save') {
-          await api('/api/atoms/' + encodeURIComponent(selected.id), {
+          const proposal = await api('/api/atoms/' + encodeURIComponent(selected.id), {
             method: 'PATCH',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(formValues()),
           });
-          msg.textContent = 'Saved. Git will show the diff.';
+          if (proposal.decision !== 'write' || !proposal.atom) throw new Error((proposal.reasons || ['No new proposal was created.']).join('; '));
+          selected = proposal.atom;
+          msg.textContent = 'Proposal saved for review.';
         } else if (act === 'admit') {
-          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST' });
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ rationale: detailEl.querySelector('[name="review_rationale"]').value }) });
         } else if (act === 'reject') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/reject', { method: 'POST' });
         } else if (act === 'delete') {
-          const confirmCanonical = selected.authority === 'canonical' ? 'true' : 'false';
-          await api('/api/atoms/' + encodeURIComponent(selected.id) + '?confirm=' + confirmCanonical, { method: 'DELETE' });
+          if (!confirm('Delete this memory version?')) return;
+          await api('/api/atoms/' + encodeURIComponent(selected.id), { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirm: true }) });
           selected = null;
+        } else if (act === 'resolve') {
+          await api('/api/resolve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ winner_id: selected.id, loser_id: detailEl.querySelector('[name="loser_id"]').value, rationale: detailEl.querySelector('[name="review_rationale"]').value }) });
+        } else if (act === 'inspect-opponent') {
+          return await select(detailEl.querySelector('[name="loser_id"]').value);
         }
         await load();
       } catch (err) {
@@ -154,6 +215,7 @@
       if (item) select(item.dataset.id);
     });
     filterEl.addEventListener('change', load);
+    originFilterEl.addEventListener('change', load);
     document.getElementById('reload').addEventListener('click', load);
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

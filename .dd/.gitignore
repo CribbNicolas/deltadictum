@@ -1,0 +1,7 @@
+ui.json
+.write-lock
+.pending-write.json
+*.tmp
+*.sqlite
+*.sqlite-*
+observations/

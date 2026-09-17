@@ -7,6 +7,12 @@ node_modules/
 .dd/ui.json
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.dd/.write-lock
+.dd/.pending-write.json
+tmp/
+output/eval/
 *.log
 coverage/
 .DS_Store

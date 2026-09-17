@@ -18,9 +18,9 @@ export function uiStatusPath(ddDir) {
   return join(ddDir, 'ui.json');
 }
 
-export async function writeUiUrl(ddDir, { url, port }) {
+export async function writeUiUrl(ddDir, { url, port, hookToken }) {
   await mkdir(ddDir, { recursive: true });
-  await writeFile(uiStatusPath(ddDir), `${JSON.stringify({ url, port }, null, 2)}\n`, 'utf8');
+  await writeFile(uiStatusPath(ddDir), `${JSON.stringify({ url, port, ...(hookToken ? { hook_token: hookToken } : {}) }, null, 2)}\n`, 'utf8');
 }
 
 export async function readUiUrl(ddDir) {

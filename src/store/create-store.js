@@ -1,10 +1,13 @@
-import { appendFile, mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { watch } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createGitFileStore } from './git-file-store.js';
-import { observationsPath, sqlitePath } from './paths.js';
+import { sqlitePath } from './paths.js';
 import { createSqliteIndex } from './sqlite-index.js';
 import { sourceFingerprint } from './fingerprint.js';
 import { assessDeterioration, DEFAULT_HEALTH_THRESHOLDS } from '../engine/health/deterioration.js';
+import { createTelemetry } from './telemetry.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -20,9 +23,14 @@ function healthThresholdsFromConfig(config) {
   return base;
 }
 
-export async function createMemoryStore({ ddDir, dataDir }) {
+export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddDir) }) {
   await mkdir(dataDir, { recursive: true });
   await mkdir(ddDir, { recursive: true });
+  // Knowledge is shareable; process capabilities and telemetry are local.
+  // Exclusive creation preserves an existing project's ignore policy.
+  try {
+    await writeFile(join(ddDir, '.gitignore'), 'ui.json\n.write-lock\n.pending-write.json\n*.tmp\n*.sqlite\n*.sqlite-*\nobservations/\n', { flag: 'wx' });
+  } catch (err) { if (err.code !== 'EEXIST') throw err; }
 
   const git = createGitFileStore(ddDir);
   const index = createSqliteIndex(sqlitePath(dataDir));
@@ -36,6 +44,7 @@ export async function createMemoryStore({ ddDir, dataDir }) {
     ]);
     index.rebuild(atoms, registry, relations);
     index.setMeta('source_fingerprint', await sourceFingerprint(ddDir));
+    index.setMeta('index_format', '7.1');
     return { atoms: atoms.length };
   }
 
@@ -43,49 +52,68 @@ export async function createMemoryStore({ ddDir, dataDir }) {
     index.setMeta('source_fingerprint', await sourceFingerprint(ddDir));
   }
 
-  const currentFp = await sourceFingerprint(ddDir);
-  if (index.getMeta('source_fingerprint') !== currentFp) {
-    await reindex();
+  async function refresh() {
+    await git.recover();
+    if (index.getMeta('index_format') !== '7.1' || index.getMeta('source_fingerprint') !== await sourceFingerprint(ddDir)) await reindex();
+  }
+
+  await git.withWriteLock(refresh);
+  const telemetry = createTelemetry(index, git);
+  await telemetry.prune();
+  let dirty = false;
+  let refreshedAt = Date.now();
+  let watcher;
+  try {
+    watcher = watch(ddDir, { recursive: true }, (_event, file) => {
+      if (/^(atoms|archive|candidates|registry)([\\/]|$)|^relations\.json$/.test(String(file))) dirty = true;
+    });
+    watcher.on('error', () => { dirty = true; });
+  } catch { /* Periodic freshness checks cover platforms without recursive watch. */ }
+  async function refreshIfChanged() {
+    if (!dirty && Date.now() - refreshedAt < 5000) return;
+    await git.withWriteLock(refresh);
+    dirty = false; refreshedAt = Date.now();
+  }
+
+  async function withWriteLock(work) {
+    return git.withWriteLock(async () => { await refresh(); return work(); });
+  }
+
+  async function commitAtoms(atoms, newRelations = [], deleteAtoms = []) {
+    return withWriteLock(async () => {
+      for (const atom of atoms) {
+        const previous = index.getAtom(atom.id);
+        if (previous && (previous.project_id !== atom.project_id || previous.topic_key !== atom.topic_key)) throw new Error('immutable_memory_identity');
+      }
+      const relations = await git.loadRelations();
+      for (const relation of newRelations) {
+        if (!relations.some(r => r.source_atom_id === relation.source_atom_id && r.target_atom_id === relation.target_atom_id && r.relation_type === relation.relation_type)) {
+          relations.push({ id: randomUUID(), confidence: 0.5, created_at: nowIso(), ...relation });
+        }
+      }
+      const deleted = new Set(deleteAtoms.map(atom => atom.id));
+      const kept = relations.filter(r => !deleted.has(r.source_atom_id) && !deleted.has(r.target_atom_id));
+      const stored = await git.commit({ atoms, deleteAtoms, relations: kept });
+      // Index updates are atomic; on failure the Git journal/source wins on reopen.
+      if (newRelations.length || deleteAtoms.length) await reindex();
+      else {
+        index.transaction(() => {
+          for (const atom of stored.filter(a => !['active', 'contested'].includes(a.lifecycle_state))) index.upsertAtom(atom);
+          for (const atom of stored.filter(a => ['active', 'contested'].includes(a.lifecycle_state))) index.upsertAtom(atom);
+        });
+        await refreshFingerprint();
+      }
+      return stored;
+    });
   }
 
   async function putAtom(atom) {
-    const stored = await git.putAtom(atom);
-    index.upsertAtom(stored);
-    await refreshFingerprint();
-    return stored;
+    return (await commitAtoms([atom]))[0];
   }
 
   async function deleteAtom(atom) {
-    await git.deleteAtom(atom);
-    index.removeAtom(atom.id);
-    await refreshFingerprint();
+    await commitAtoms([], [], [atom]);
     return true;
-  }
-
-  async function putObservation(observation) {
-    const row = {
-      id: observation.id ?? randomUUID(),
-      project_id: observation.project_id,
-      source_type: observation.source_type,
-      source_ref: observation.source_ref,
-      raw_preview: String(observation.raw_preview ?? '').slice(0, 4000),
-      observed_at: observation.observed_at ?? nowIso(),
-      promotion_status: observation.promotion_status ?? 'unreviewed',
-      sanitization_status: observation.sanitization_status ?? 'sanitized',
-      metadata: observation.metadata ?? {},
-    };
-    await mkdir(dataDir, { recursive: true });
-    await appendFile(observationsPath(dataDir), `${JSON.stringify(row)}\n`, 'utf8');
-    index.db.prepare(`
-      INSERT INTO memory_observations (
-        id, project_id, source_type, source_ref, raw_preview, observed_at,
-        promotion_status, sanitization_status, metadata
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      row.id, row.project_id, row.source_type, row.source_ref, row.raw_preview,
-      row.observed_at, row.promotion_status, row.sanitization_status, JSON.stringify(row.metadata),
-    );
-    return row;
   }
 
   async function logAdmission(entry) {
@@ -102,6 +130,7 @@ export async function createMemoryStore({ ddDir, dataDir }) {
       entry.observation_id ?? null,
       nowIso(),
     );
+    await telemetry.prune();
   }
 
   async function logContradiction(entry) {
@@ -144,6 +173,7 @@ export async function createMemoryStore({ ddDir, dataDir }) {
       entry.budget_used ?? 0,
       nowIso(),
     );
+    await telemetry.prune();
   }
 
   async function getVocabulary(projectId) {
@@ -179,11 +209,13 @@ export async function createMemoryStore({ ddDir, dataDir }) {
   }
 
   async function persistRegistry(mutator) {
+    return withWriteLock(async () => {
     const registry = await git.loadRegistry();
     const result = await mutator(registry);
     await git.saveRegistry(registry);
     await reindex();
     return result;
+    });
   }
 
   async function createRegistryEntry(projectId, key, status) {
@@ -258,6 +290,7 @@ export async function createMemoryStore({ ddDir, dataDir }) {
   }
 
   async function putRelation(relation) {
+    return withWriteLock(async () => {
     const relations = await git.loadRelations();
     const row = {
       id: relation.id ?? randomUUID(),
@@ -275,12 +308,15 @@ export async function createMemoryStore({ ddDir, dataDir }) {
     await git.saveRelations(relations);
     await reindex();
     return row;
+    });
   }
 
   return {
     git,
+    ddDir, dataDir, repoRoot,
+    withWriteLock, commitAtoms, refreshIfChanged, refresh: () => git.withWriteLock(refresh),
     index,
-    reindex,
+    reindex: () => git.withWriteLock(async () => { await git.recover(); return reindex(); }),
     loadConfig: () => git.loadConfig(),
     saveConfig: config => git.saveConfig(config),
     getAtom: async (id, projectId) => index.getAtom(id, projectId),
@@ -297,7 +333,6 @@ export async function createMemoryStore({ ddDir, dataDir }) {
     },
     putAtom,
     deleteAtom,
-    putObservation,
     logAdmission,
     logRetrieval,
     logContradiction,
@@ -317,6 +352,7 @@ export async function createMemoryStore({ ddDir, dataDir }) {
     renameRegistryEntry,
     listRelations,
     putRelation,
-    close: () => index.close(),
+    close: () => { watcher?.close(); index.close(); },
+    ...telemetry,
   };
 }

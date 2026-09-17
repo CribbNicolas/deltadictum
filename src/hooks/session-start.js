@@ -1,10 +1,12 @@
-import { retrieveMemories } from '../engine/retrieve.js';
 import { sessionBanner } from './banner.js';
+import { orientProject } from '../engine/project-context.js';
 
 export function microPack(memories) {
   return memories.map(memory => {
-    const flag = memory.memory_type === 'anti_memory' ? 'ANTI' : memory.memory_type.toUpperCase();
-    return `[${flag}] ${memory.content || memory.retrieval_forms?.micro || memory.title}`;
+    const flag = memory.contested || memory.lifecycle_state === 'contested' ? 'DISPUTED'
+      : memory.lifecycle_state === 'review_required' ? 'REVIEW REQUIRED'
+      : memory.memory_type === 'anti_memory' ? 'ANTI' : memory.memory_type.toUpperCase();
+    return `[${flag} ${memory.id ?? ''}] ${memory.content || memory.retrieval_forms?.micro || memory.title}`;
   }).join('\n');
 }
 
@@ -19,20 +21,13 @@ export function contextPayload(eventName, text) {
   };
 }
 
-export async function buildSessionStartContext({ store, projectId, uiUrl }) {
+export async function buildSessionStartContext({ store, projectId, uiUrl, sessionId, source }) {
+  if (sessionId && ['compact', 'clear'].includes(source)) await store.clearSessionDeliveries(projectId, sessionId);
   const activeCount = await store.countAtoms({ projectId, lifecycleStates: ['active'] });
   const banner = sessionBanner({ projectId, url: uiUrl, activeCount });
 
-  const result = await retrieveMemories({
-    project_id: projectId,
-    action: 'session start coding in this repository',
-    budget_tokens: 200,
-  }, { store });
-  const antiAndCanonical = (result.memories ?? []).filter(memory =>
-    memory.memory_type === 'anti_memory' || memory.authority === 'canonical' || memory.form_type === 'micro',
-  );
-  const pack = microPack(antiAndCanonical.slice(0, 12));
-  const advisory = pack ? `DD - ${pack}` : '';
+  const context = await orientProject({ budget_tokens: 400 }, { store, projectId });
+  const advisory = `DD - Project context (advisory): ${JSON.stringify({ ...context, ...(sessionId ? { session_id: sessionId } : {}) })}`;
   return {
     hookSpecificOutput: {
       hookEventName: 'SessionStart',

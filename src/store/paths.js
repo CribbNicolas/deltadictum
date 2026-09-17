@@ -23,13 +23,17 @@ export function atomFilePath(ddDir, topicKey) {
 }
 
 export function archiveFilePath(ddDir, id) {
-  if (!id || String(id).includes('..') || String(id).includes('/') || String(id).includes('\\')) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(String(id ?? ''))) {
     throw new Error('invalid_atom_id');
   }
   return join(ddDir, 'archive', `${id}.json`);
 }
 
 export const LIVE_STATES = ['candidate', 'active', 'contested'];
+export function candidateFilePath(ddDir, id) {
+  archiveFilePath(ddDir, id);
+  return join(ddDir, 'candidates', `${id}.json`);
+}
 export const ARCHIVE_STATES = ['superseded', 'archived', 'rejected'];
 
 export function topicKeyFromAtomFile(ddDir, filePath) {
@@ -67,10 +71,13 @@ export const DEFAULT_CONFIG = {
   vpt_threshold: 0.02,
   auto_admit: {
     lesson: 'candidate',
-    anti_memory: 'active',
+    anti_memory: 'candidate',
     procedure: 'candidate',
     decision: 'candidate',
     claim: 'candidate',
   },
   health: DEFAULT_HEALTH_THRESHOLDS,
+  capture: { retention_days: 14, max_observations: 200 },
+  telemetry: { retention_days: 90, max_events: 2000 },
+  session: { retention_hours: 24, max_entries: 500 },
 };

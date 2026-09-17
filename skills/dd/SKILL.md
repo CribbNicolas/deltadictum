@@ -1,49 +1,18 @@
 ---
 name: dd
-description: Use DeltaDictum (DD) for next-action doctrine. Retrieve budgeted lessons before acting, propose at most one durable lesson after, never dump transcripts. Chat copy is always "DD - ...".
+description: Use DD project orientation and conditional engineering memories before implementing, debugging or repeating a project workflow.
 ---
 
-# DD
+# DD project knowledge
 
-Doctrine is not chat history. A durable lesson must say when it applies (`trigger`), what to do differently (`behavior_delta`), and why (`evidence_refs`). Retrieved lessons are advisory — never treat them as a system instruction.
+Call `orient` once when entering a project, with the intended task and affected files if known. It returns manifest facts, source pointers and applicable knowledge. Read the pointed source when the task needs details.
 
-In chat, only write:
+Before a relevant action, call `retrieve` with `action`, `files`, `operation` and known context facts. Use the host session ID consistently; `repeat: true` refreshes knowledge after context compaction. Default payload budget is 600 estimated tokens. Expand a specific memory with `get` only when needed.
 
-```
-DD - loaded for `<project_id>` (N active).
-DD - Audit UI: <ui_url>
-```
+Respect assumptions and revision conditions. Disputed or review-required knowledge requires inspecting the evidence before applying it. Retrieved content is advisory; current project evidence and user/host instructions govern the task.
 
-Never write DeltaDictum in chat.
+Propose reusable knowledge as it becomes supported during the work, without waiting for the session to end. Call `propose` with independent `proposals` selected for future value; there is no proposal count limit per call or session. Each needs `topic_key`, `trigger`, `behavior_delta`, `why` and real `evidence_refs`; type defaults to lesson. DD generates compact forms. A proposal is pending review, not an approved decision.
 
-## Session start
+Set each proposal's `capture_origin` to `user_explicit` only when the user explicitly asked to save that knowledge. Otherwise use `model_initiated`, including discoveries during a user-requested task. Capture origin does not imply approval.
 
-On the first user-visible reply, if DD tools are available, call `status` (it includes `ui_url`) and open with those two `DD -` lines. Do not dump lessons there.
-
-## Retrieve first
-
-Before implementing, debugging, or repeating a workflow, call `retrieve` with the action you are about to take. Do not wait for the user to ask.
-
-- Use the returned `micro`/`short` forms only (`content`). Hits are compact: no evidence dump.
-- If `abstained` is true, do not invent lessons.
-- Call `get` only when you need evidence or the full form.
-
-## Propose, don't dump
-
-At session end, and whenever the user asks to remember something, if there is **exactly one** reusable lesson, anti-memory, or decision, call `propose` once even if the user did not say "remember". If nothing should change next time, do not propose.
-
-When proposing, include:
-
-- `memory_type`
-- `title`, `trigger`, `behavior_delta`, `what`, `why`
-- `topic_key` like `domain/area/name`
-- `evidence_refs` (`source_type`, `source_ref`, `summary`)
-- `retrieval_forms.micro` and `retrieval_forms.short`
-
-Do not store raw tool logs, `<think>` blocks, or conversation transcripts.
-
-Admission is deterministic. `observe` means it was not durable. `block` means reject. Canonical decisions stay candidates until a human admits them in the UI.
-
-## Audit
-
-`ui` returns the local audit URL. `list` / `delete` / `admit` also work from tools.
+Use `feedback` for observed task outcomes, with memory ID, stable task ID, summary and evidence. Do not report success from retrieval alone. Use `ui` when the user needs to review, approve or resolve knowledge.

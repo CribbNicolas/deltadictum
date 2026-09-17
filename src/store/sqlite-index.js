@@ -3,8 +3,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
+import { searchableTrigger } from '../engine/activation.js';
+import { withCaptureProvenance } from '../engine/contract.js';
 
 const SCHEMA_PATH = join(dirname(fileURLToPath(import.meta.url)), 'schema.sql');
+const parseAtom = payload => withCaptureProvenance(JSON.parse(payload));
 
 function inParams(prefix, values) {
   const params = {};
@@ -57,6 +60,14 @@ export function createSqliteIndex(dbPath) {
   mkdirSync(dirname(dbPath), { recursive: true });
   const db = new DatabaseSync(dbPath);
   db.exec('PRAGMA foreign_keys = ON');
+  db.exec('PRAGMA busy_timeout = 5000');
+  db.exec('PRAGMA journal_mode = WAL');
+
+  function transaction(work) {
+    db.exec('BEGIN IMMEDIATE');
+    try { const result = work(); db.exec('COMMIT'); return result; }
+    catch (err) { db.exec('ROLLBACK'); throw err; }
+  }
 
   async function migrate() {
     const sql = await readFile(SCHEMA_PATH, 'utf8');
@@ -111,7 +122,7 @@ export function createSqliteIndex(dbPath) {
       atom.id,
       atom.project_id,
       atom.title ?? '',
-      atom.trigger ?? '',
+      searchableTrigger(atom),
       atom.what ?? '',
       atom.why ?? '',
       atom.topic_key ?? '',
@@ -128,13 +139,13 @@ export function createSqliteIndex(dbPath) {
   function getAtom(idOrKey, projectId) {
     const byId = db.prepare('SELECT payload FROM memory_atoms WHERE id = ?').get(idOrKey);
     if (byId) {
-      const atom = JSON.parse(byId.payload);
+      const atom = parseAtom(byId.payload);
       if (!projectId || atom.project_id === projectId) return atom;
     }
     const row = projectId
-      ? db.prepare('SELECT payload FROM memory_atoms WHERE topic_key = ? AND project_id = ?').get(idOrKey, projectId)
-      : db.prepare('SELECT payload FROM memory_atoms WHERE topic_key = ?').get(idOrKey);
-    return row ? JSON.parse(row.payload) : null;
+      ? db.prepare("SELECT payload FROM memory_atoms WHERE topic_key = ? AND project_id = ? ORDER BY lifecycle_state IN ('active','contested') DESC, updated_at DESC LIMIT 1").get(idOrKey, projectId)
+      : db.prepare("SELECT payload FROM memory_atoms WHERE topic_key = ? ORDER BY lifecycle_state IN ('active','contested') DESC, updated_at DESC LIMIT 1").get(idOrKey);
+    return row ? parseAtom(row.payload) : null;
   }
 
   function listAtoms({ projectId, lifecycleStates, memoryTypes } = {}) {
@@ -154,7 +165,7 @@ export function createSqliteIndex(dbPath) {
     }
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     const rows = db.prepare(`SELECT payload FROM memory_atoms ${where} ORDER BY updated_at DESC`).all(params);
-    return rows.map(row => JSON.parse(row.payload));
+    return rows.map(row => parseAtom(row.payload));
   }
 
   function search({ projectId, query, limit = 50, lifecycleStates, memoryTypes } = {}) {
@@ -177,16 +188,16 @@ export function createSqliteIndex(dbPath) {
       ORDER BY bm25(memory_atoms_fts)
       LIMIT @limit
     `).all(params);
-    return rows.map(row => JSON.parse(row.payload));
+    return rows.map(row => parseAtom(row.payload));
   }
 
   function listByTopicLive(projectId, topicKey) {
     const rows = db.prepare(`
       SELECT payload FROM memory_atoms
       WHERE project_id = ? AND topic_key = ?
-        AND lifecycle_state IN ('candidate', 'active')
+        AND lifecycle_state IN ('active', 'contested')
     `).all(projectId, topicKey);
-    return rows.map(row => JSON.parse(row.payload));
+    return rows.map(row => parseAtom(row.payload));
   }
 
   function countAtoms({ projectId, lifecycleStates, memoryTypes } = {}) {
@@ -446,7 +457,8 @@ export function createSqliteIndex(dbPath) {
     incrementActivation,
     getMeta,
     setMeta,
-    rebuild,
+    rebuild: (atoms, registry, relations) => transaction(() => rebuild(atoms, registry, relations)),
+    transaction,
     close,
   };
 }

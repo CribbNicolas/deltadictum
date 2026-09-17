@@ -1,0 +1,99 @@
+import { decideAdmission } from './v2/admission.js';
+import { stampRevisionFiles, verifyReferences } from './evidence.js';
+import { validateExplicitContradiction } from './v6/contradiction.js';
+
+// Only the local review transport constructs this capability. It is never an MCP argument.
+export const HUMAN_REVIEW = Symbol('local-human-review');
+function requireReview(actor) { if (actor !== HUMAN_REVIEW) throw new Error('human_review_required'); }
+
+async function effectivePeers(id, store, projectId) {
+  const relations = await store.listRelations({ atomIds: [id] });
+  const ids = relations.filter(r => r.relation_type === 'contradicts')
+    .map(r => r.source_atom_id === id ? r.target_atom_id : r.source_atom_id);
+  return (await Promise.all(ids.map(peerId => store.getAtom(peerId, projectId))))
+    .filter(a => a && ['active', 'contested'].includes(a.lifecycle_state));
+}
+
+export async function admitMemory(id, { store, projectId, actor, rationale, authority } = {}) {
+  requireReview(actor);
+  return store.withWriteLock(async () => {
+    const candidate = await store.getAtom(id, projectId);
+    if (!candidate || candidate.lifecycle_state !== 'candidate') throw new Error('candidate_required');
+    if (!rationale?.trim()) throw new Error('review_rationale_required');
+    const gate = decideAdmission(candidate);
+    if (gate.decision !== 'write') throw new Error(`cannot_admit:${gate.reasons.join(',')}`);
+    const evidence_state = await verifyReferences(candidate.evidence_refs, { store, projectId });
+    if (evidence_state.artifacts.some(a => a.status === 'out_of_scope')) throw new Error('evidence_scope_violation');
+    const current = (await store.listByTopicLive(projectId, candidate.topic_key))[0];
+    if (current && candidate.replaces !== current.id) throw new Error('replacement_changed_review_again');
+    const now = new Date().toISOString();
+    const approved = await stampRevisionFiles({ ...candidate, lifecycle_state: 'active',
+      authority: authority === 'canonical' || candidate.requested_authority === 'canonical' ? 'canonical' : 'validated',
+      confidence: 0.85, evidence_state: { ...evidence_state, support: 'human_reviewed' },
+      review: { source: 'local_ui', reviewed_at: now, rationale: rationale.trim() },
+    }, store);
+    const peers = current ? await effectivePeers(current.id, store, projectId) : [];
+    if (peers.length) { approved.lifecycle_state = 'contested'; approved.contested_at = now; }
+    const atoms = current ? [{ ...current, lifecycle_state: 'superseded', superseded_by: approved.id }, approved] : [approved];
+    const relations = current ? [{ source_atom_id: approved.id, relation_type: 'supersedes', target_atom_id: current.id }] : [];
+    for (const peer of peers) relations.push({ source_atom_id: approved.id, relation_type: 'contradicts', target_atom_id: peer.id });
+    const stored = await store.commitAtoms(atoms, relations);
+    await store.logAdmission({ project_id: projectId, decision: 'admit', reasons: ['human_reviewed'], atom_id: id });
+    return stored.find(a => a.id === id);
+  });
+}
+
+export async function rejectMemory(id, { store, projectId, actor } = {}) {
+  requireReview(actor);
+  return store.withWriteLock(async () => {
+    const atom = await store.getAtom(id, projectId);
+    if (!atom || atom.lifecycle_state !== 'candidate') throw new Error('candidate_required');
+    return store.putAtom({ ...atom, lifecycle_state: 'rejected' });
+  });
+}
+
+export async function declareContradiction(id, contradicts, { store, projectId }) {
+  return store.withWriteLock(async () => {
+    const atom = await store.getAtom(id, projectId);
+    const other = await store.getAtom(contradicts, projectId);
+    const check = validateExplicitContradiction(atom ?? {}, other);
+    if (!atom || !check.valid) throw new Error(check.reason ?? 'not_found');
+    if (![atom, other].every(a => ['active', 'contested'].includes(a.lifecycle_state))) throw new Error('effective_memories_required');
+    const now = new Date().toISOString();
+    await store.commitAtoms([atom, other].map(a => ({ ...a, lifecycle_state: 'contested', contested_at: now })),
+      [{ source_atom_id: atom.id, relation_type: 'contradicts', target_atom_id: other.id }]);
+    await store.logContradiction({ project_id: projectId, atom_a_id: id, atom_b_id: contradicts,
+      detection_source: 'explicit', action: 'contested', reasons: ['explicit_contradiction'] });
+    return { decision: 'contest', ids: [id, contradicts] };
+  });
+}
+
+export async function resolveMemories(winnerId, loserId, { store, projectId, actor, rationale } = {}) {
+  requireReview(actor);
+  if (!rationale?.trim()) throw new Error('review_rationale_required');
+  return store.withWriteLock(async () => {
+    const winner = await store.getAtom(winnerId, projectId);
+    const loser = await store.getAtom(loserId, projectId);
+    const relations = await store.listRelations({ atomIds: [winnerId] });
+    if (!winner || !loser || winnerId === loserId || ![winner, loser].every(a => a.lifecycle_state === 'contested')
+      || !relations.some(r => r.relation_type === 'contradicts' && [r.source_atom_id, r.target_atom_id].includes(loserId))) throw new Error('contested_pair_required');
+    const peerIds = relations.filter(r => r.relation_type === 'contradicts')
+      .map(r => r.source_atom_id === winnerId ? r.target_atom_id : r.source_atom_id).filter(id => id !== loserId);
+    const peers = await Promise.all(peerIds.map(id => store.getAtom(id, projectId)));
+    const stillContested = peers.some(a => a && ['active', 'contested'].includes(a.lifecycle_state));
+    const atoms = [{ ...loser, lifecycle_state: 'superseded', superseded_by: winnerId, contested_at: null },
+      { ...winner, lifecycle_state: stillContested ? 'contested' : 'active', contested_at: stillContested ? winner.contested_at : null,
+        review: { source: 'local_ui', reviewed_at: new Date().toISOString(), rationale: rationale.trim() } }];
+    // Other decisions cease to be disputed only if the retired loser was their
+    // last effective opposing decision. Unrelated disputes remain unresolved.
+    for (const peer of await effectivePeers(loserId, store, projectId)) {
+      if (peer.id === winnerId) continue;
+      const remaining = (await effectivePeers(peer.id, store, projectId)).filter(a => a.id !== loserId);
+      if (!remaining.length) atoms.push({ ...peer, lifecycle_state: 'active', contested_at: null });
+    }
+    await store.commitAtoms(atoms);
+    await store.logContradiction({ project_id: projectId, atom_a_id: winnerId, atom_b_id: loserId,
+      detection_source: 'explicit', action: 'resolved', winner_atom_id: winnerId, reasons: ['human_reviewed'] });
+    return { winner_id: winnerId, loser_id: loserId };
+  });
+}

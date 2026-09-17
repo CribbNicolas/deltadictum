@@ -2,7 +2,8 @@
   "mcp": {
     "dd": {
       "type": "local",
-      "command": ["node", "src/mcp/server.js"],
+      "command": ["node", "<absolute-plugin-path>/src/mcp/server.js"],
+      "environment": { "DD_PROJECT_DIR": "<absolute-project-path>" },
       "enabled": true
     }
   }

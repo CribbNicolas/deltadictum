@@ -1,13 +1,21 @@
 #!/usr/bin/env node
-import { sanitizeText } from '../engine/v2/sanitizer.js';
 import { retrieveMemories } from '../engine/retrieve.js';
-import { openStore, readJsonStdin } from '../project.js';
+import { openStore, readJsonStdin, findRepoRoot } from '../project.js';
 import { readUiUrl } from './banner.js';
 import { buildSessionStartContext, contextPayload } from './session-start.js';
 import { STOP_CAPTURE_PROMPT } from './capture.js';
 import { buildPreToolContext } from './pre-tool.js';
+import { observationFromTool } from './observe.js';
+import { microPack } from './session-start.js';
+import { callRunningStore } from './bridge.js';
 
 function ok(payload) {
+  if (codexHost) {
+    if (payload.decision === 'allow') delete payload.decision;
+    if (command === 'stop' && payload.hookSpecificOutput?.additionalContext) {
+      payload = { decision: 'block', reason: payload.hookSpecificOutput.additionalContext };
+    }
+  }
   process.stdout.write(JSON.stringify(payload));
   process.exit(0);
 }
@@ -16,24 +24,28 @@ function skip() {
   process.exit(0);
 }
 
-function microPack(memories) {
-  return memories.map(memory => {
-    const flag = memory.memory_type === 'anti_memory' ? 'ANTI' : memory.memory_type.toUpperCase();
-    return `[${flag}] ${memory.content || memory.retrieval_forms?.micro || memory.title}`;
-  }).join('\n');
-}
-
 const command = process.argv[2];
+const codexHost = process.argv.includes('--codex');
+const dataArg = process.argv.indexOf('--data');
+if (dataArg >= 0 && process.argv[dataArg + 1]) process.env.DD_DATA = process.argv[dataArg + 1];
 
 try {
   const payload = await readJsonStdin();
-  const { store, projectId, ddDir } = await openStore();
+  const observation = command === 'observe' ? observationFromTool(payload) : null;
+  if (command === 'observe' && !observation) skip();
+  if (command === 'pre-tool' && /(^|__)(dd|deltadictum)(__|_)/i.test(payload.tool_name || payload.toolName || '')) skip();
+  const cwd = payload.cwd || process.env.DD_PROJECT_DIR || process.cwd();
+  const bridged = await callRunningStore(command, payload, await findRepoRoot(cwd));
+  if (bridged) ok(bridged);
+  const { store, projectId, ddDir } = await openStore({ cwd });
 
   if (command === 'session-start') {
     const result = await buildSessionStartContext({
       store,
       projectId,
       uiUrl: await readUiUrl(ddDir),
+      sessionId: payload.session_id ?? payload.sessionId,
+      source: payload.source,
     });
     store.close();
     ok(result);
@@ -46,40 +58,37 @@ try {
   }
 
   if (command === 'prompt') {
+    await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
     const action = payload.prompt || payload.text || payload.user_prompt || '';
     const result = await retrieveMemories({
       project_id: projectId,
       action,
       budget_tokens: payload.budget_tokens,
+      session_id: payload.session_id ?? payload.sessionId,
     }, { store });
     store.close();
     ok(contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
   }
 
   if (command === 'observe') {
-    const preview = sanitizeText(
-      payload.tool_input && JSON.stringify(payload.tool_input) ||
-      payload.tool_response ||
-      payload.content ||
-      payload.text ||
-      'empty',
-    ).slice(0, 4000) || 'empty';
-    await store.putObservation({
-      project_id: projectId,
-      source_type: 'tool_output',
-      source_ref: payload.tool_name || payload.tool || 'tool',
-      raw_preview: preview,
-      metadata: { tool: payload.tool_name || payload.tool || null },
-    });
+    await store.putObservation({ ...observation, project_id: projectId });
     store.close();
     skip();
   }
 
   if (command === 'stop') {
+    const observations = await store.recentObservations(projectId, payload.session_id ?? payload.sessionId);
+    // Codex Stop requires an explicit continuation. Spend that extra model turn
+    // only after a recorded host validation/failure; ordinary turns stay quiet.
+    if (codexHost && !observations.length) { store.close(); skip(); }
+    if (payload.stop_hook_active || !await store.claimCapturePrompt(projectId, payload.session_id ?? payload.sessionId, observations)) {
+      store.close(); skip();
+    }
+    const references = observations.length ? `\nAvailable host evidence for this session (get by ID; source_type=tool_output, source_ref=ID): ${JSON.stringify(observations)}` : '';
     store.close();
     ok(contextPayload(
       'Stop',
-      STOP_CAPTURE_PROMPT,
+      STOP_CAPTURE_PROMPT + references,
     ));
   }
 

@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { createToolHandlers } from '../../src/mcp/tools.js';
+import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 
 function proposal() {
   return {
@@ -21,7 +22,7 @@ function proposal() {
 }
 
 describe('MCP tool handlers', () => {
-  test('propose, list, admit, retrieve, delete', async () => {
+  test('compact propose, local review, list and retrieve without agent approval tools', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dd-mcp-'));
     const store = await createMemoryStore({
       ddDir: join(root, '.dd'),
@@ -32,22 +33,24 @@ describe('MCP tool handlers', () => {
     const proposed = JSON.parse((await tools.propose({ ...proposal(), project_id: 'demo' })).content[0].text);
     assert.equal(proposed.decision, 'write');
 
-    const admitted = JSON.parse((await tools.admit({ id: proposed.atom.id })).content[0].text);
+    assert.equal(proposed.atom, undefined);
+    assert.equal(tools.admit, undefined);
+    assert.equal(tools.resolve, undefined);
+    assert.equal(tools.delete, undefined);
+    const admitted = await admitMemory(proposed.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Reviewed gate.' });
     assert.equal(admitted.lifecycle_state, 'active');
 
     const retrieved = JSON.parse((await tools.retrieve({ action: 'before writing durable memory' })).content[0].text);
     assert.equal(retrieved.abstained, false);
-    assert.equal(retrieved.memories[0].content, 'Validate trigger before active memory.');
+    assert.match(retrieved.memories[0].content, /validate trigger first/);
     assert.equal(retrieved.memories[0].evidence_refs, undefined);
     assert.ok(!JSON.stringify(retrieved).includes('src/engine/v2/admission.js'));
     const rawRetrieve = (await tools.retrieve({ action: 'before writing durable memory' })).content[0].text;
     assert.doesNotMatch(rawRetrieve, /\n\s+/);
 
     const listed = JSON.parse((await tools.list({})).content[0].text);
-    assert.equal(listed.length, 1);
+    assert.equal(listed.total, 1);
 
-    const deleted = JSON.parse((await tools.delete({ id: proposed.atom.id })).content[0].text);
-    assert.equal(deleted.deleted, true);
     store.close();
   });
 
@@ -80,4 +83,3 @@ describe('MCP tool handlers', () => {
     store.close();
   });
 });
-

@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
@@ -19,6 +19,9 @@
     "test:hooks": "node --test --test-concurrency=1 tests/hooks/**/*.test.js",
     "test:stress": "node --test --test-concurrency=1 tests/stress/**/*.test.js",
     "test:all": "npm test && npm run test:stress",
+    "sync:plugin": "node scripts/sync-plugin.mjs",
+    "eval": "node src/eval/replay.js",
+    "eval:models": "node src/eval/model-runner.js",
     "start": "node src/cli.js",
     "mcp": "node src/mcp/server.js"
   },
@@ -26,7 +29,13 @@
     "src",
     "plugin",
     "adapters",
-    "docs"
+    "docs",
+    "skills",
+    "hooks",
+    "mcp.js",
+    ".mcp.json",
+    "plugin.json",
+    "scripts"
   ],
   "license": "UNLICENSED",
   "dependencies": {
