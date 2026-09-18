@@ -72,11 +72,14 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
       // candidate superseding two memories is not something review can express.
       route = { decision: 'write', reasons: ['suspected_duplicate_pair'], suspected_pair: route.suspected_pair };
     }
+    // `replaces` already tells the reviewer what an update revises; flagging the
+    // same pair as suspected on top of it would say the opposite of what
+    // approving the candidate does. The flag belongs to the escalated case only.
     if (route.decision === 'update') payload.replaces = route.replaces;
-    if (route.suspected_pair?.length) payload.suspected_pair = route.suspected_pair;
-    const reasons_out = ['pending_review', ...route.reasons];
+    else if (route.suspected_pair?.length) payload.suspected_pair = route.suspected_pair;
+    const decided = ['pending_review', ...route.reasons];
     const atom = await store.putAtom(payload);
-    await store.logAdmission({ project_id: atom.project_id, decision: route.decision, reasons: reasons_out, atom_id: atom.id });
-    return { decision: route.decision, reasons: reasons_out, atom, collides_with };
+    await store.logAdmission({ project_id: atom.project_id, decision: route.decision, reasons: decided, atom_id: atom.id });
+    return { decision: route.decision, reasons: decided, atom, collides_with };
   });
 }

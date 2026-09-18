@@ -60,6 +60,11 @@ describe('trigger collisions', () => {
       assert.equal(paraphrase.decision, 'update');
       assert.ok(paraphrase.reasons.includes('trigger_collision_same_scope'));
       assert.equal(paraphrase.atom.replaces, original.id);
+      // `replaces` is the whole statement. A suspected-pair flag beside it would
+      // warn the reviewer that approving adds a second memory, which is the
+      // opposite of what approving an update does.
+      assert.equal(paraphrase.atom.suspected_pair, undefined);
+      assert.equal((await db.getAtom(paraphrase.atom.id, PROJECT)).suspected_pair, undefined);
       // Nothing is effective yet: the original still stands, unmodified.
       assert.equal((await db.getAtom(original.id, PROJECT)).lifecycle_state, 'active');
       assert.equal(paraphrase.atom.lifecycle_state, 'candidate');
@@ -109,6 +114,8 @@ describe('trigger collisions', () => {
       assert.equal(vague.decision, 'write');
       assert.ok(vague.reasons.includes('suspected_duplicate_pair'));
       assert.deepEqual(vague.atom.suspected_pair, [original.id]);
+      // The reviewer reads it off the stored atom, not off the return value.
+      assert.deepEqual((await db.getAtom(vague.atom.id, PROJECT)).suspected_pair, [original.id]);
       assert.equal(vague.atom.replaces, undefined);
       // Untouched: same revision timestamp, same content, still effective.
       const after = await db.getAtom(original.id, PROJECT);
@@ -154,6 +161,29 @@ describe('trigger collisions', () => {
       assert.equal(paraphrase.decision, 'write');
       assert.equal(paraphrase.atom.replaces, undefined);
       assert.equal(paraphrase.collides_with.length, 0);
+    } finally { db.close(); }
+  });
+
+  test('a revision whose target is no longer effective goes back to review', async () => {
+    const db = await store();
+    try {
+      const original = await seedEffective(db);
+      const paraphrase = await proposeMemory(proposal({
+        topic_key: 'payments/retries/keys',
+        trigger: 'when retrying a payment request',
+        behavior_delta: 'Send the original idempotency key again.',
+      }), { store: db });
+      assert.equal(paraphrase.decision, 'update');
+
+      // The reviewer approved something else in the meantime, and the memory this
+      // candidate proposed to revise is gone. Approving now would supersede
+      // nothing and leave a second memory on the same trigger.
+      await db.putAtom({ ...(await db.getAtom(original.id, PROJECT)), lifecycle_state: 'archived' });
+      await assert.rejects(
+        admitMemory(paraphrase.atom.id, { store: db, projectId: PROJECT, actor: HUMAN_REVIEW,
+          rationale: 'Local review: approving a revision of a retired memory.' }),
+        /replacement_changed_review_again/);
+      assert.equal((await db.getAtom(paraphrase.atom.id, PROJECT)).lifecycle_state, 'candidate');
     } finally { db.close(); }
   });
 

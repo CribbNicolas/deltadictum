@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: architecture
 artifact_type: reference
 stability: stable
-last_validated: 2026-09-17
+last_validated: 2026-09-18
 depends_on:
   - architecture/plugin-constraints.md
 do_not_co_load_with: []
@@ -59,7 +59,13 @@ follows from it. Only review establishes support.
 At most one memory per project and topic key is `active` or `contested`. A replacement supersedes;
 it never silently coexists.
 
+Supersession is not confined to a shared topic key: a candidate may name a colliding memory on another
+topic in `replaces`, and approving it retires that memory. What the invariant fixes is the ceiling of
+one live memory per key, not the identity of what a replacement may retire.
+
 **Enforced by:** a unique partial index in the store, and a matching guard in the git file store.
+`admitMemory` resolves the named replacement by id and refuses the promotion if it is no longer
+effective, so a supersession is never applied against a store the reviewer did not see.
 
 ## INV-07: Injected context is advisory and self-consistent
 

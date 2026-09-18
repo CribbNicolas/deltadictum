@@ -75,8 +75,16 @@ temporary repository. The retrieval fixtures cannot supply these figures: they a
 
 | Figure | Definition |
 |---|---|
-| `write_path.duplicate_rate_per_1000` | `ignore` decisions with reason `equivalent_knowledge_exists`, over `proposeMemory` outcomes (`write`, `ignore`, `block`, `observe`), read from `memory_admission_decisions`. `admit` is a later review event and is excluded. |
+| `write_path.duplicate_rate_per_1000` | `ignore` decisions with reason `equivalent_knowledge_exists`, over `proposeMemory` outcomes (`write`, `update`, `ignore`, `block`, `observe`), read from `memory_admission_decisions`. `admit` is a later review event and is excluded. |
+| `write_path.near_duplicate_detection_rate_per_1000` | `update` decisions plus decisions carrying `suspected_duplicate_pair`, over the same outcomes. Near-duplicates the write path **recognised**. |
+| `write_path.near_duplicate_pairs_surviving` | Pairs of effective memories whose triggers overlap at Jaccard ≥ 0.5 with the same scope and the same direction. Near-duplicates that were **created anyway** and reached the effective set. |
 | `write_path.evidence_coverage` | Share of effective memories (`active` or `contested`) with at least one `evidence_state.artifacts` entry at `status: 'verified'`. |
+
+The two near-duplicate figures move in opposite directions and must be read together. Detection rising
+is the routing starting to see what was always there; survival falling is the only one that means the
+store got better. The survival threshold is pinned at 0.5 in `src/eval/replay.js` rather than read from
+`config.health.trigger_collision.jaccard`, so raising a project's threshold cannot improve the number
+that threshold is being judged by.
 
 ### What these numbers cannot tell you
 
@@ -88,8 +96,13 @@ temporary repository. The retrieval fixtures cannot supply these figures: they a
   model would have found the same guidance by reading the repository.
 - **Duplicate rate catches exact equivalence only.** `sameKnowledge` compares thirteen authored fields
   as serialised JSON, so paraphrases do not register as duplicates. The figure understates the problem
-  by construction; it is a regression signal for near-duplicate work, not a measure of redundancy.
-- **Sample sizes are single-developer sizes** (L6). 24 scenarios and 7 fixtures are regression signals,
+  by construction, which is why the two near-duplicate figures exist beside it. It was `0` over a corpus
+  that contained no near-duplicate at all — a rate computed over nothing to detect, which is why the
+  corpus now carries `NEAR_DUPLICATES` scenarios.
+- **Near-duplicate survival is judged lexically.** The pair count uses trigger Jaccard, scope equality
+  and preventive polarity, the same signals the routing itself uses (L3 leaves no others). Two memories
+  that restate each other in unrelated words are invisible to both.
+- **Sample sizes are single-developer sizes** (L6). 24 scenarios and 12 write-path fixtures are regression signals,
   not statistics. No confidence interval computed over them would mean anything.
 - **No latency figure belongs here.** Per-case `elapsed_ms` from the replay is not a percentile; the hot
   path is exercised in `npm run test:stress`.

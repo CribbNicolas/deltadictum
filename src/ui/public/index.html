@@ -219,9 +219,13 @@
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(formValues()),
           });
-          if (proposal.decision !== 'write' || !proposal.atom) throw new Error((proposal.reasons || ['No new proposal was created.']).join('; '));
+          if (!['write', 'update'].includes(proposal.decision) || !proposal.atom) throw new Error((proposal.reasons || ['No new proposal was created.']).join('; '));
           selected = proposal.atom;
-          msg.textContent = 'Proposal saved for review.';
+          // An edit can collide with a memory on another topic, which makes the
+          // saved proposal a revision of it rather than a new sibling.
+          msg.textContent = proposal.decision === 'update'
+            ? 'Proposal saved for review as a revision of ' + proposal.atom.replaces + '.'
+            : 'Proposal saved for review.';
         } else if (act === 'admit') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
             rationale: detailEl.querySelector('[name="review_rationale"]').value,

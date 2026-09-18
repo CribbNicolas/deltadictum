@@ -229,7 +229,7 @@ repeated corrections on one topic are the near-duplicates this stage catches. In
 
 ## Outcome
 
-Implemented. `npm test` 246/246, `npm run eval` 24/24 with f1 1.0 and evidence coverage 1.0,
+Implemented. `npm test` 247/247, `npm run eval` 24/24 with f1 1.0 and evidence coverage 1.0,
 `npm run test:stress` 13/13 at `cold_ms=937 resident_ms=94` on 2000 atoms.
 
 ### What the acceptance number did
@@ -287,6 +287,29 @@ It now reviews each proposal before the next, which is the order real use produc
 
 **The threshold and the *Files* correction from stage 5 both held.** `config.health.trigger_collision.jaccard`
 is read in `src/engine/write.js`; the literal `0.5` is gone; `src/store/paths.js` was not touched.
+
+### Review
+
+A review pass after the stage commit found three defects in it and two stale documents.
+
+**An `update` also carried `suspected_pair`.** The candidate showed the reviewer two notices at once,
+and the second said approving it would add a second memory on the same trigger — the opposite of what
+approving a revision does. The flag now belongs to the escalated case only, pinned by an assertion on
+the stored atom rather than on the return value.
+
+**The audit UI treated `update` as a failed edit.** `PATCH /api/atoms/:id` re-proposes through
+`proposeMemory`, so a reviewer editing a candidate's trigger into a collision got the decision's
+reasons rendered as an error. The edit path now accepts `update` and says which memory the saved
+proposal revises.
+
+**The re-review guard had no test.** `admitMemory` refuses to apply a revision whose target stopped
+being effective, which is what keeps a cross-topic supersession from being applied against a store the
+reviewer never saw. It was implemented and unasserted.
+
+**`docs/memory/evaluation-harness.md` still listed the write-path outcomes without `update`**, and
+documented neither new figure. **`docs/DD.md` carried no bullet for the routing** — a behavioural
+guarantee absent from the contract that states them — and **INV-06 read as though supersession were
+confined to a shared topic key**, which this stage made untrue. All three are corrected.
 
 ### Not done
 
