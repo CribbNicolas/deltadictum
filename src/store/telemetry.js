@@ -12,7 +12,13 @@ export function createTelemetry(index, git) {
     const telemetry = config.telemetry;
     db.prepare('DELETE FROM memory_observations WHERE observed_at < ?').run(since(obs.retention_days));
     db.prepare('DELETE FROM memory_observations WHERE id IN (SELECT id FROM memory_observations ORDER BY observed_at DESC LIMIT -1 OFFSET ?)').run(obs.max_observations);
-    for (const table of ['memory_feedback', 'memory_retrieval_events', 'memory_admission_decisions', 'memory_contradiction_log']) {
+    // memory_contradiction_log is deliberately absent: it records Level 3 human
+    // decisions and their rationale, which is audit, not telemetry. A row is
+    // written only when a caller declares a contradiction or a human resolves
+    // one, so the table cannot grow the way the observation and retrieval logs
+    // do, and discarding a resolution would destroy the record of why an
+    // effective memory won.
+    for (const table of ['memory_feedback', 'memory_retrieval_events', 'memory_admission_decisions']) {
       db.prepare(`DELETE FROM ${table} WHERE created_at < ?`).run(since(telemetry.retention_days));
       db.prepare(`DELETE FROM ${table} WHERE id IN (SELECT id FROM ${table} ORDER BY created_at DESC LIMIT -1 OFFSET ?)`).run(telemetry.max_events);
     }
