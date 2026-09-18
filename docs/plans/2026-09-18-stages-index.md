@@ -44,11 +44,15 @@ What the audit found, and what the stages address:
 | 3 | [Measurement](2026-09-18-stage-3-measurement.md) | **Done** `2765ed8` | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
 | 4 | [Provenance](2026-09-18-stage-4-provenance.md) | **Done** `3c83529` | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
 | 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | **Done** `e5b8c6f` | The highest-reliability signal available is never observed | Medium |
-| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Ready | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
+| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Next | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
 | 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Ready | `archived` is declared and unreachable; the effective set only grows | High |
 
 A stage marked **Done** carries an *Outcome* section recording what it actually did, including where
 the plan turned out to be wrong. Read that before assuming the stage body describes the current code.
+
+The stage marked **Next** carries a *Corrections from stage N* section: its *Start here* checks have
+already been run against the current code, and every place the plan disagrees with what is there is
+written down. Start from that section, not from the plan body.
 
 ## Dependency graph
 

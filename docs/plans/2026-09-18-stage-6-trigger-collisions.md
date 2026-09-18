@@ -8,6 +8,7 @@ depends_on:
   - architecture/plugin-constraints.md
   - memory/memory-admission-control.md
   - plans/2026-09-18-stage-3-measurement.md
+  - plans/2026-09-18-stage-5-user-corrections.md
 do_not_co_load_with: []
 ---
 
@@ -46,9 +47,11 @@ stages move code. Run the checks below first. If any result disagrees with what 
 section claims, **stop and report the difference** instead of proceeding — a plan that no longer
 matches the code is information, not an obstacle to route around.
 
-This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
-described one unreachable handler where there were two plus a routing indirection, and a stage
-instructed a rule that turned out to be wrong once implemented.
+This is not ceremony. Executing this plan series has produced four cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection; a stage instructed a
+rule that turned out to be wrong once implemented; a stage named one prompt handler where two exist;
+and a stage asserted a *Done when* line ("visible in the audit UI") that no code satisfied. The section
+below is the same check, already run for you.
 
 ```bash
 # The detector that already runs. Expect: a jaccard >= 0.5 filter, returned and unused.
@@ -65,9 +68,49 @@ grep -rn "decision: 'update'" src/
 npm run eval
 ```
 
+## Corrections from stage 5
+
+Stage 5 shipped (`e5b8c6f`, review `b884d31`). Checked 2026-09-18: **all four *Start here* checks still
+return what this document says they should.** Only line numbers drifted — `src/engine/write.js:62-65`,
+`src/engine/contract.js:95-99`, `src/engine/v2/constants.js:7`, and the health indicator at
+`src/engine/health/deterioration.js:6` and `:138-160`. What this document gets wrong:
+
+**The threshold is already in config, and the *Files* list points at the wrong file.**
+`DEFAULT_CONFIG.health` *is* `DEFAULT_HEALTH_THRESHOLDS` (`src/store/paths.js:80`), which already
+contains `trigger_collision: { jaccard: 0.5, ... }` and is already project-overridable. Adding a key
+next to `vpt_threshold` would create a second threshold for one concept — the drift this plan's own
+risks section forbids for the similarity function, for the same reason. Read
+`config.health.trigger_collision.jaccard` and delete the literal `0.5` in `write.js`, which is
+currently a second copy of that number. **Remove `src/store/paths.js` from the *Files* list.**
+
+**The collision is computed after the atom is already written.** `src/engine/write.js:60` calls
+`store.putAtom(payload)`, and only then loads peers and computes `collides_with`. A decision cannot be
+routed on a value produced after the write it is supposed to route. Moving the computation above the
+`putAtom` call is the first change this stage makes, and it is structural, not cosmetic.
+
+**The comparison does not see candidates.** `peers` is `lifecycleStates: ['active', 'contested']`, so a
+near-duplicate sitting in the review queue is invisible. This matters directly for the stage 5 feed
+below: repeated corrections arrive as candidates, and two near-identical *candidates* are exactly the
+pair a reviewer should see together. Decide whether candidates join the comparison; if they do, the
+scope guard and the "when in doubt, create the candidate" rule apply unchanged.
+
+**The acceptance criterion cannot be met as written.** `npm run eval` currently reports
+`write_attempts: 7, duplicates: 0, duplicate_rate_per_1000: 0`. A rate of zero cannot "measurably
+fall". The replay corpus contains no near-duplicate scenario, so the metric judges nothing today. Add
+paraphrase and scope-mismatch scenarios to the corpus *before* changing the routing, so the number
+means something in both directions — this is the same trap stage 3 named: a green that proves nothing.
+
+**Stage 5 landed, and its feed is real.** `user_correction` observations now exist
+(`observationFromPrompt` in `src/hooks/observe.js`), and the audit UI lists recorded evidence read-only.
+The "repeated corrections on one topic" case this stage benefits from is reachable rather than
+hypothetical.
+
+**Baseline to hold.** `npm test` 239/239, `npm run eval` 24/24 with f1 1.0 and evidence coverage 1.0,
+`npm run test:stress` 12/12 at `cold_ms=1124 resident_ms=110` on 2000 atoms.
+
 ## Starting state
 
-**The detector already runs on every write.** `src/engine/write.js:52-54`:
+**The detector already runs on every write.** `src/engine/write.js:62-64`:
 
 ```js
 const collides_with = peers.filter(a => a.id !== atom.id).map(peer => ({ id: peer.id, topic_key: peer.topic_key,
@@ -81,12 +124,12 @@ The result is returned to the caller and surfaced over MCP (`src/mcp/tools.js:16
 a second time as a health indicator, `trigger_collision` in `src/engine/health/deterioration.js:136-154`,
 which also only reports.
 
-**Meanwhile deduplication is exact.** `sameKnowledge` (`src/engine/contract.js:89-93`) compares the
+**Meanwhile deduplication is exact.** `sameKnowledge` (`src/engine/contract.js:95-99`) compares the
 thirteen `MATERIAL_FIELDS` as serialised JSON. A paraphrase, a reordered list, or one extra word is a
 new candidate. So the write path can detect near-duplicates and chooses not to, while the mechanism
 that does block duplicates cannot see them.
 
-**One decision is declared and never emitted.** `ADMISSION_DECISIONS` (`src/engine/v2/constants.js:4`)
+**One decision is declared and never emitted.** `ADMISSION_DECISIONS` (`src/engine/v2/constants.js:7`)
 includes `update`. Stage 1 deliberately kept it for this stage.
 
 ## What changes, and why
@@ -116,15 +159,17 @@ and apply to different files, components or operations — the `applies_to` gate
 match with a scope mismatch is not a duplicate.
 
 **The threshold is configurable with a justified default.** 0.5 is the value already in use for the
-report and the health indicator; reuse it rather than introducing a second constant, and put it in
-config next to `vpt_threshold` (`src/store/paths.js`).
+report and the health indicator; reuse it rather than introducing a second constant. It is already in
+config, at `config.health.trigger_collision.jaccard` — read it there. See *Corrections from stage 5*.
 
 ## Files
 
 - `src/engine/write.js` — carry the collision into the decision instead of only returning it
 - `src/engine/v2/admission.js` — the routing
 - `src/mcp/tools.js` — surface the decision so the agent understands why a proposal became a revision
-- `src/store/paths.js` — the threshold in `DEFAULT_CONFIG`
+- ~~`src/store/paths.js`~~ — nothing to do; the threshold is already in `DEFAULT_CONFIG.health`, see
+  *Corrections from stage 5* above
+- `src/eval/` — near-duplicate scenarios, so the acceptance metric is not judging an empty set
 - `docs/memory/memory-admission-control.md` — remove the "Not implemented" note on collisions, and the
   one on `update` never being emitted
 - `docs/memory/roadmap.md` — gap closes
