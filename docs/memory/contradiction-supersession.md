@@ -93,18 +93,26 @@ The intended precedence order, highest first:
 Predominance must never be the primary factor, or repeatedly-chosen positions entrench themselves and
 stale decisions become unchallengeable.
 
-**Not implemented.** This order exists as `compareForResolution` in `src/engine/v6/predominance.js` and
-**is called by nothing**. Resolution is entirely a human choice in the audit UI, with no ranking shown.
-Two further gaps make the function inert as written:
+The order is implemented in `src/engine/v6/predominance.js` and surfaced to the reviewer:
 
-- `evidence_supports`, its primary signal, has **no producer anywhere in the codebase**. The function
-  reads it and its own docblock says so.
-- `memory_atoms.predominance` is a real column, persisted and read back, that **no code path ever
-  increments**. `PREDOMINANCE_WIN_BUMP` is exported and never applied. Neither resolution nor
-  supersession bumps it.
+- **Evidence** is derived from the atom's own `evidence_state.verified_count`, so no caller has to
+  enrich an atom before comparing. It counts artifacts whose bytes were checked — integrity coverage,
+  never logical support.
+- **Authority** reads the shared ladder in `src/engine/authority.js`. Retrieval weights and resolution
+  ranks are two projections of one ordered list, so they cannot disagree about which authority
+  outranks which; a test asserts that for every pair.
+- **Predominance** is incremented by `PREDOMINANCE_WIN_BUMP` on the winner of a human resolution, and
+  bounded, so accumulation cannot turn a tiebreaker into a primary signal.
 
-Wiring this order, and producing the evidence signal it needs, is the first item in
-[the roadmap](roadmap.md).
+`GET /api/atoms/:id` returns, for each effective opponent, which side the order favours and the tier
+that decided it. A total tie is reported as a tie rather than resolved arbitrarily.
+
+**This is advice, not a decision.** `resolveMemories` does not consult the order. It still requires the
+local review capability and a written rationale, and the reviewer may pick the side the order does not
+favour. Nothing automatic selects a winner.
+
+**Not implemented.** Predominance decay. A track record currently only grows, so a position that won
+long ago keeps its nudge indefinitely. The bound limits the damage; it does not remove it.
 
 ## Inference Boundary
 

@@ -43,18 +43,15 @@ contested lifecycle, deterioration detection, and a local audit UI.
 
 Known gaps, in the order they hurt:
 
-1. **Two incompatible entrenchment orders.** `compareForResolution` in `engine/v6/predominance.js` is a
-   correct lexicographic order that nothing calls, and whose primary signal has no producer.
-   `AUTHORITY_WEIGHT` in `engine/retrieve.js` is a different order that does run.
-2. **Provenance is recorded and ignored.** `capture_origin` and `evidence_state.provenance` both exist;
+1. **Provenance is recorded and ignored.** `capture_origin` and `evidence_state.provenance` both exist;
    the admission gate reads neither, and confidence is a constant.
-3. **Near-duplicate knowledge is detected and tolerated.** `collides_with` is computed on every write
+2. **Near-duplicate knowledge is detected and tolerated.** `collides_with` is computed on every write
    and acted on nowhere.
-4. **Nothing is ever forgotten.** `archived` is a declared lifecycle state that no code path reaches.
-5. **Advisory only.** `PreToolUse` always returns `allow`; an `anti_memory` cannot stop anything.
-6. **User corrections are not observed.** The observation log records tool failures and validation
+3. **Nothing is ever forgotten.** `archived` is a declared lifecycle state that no code path reaches.
+4. **Advisory only.** `PreToolUse` always returns `allow`; an `anti_memory` cannot stop anything.
+5. **User corrections are not observed.** The observation log records tool failures and validation
    commands; the highest-reliability signal available depends on the model remembering to propose it.
-7. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
+6. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
    `explicit`, and `actor_ref` is never populated. The log itself is now retained as audit rather
    than pruned as telemetry.
 
@@ -70,16 +67,18 @@ Done:
 - ✅ Require unreviewed authorities to clear a higher activation bar than reviewed ones, because a
   wrong injection costs more than a missed one.
 - ✅ Retain the contradiction log as audit instead of pruning it as telemetry.
+- ✅ Unify the entrenchment order. One authority ladder now backs both the retrieval weight and the
+  resolution rank, so they cannot disagree about which authority outranks which.
+- ✅ Give contradiction resolution a declared precedence policy — evidence, then recency, then
+  authority, then track record — surfaced to the reviewer with the tier that decided it, and never as
+  a decision. The evidence signal is derived from verified artifact coverage, and the winner of a
+  human resolution records a bounded track record.
 
 Remaining:
 
-- Unify the entrenchment order; produce the evidence signal it needs; derive retrieval authority
-  weights from the same order.
 - Act on `collides_with` instead of only reporting it.
 - Rank knowledge by source reliability, with a hard cap per source, so a model claim can never reach
   the standing of a verified artifact or an explicit user correction.
-- Give contradiction resolution a declared precedence policy — authority, then specificity, then
-  recency, then verified evidence — surfaced to the reviewer as a recommendation, never as a decision.
 
 ## Phase 2 — Fix what produces the knowledge
 

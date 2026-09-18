@@ -7,6 +7,7 @@ import { proposeMemory } from '../engine/write.js';
 import { admitMemory, rejectMemory, resolveMemories, HUMAN_REVIEW } from '../engine/lifecycle.js';
 import { projectContext } from '../engine/project-context.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
+import { recommendResolution } from '../engine/v6/predominance.js';
 import { resolve as resolvePath } from 'node:path';
 import { buildPreToolContext } from '../hooks/pre-tool.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
@@ -92,9 +93,13 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
           const relations = await store.listRelations({ atomIds: [atom.id] });
           const ids = relations.filter(r => r.relation_type === 'contradicts')
             .map(r => r.source_atom_id === atom.id ? r.target_atom_id : r.source_atom_id);
+          // The ranking order is shown to the reviewer as a recommendation with
+          // the tier that decided it. Resolution stays a human choice: nothing
+          // here selects a winner.
           const opponents = (await Promise.all(ids.map(peerId => store.getAtom(peerId, projectId))))
             .filter(a => a && ['active', 'contested'].includes(a.lifecycle_state))
-            .map(a => ({ id: a.id, title: a.title, topic_key: a.topic_key }));
+            .map(a => ({ id: a.id, title: a.title, topic_key: a.topic_key,
+              recommendation: recommendResolution(atom, a) }));
           return send(res, 200, { ...atom, freshness: await checkEvidenceFreshness(atom, store), relations, opponents });
         }
         const body = await readBody(req);

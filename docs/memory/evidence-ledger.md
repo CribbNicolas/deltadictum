@@ -48,6 +48,15 @@ Memory tracks when a claim is valid.
 
 `observed_at` exists on **observations**, not on knowledge. An atom therefore carries valid time only.
 
+## Coverage as a Ranking Signal
+
+The count of references whose bytes were verified is the primary tier of the contested-resolution
+order (see `contradiction-supersession.md`). It is derived from `evidence_state.verified_count` at
+comparison time rather than stored, so it cannot drift from the evidence it summarises.
+
+It measures integrity, never entailment. That is precisely why authority and human review occupy
+separate tiers: coverage says the artifacts are real, and review says the claim follows from them.
+
 ## Relations
 
 The relation table permits six types: `supports`, `contradicts`, `supersedes`, `derived_from`,

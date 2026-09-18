@@ -83,4 +83,47 @@ describe('audit UI HTTP', () => {
     assert.equal(empty.body.length, 1);
     assert.equal(empty.body[0].id, written.atom.id);
   });
+  test('a contested atom shows the ranking recommendation without resolving anything', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-dispute-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const propose = topic_key => proposeMemory({
+      project_id: 'demo', memory_type: 'decision', title: 'Retry policy',
+      trigger: 'when retrying payment requests', behavior_delta: 'Reuse the idempotency key.',
+      what: 'Retries reuse the key.', why: 'Avoid duplicate charges.', topic_key,
+      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/write.js', summary: 'write path' }],
+      retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the idempotency key on retry.' },
+    }, { store });
+    const first = await propose('payments/retry/keys');
+    const second = await propose('payments/retry/manual');
+
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const headers = { 'content-type': 'application/json', 'x-dd-review-token': ui.token };
+
+    for (const written of [first, second]) {
+      await json(`${ui.url}/api/atoms/${written.atom.id}/admit`,
+        { method: 'POST', headers, body: JSON.stringify({ rationale: 'Reviewed against the write path.' }) });
+    }
+    await store.commitAtoms([], [{ source_atom_id: first.atom.id, relation_type: 'contradicts', target_atom_id: second.atom.id }]);
+    for (const written of [first, second]) {
+      const atom = await store.getAtom(written.atom.id, 'demo');
+      await store.commitAtoms([{ ...atom, lifecycle_state: 'contested', contested_at: new Date().toISOString() }]);
+    }
+
+    const viewed = await json(`${ui.url}/api/atoms/${first.atom.id}`);
+    assert.equal(viewed.status, 200);
+    assert.equal(viewed.body.opponents.length, 1);
+    const recommendation = viewed.body.opponents[0].recommendation;
+    assert.ok(recommendation, 'the reviewer is shown which side the ranking order favours');
+    assert.ok('basis' in recommendation && 'winner_id' in recommendation && 'tie' in recommendation);
+    if (!recommendation.tie) {
+      assert.ok([first.atom.id, second.atom.id].includes(recommendation.winner_id));
+      assert.ok(['evidence', 'recency', 'authority', 'predominance'].includes(recommendation.basis));
+    }
+
+    // Showing a recommendation must not resolve anything on its own.
+    assert.equal((await store.getAtom(first.atom.id, 'demo')).lifecycle_state, 'contested');
+    assert.equal((await store.getAtom(second.atom.id, 'demo')).lifecycle_state, 'contested');
+  });
+
 });
