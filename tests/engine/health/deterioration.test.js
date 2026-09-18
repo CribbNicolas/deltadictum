@@ -320,6 +320,15 @@ describe('retirement candidates', () => {
     assert.deepEqual(retirementCandidates(snapshotWith([young], 50), NOW, POLICY), []);
   });
 
+  test('a memory a pending candidate revises is under review, not disused', () => {
+    const target = disused();
+    const revision = atom({ id: 'c1', lifecycle_state: 'candidate', replaces: 'a1' });
+    assert.deepEqual(retirementCandidates(snapshotWith([target, revision]), NOW, POLICY), []);
+    // The candidate's own state is what protects it. A rejected leftover does not.
+    const rejected = atom({ id: 'c2', lifecycle_state: 'rejected', replaces: 'a1' });
+    assert.deepEqual(retirementCandidates(snapshotWith([target, rejected]), NOW, POLICY).map(a => a.id), ['a1']);
+  });
+
   test('a disputed memory is a human question, not disuse', () => {
     assert.deepEqual(retirementCandidates(snapshotWith([disused({ lifecycle_state: 'contested' })]), NOW, POLICY), []);
   });

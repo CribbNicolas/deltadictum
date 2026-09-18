@@ -217,6 +217,29 @@ describe('forgetting by disuse', () => {
     } finally { db.close(); }
   });
 
+  test('a memory a candidate is proposing to revise is not disused', async () => {
+    const db = await store();
+    try {
+      const original = await seedEffective(db, { authority: 'inferred', age_days: 400 });
+      await setRetirementPolicy(db, REACHABLE);
+      await logRetrievals(db, 4);
+
+      // The revision is proposed against the live memory, and the same write
+      // sweeps. Retiring the target here would produce a candidate that review
+      // can never approve.
+      const revision = await proposeMemory(proposal({
+        title: 'Keep the idempotency key when retrying',
+        behavior_delta: 'Send the original idempotency key again.',
+      }), { store: db });
+      assert.equal(revision.atom.replaces, original.id);
+      assert.equal((await db.getAtom(original.id, PROJECT)).lifecycle_state, 'active');
+
+      const admitted = await admitMemory(revision.atom.id, { store: db, projectId: PROJECT,
+        actor: HUMAN_REVIEW, rationale: 'The wording is clearer.' });
+      assert.equal(admitted.lifecycle_state, 'active');
+    } finally { db.close(); }
+  });
+
   test('the write path still succeeds when retirement evaluation throws', async () => {
     const db = await store();
     try {
