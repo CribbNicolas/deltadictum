@@ -41,11 +41,11 @@ What the audit found, and what the stages address:
 |---|---|---|---|---|
 | 1 | [Cleanup](2026-09-18-stage-1-cleanup.md) | **Done** `f839e93` | Dead modules, unreachable handlers, unused enum value, schema default drift | Low |
 | 2 | [Project isolation](2026-09-18-stage-2-project-isolation.md) | **Done** `3308828` | An ancestor capturing the work beneath it; the one red test | Medium |
-| 3 | [Measurement](2026-09-18-stage-3-measurement.md) | Next | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
-| 4 | [Provenance](2026-09-18-stage-4-provenance.md) | Waiting on 3 | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
+| 3 | [Measurement](2026-09-18-stage-3-measurement.md) | **Done** `2765ed8` | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
+| 4 | [Provenance](2026-09-18-stage-4-provenance.md) | Next | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
 | 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | Waiting on 4 | The highest-reliability signal available is never observed | Medium |
-| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Waiting on 3 | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
-| 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Waiting on 3 | `archived` is declared and unreachable; the effective set only grows | High |
+| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Ready | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
+| 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Ready | `archived` is declared and unreachable; the effective set only grows | High |
 
 A stage marked **Done** carries an *Outcome* section recording what it actually did, including where
 the plan turned out to be wrong. Read that before assuming the stage body describes the current code.
@@ -63,8 +63,10 @@ the plan turned out to be wrong. Read that before assuming the stage body descri
 - **1 and 2 are independent of each other** and of everything else. Either can go first; both must
   precede the rest, because stage 1 removes code that would otherwise be maintained for nothing and
   stage 2 fixes a correctness bug the later stages would inherit.
-- **3 gates 4 through 7.** Without abstention F1, duplicate rate and evidence coverage there is no way
-  to show any later stage helped. Stage 3 captures the baseline every later stage is compared against.
+- **3 gates 4 through 7**, and is now done. Stage 4 raises evidence coverage and must not lower it;
+  stage 6 is measured by whether duplicate rate moves once near-duplicates are acted upon; every stage
+  that changes what gets injected is measured by whether abstention F1 holds. Note that duplicate rate
+  catches **exact** equivalence only, so its baseline of 0 understates the problem by construction.
 - **5 enriches 4** rather than blocking it: stage 4 defines the reliability ladder and stage 5 adds its
   top source.
 - **6 and 7 are independent of each other.**
@@ -76,16 +78,20 @@ reading this index.
 
 - **Start by confirming the ground.** Every stage opens with a *Start here* section of checks whose
   expected output is stated. Run them before writing code. If the repository disagrees with the
-  document, stop and report it: three errors in this plan were found that way, including a stage that
-  described one unreachable handler where there were two, a rule that was wrong once implemented, and
-  a count of abstention scenarios that was off by a third.
+  document, stop and report it: six errors in this plan were found that way — a stage that described
+  one unreachable handler where there were two, a rule that was wrong once implemented, a count of
+  abstention scenarios that was off by a third, and three claims in stage 3 about what the store
+  already recorded that turned out to be false. Every one of them changed the implementation.
 - **Tests first, and check the red is for the right reason.** This work has already produced a test
   that passed vacuously because the operation under test did not trigger the code being measured.
   A green that proves nothing is worse than a red.
 - **One commit per stage**, whose message explains the reasoning, not the diff.
-- **Baseline is sacred.** After stage 2: `npm test` is **197 tests, 197 passing — zero failures**, and
-  `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens. A stage that leaves a failing test is not
-  finished. (The count dropped from 213 because stage 1 removed three dead test files.)
+- **Baseline is sacred.** After stage 3: `npm test` is **202 tests, 202 passing — zero failures**, and
+  `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens, abstention f1 1.0 over 9 scenarios, 0
+  duplicates per 1000 write attempts, evidence coverage 1.0. A stage that leaves a failing test is not
+  finished. (197 after stage 2, itself down from 213 because stage 1 removed three dead test files;
+  stage 3 added five.) The full report is recorded under *Baseline* in
+  [the stage 3 document](2026-09-18-stage-3-measurement.md).
 - **The replay may not get worse.** A stage that changes ranking runs the replay before and after and
   explains the difference in its commit.
 - **Documentation changes in the same commit.** If a stage changes behaviour that `docs/` describes,
@@ -100,8 +106,9 @@ phase.
 - **`anti_memory` veto.** `src/hooks/pre-tool.js` always returns `allow`; an anti-memory cannot stop a
   tool call. Blocked by L4: the hook contract differs per harness, and Codex does not even accept
   `decision: 'allow'`. Needs a negotiated-capability design with degradation to a warning.
-- **Bounded automatic promotion (SPRT).** Relaxes DD's central safety property. Needs stage 3 first and
-  an explicit decision to relax it.
+- **Bounded automatic promotion (SPRT).** Relaxes DD's central safety property. Stage 3 is now done, so
+  the measurement precondition is met; it still needs an explicit decision to relax the property, which
+  has not been taken.
 - **Predominance decay.** Only matters if predominance ever carries weight; it is bounded and is the
   last of four tiers.
 - **Full bitemporality.** Git history already answers "what did the system believe on Tuesday".

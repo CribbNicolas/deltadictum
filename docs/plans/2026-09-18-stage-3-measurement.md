@@ -197,10 +197,16 @@ npm test      # zero failures — stage 2 has already cleaned the suite
 Depends on stages 1 and 2 only for a clean baseline — the suite must be green before a baseline means
 anything. **Gates stages 4, 5, 6 and 7**: without these numbers, each of them is an opinion.
 
-## What the ground checks found that this document got wrong
+## Outcome
 
-The four checks all returned what the *Starting state* section predicted. Three claims made elsewhere
-in this document did not survive contact with the code, and the implementation had to route around them.
+Executed in commit `2765ed8`. **202 tests, 202 passing**, plus 12 passing stress tests. Retrieval
+replay unchanged at 24/24, f1 1.0, 2182 tokens — byte-identical, which is the acceptance criterion for
+a stage that adds instrumentation and must change no retrieval decision. The suite grew from 197 to 202
+because this stage added five tests; no existing test was modified.
+
+The four *Start here* checks all returned what the *Starting state* section predicted. Three claims
+made elsewhere in this document did not survive contact with the code, and the implementation had to
+route around them.
 
 1. **`memory_admission_decisions` did not record what duplicate rate needs.** `proposeMemory` returned
    `ignore` at `src/engine/write.js:50` and returned *immediately*, with no `logAdmission` call. Two
@@ -223,6 +229,16 @@ in this document did not survive contact with the code, and the implementation h
 Two files outside the plan's *Files* list were changed as a result: `src/engine/write.js` (log the
 `ignore` and the two unlogged `block` decisions) and `src/store/create-store.js` (add `listAdmissions`).
 Neither changes a decision — both only record one that was already being made.
+
+Two other things a clean-context run should know:
+
+- **`gateFails(report)` was extracted from the CLI block** so the gate is testable without spawning a
+  process. Abstention got its own threshold (`abstention.f1 < 0.9`) rather than being folded into the
+  existing one, which is unchanged.
+- **The write-path probe promotes through `admitMemory` with the `HUMAN_REVIEW` symbol**, in a
+  throwaway store, so that "effective" in the coverage figure means what it means everywhere else in
+  DD (`active` or `contested`). Nothing in the production promotion path changed; the probe stands in
+  for the reviewer only inside the evaluation.
 
 ## Baseline
 
