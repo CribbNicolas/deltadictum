@@ -139,15 +139,17 @@ What is actually written today:
 | `actor_ref` | **Never populated.** No call site supplies it. |
 | `reasons` | Populated. Level 3 resolution requires a rationale, enforced in code. |
 
-**Not implemented.** Two claims earlier versions of this document made are false, recorded here so they
-are not repeated:
+**Retention.** Log rows are never deleted. `memory_contradiction_log` is deliberately excluded from the
+telemetry prune in `src/store/telemetry.js`: a row is written only when a caller declares a
+contradiction or a human resolves one, so the table cannot grow the way the observation and retrieval
+logs do, and discarding a resolution would destroy the record of why an effective memory won.
 
-- The log is **not** an audit record of supersession. Supersession happens during admission and writes
-  no log row at all; only explicit contradiction and its resolution are logged.
-- Log rows are **not** immutable. `memory_contradiction_log` is pruned with the other telemetry tables
-  at 90 days or 2000 rows, whichever comes first (`src/store/paths.js`, applied in
-  `src/store/telemetry.js`). Whether a resolution record is telemetry or audit is an open decision: if
-  it is audit, it does not belong under the telemetry retention policy.
+The other three logs — feedback, retrieval events and admission decisions — remain under the telemetry
+policy of 90 days or 2000 rows, whichever comes first.
+
+**Not implemented.** One claim earlier versions of this document made is false, recorded here so it is
+not repeated: the log is **not** an audit record of supersession. Supersession happens during admission
+and writes no log row at all; only explicit contradiction and its resolution are logged.
 
 ## Interfaces
 
@@ -157,7 +159,7 @@ through the local audit UI.
 | Operation | Interface |
 |---|---|
 | Supersession-aware write | MCP `propose`. Detects a same-key effective atom and sets `replaces`; the swap happens on approval. |
-| Revise an existing memory | MCP `update`. Merges the supplied fields over the stored atom and re-proposes it. There is **no update in place**: a revision is a new candidate that supersedes on approval, so the effective memory never changes without review. |
+| Revise an existing memory | MCP `propose` with the same `topic_key`. There is **no update in place**: a revision is a new candidate that supersedes on approval, so the effective memory never changes without review. `createToolHandlers` also exposes an `update` handler that merges fields over a stored atom and re-proposes it, but `definition.js` does not register it as a tool, so no caller can reach it. |
 | Declare a contradiction | MCP `contradict`. Both sides enter `contested`. |
 | List contested pairs | MCP `list` and the audit UI, always project-scoped (INV-01, INV-02). |
 | Resolve a contradiction | Audit UI `POST /api/resolve`. Local human review with a mandatory rationale; not reachable from MCP. |

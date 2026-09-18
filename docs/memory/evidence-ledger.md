@@ -40,15 +40,23 @@ Evidence can reference test logs, tool outputs, files, diffs, traces, decisions,
 
 ## Temporal Validity
 
-Memory tracks when something was observed and when it is valid.
+Memory tracks when a claim is valid.
 
-- `observed_at`: when evidence was captured.
-- `valid_from`: when the claim became true or actionable.
-- `valid_until`: when the claim stops being true or useful.
+- `valid_from`: when the claim became true or actionable. Defaults to write time.
+- `valid_until`: when the claim stops being true or useful. Optional; an expired window suppresses the
+  advice rather than flagging it.
+
+`observed_at` exists on **observations**, not on knowledge. An atom therefore carries valid time only.
 
 ## Relations
 
-The ledger supports `supported_by`, `refuted_by`, `supersedes`, `superseded_by`, `contradicts`, `caused_by`, and `effective_during`.
+The relation table permits six types: `supports`, `contradicts`, `supersedes`, `derived_from`,
+`blocks` and `related_to`. Supersession also records `superseded_by` directly on the atom.
+
+**Not implemented.** Only `supersedes` and `contradicts` are ever written. `supports`, `derived_from`,
+`blocks` and `related_to` exist in the schema and no code path produces them, so the relation graph
+carries succession and dispute and nothing else. Earlier versions of this document named
+`supported_by`, `refuted_by`, `caused_by` and `effective_during`; none of those exist under any name.
 
 ## V2 and V3 Boundary
 
@@ -56,16 +64,29 @@ V2 requires `evidence_refs` as stable references. V3 introduces first-class evid
 
 ## Bitemporal Detail
 
-Durable memory tracks two independent time axes:
+**Not implemented.** The intent is two independent time axes on durable knowledge:
 
-- **Transaction time** — `observed_at`: when the evidence was captured by the system.
-- **Valid time** — `valid_from` / `valid_until`: when the claim is actually true or actionable in the world.
+- **Transaction time** — when the system came to believe the claim.
+- **Valid time** — `valid_from` / `valid_until`: when the claim is actually true in the world.
 
-Separating them answers questions the V1 model cannot: "what did we believe at time T" versus "what was true at time T". This is the basis for stale-decision detection and "what changed since X" queries.
+Separating them answers "what did we believe at time T" as distinct from "what was true at time T",
+which is the basis for stale-decision detection and "what changed since X" queries.
+
+Today an atom carries valid time only. Transaction time exists on observations (`observed_at`) and in
+git history, but not on knowledge, so the first question can be answered by reading the repository log
+and not by querying the store. Completing this is an audit improvement, not a retrieval one, and it
+requires a schema migration.
 
 ## Causal Relations
 
-Beyond `supported_by` / `refuted_by` / `supersedes`, the ledger records causal and temporal links: `caused_by` and `effective_during`. These let memory reconstruct why a decision was made and what conditions held when a task failed — valuable for autonomous debugging.
+**Not implemented.** The intent was that the ledger record causal and temporal links beyond succession
+and dispute, so memory could reconstruct why a decision was made and what conditions held when a task
+failed. Nothing of the sort exists: no causal relation type is defined in the schema, and no code path
+writes one.
+
+The nearest thing that does exist is authored rather than inferred — `why`, `alternatives`,
+`assumptions` and `revisit_when` on the atom itself carry the reasoning the causal graph was meant to
+reconstruct.
 
 ## Claim Surface vs Evidence Deep-Fetch
 

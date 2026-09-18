@@ -55,20 +55,26 @@ Known gaps, in the order they hurt:
 6. **User corrections are not observed.** The observation log records tool failures and validation
    commands; the highest-reliability signal available depends on the model remembering to propose it.
 7. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
-   `explicit`, `actor_ref` is never populated, and the contradiction log is pruned under the telemetry
-   retention policy. Whether a resolution record is telemetry or audit is still undecided.
+   `explicit`, and `actor_ref` is never populated. The log itself is now retained as audit rather
+   than pruned as telemetry.
 
 ## Phase 1 — Make the existing signals honest
 
 Wire what is already written, add no dependency, keep the human in the write path.
 
+Done:
+
+- ✅ Never inject both sides of a contradiction in one pack.
+- ✅ Suppress near-duplicate advice inside a pack.
+- ✅ Use recorded frequency and age to separate live from dead knowledge.
+- ✅ Require unreviewed authorities to clear a higher activation bar than reviewed ones, because a
+  wrong injection costs more than a missed one.
+- ✅ Retain the contradiction log as audit instead of pruning it as telemetry.
+
+Remaining:
+
 - Unify the entrenchment order; produce the evidence signal it needs; derive retrieval authority
   weights from the same order.
-- Never inject both sides of a contradiction in one pack.
-- Suppress near-duplicate advice inside a pack.
-- Use recorded frequency and age to separate live from dead knowledge.
-- Require unreviewed authorities to clear a higher activation bar than reviewed ones, because a wrong
-  injection costs more than a missed one.
 - Act on `collides_with` instead of only reporting it.
 - Rank knowledge by source reliability, with a hard cap per source, so a model claim can never reach
   the standing of a verified artifact or an explicit user correction.

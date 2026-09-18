@@ -60,7 +60,11 @@ Orientation reads bounded manifest and README content, known script names, root 
 
 Retrieval uses FTS candidates plus aliases, authored trigger variants, a small transparent English/Spanish concept vocabulary, and structured file/component/operation cues. It checks scope before ranking and never falls back to arbitrary recent memories after an empty or failed search. The concept vocabulary improves covered phrases; it is not general semantic understanding.
 
-Candidates are ranked by activation and existing evidence authority. Full, short and micro forms are tried in order, with fallback both for size and insufficient value per token. Disputes, unknown assumptions and review notices remain explicit. At most eight memories are returned.
+Candidates are ranked by activation, existing evidence authority and recorded use. Knowledge that no retrieval has ever activated ranks below knowledge that has, using the stored use count and age rather than the retrieval log, which the hot path cannot afford to read. A candidate set with no usage history at all carries no evidence either way and is left unranked by that signal. Knowledge that no human reviewed must clear a higher activation floor than reviewed knowledge, because a wrong injection costs more than a missed one.
+
+Selection is not independent per memory. A candidate that repeats a trigger already selected is penalised and an identical one is dropped: a second copy of the same rule spends budget without adding advice. A candidate that contradicts one already selected is excluded outright, so an injected pack never argues with itself; the dispute is surfaced by naming the opponent instead.
+
+Full, short and micro forms are tried in order, with fallback both for size and insufficient value per token. Disputes, unknown assumptions and review notices remain explicit. At most eight memories are returned.
 
 The default budget is 600 estimated tokens for the serialized result. UTF-8 bytes divided by three provides a provider-independent estimate; it is not an exact guarantee for any tokenizer. MCP budgets range from 128 to 8,000. Orientation and recalled knowledge share a budget. Expanded `get` results and tool schemas are separate protocol costs and must be included in real-model measurements.
 
@@ -69,6 +73,8 @@ Delivery deduplication requires an explicit session ID. Its revision includes kn
 ## Persistence and concurrency
 
 Git JSON is the source of truth for knowledge. SQLite uses WAL and contains the rebuildable search index plus local observations, feedback and delivery state. Telemetry is not part of shared project doctrine.
+
+Observations, feedback, retrieval events, admission decisions and session state are bounded by retention. The contradiction log is the exception: it records declared disputes and the rationale a reviewer gave for resolving them, which is audit rather than telemetry, so it is never pruned. A row is written only on an explicit declaration or a human resolution, so it cannot grow the way the observation and retrieval logs do.
 
 A project lock serializes mutations across processes. Nested engine operations reuse that lock. Multi-file changes first persist a roll-forward journal; journal publication is the commit point. Recovery completes it before rebuilding or serving the index. Individual files publish by temporary-file rename after flushing contents. This covers process interruption; filesystem corruption and hardware power-loss behavior still depend on the operating system and storage.
 
