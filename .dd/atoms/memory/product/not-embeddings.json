@@ -2,7 +2,7 @@
   "id": "1349225a-6ef2-4300-97bc-042f2a383baa",
   "schema_version": 6,
   "authority": "inferred",
-  "confidence": 0.7,
+  "confidence": 0.85,
   "scope": "project",
   "valid_from": "2026-09-10T05:52:06.202Z",
   "memory_type": "anti_memory",
@@ -27,5 +27,22 @@
   "registry_key_id": "0fae826c-2be6-4430-ae4e-27f06a7b78ba",
   "lifecycle_state": "active",
   "created_at": "2026-09-10T05:52:06.259Z",
-  "updated_at": "2026-09-10T05:52:06.259Z"
+  "updated_at": "2026-09-18T09:08:10.069Z",
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.066Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "docs/specs/2026-09-09-retrieval-hot-path-and-scale.md",
+        "summary": "What not to copy",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d8063fd19579e7c0b014eb4542ba1451bf2ef26f66b529040e6eb2c1ac5e5835"
+      }
+    ],
+    "verified_count": 1,
+    "support": "unreviewed"
+  }
 }

@@ -2,7 +2,7 @@
   "id": "b8f17c0c-5752-4c83-9f14-3ee9977d2812",
   "schema_version": 6,
   "authority": "inferred",
-  "confidence": 0.7,
+  "confidence": 0.85,
   "scope": "project",
   "valid_from": "2026-09-10T05:52:06.039Z",
   "memory_type": "lesson",
@@ -32,5 +32,30 @@
   "registry_key_id": "31cc69c0-05cd-4cba-b211-4f1ff318d0fa",
   "lifecycle_state": "active",
   "created_at": "2026-09-10T05:52:06.072Z",
-  "updated_at": "2026-09-10T05:52:06.078Z"
+  "updated_at": "2026-09-18T09:08:10.146Z",
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.143Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/retrieve.js",
+        "summary": "compactHit and FTS candidate path",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "8671f5d1e28c7c27059fa736aba0e3dd38bb017900de41dab7d2902ead9629bc"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "docs/specs/2026-09-09-retrieval-hot-path-and-scale.md",
+        "summary": "Hot path spec",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d8063fd19579e7c0b014eb4542ba1451bf2ef26f66b529040e6eb2c1ac5e5835"
+      }
+    ],
+    "verified_count": 2,
+    "support": "unreviewed"
+  }
 }

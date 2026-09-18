@@ -2,7 +2,7 @@
   "id": "0a6b1845-e0dc-486f-ae62-1dc17c154845",
   "schema_version": 6,
   "authority": "inferred",
-  "confidence": 0.7,
+  "confidence": 0.85,
   "scope": "project",
   "valid_from": "2026-09-10T05:52:06.265Z",
   "memory_type": "procedure",
@@ -32,5 +32,30 @@
   "registry_key_id": "bf85fdcc-1c13-401a-8180-f114b3db8f75",
   "lifecycle_state": "active",
   "created_at": "2026-09-10T05:52:06.396Z",
-  "updated_at": "2026-09-10T05:52:06.402Z"
+  "updated_at": "2026-09-18T09:08:10.049Z",
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.046Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "docs/specs/2026-09-10-memory-quality-and-performance-tests.md",
+        "summary": "Quality and performance catalog",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "73c3173c87e4ab2f8b9bdba3be511d6fb97b6b2d90d76c0f0dabbc307df0e7d5"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "package.json",
+        "summary": "test and test:stress scripts",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "016c66527d1f691dff06759186dfbdb9cdc768abe82b4464e2172c9f5a52023f"
+      }
+    ],
+    "verified_count": 2,
+    "support": "unreviewed"
+  }
 }
