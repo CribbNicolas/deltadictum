@@ -31,6 +31,11 @@
     .warning { border-color: var(--danger); }
     pre { white-space: pre-wrap; overflow-wrap: anywhere; }
     #project { padding: 12px 20px; color: var(--muted); border-bottom: 1px solid #2a2a33; }
+    #evidence { border-bottom: 1px solid #2a2a33; color: var(--muted); }
+    #evidence > summary { padding: 12px 20px; cursor: pointer; }
+    #evidence-list { max-height: 240px; overflow: auto; padding: 0 20px 12px; }
+    .observation { padding: 8px 0; border-top: 1px solid #2a2a33; }
+    .observation p { margin: 4px 0 0; color: var(--fg); overflow-wrap: anywhere; }
     @media (max-width: 760px) { main { grid-template-columns: 1fr; } #list { max-height: 240px; } header { flex-wrap: wrap; } }
   </style>
 </head>
@@ -56,6 +61,10 @@
     </nav>
   </header>
   <div id="project"></div>
+  <details id="evidence">
+    <summary>Recorded evidence <span id="evidence-count"></span></summary>
+    <div id="evidence-list"></div>
+  </details>
   <main>
     <section id="list"></section>
     <section id="detail" class="empty">Select a memory.</section>
@@ -84,6 +93,7 @@
       const q = new URLSearchParams();
       if (filterEl.value) q.set('lifecycle', filterEl.value);
       if (originFilterEl.value) q.set('capture_origin', originFilterEl.value);
+      await loadEvidence();
       atoms = await api('/api/atoms?' + q);
       renderList();
       if (!atoms.length) {
@@ -95,6 +105,20 @@
         if (still) await select(still.id);
         else { selected = null; detailEl.textContent = 'Select a memory.'; }
       }
+    }
+
+    // Read-only. An observation is evidence a proposal may cite, not knowledge,
+    // so there is nothing here to approve: promotion happens on the memory that
+    // cites it, with the reviewer able to see what was actually recorded.
+    async function loadEvidence() {
+      const observations = await api('/api/observations');
+      document.getElementById('evidence-count').textContent = observations.length ? `· ${observations.length} recorded, read-only` : '· none recorded';
+      document.getElementById('evidence-list').innerHTML = observations.map(o => `
+        <div class="observation">
+          <span class="badge">${escapeHtml(o.source_type)}</span>
+          <small>${escapeHtml(o.source_ref)} · ${escapeHtml(o.observed_at)} · ${escapeHtml(o.metadata?.provenance ?? 'unknown')} · <code>${escapeHtml(o.id)}</code></small>
+          <p>${escapeHtml(o.raw_preview)}</p>
+        </div>`).join('') || '<p>Nothing observed yet. Failures, validation commands and user corrections appear here.</p>';
     }
 
     function renderList() {

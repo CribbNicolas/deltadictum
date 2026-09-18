@@ -222,7 +222,7 @@ stage acts on.
 
 ## Outcome
 
-Implemented 2026-09-18. `npm test` is **237 tests, 237 passing**; `npm run eval` is unchanged at 24/24,
+Implemented 2026-09-18. `npm test` is **239 tests, 239 passing**; `npm run eval` is unchanged at 24/24,
 f1 1.0, 2182 estimated tokens, evidence coverage 1.0; `npm run test:stress` passes with
 `cold_ms=1094 resident_ms=109` on 2000 atoms, the same class as before. The detector costs under a
 microsecond on a normal prompt and 16 microseconds on a 20 KB paste, against a Node start-up measured
@@ -252,3 +252,24 @@ the sanitised and redacted prompt; the stored preview keeps 600. Families requir
 rather than a bare keyword, because bare keywords match ordinary work: *"don't forget the docs"* and
 *"stop the server after the test"* are instructions. The negative test carries sixteen such prompts
 against twelve positives, which is the ratio that keeps the review queue usable.
+
+### What the review after the first commit found
+
+Three things the stage claimed but had not done. Each was a gap between a *Done when* line and the code.
+
+**"Visible in the audit UI" was false, and had been false for host observations too.** Nothing rendered
+an observation anywhere; `assessDeterioration` counted unreviewed ones and no view listed them. The UI
+now has a read-only *Recorded evidence* panel backed by `GET /api/observations` and
+`store.listObservations`. Read-only is the point: an observation is evidence a proposal cites, so there
+is nothing to approve on it, and the panel offers no action. This closed a pre-existing gap the stage
+inherited rather than created.
+
+**The capture prompt excluded the source the stage added.** `STOP_CAPTURE_PROMPT` said *"Use actual
+file or host observation references"*. A correction that the model is told not to cite never reaches a
+proposal, which would have made the whole path inert. This is the one sentence the stage-4 corrections
+section predicted `capture.js` might need.
+
+**The data-flow diagram still named host observations as the only observed input.** Corrected.
+
+Checked and found already correct: `hooks/run.cjs` is a thin shim that imports `src/hooks/run.js`, so
+it needed nothing; `plugin/` mirrors only skills, not hooks.

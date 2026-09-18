@@ -169,3 +169,41 @@ describe('audit UI HTTP', () => {
   });
 
 });
+
+describe('audit UI recorded evidence', () => {
+  // The stage that started recording user corrections claimed they would be
+  // "visible in the audit UI". Nothing rendered any observation, host ones
+  // included, so the claim was false for every source until this panel existed.
+  test('observations are listed read-only, project-scoped, and offer no action', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-evidence-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const headers = await reviewHeaders(ui.url);
+    await store.putObservation({ project_id: 'demo', source_type: 'user_correction', source_ref: 'UserPromptSubmit',
+      raw_preview: 'User correction. No, that is wrong - retrieval is project-scoped first.',
+      metadata: { provenance: 'user_correction', signal: 'correction', session_id: 'current' } });
+    await store.putObservation({ project_id: 'demo', source_type: 'validation', source_ref: 'Bash',
+      raw_preview: 'Validation passed (exit 0). Checks passed.', metadata: { provenance: 'host', session_id: 'current' } });
+    await store.putObservation({ project_id: 'other', source_type: 'validation', source_ref: 'Bash',
+      raw_preview: 'Another project.', metadata: { provenance: 'host', session_id: 'current' } });
+
+    const listed = await json(ui.url + '/api/observations', { headers });
+    assert.equal(listed.status, 200);
+    assert.equal(listed.body.length, 2);
+    assert.deepEqual(listed.body.map(o => o.source_type).sort(), ['user_correction', 'validation']);
+    assert.equal(listed.body.every(o => o.project_id === undefined || o.project_id === 'demo'), true);
+    assert.match(listed.body.find(o => o.source_type === 'user_correction').raw_preview, /project-scoped first/);
+    assert.equal(listed.body.find(o => o.source_type === 'user_correction').metadata.provenance, 'user_correction');
+    assert.equal(listed.body.some(o => /Another project/.test(o.raw_preview)), false);
+
+    // Evidence is not promotable, so the panel has nothing to submit to.
+    for (const method of ['POST', 'PATCH', 'DELETE']) {
+      assert.equal((await json(ui.url + '/api/observations', { method, headers })).status, 404);
+    }
+    const html = await (await fetch(ui.url + '/')).text();
+    assert.match(html, /id="evidence-list"/);
+    assert.match(html, /Recorded evidence/);
+    for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) new Script(script[1]);
+  });
+});

@@ -42,6 +42,15 @@ export function createTelemetry(index, git) {
     const row = db.prepare('SELECT * FROM memory_observations WHERE id = ?').get(id);
     return row ? { ...row, metadata: JSON.parse(row.metadata) } : null;
   }
+  // Read-only for review. An observation is evidence, not knowledge: the audit
+  // UI shows what was recorded so a reviewer can judge a proposal citing it, and
+  // offers no action on it, because promoting evidence is not a thing that can
+  // happen.
+  async function listObservations(projectId, limit = 50) {
+    return db.prepare(`SELECT id,source_type,source_ref,raw_preview,observed_at,metadata FROM memory_observations
+      WHERE project_id=? ORDER BY observed_at DESC, id DESC LIMIT ?`).all(projectId, Math.min(Number(limit) || 50, 200))
+      .map(row => ({ ...row, metadata: JSON.parse(row.metadata) }));
+  }
   async function recentObservations(projectId, sessionId) {
     if (!sessionId) return [];
     return db.prepare(`SELECT id,source_type,source_ref FROM memory_observations
@@ -102,6 +111,6 @@ export function createTelemetry(index, git) {
       return true;
     });
   }
-  return { prune, putObservation, getObservation, recentObservations, putFeedback, feedbackSummary, listFeedback, reviewFeedback,
+  return { prune, putObservation, getObservation, listObservations, recentObservations, putFeedback, feedbackSummary, listFeedback, reviewFeedback,
     wasDelivered, markDelivered, clearSessionDeliveries, beginCaptureTurn, claimCapturePrompt };
 }

@@ -86,7 +86,7 @@ reading this index.
   that passed vacuously because the operation under test did not trigger the code being measured.
   A green that proves nothing is worse than a red.
 - **One commit per stage**, whose message explains the reasoning, not the diff.
-- **Baseline is sacred.** After stage 5: `npm test` is **237 tests, 237 passing — zero failures**, and
+- **Baseline is sacred.** After stage 5: `npm test` is **239 tests, 239 passing — zero failures**, and
   `npm run eval` is unchanged at 24/24, f1 1.0, 2182 estimated tokens, evidence coverage 1.0. After
   stage 3 it was `npm test` **202 tests, 202 passing — zero failures**, and
   `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens, abstention f1 1.0 over 9 scenarios, 0
