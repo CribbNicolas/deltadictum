@@ -26,8 +26,17 @@ export async function admitMemory(id, { store, projectId, actor, rationale, auth
     if (gate.decision !== 'write') throw new Error(`cannot_admit:${gate.reasons.join(',')}`);
     const evidence_state = await verifyReferences(candidate.evidence_refs, { store, projectId });
     if (evidence_state.artifacts.some(a => a.status === 'out_of_scope')) throw new Error('evidence_scope_violation');
-    const current = (await store.listByTopicLive(projectId, candidate.topic_key))[0];
-    if (current && candidate.replaces !== current.id) throw new Error('replacement_changed_review_again');
+    const live = (await store.listByTopicLive(projectId, candidate.topic_key))[0];
+    if (live && candidate.replaces !== live.id) throw new Error('replacement_changed_review_again');
+    // A trigger-collision `update` names a replacement on another topic_key, so the
+    // target cannot be found by topic. It is resolved by id and must still be
+    // effective: if it was superseded or retired since the proposal, the revision
+    // no longer describes the store the reviewer is looking at.
+    const target = candidate.replaces ? await store.getAtom(candidate.replaces, projectId) : null;
+    if (candidate.replaces && !['active', 'contested'].includes(target?.lifecycle_state)) {
+      throw new Error('replacement_changed_review_again');
+    }
+    const current = live ?? target;
     const now = new Date().toISOString();
     const granted = authority === 'canonical' || candidate.requested_authority === 'canonical' ? 'canonical' : 'validated';
     // The cap applies here rather than only at proposal: candidates are never

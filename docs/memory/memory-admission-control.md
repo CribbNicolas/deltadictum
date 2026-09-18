@@ -101,13 +101,10 @@ proposal -> block | observe | write | ignore
 | `observe` | Any other contract failure | Stored as an observation, never as knowledge. |
 | `write` | Contract satisfied | Stored as a **candidate**, awaiting human review. Never active. |
 | `ignore` | An equivalent memory already exists | The existing memory is returned unchanged. |
+| `update` | The trigger collides with one effective memory of the same scope, saying the same thing | Stored as a **candidate** that names the colliding memory in `replaces`. Approval supersedes it; nothing changes before review. |
 
 Two further decisions belong to the lifecycle layer rather than the gate: `admit`, when local human
 review promotes a candidate, and `contest`, when a caller declares a contradiction.
-
-**Not implemented.** `ADMISSION_DECISIONS` in `src/engine/v2/constants.js` also declares `update`,
-which is never emitted. It is the missing collision routing — see *Update, do not append* below — and
-is kept for that.
 
 `warn` was removed from the list. It would have been a middle ground between advising and blocking,
 and there is no such ground while every write already stops at a candidate awaiting review.
@@ -122,11 +119,35 @@ Deduplication is **exact**: two proposals are equivalent when thirteen authored 
 identically and their evidence signatures match. A paraphrase is therefore a new candidate, not a
 duplicate.
 
-The write path also computes `collides_with`: effective memories whose trigger overlaps the proposal
-by a Jaccard score of 0.5 or more. It is returned to the caller.
+The write path also computes `collides_with` **before the atom is written**: effective memories whose
+trigger overlaps the proposal by at least `config.health.trigger_collision.jaccard` (0.5 by default,
+the same threshold the health indicator uses). It is returned to the caller and it routes the decision.
 
-**Not implemented.** Nothing acts on `collides_with`. It is reported and then ignored — no block, no
-merge, no contest. Acting on it is a Phase 1 item.
+Routing is in `routeTriggerCollision` (`src/engine/v2/admission.js`). Peers on the proposal's own
+`topic_key` are excluded — that is supersession, already handled by `replaces`. Candidates join the
+comparison but are never a revision target: a candidate is not effective, so superseding it would mean
+nothing.
+
+| Collision | Decision |
+|---|---|
+| None above the threshold | `write` — a candidate, as before |
+| Exactly one effective peer, same scope, same direction | `update` — a candidate revising that peer |
+| Any declared scope dimension disjoint | `write` — distinct knowledge, not a duplicate |
+| Anything else that collides | `write`, with `suspected_duplicate_pair` and the peer ids in `suspected_pair` |
+
+Two guards decide which of those applies, and both are lexical because a hook can afford nothing else:
+
+- **Scope.** `compareScope` compares `applies_to.files`, `.components`, `.operations` and the keyed
+  `assumptions`. Disjoint on any declared dimension means *different knowledge* — the same conclusion
+  the activation gate reaches in `src/engine/activation.js`. One side declaring what the other leaves
+  open is *ambiguous*, and ambiguity escalates to the reviewer rather than resolving itself.
+- **Direction.** `agreesInDirection` requires the same `memory_type` and the same polarity under the
+  preventive vocabulary the anti-memory gate already uses. Two memories that share a trigger and a
+  scope while telling the agent opposite things are a contradiction, resolved through
+  `declareContradiction` and review — never by superseding one with the other.
+
+Nothing here changes an effective memory. An `update` is a candidate; approval is what applies it, and
+`admitMemory` re-checks that the named replacement is still effective before doing so.
 
 ## Admission score
 
@@ -157,8 +178,14 @@ accumulate a second durable copy.
 
 What happens today: a same-key proposal sets `replaces`, and the swap takes effect only when a human
 approves it, so the effective memory never changes without review. An exactly equivalent proposal is
-ignored. Everything between those two — a paraphrase, a near-duplicate on a different key, a proposal
-that merely adds a condition — becomes a separate candidate.
+ignored. A paraphrase on a different key is routed as an `update` when its scope and direction match
+the memory it collides with, and it is flagged as a suspected pair when they only partly match — see
+*Equivalence and collision* above.
+
+What still becomes a separate candidate: a proposal that merely adds a condition, and any collision
+whose scope is ambiguous. Both go to the reviewer with the pair named, because merging two memories
+that only resembled each other is the expensive error and a duplicate is recoverable where deleted
+knowledge is not.
 
 ## Reuse contract
 

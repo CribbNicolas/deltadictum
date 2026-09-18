@@ -30,25 +30,43 @@ test('the existing gate still fires on retrieval quality alone', () => {
 });
 
 test('duplicate rate is zero without duplicates and non-zero when one proposal repeats', async () => {
+  // Derived from the corpus rather than written down, so a scenario can be added
+  // to it without the assertion quietly becoming a different claim.
+  const proposals = writeProbeProposals();
   const clean = await runWritePathProbe();
-  assert.equal(clean.write_attempts, 7);
+  assert.equal(clean.write_attempts, proposals.length);
   assert.equal(clean.duplicates, 0);
   assert.equal(clean.duplicate_rate_per_1000, 0);
 
-  const proposals = writeProbeProposals();
-  const repeated = await runWritePathProbe({ proposals: [...proposals, proposals[0]] });
-  assert.equal(repeated.write_attempts, 8);
+  // A topic no near-duplicate scenario revises, so what this measures is an
+  // exact repeat rather than a collision routed as a revision.
+  const untouched = proposals.findIndex(p => p.topic_key === 'security/logging/credentials');
+  const repeated = await runWritePathProbe({ proposals: [...proposals, proposals[untouched]] });
+  assert.equal(repeated.write_attempts, proposals.length + 1);
   assert.equal(repeated.duplicates, 1);
-  assert.equal(repeated.duplicate_rate_per_1000, 125);
+  assert.equal(repeated.duplicate_rate_per_1000, 1 / (proposals.length + 1) * 1000);
+});
+
+test('the corpus contains near-duplicates, and none of them survives into the effective set', async () => {
+  // The metric judged an empty set before these scenarios existed: a rate of zero
+  // over a corpus with nothing to detect proves nothing in either direction.
+  const probe = await runWritePathProbe();
+  assert.ok(probe.near_duplicates_detected > 0, 'the corpus exercises the collision routing');
+  assert.equal(probe.near_duplicate_pairs_surviving, 0);
+  // Restatements merge; a different scope and an opposing instruction do not.
+  assert.ok(probe.effective_memories < probe.write_attempts);
 });
 
 test('evidence coverage is one when references resolve and drops when one is removed', async () => {
   const resolved = await runWritePathProbe();
-  assert.equal(resolved.effective_memories, 7);
   assert.equal(resolved.evidence_coverage, 1);
 
-  const missing = await runWritePathProbe({ missingEvidence: ['evidence/0.md'] });
-  assert.equal(missing.effective_memories, 7);
-  assert.equal(missing.evidence_coverage, 6 / 7);
+  // Again a topic nothing supersedes: a superseded memory leaves the effective
+  // set, taking its missing reference with it.
+  const untouched = writeProbeProposals().findIndex(p => p.topic_key === 'security/logging/credentials');
+  const missing = await runWritePathProbe({ missingEvidence: [`evidence/${untouched}.md`] });
+  assert.equal(missing.effective_memories, resolved.effective_memories);
+  assert.equal(missing.evidence_coverage,
+    (resolved.effective_memories - 1) / resolved.effective_memories);
   assert.ok(missing.evidence_coverage < resolved.evidence_coverage);
 });

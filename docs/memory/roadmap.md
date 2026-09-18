@@ -47,8 +47,12 @@ Known gaps, in the order they hurt:
    ordinal ladder capping attainable confidence per source; the gate reports the ceiling and
    `admitMemory` stamps it from the evidence verified during review. `confidence` now varies by source
    instead of being a constant.
-2. **Near-duplicate knowledge is detected and tolerated.** `collides_with` is computed on every write
-   and acted on nowhere.
+2. ~~**Near-duplicate knowledge is detected and tolerated.**~~ **Closed.** `collides_with` is now
+   computed before the atom is written and routes the admission decision. A restatement of an
+   effective memory with the same scope and the same direction is proposed as an `update` naming it in
+   `replaces`; a disjoint scope stays separate knowledge; anything ambiguous is written as a candidate
+   flagged `suspected_duplicate_pair`, so the reviewer sees the two together. Nothing merges without
+   review.
 3. **Nothing is ever forgotten.** `archived` is a declared lifecycle state that no code path reaches.
 4. **Advisory only.** `PreToolUse` always returns `allow`; an `anti_memory` cannot stop anything.
 5. ~~**User corrections are not observed.**~~ **Closed.** `observationFromPrompt` in
@@ -82,9 +86,12 @@ Done:
   a decision. The evidence signal is derived from verified artifact coverage, and the winner of a
   human resolution records a bounded track record.
 
-Remaining:
+Done (continued):
 
-- Act on `collides_with` instead of only reporting it.
+- ✅ Act on `collides_with` instead of only reporting it. The routing is lexical — scope equality and
+  preventive polarity — because there is no embedding budget (L3) and no background judge (L2).
+  Ambiguity escalates to the reviewer rather than resolving itself, since a duplicate is recoverable
+  and deleted knowledge is not.
 
 ## Phase 2 — Fix what produces the knowledge
 

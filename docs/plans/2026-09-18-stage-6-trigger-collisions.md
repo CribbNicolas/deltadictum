@@ -2,7 +2,7 @@
 artifact_class: authored
 owner_domain: plans
 artifact_type: plan
-stability: draft
+stability: implemented
 last_validated: 2026-09-18
 depends_on:
   - architecture/plugin-constraints.md
@@ -226,3 +226,69 @@ detected, then fall as they stop being created. Distinguish those two in the rep
 
 Depends on **stage 3** for the duplicate-rate baseline that judges it. Benefits from **stage 5**:
 repeated corrections on one topic are the near-duplicates this stage catches. Independent of stage 7.
+
+## Outcome
+
+Implemented. `npm test` 246/246, `npm run eval` 24/24 with f1 1.0 and evidence coverage 1.0,
+`npm run test:stress` 13/13 at `cold_ms=937 resident_ms=94` on 2000 atoms.
+
+### What the acceptance number did
+
+The plan's criterion — "the duplicate rate must measurably fall" — could not be read off the existing
+figure, and the plan said so: `duplicate_rate_per_1000` counts `ignore` decisions, which only fire on
+exact equivalence. It was 0 before and it is 0 after. That is not the stage failing; it is the metric
+measuring detection of a case the corpus never contained.
+
+So the corpus gained five near-duplicate scenarios (`NEAR_DUPLICATES` in `src/eval/replay.js`) and the
+report gained two figures that move in opposite directions, exactly as the plan predicted:
+
+| | Routing off | Routing on |
+|---|---|---|
+| `near_duplicate_detection_rate_per_1000` | 0 | 416.7 |
+| `near_duplicate_pairs_surviving` | **2** | **0** |
+| `effective_memories` | 12 | 10 |
+
+Both columns are the same corpus and the same 12 write attempts; "routing off" is the identical build
+with `trigger_collision.jaccard` above 1, so nothing collides. Detection rose from nothing, and the
+number that matters — near-identical memories that reached the effective set anyway — fell to zero.
+The surviving-pairs measurement threshold is pinned at 0.5 in the eval rather than read from config,
+so raising a project's threshold cannot improve the score it is being judged by.
+
+Retrieval is untouched: 24/24 exact, f1 1.0, 2182 estimated tokens, abstention f1 1.0.
+
+### Where the plan was wrong, or incomplete
+
+**A revision must not reverse the memory it revises.** The plan's guard was scope alone. Scope alone
+merges opposites: three existing tests build an *opposing* memory that shares a trigger and a scope in
+order to contest it, and the first implementation superseded one with the other, deleting knowledge —
+the plan's own named expensive error, reached by following the plan. `agreesInDirection` was added:
+same `memory_type`, same polarity under the preventive vocabulary the anti-memory gate already uses.
+An opposing collision escalates as a suspected pair; contradiction remains `declareContradiction`'s job.
+
+**`replaces` was coupled to `topic_key`, so `update` would have been decorative.** `admitMemory`
+resolved the replacement target by looking up the live memory *for the candidate's own topic*. A
+cross-topic `replaces` would have been silently dropped at approval, leaving both memories effective —
+the decision would have been emitted and recorded while changing nothing. `src/engine/lifecycle.js`
+now resolves the target by id and re-checks that it is still effective at review time. That file was
+not in the plan's *Files* list.
+
+**Three test fixtures built near-duplicates on purpose.** They constructed four, twelve and two
+memories that differed only in `topic_key` while standing in for distinct knowledge. They are now
+genuinely distinct. This is the stage working, not a regression, but it is worth recording that the
+repository's own fixtures contained the pattern this stage exists to stop.
+
+**Candidates join the comparison, but are never a revision target.** The plan left the decision open.
+They are compared, because two near-identical candidates are the pair a reviewer should see together;
+they cannot be replaced, because a candidate is not effective and superseding it would mean nothing.
+
+**The eval probe reviewed in a batch.** `runWritePathProbe` proposed everything and only then admitted
+it, so every peer was still a candidate when the next proposal arrived and no collision could route.
+It now reviews each proposal before the next, which is the order real use produces.
+
+**The threshold and the *Files* correction from stage 5 both held.** `config.health.trigger_collision.jaccard`
+is read in `src/engine/write.js`; the literal `0.5` is gone; `src/store/paths.js` was not touched.
+
+### Not done
+
+The audit UI shows a suspected pair as a warning on the candidate, naming the ids. It does not yet
+render the two memories side by side, which is what "see the pair together" should eventually mean.

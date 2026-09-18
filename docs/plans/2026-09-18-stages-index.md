@@ -44,8 +44,8 @@ What the audit found, and what the stages address:
 | 3 | [Measurement](2026-09-18-stage-3-measurement.md) | **Done** `2765ed8` | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
 | 4 | [Provenance](2026-09-18-stage-4-provenance.md) | **Done** `3c83529` | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
 | 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | **Done** `e5b8c6f` | The highest-reliability signal available is never observed | Medium |
-| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Next | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
-| 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Ready | `archived` is declared and unreachable; the effective set only grows | High |
+| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | **Done** `pending` | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
+| 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Next | `archived` is declared and unreachable; the effective set only grows | High |
 
 A stage marked **Done** carries an *Outcome* section recording what it actually did, including where
 the plan turned out to be wrong. Read that before assuming the stage body describes the current code.
@@ -90,8 +90,12 @@ reading this index.
   that passed vacuously because the operation under test did not trigger the code being measured.
   A green that proves nothing is worse than a red.
 - **One commit per stage**, whose message explains the reasoning, not the diff.
-- **Baseline is sacred.** After stage 5: `npm test` is **239 tests, 239 passing — zero failures**, and
-  `npm run eval` is unchanged at 24/24, f1 1.0, 2182 estimated tokens, evidence coverage 1.0. After
+- **Baseline is sacred.** After stage 6: `npm test` is **246 tests, 246 passing — zero failures**,
+  `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens, evidence coverage 1.0, and
+  `npm run test:stress` is 13/13. The write-path probe now reports two near-duplicate figures as well;
+  stage 6 records what they were with the routing off and on. After stage 5: `npm test` was
+  **239 tests, 239 passing — zero failures**, and
+  `npm run eval` unchanged at 24/24, f1 1.0, 2182 estimated tokens, evidence coverage 1.0. After
   stage 3 it was `npm test` **202 tests, 202 passing — zero failures**, and
   `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens, abstention f1 1.0 over 9 scenarios, 0
   duplicates per 1000 write attempts, evidence coverage 1.0. A stage that leaves a failing test is not
