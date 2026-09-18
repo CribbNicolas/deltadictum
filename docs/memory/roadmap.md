@@ -54,6 +54,9 @@ Known gaps, in the order they hurt:
 5. **Advisory only.** `PreToolUse` always returns `allow`; an `anti_memory` cannot stop anything.
 6. **User corrections are not observed.** The observation log records tool failures and validation
    commands; the highest-reliability signal available depends on the model remembering to propose it.
+7. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
+   `explicit`, `actor_ref` is never populated, and the contradiction log is pruned under the telemetry
+   retention policy. Whether a resolution record is telemetry or audit is still undecided.
 
 ## Phase 1 — Make the existing signals honest
 
