@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
+import { VERIFIED_OBSERVATION_PROVENANCES } from './reliability.js';
 
 export async function projectFile(repoRoot, ref) {
   const clean = String(ref ?? '').replace(/#L\d+(?:-L?\d+)?$/, '');
@@ -29,8 +30,11 @@ export async function verifyReferences(refs, { store, repoRoot = store.repoRoot,
       }
     } else if (ref.source_type === 'tool_output' && store.getObservation) {
       const observation = await store.getObservation(ref.source_ref);
-      if (observation?.metadata?.provenance === 'host' && observation.project_id === projectId) {
-        entry.status = 'verified'; entry.provenance = 'host';
+      // Which observation provenances verify is the reliability ladder's business,
+      // not a second list kept here. Observation provenance is stamped by the hook
+      // and the engine; a proposal cannot supply it.
+      if (VERIFIED_OBSERVATION_PROVENANCES.includes(observation?.metadata?.provenance) && observation.project_id === projectId) {
+        entry.status = 'verified'; entry.provenance = observation.metadata.provenance;
         entry.hash = createHash('sha256').update(observation.raw_preview).digest('hex');
       }
     }

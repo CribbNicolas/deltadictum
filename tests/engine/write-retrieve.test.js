@@ -7,6 +7,7 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { proposeMemory } from '../../src/engine/write.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
+import { cappedConfidence } from '../../src/engine/reliability.js';
 
 function proposal(overrides = {}) {
   return {
@@ -34,6 +35,15 @@ function proposal(overrides = {}) {
   };
 }
 
+// Only review makes an atom effective, and it stamps a reviewed authority and a
+// source-capped confidence while doing so. Seeding `active` with a candidate's
+// own authority and confidence is a state the write path cannot produce, and it
+// ranks differently, so these tests seed what admission actually writes.
+async function activate(db, atom) {
+  return db.putAtom({ ...atom, lifecycle_state: 'active', authority: 'validated',
+    confidence: cappedConfidence(atom, { authority: 'validated' }) });
+}
+
 async function store() {
   const root = await mkdtemp(join(tmpdir(), 'dd-wr-'));
   return createMemoryStore({
@@ -49,7 +59,7 @@ describe('propose + retrieve', () => {
     assert.equal(result.decision, 'write');
     assert.equal(result.atom.lifecycle_state, 'candidate');
 
-    await db.putAtom({ ...result.atom, lifecycle_state: 'active' });
+    await activate(db, result.atom);
     const retrieved = await retrieveMemories({
       project_id: 'demo',
       action: 'before writing durable memory',
@@ -137,7 +147,7 @@ describe('propose + retrieve', () => {
         topic_key: `memory/admission/cap-${i}`,
         title: `Cap lesson ${i}`,
       }), { store: db });
-      await db.putAtom({ ...written.atom, lifecycle_state: 'active' });
+      await activate(db, written.atom);
     }
     const retrieved = await retrieveMemories({
       project_id: 'demo',
@@ -151,7 +161,7 @@ describe('propose + retrieve', () => {
   test('retrieve at 1000 atoms finds the needle without dumping full atoms', async () => {
     const db = await store();
     const needle = await proposeMemory(proposal({ id: 'needle' }), { store: db });
-    await db.putAtom({ ...needle.atom, lifecycle_state: 'active' });
+    await activate(db, needle.atom);
     // Newer filler rows must outrank the needle in listAtoms(updated_at DESC)
     // so a git/SQLite table-scan fallback of 50 cannot accidentally return it.
     for (let i = 0; i < 1000; i += 1) {
@@ -192,7 +202,7 @@ describe('propose + retrieve', () => {
   test('does not retrieve another project', async () => {
     const db = await store();
     const written = await proposeMemory(proposal(), { store: db });
-    await db.putAtom({ ...written.atom, lifecycle_state: 'active' });
+    await activate(db, written.atom);
     const retrieved = await retrieveMemories({
       project_id: 'other',
       action: 'before writing durable memory',

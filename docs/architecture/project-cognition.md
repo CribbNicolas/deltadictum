@@ -38,11 +38,13 @@ Capture provenance is additive schema-7 metadata. `capture_origin` accepts `mode
 
 Missing historical origins read as `user_explicit` by policy; an absent capture channel remains `unknown`. Reading or rebuilding the index does not rewrite Git history or infer origin from authority. A materially changed proposal records its own origin. An equivalent proposal is still deduplicated and returns the original memory with its original capture provenance. `get`, `list`, proposal responses and the audit UI expose these fields; `list` and the UI support origin filtering. Compact retrieval payloads do not include them.
 
+Provenance sets a ceiling on attainable confidence. One declared ordinal ladder in `src/engine/reliability.js` ranks sources least to most reliable — unverified agent claim, host observation, repository artifact, observed user correction — and each level caps what the source can reach. The level is the most reliable verified artifact the memory carries, so an unverified reference caps at the bottom rung whatever source type it names, and evidence volume does not lift a memory past its ceiling. `capture_origin` applies as a factor at or below 1 and can only lower a ceiling, never raise one. The cap is stamped by `admitMemory` from the evidence verified during review, because candidates are never retrieved and a proposal-time confidence ranks nothing. A reviewer granting `canonical` is not clamped by the ladder; nothing else rises above it — reported outcomes, resolution wins and repeated proposals all leave confidence where it is.
+
 All new knowledge starts as a candidate. The MCP schema excludes generated identity, verified hashes, review stamps, confidence and lifecycle controls. Approval and conflict resolution require the local review transport and a rationale. An agent can flag disagreement and propose revisions, but the advertised MCP tools cannot select a winner or promote a proposal.
 
 Candidates use immutable ID paths, effective decisions use topic paths and history uses ID paths. Proposing a same-topic replacement records the current ID without modifying it. Approval rejects a stale replacement if another reviewed version became current. A successful approval archives the previous version and publishes the new one in a single recoverable transaction.
 
-A replacement inherits unresolved disagreements. Resolving one pair preserves any remaining effective opponents. Historical contradiction relations are retained for audit; retrieval points to effective opponents. No frequency counter raises confidence or authority.
+A replacement inherits unresolved disagreements. Resolving one pair preserves any remaining effective opponents. Historical contradiction relations are retained for audit; retrieval points to effective opponents. No frequency counter raises confidence or authority, and no volume of low-reliability captures reaches the standing of one verified artifact.
 
 This is an application boundary between model-facing tools and local review. It does not isolate the audit UI or Git files from an agent or user with unrestricted access to the machine. Human review also remains fallible; current repository evidence takes precedence over remembered advice.
 
@@ -50,7 +52,7 @@ This is an application boundary between model-facing tools and local review. It 
 
 File, diff and test-log references must resolve inside the consuming repository, including after symlink resolution. DD computes SHA-256 hashes and limits file reads. It does not execute referenced commands. A host observation can be referenced by its recorded ID and must belong to the same project.
 
-Artifact verification establishes existence and integrity. It does not prove that a test actually passed or that the artifact logically supports the proposed decision. Model-provided `user_approval` references remain unverified claims. The reviewer sees provenance and records the reasoning for accepting the decision.
+Artifact verification establishes existence and integrity. It does not prove that a test actually passed or that the artifact logically supports the proposed decision. Model-provided `user_approval` references remain unverified claims, and an unverified reference is an agent claim for the purpose of the reliability ceiling. Which observation provenances verify is derived from the reliability ladder, not listed separately in the evidence layer. The reviewer sees provenance and records the reasoning for accepting the decision.
 
 Verified file evidence and `file_changed` rules are rechecked on recall and expansion. Local host observations expire under retention; their provenance snapshot remains on the decision. Use a durable repository artifact when another checkout needs to inspect the supporting material.
 

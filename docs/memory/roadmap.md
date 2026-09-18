@@ -43,8 +43,10 @@ contested lifecycle, deterioration detection, and a local audit UI.
 
 Known gaps, in the order they hurt:
 
-1. **Provenance is recorded and ignored.** `capture_origin` and `evidence_state.provenance` both exist;
-   the admission gate reads neither, and confidence is a constant.
+1. ~~**Provenance is recorded and ignored.**~~ **Closed.** `src/engine/reliability.js` declares an
+   ordinal ladder capping attainable confidence per source; the gate reports the ceiling and
+   `admitMemory` stamps it from the evidence verified during review. `confidence` now varies by source
+   instead of being a constant.
 2. **Near-duplicate knowledge is detected and tolerated.** `collides_with` is computed on every write
    and acted on nowhere.
 3. **Nothing is ever forgotten.** `archived` is a declared lifecycle state that no code path reaches.
@@ -69,6 +71,10 @@ Done:
 - ✅ Retain the contradiction log as audit instead of pruning it as telemetry.
 - ✅ Unify the entrenchment order. One authority ladder now backs both the retrieval weight and the
   resolution rank, so they cannot disagree about which authority outranks which.
+- ✅ Rank knowledge by source reliability, with a hard cap per source, so a model claim can never reach
+  the standing of a verified artifact or an explicit user correction. One declared ordinal ladder,
+  applied at admission rather than at proposal, because candidates are never retrieved. Human review
+  stays above it: a reviewer granting `canonical` is not clamped.
 - ✅ Give contradiction resolution a declared precedence policy — evidence, then recency, then
   authority, then track record — surfaced to the reviewer with the tier that decided it, and never as
   a decision. The evidence signal is derived from verified artifact coverage, and the winner of a
@@ -77,14 +83,13 @@ Done:
 Remaining:
 
 - Act on `collides_with` instead of only reporting it.
-- Rank knowledge by source reliability, with a hard cap per source, so a model claim can never reach
-  the standing of a verified artifact or an explicit user correction.
 
 ## Phase 2 — Fix what produces the knowledge
 
 Phase 1 filters the output. Phase 2 improves the input, which is the larger win.
 
-- Observe explicit user corrections as a first-class, high-reliability signal.
+- Observe explicit user corrections as a first-class, high-reliability signal. The ladder's top rung
+  (`user_correction`) is declared and reachable; nothing produces that provenance yet.
 - Generalise repeated corrections into one scoped rule instead of accumulating near-duplicates.
 - Route admission to add, ignore or merge rather than only accept or reject.
 - Order the review queue by expected value, since human review time is the scarce resource.

@@ -1,5 +1,6 @@
 import { decideAdmission } from './v2/admission.js';
 import { stampRevisionFiles, verifyReferences } from './evidence.js';
+import { cappedConfidence } from './reliability.js';
 import { validateExplicitContradiction } from './v6/contradiction.js';
 import { bumpPredominance } from './v6/predominance.js';
 
@@ -28,9 +29,15 @@ export async function admitMemory(id, { store, projectId, actor, rationale, auth
     const current = (await store.listByTopicLive(projectId, candidate.topic_key))[0];
     if (current && candidate.replaces !== current.id) throw new Error('replacement_changed_review_again');
     const now = new Date().toISOString();
+    const granted = authority === 'canonical' || candidate.requested_authority === 'canonical' ? 'canonical' : 'validated';
+    // The cap applies here rather than only at proposal: candidates are never
+    // retrieved, so a proposal-time confidence affects no ranking. This is the
+    // number the retrieval value formula reads, and it is derived from the
+    // freshly verified evidence rather than from what the candidate carried.
+    const confidence = cappedConfidence({ ...candidate, evidence_state }, { authority: granted });
     const approved = await stampRevisionFiles({ ...candidate, lifecycle_state: 'active',
-      authority: authority === 'canonical' || candidate.requested_authority === 'canonical' ? 'canonical' : 'validated',
-      confidence: 0.85, evidence_state: { ...evidence_state, support: 'human_reviewed' },
+      authority: granted, confidence,
+      evidence_state: { ...evidence_state, support: 'human_reviewed' },
       review: { source: 'local_ui', reviewed_at: now, rationale: rationale.trim() },
     }, store);
     const peers = current ? await effectivePeers(current.id, store, projectId) : [];

@@ -8,6 +8,7 @@ Version 0.2 / schema 7 is defined by [project cognition](architecture/project-co
 - Capture has no proposal count limit per call or session. Automatic reminders use independent turn guards; they cannot block explicit proposals.
 - `capture_origin` distinguishes model initiative from an explicit request to save knowledge. Missing values default to `user_explicit`, including historical memories. Capture, transport and approval remain separate.
 - Artifact verification establishes provenance/integrity; review assesses claim support.
+- Source reliability caps attainable confidence. One declared ordinal ladder ranks unverified agent claim below host observation below repository artifact below observed user correction; the cap is applied at admission, evidence volume does not exceed it, and `capture_origin` can only lower it. A reviewer granting `canonical` is not clamped; nothing else rises above the ladder.
 - Advice remains subordinate to host instructions, user intent and current project evidence.
 - Every compact form preserves applicability. Disputed or stale knowledge remains explicitly qualified.
 - Context budgets account for the serialized result, using a documented model-independent estimate.

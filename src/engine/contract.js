@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { sanitizeText, hasUnsafeMemoryContent } from './v2/sanitizer.js';
 import { MEMORY_TYPES, MEMORY_SCOPES } from './v2/constants.js';
+import { cappedConfidence } from './reliability.js';
 
 export const SCHEMA_VERSION = 7;
 export const CAPTURE_ORIGINS = ['model_initiated', 'user_explicit'];
@@ -50,10 +51,15 @@ export function normalizeProposal(raw = {}, projectId = raw.project_id, { captur
     evidence_refs: (Array.isArray(raw.evidence_refs) ? raw.evidence_refs : []).map(ref => ({
       source_type: text(ref.source_type), source_ref: text(ref.source_ref), summary: text(ref.summary),
     })),
-    authority: 'inferred', confidence: 0.7, lifecycle_state: 'candidate',
+    authority: 'inferred', lifecycle_state: 'candidate',
     valid_from: raw.valid_from ?? new Date().toISOString(), valid_until: raw.valid_until ?? null,
   };
   atom.retrieval_forms = deriveForms(atom);
+  // Derived from the reliability ladder rather than stamped as a constant. No
+  // reference is verified yet at this point, so every proposal lands on the
+  // unverified rung by construction; the point is that the number is the
+  // ladder's and can never exceed what the source turns out to earn.
+  atom.confidence = cappedConfidence(atom, { authority: atom.authority });
   return atom;
 }
 

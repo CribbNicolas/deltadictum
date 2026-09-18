@@ -2,7 +2,7 @@
 artifact_class: authored
 owner_domain: plans
 artifact_type: plan
-stability: draft
+stability: implemented
 last_validated: 2026-09-18
 depends_on:
   - architecture/plugin-constraints.md
@@ -209,7 +209,79 @@ changes the write path and moves ranking, so a silent change is not acceptable.
 - The two documents describe the ladder, and `docs/memory/roadmap.md` records gap 1 as closed.
 - One commit explaining why the cap applies at admission rather than at proposal.
 
+## Outcome
+
+Executed 2026-09-18. **218 tests, 218 passing** (202 before, plus the 16 this stage added), 12 passing
+stress tests, and the retrieval replay **byte-identical to the stage 3 baseline** — 24/24 exact, f1 1.0,
+abstention f1 1.0, evidence coverage 1, 2182 tokens. Nothing in the eval moved, and the reason is the
+one the *Tests* section predicted: `src/eval/replay.js` seeds the retrieval fixtures through `putAtom`
+with an explicit `confidence: 0.85`, and the write-path probe proposes `source_type: 'file'` references
+against files it writes, which verify as `filesystem` and land on the same 0.85 the flat constant used
+to stamp. That coincidence is asserted deliberately rather than left to be discovered.
+
+The four *Start here* checks returned what the *Starting state* section predicted, with one line drift:
+the admitted constant is at `src/engine/lifecycle.js:33`, not `:32`.
+
+### The ladder as built
+
+| Source | Cap | Assigned when |
+|---|---|---|
+| `agent_claim` | 0.5 | nothing verified, including `user_statement` and `user_approval` |
+| `host` | 0.7 | a `tool_output` reference resolving to a recorded host observation |
+| `filesystem` | 0.85 | a `file`, `diff` or `test_log` reference resolved in the repository and hashed |
+| `user_correction` | 0.95 | an observed explicit user correction — declared here, produced by stage 5 |
+
+The level is the most reliable **verified** artifact the memory carries, so an unverified reference is an
+agent claim whatever source type it names.
+
+**`capture_origin` is a factor, not a rung.** `user_explicit` × 1, `model_initiated` × 0.9, an
+unrecognised origin at the lowest factor. A competing *cap* was the first design and was rejected: at
+any value low enough to discriminate at the bottom of the ladder, it inverted the ladder, letting an
+agent's unverified "the user asked me to save this" outrank a verified repository artifact captured
+autonomously. A factor scales every rung equally and therefore cannot invert the order. A test asserts
+that directly.
+
+**Human review is above the ladder via `canonical` specifically.** A reviewer granting `canonical` gets
+confidence 1; a reviewer granting `validated` accepts the source's ceiling. Reading the *What stays
+above the cap* section as "review lifts every cap" would have made the whole stage a no-op, since
+confidence is only ever stamped after review.
+
+### Three things a clean-context run should know
+
+1. **The cap is applied from the freshly verified evidence, not the candidate's stored `evidence_state`.**
+   `admitMemory` re-runs `verifyReferences`, and that result is what feeds the cap. A candidate's stored
+   verification can be stale by review time.
+
+2. **`src/engine/evidence.js` was changed, and it is not in the *Files* list.** `verifyReferences` tested
+   `metadata.provenance === 'host'` literally. It now tests membership of `VERIFIED_OBSERVATION_PROVENANCES`,
+   derived from the ladder's own `observed` flag. Without this the `user_correction` rung would be
+   unreachable declaration, and stage 5 would have to add a second list of which provenances verify —
+   exactly the third table the *Risks* section forbids. Observation provenance is stamped by the hook and
+   the engine (`src/hooks/run.js:74`, `src/engine/write.js:19-22`); no proposal can supply it, so this
+   widens no attack surface.
+
+3. **Three pre-existing tests in `tests/engine/write-retrieve.test.js` were seeding a state the write
+   path cannot produce**, and they failed. They made an atom effective with
+   `putAtom({ ...atom, lifecycle_state: 'active' })`, keeping the candidate's `authority: 'inferred'` and
+   its proposal-time confidence. Only `admitMemory` creates an `active` atom in `src/`, and it always
+   stamps a reviewed authority — `active` plus `inferred` is unreachable. Those three now seed what
+   admission writes (`validated`, plus the ladder's confidence), which as it happens ranks marginally
+   *higher* than the fake state did, 0.85 × 0.5 against 0.6 × 0.7. This is the one place where the plan's
+   claim that "a proposal-time confidence affects nothing" needed qualifying: true of the write path,
+   false of tests that bypass it.
+
+`docs/DD.md` also gained a contract line, since a cap on attainable confidence is a behavioural
+guarantee and not only an internal detail.
+
+### The demotion is real, and intended
+
+An admitted memory with no verified artifact now carries 0.5 rather than 0.85, which roughly halves its
+retrieval value and so raises the activation it needs to clear the value-per-token gate. That is the
+stage working: per the *Risks* section, a memory the ladder demotes is telling you about its evidence.
+The reviewer's remedy is `canonical`, not a higher cap.
+
 ## Depends on / unblocks
 
 Depends on **stage 3** for the baseline it is measured against. Stage 5 adds the ladder's top source, so
-this stage defines the shape that stage fills.
+this stage defines the shape that stage fills: the `user_correction` rung and the ladder-derived set of
+verified observation provenances are both in place, and nothing produces that provenance yet.
