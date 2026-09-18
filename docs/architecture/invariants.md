@@ -26,7 +26,8 @@ project's retrieval. The project identifier is resolved from the repository and 
 every read and every write, not a field applied afterwards.
 
 **Enforced by:** `project_id` on every store query; `validateExplicitContradiction` refuses a
-cross-project pair; evidence paths are confined to the repository root.
+cross-project pair; evidence paths are confined to the repository root; and `findRepoRoot` never
+resolves to the user's home, so no ancestor can capture unrelated work beneath it.
 
 ## INV-02: Retrieval is project-scoped first
 

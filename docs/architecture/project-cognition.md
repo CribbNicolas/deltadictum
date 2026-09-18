@@ -80,7 +80,7 @@ A project lock serializes mutations across processes. Nested engine operations r
 
 Deletion checks the stored ID and project before removing a topic file. A historical ID cannot delete its successor. Index refresh uses a schema marker and source metadata fingerprint, with filesystem invalidation and periodic refresh for external edits. Metadata fingerprints are cache invalidation, not integrity proofs; evidence hashes serve that separate purpose.
 
-First open assigns one persisted project identity under the lock. Cache paths include the resolved repository path, avoiding collisions between equally named projects. `.dd/.gitignore` is created only if absent and excludes runtime capabilities, temporary files and SQLite files. Existing ignore policies are preserved.
+First open assigns one persisted project identity under the lock. Cache paths include the resolved repository path, avoiding collisions between equally named projects, and live under a per-user base that is deliberately not named `.dd`: a `.dd` directory marks a project, so a cache sharing that name let the home directory resolve as a project root. The upward search for a project root prefers `.git`, accepts a `.dd` only when it carries project markers rather than caches, and never crosses the user's home — an ancestor that contains everything must not capture the work beneath it. Pointing at the home directly remains a deliberate choice. `.dd/.gitignore` is created only if absent and excludes runtime capabilities, temporary files and SQLite files. Existing ignore policies are preserved.
 
 ## Capture, feedback and runtime cost
 

@@ -108,7 +108,9 @@ Automatic capture reminders are separate from writes: the Stop hook avoids repea
 
 Commit these knowledge files to share them with a team. Ignore runtime files `ui.json`, `.write-lock`, `.pending-write.json` and `*.tmp`. DD creates a local ignore file automatically.
 
-SQLite, observations, feedback and session deliveries live under a cache directory identified by the resolved project path. `DD_DATA` explicitly overrides that directory; use a separate directory for each project.
+SQLite, observations, feedback and session deliveries live under a per-user cache at `~/.dd-data`, in one directory per project identified by the resolved project path. `DD_DATA` explicitly overrides that directory; use a separate directory for each project. The cache is rebuildable from git, so deleting it costs local telemetry and no knowledge.
+
+The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a project, and when the per-user cache shared that name the home directory resolved as a project root, merging unrelated work into one store. If you used an earlier version, `node scripts/check-home-artifacts.mjs` reports what `~/.dd` still holds and removes it only when asked, and only when it holds no knowledge.
 
 Existing V6 knowledge stays readable. A legacy candidate is relocated on its next lifecycle transition; it cannot replace effective knowledge merely by being proposed. SQLite is rebuilt when its format or source fingerprint changes. The previous v1 observation JSONL is no longer appended; legacy files remain available for manual audit. Version 0.2 uses a separate default cache identity, so v1 local telemetry is not automatically imported.
 
