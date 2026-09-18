@@ -150,6 +150,12 @@
         <details open><summary>Task outcomes (${outcomes.length})</summary>${outcomes.map(o => `<p>${escapeHtml(o.outcome)} · ${escapeHtml(o.summary)} · ${escapeHtml(o.verification)} <button data-feedback="${escapeHtml(o.id)}" data-accept="true">Accept evidence</button> <button data-feedback="${escapeHtml(o.id)}" data-accept="false">Dismiss report</button></p>`).join('')}</details>
         ${field('review_rationale', '', true)}
         <small>Explain why the evidence supports this decision. Saving edits creates a new proposal.</small>
+        ${selected.lifecycle_state === 'candidate' ? `<label for="field-review_authority">Authority to grant</label>
+        <select id="field-review_authority" name="review_authority">
+          <option value="validated" selected>validated — accept the ceiling this memory's source earns</option>
+          <option value="canonical">canonical — lift the source ceiling; this is your decision, not the evidence's</option>
+        </select>
+        <small>Source reliability caps confidence. Granting canonical is the only review action that lifts that cap.</small>` : ''}
         ${selected.lifecycle_state === 'contested' ? `<label for="field-loser_id">Conflicting decision to supersede</label><select id="field-loser_id" name="loser_id">${selected.opponents.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.topic_key)} · ${escapeHtml(a.title)}</option>`).join('')}</select><button data-act="inspect-opponent">Inspect selected conflict</button>` : ''}
         <div class="row">
           ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
@@ -192,7 +198,9 @@
           selected = proposal.atom;
           msg.textContent = 'Proposal saved for review.';
         } else if (act === 'admit') {
-          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ rationale: detailEl.querySelector('[name="review_rationale"]').value }) });
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+            rationale: detailEl.querySelector('[name="review_rationale"]').value,
+            authority: detailEl.querySelector('[name="review_authority"]').value }) });
         } else if (act === 'reject') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/reject', { method: 'POST' });
         } else if (act === 'delete') {

@@ -52,14 +52,16 @@ const LEAST_ORIGIN_FACTOR = Math.min(...Object.values(CAPTURE_ORIGIN_FACTOR));
 
 // The most reliable source the memory can actually show, which is the most
 // reliable *verified* artifact it carries. An unverified reference is an agent
-// claim whatever source type it names, so it never raises the level.
+// claim whatever source type it names, so it never raises the level. An
+// unrecognised provenance ranks at the bottom and so can never win this
+// comparison either, which is what keeps an invented value out of the result.
 export function sourceProvenance(atom) {
   let provenance = LEAST;
   for (const artifact of atom?.evidence_state?.artifacts ?? []) {
     if (artifact?.status !== 'verified') continue;
     if (reliabilityRank(artifact.provenance) > reliabilityRank(provenance)) provenance = artifact.provenance;
   }
-  return RELIABILITY_RANK[provenance] === undefined ? LEAST : provenance;
+  return provenance;
 }
 
 // The ceiling this memory's source earns. Evidence composes with the cap rather

@@ -76,6 +76,14 @@ review. A proposal therefore always lands on the unverified rung, because nothin
 clamped: the ladder bounds what a source reaches without review, not what a human decides. A reviewer
 granting `validated` accepts the ceiling.
 
+**Knowledge written before the ladder keeps its stored confidence** until something re-derives it.
+`reverifyStoredEvidence` (`src/engine/reverify.js`, run by `node scripts/reverify-evidence.mjs`) re-reads
+the references a stored memory already carries and re-derives `evidence_state` and `confidence` from
+what they resolve to now. It is not a review and does not behave like one: authority, lifecycle state and
+the review stamp never move, so nothing is promoted and a `canonical` grant stays where the reviewer put
+it. It is read-only unless given `--apply`, because it rewrites git-tracked knowledge, and it refuses a
+reference that escapes the repository exactly as admission does.
+
 **Nothing else raises it.** A reported outcome is telemetry (`src/engine/feedback.js:12-13`), a
 resolution win is a track record, and re-proposing the same knowledge is ignored. No quantity of agent
 claims reaches the standing of one verified artifact; `tests/engine/reliability.test.js` asserts that
