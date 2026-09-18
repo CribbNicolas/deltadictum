@@ -6,11 +6,22 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { startUiServer } from '../../src/ui/server.js';
 import { proposeMemory } from '../../src/engine/write.js';
+import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
 import { Script } from 'node:vm';
 
 async function json(url, opts) {
   const res = await fetch(url, opts);
   return { status: res.status, body: await res.json() };
+}
+
+// The review token is only delivered in the served page, which is the path a
+// reviewer actually takes. `startUiServer` resolves `hookToken`, not this one,
+// so reading it off the server object silently yields undefined and every
+// non-GET request 403s while the test still looks green.
+async function reviewHeaders(base) {
+  const html = await (await fetch(base + '/')).text();
+  return { 'content-type': 'application/json',
+    'x-dd-review-token': html.match(/name="dd-review-token" content="([a-f0-9]+)"/)[1] };
 }
 
 describe('audit UI HTTP', () => {
@@ -83,6 +94,35 @@ describe('audit UI HTTP', () => {
     assert.equal(empty.body.length, 1);
     assert.equal(empty.body[0].id, written.atom.id);
   });
+  test('review grants the authority the reviewer chose, and only canonical lifts the source cap', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-authority-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    // No verified artifact: the source ladder caps this at its bottom rung.
+    const propose = topic_key => proposeMemory({
+      project_id: 'demo', memory_type: 'lesson', title: 'Reported instruction',
+      trigger: 'when retrying payments', behavior_delta: 'Reuse the idempotency key.',
+      what: 'Retries reuse the key.', why: 'Avoid duplicate charges.', topic_key,
+      evidence_refs: [{ source_type: 'user_statement', source_ref: 'the user said so', summary: 'Reported' }],
+      retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the idempotency key on retry.' },
+    }, { store });
+    const plain = await propose('payments/retry/plain');
+    const lifted = await propose('payments/retry/lifted');
+
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const headers = await reviewHeaders(ui.url);
+    const admit = (id, body) => json(`${ui.url}/api/atoms/${id}/admit`,
+      { method: 'POST', headers, body: JSON.stringify(body) });
+
+    const validated = await admit(plain.atom.id, { rationale: 'Reviewed; the claim is plausible.', authority: 'validated' });
+    assert.equal(validated.body.authority, 'validated');
+    assert.equal(validated.body.confidence, RELIABILITY_CAP.agent_claim);
+
+    const canonical = await admit(lifted.atom.id, { rationale: 'Reviewed; I stand behind this regardless of the evidence.', authority: 'canonical' });
+    assert.equal(canonical.body.authority, 'canonical');
+    assert.equal(canonical.body.confidence, 1);
+  });
+
   test('a contested atom shows the ranking recommendation without resolving anything', async t => {
     const root = await mkdtemp(join(tmpdir(), 'dd-ui-dispute-'));
     const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
@@ -98,11 +138,13 @@ describe('audit UI HTTP', () => {
 
     const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
     t.after(async () => { await ui.close(); store.close(); });
-    const headers = { 'content-type': 'application/json', 'x-dd-review-token': ui.token };
+    const headers = await reviewHeaders(ui.url);
 
     for (const written of [first, second]) {
-      await json(`${ui.url}/api/atoms/${written.atom.id}/admit`,
+      const admitted = await json(`${ui.url}/api/atoms/${written.atom.id}/admit`,
         { method: 'POST', headers, body: JSON.stringify({ rationale: 'Reviewed against the write path.' }) });
+      assert.equal(admitted.status, 200);
+      assert.equal(admitted.body.lifecycle_state, 'active');
     }
     await store.commitAtoms([], [{ source_atom_id: first.atom.id, relation_type: 'contradicts', target_atom_id: second.atom.id }]);
     for (const written of [first, second]) {
