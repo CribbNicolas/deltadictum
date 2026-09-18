@@ -67,6 +67,7 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
       }
       if (req.method === 'GET' && url.pathname === '/api/project') return send(res, 200, await projectContext(store));
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, await store.assessDeterioration(projectId));
+      if (req.method === 'GET' && url.pathname === '/api/observations') return send(res, 200, await store.listObservations(projectId));
       if (req.method === 'GET' && url.pathname === '/api/feedback') return send(res, 200, await store.listFeedback(projectId, url.searchParams.get('atom')));
       if (req.method === 'POST' && url.pathname === '/api/feedback/review') {
         const body = await readBody(req);

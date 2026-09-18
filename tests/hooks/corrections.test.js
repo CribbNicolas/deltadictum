@@ -173,3 +173,12 @@ test('the Codex path leaves UserPromptSubmit alone', async () => {
   assert.equal(context.decision, undefined);
   assert.equal(context.reason, undefined);
 });
+
+// The Stop prompt told the model to cite "file or host observation" references,
+// which excluded the source this stage added. A correction that cannot be cited
+// is a correction that never reaches a proposal.
+test('the capture prompt tells the model a correction is citable', async () => {
+  const { STOP_CAPTURE_PROMPT } = await import('../../src/hooks/capture.js');
+  assert.match(STOP_CAPTURE_PROMPT, /user correction/i);
+  assert.match(STOP_CAPTURE_PROMPT, /never invent user approval/);
+});
