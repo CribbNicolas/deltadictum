@@ -13,14 +13,36 @@ async function exists(path) {
   }
 }
 
-export async function findRepoRoot(start = process.cwd()) {
+// A project `.dd` holds knowledge. The per-user data base holds one rebuildable
+// cache directory per project and none of these markers, so the two are
+// distinguishable without guessing.
+const PROJECT_MARKERS = ['atoms', 'candidates', 'registry', 'config.json'];
+
+async function isProjectStore(ddDir) {
+  for (const marker of PROJECT_MARKERS) if (await exists(join(ddDir, marker))) return true;
+  return false;
+}
+
+/**
+ * Resolve the project root by walking up from `start`.
+ *
+ * The walk stops below `stopAt`, the user's home by default. An ancestor at or
+ * above the home must never capture a directory beneath it: the home contains
+ * everything, so accepting it as a project root merges unrelated work into one
+ * store and breaks project isolation (INV-01). Pointing at the home directly is
+ * a deliberate choice and stays available.
+ */
+export async function findRepoRoot(start = process.cwd(), { stopAt = homedir() } = {}) {
+  const boundary = resolve(stopAt);
   let dir = resolve(start);
-  for (;;) {
-    if (await exists(join(dir, '.dd')) || await exists(join(dir, '.git'))) return dir;
+  while (dir !== boundary) {
+    if (await exists(join(dir, '.git'))) return dir;
+    if (await isProjectStore(join(dir, '.dd'))) return dir;
     const parent = dirname(dir);
-    if (parent === dir) return resolve(start);
+    if (parent === dir) break;
     dir = parent;
   }
+  return resolve(start);
 }
 
 export function projectSlug(repoRoot) {
@@ -32,7 +54,9 @@ export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cw
   const ddDir = join(repoRoot, '.dd');
   const slug = projectSlug(repoRoot);
   const identity = createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12);
-  const dataBase = process.env.GROK_PLUGIN_DATA || process.env.CLAUDE_PLUGIN_DATA || join(homedir(), '.dd');
+  // Deliberately not `~/.dd`: that made the per-user cache indistinguishable
+  // from a project marker, so the home resolved as a project root.
+  const dataBase = process.env.GROK_PLUGIN_DATA || process.env.CLAUDE_PLUGIN_DATA || join(homedir(), '.dd-data');
   const dataDir = process.env.DD_DATA || join(dataBase, `${slug}-${identity}`);
   const store = await createMemoryStore({ ddDir, dataDir, repoRoot });
   const config = await store.withWriteLock(async () => {
