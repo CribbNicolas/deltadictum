@@ -10,6 +10,7 @@ import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { recommendResolution } from '../engine/v6/predominance.js';
 import { resolve as resolvePath } from 'node:path';
 import { buildPreToolContext } from '../hooks/pre-tool.js';
+import { recordPromptObservation } from '../hooks/observe.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
 import { retrieveMemories } from '../engine/retrieve.js';
 
@@ -47,6 +48,7 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
           sessionId: payload.session_id ?? payload.sessionId, source: payload.source }));
         if (url.pathname.endsWith('/prompt')) {
           await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
+          await recordPromptObservation(payload, { store, projectId });
           const result = await retrieveMemories({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
             session_id: payload.session_id ?? payload.sessionId, budget_tokens: payload.budget_tokens }, { store });
           return send(res, 200, contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
