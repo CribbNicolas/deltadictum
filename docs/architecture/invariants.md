@@ -77,7 +77,21 @@ instructions or the user's intent. An injected pack never carries both sides of 
 A hook that fails, times out or returns malformed output must degrade to silence. No memory benefit
 justifies damaging the session it runs in.
 
-## INV-09: Git is the authority, SQLite is derived
+## INV-09: Archiving is not deleting
+
+Retirement removes a memory from the effective set; it never removes the knowledge. An archived memory
+keeps its git file, can be read, and can be restored to `active` by a reviewer. Deletion is a separate,
+manual, explicitly confirmed action, with a second confirmation for canonical memories, and no
+automatic path reaches it.
+
+Retirement is also bounded by what review protects: only `inferred` and `observed` memories are
+reachable, and only by disuse — never activated, past a minimum age, and with enough retrievals after
+the memory was written that its trigger had real chances to fire. Age alone retires nothing.
+
+**Enforced by:** `archiveMemory` refuses any authority above `observed` and any state but `active`;
+`restoreMemory` requires the local review capability; deletion lives only on the audit UI's DELETE path.
+
+## INV-10: Git is the authority, SQLite is derived
 
 Knowledge lives in git-tracked files. The SQLite index is a rebuildable projection plus local
 telemetry. Losing the index must never lose knowledge.

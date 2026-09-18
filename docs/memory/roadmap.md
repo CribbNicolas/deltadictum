@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: roadmap
 stability: draft
-last_validated: 2026-09-17
+last_validated: 2026-09-18
 depends_on:
   - architecture/plugin-constraints.md
 used_by:
@@ -53,7 +53,10 @@ Known gaps, in the order they hurt:
    `replaces`; a disjoint scope stays separate knowledge; anything ambiguous is written as a candidate
    flagged `suspected_duplicate_pair`, so the reviewer sees the two together. Nothing merges without
    review.
-3. **Nothing is ever forgotten.** `archived` is a declared lifecycle state that no code path reaches.
+3. ~~**Nothing is ever forgotten.**~~ **Closed.** `archived` is reachable: `archiveMemory` writes it and
+   `retireByDisuse` drives it from the `dead_inferred` conjunction plus an opportunity count, swept
+   lazily on the write path. Authority protects, contested is excluded, and `restoreMemory` brings a
+   memory back through the audit UI. Archiving is not deletion; deletion stays manual and confirmed.
 4. **Advisory only.** `PreToolUse` always returns `allow`; an `anti_memory` cannot stop anything.
 5. ~~**User corrections are not observed.**~~ **Closed.** `observationFromPrompt` in
    `src/hooks/observe.js` detects corrective language lexically on `UserPromptSubmit` and records it as
@@ -115,7 +118,10 @@ Remaining:
 ## Phase 3 — Behavior beyond advice
 
 - A negotiated veto path for anti-memories, degrading to a warning on harnesses that cannot veto.
-- Retire knowledge that nothing activates, by disuse rather than by age.
+- ✅ Retire knowledge that nothing activates, by disuse rather than by age. Shipped 2026-09-18 with
+  deliberately conservative defaults (90 days *and* 40 retrievals that postdate the memory), because
+  the repository it shipped on had `dead_inferred` 0 and `cap_saturation` skipped — the mechanism is
+  in place, the benefit is a pending longitudinal measurement of `cap_saturation`.
 - Bounded automatic promotion, from inferred to validated only, on artifact-verified evidence only,
   reversible and logged. This is the only item that relaxes a current safety property and it does not
   begin without an explicit decision to relax it.

@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: spec
 stability: implemented
-last_validated: 2026-09-10
+last_validated: 2026-09-18
 depends_on:
   - specs/2026-09-09-retrieval-hot-path-and-scale.md
   - memory/contradiction-supersession.md
@@ -16,7 +16,8 @@ used_by:
 # Memory deterioration detection (data only)
 
 Date: 2026-09-10
-Status: **Implemented** (detection-only). LLM prune and auto-archive stay deferred.
+Status: **Implemented**. Detection-only until 2026-09-18, when stage 7 promoted one indicator to an
+action; see *What stopped being detection-only* below. LLM prune stays deferred.
 
 ## Context
 
@@ -87,6 +88,8 @@ O(n²) over the live set is acceptable at hundreds; do not scan archive.
 - `watch` if `>= 5`
 - `deteriorated` if `>= 20`
 - Offenders: atom ids (cap 20)
+- Also carries `retirable`: the subset that stage 7 would retire (see below). Diagnosis and action are
+  reported together, but they are not the same predicate and not the same numbers.
 
 ### 5. `unresolved_contest`
 
@@ -151,14 +154,50 @@ No `what`, `why`, `evidence_refs`, or retrieval forms. Detection is ids + metric
 - Thresholds live in `DEFAULT_CONFIG.health` so a later config file can override; engine defaults match this spec exactly.
 - `now` is injectable for tests.
 
+## What stopped being detection-only (2026-09-18)
+
+Stage 7 promoted `dead_inferred` from diagnosis to action: a memory it describes can now be archived.
+This is the only lifecycle write this spec's machinery causes, and it is deliberately narrow.
+
+**Retirement is by disuse, not by age.** This reconciles with "Not 'old'" above rather than overturning
+it. Age alone justifies nothing: a lesson about a subsystem nobody touched this quarter is still
+correct and will be right the day that subsystem comes up. What justifies retirement is that the
+trigger **had chances to fire and never did**, so the criterion adds an opportunity count — retrievals
+this project ran *after* the memory was written — to the `dead_inferred` conjunction. No recency decay
+was added; none is planned.
+
+Retirement has its own thresholds, in `DEFAULT_HEALTH_THRESHOLDS.retirement`, deliberately far above
+`dead_inferred`'s: a warning and an irreversible-feeling action should not share a number.
+
+| | Default | Meaning |
+|---|---|---|
+| `min_age_days` | 90 | Six times the age at which the indicator merely warns |
+| `min_retrieval_events` | 40 | Of the ≤ 50 retrievals the snapshot holds, this many postdate the memory |
+
+Constraints the action inherits:
+
+- **Authority protects.** Only `inferred` and `observed` are reachable. A human put `validated` or
+  `canonical` there; crowding caused by reviewed knowledge is a review decision.
+- **Contested is excluded.** A dispute is a human's open question, not disuse.
+- **Archiving is not deleting.** The file moves to `archive/`, the memory leaves the retrieval surface
+  and the effective-set uniqueness predicate, and the audit UI can restore it. Deletion stays manual
+  and confirmed. Because the unique index covers only `active` and `contested`, archiving frees the
+  `topic_key`; if another memory has taken it, restoring is refused rather than duplicating a trigger.
+- **Lazy, never a worker.** Evaluated on the write path, which already holds the lock (L2). Never on
+  `PreToolUse` (L1). A failure to retire anything cannot fail the write that swept (L5).
+
+`cap_saturation` remains the judge of whether any of this was needed. On the repository where it
+shipped, that indicator was `skipped` for want of telemetry and `dead_inferred` was 0 — the mechanism
+was shipped with thresholds that almost never fire, and the benefit is a pending measurement.
+
 ## Out of scope
 
-- Auto-archive, auto-reject, or any lifecycle write
+- Auto-reject, or any lifecycle write other than the retirement above
 - Asking the model to prune (consumer of this report)
 - Embeddings / semantic near-duplicate detection
 - Use-feedback
 - Observation → Stop candidate
-- Decay of canonical/validated atoms
+- Decay of canonical/validated atoms, and recency decay of anything
 - Audit UI charts (CLI + MCP is enough)
 
 ## Success
@@ -168,7 +207,8 @@ No `what`, `why`, `evidence_refs`, or retrieval forms. Detection is ids + metric
 - Two live triggers `before writing durable memory` and `before writing tests` (Jaccard on `{writing,durable,memory}` vs `{writing,tests}` = 1/4) do **not** collide; two triggers sharing ≥ half their content tokens do.
 - 10 retrieve events that each return 8 ids trip `cap_saturation` to `deteriorated` and overall `deteriorated`.
 - 9 retrieve events leave B `skipped`; overall follows A only.
-- Running detection does not change git files or `activation_count`.
+- Running detection does not change git files or `activation_count`. Retirement is a separate call on
+  the write path; `assessDeterioration` itself still writes nothing.
 
 ## Tests
 

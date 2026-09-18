@@ -51,6 +51,7 @@
         <option value="contested">contested</option>
         <option value="rejected">rejected</option>
         <option value="superseded">superseded</option>
+        <option value="archived">archived</option>
       </select>
       <select id="origin-filter" aria-label="Capture origin">
         <option value="">all origins</option>
@@ -159,6 +160,7 @@
         ${selected.lifecycle_state === 'candidate' && selected.suspected_pair?.length ? `<p class="notice warning">Suspected duplicate of ${selected.suspected_pair.map(escapeHtml).join(', ')}. Read both before approving: approving this adds a second memory on the same trigger.</p>` : ''}
         ${selected.freshness.length ? `<p class="notice warning">Review required: ${escapeHtml(selected.freshness.join('; '))}</p>` : ''}
         ${selected.lifecycle_state === 'contested' ? '<p class="notice warning">Disputed knowledge. Inspect the conflicting memory before choosing a winner.</p>' : ''}
+        ${selected.lifecycle_state === 'archived' ? `<p class="notice">Retired by disuse${selected.archived_at ? ' on ' + escapeHtml(selected.archived_at) : ''}: its trigger had chances to fire and never did. Nothing was deleted. Restoring makes it retrievable again, unless another memory has taken its topic since.</p>` : ''}
         ${field('title', selected.title)}
         ${field('topic_key', selected.topic_key)}
         ${field('trigger', selected.trigger, true)}
@@ -186,6 +188,7 @@
           ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
           <button data-act="save">Save</button>
           ${selected.lifecycle_state === 'contested' ? '<button class="ok" data-act="resolve">Keep this decision and supersede the other</button>' : ''}
+          ${selected.lifecycle_state === 'archived' ? '<button class="ok" data-act="restore">Restore</button>' : ''}
           <button class="danger" data-act="delete">Delete</button>
         </div>
         <p id="msg"></p>
@@ -232,6 +235,8 @@
             authority: detailEl.querySelector('[name="review_authority"]').value }) });
         } else if (act === 'reject') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/reject', { method: 'POST' });
+        } else if (act === 'restore') {
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/restore', { method: 'POST' });
         } else if (act === 'delete') {
           if (!confirm('Delete this memory version?')) return;
           await api('/api/atoms/' + encodeURIComponent(selected.id), { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirm: true }) });

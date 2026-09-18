@@ -4,6 +4,7 @@ import { domainOf } from './v5/vocab.js';
 import { triggerJaccard } from './health/deterioration.js';
 import { normalizeProposal, sameKnowledge, validateContract } from './contract.js';
 import { stampRevisionFiles, verifyReferences } from './evidence.js';
+import { retireByDisuse } from './lifecycle.js';
 
 export async function proposeMemory(rawPayload, { store, captureSource = 'agent' }) {
   return store.withWriteLock(async () => {
@@ -80,6 +81,10 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
     const decided = ['pending_review', ...route.reasons];
     const atom = await store.putAtom(payload);
     await store.logAdmission({ project_id: atom.project_id, decision: route.decision, reasons: decided, atom_id: atom.id });
+    // Forgetting is evaluated lazily, here, where a process is already running and
+    // already holds the lock. It is advisory housekeeping: a failure to retire
+    // anything must never fail the write that triggered the sweep (L5).
+    try { await retireByDisuse({ store, projectId: atom.project_id }); } catch { /* nothing retired */ }
     return { decision: route.decision, reasons: decided, atom, collides_with };
   });
 }

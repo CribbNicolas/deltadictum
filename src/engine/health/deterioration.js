@@ -8,7 +8,25 @@ export const DEFAULT_HEALTH_THRESHOLDS = {
   unresolved_contest: { min_age_days: 7, watch: 1, deteriorated: 3 },
   supersession_churn: { watch: 3, deteriorated: 5 },
   cap_saturation: { window: 50, min_events: 10, watch: 0.2, deteriorated: 0.5 },
+  // Retirement is an action, not a warning, so it does not share `dead_inferred`'s
+  // numbers. A memory is retired only once the project has retrieved often enough,
+  // since the memory was written, that "its trigger never fired" means something.
+  // The health snapshot supplies at most 50 retrieval events, so 40 is "almost
+  // every retrieval this project has a record of, and none of them chose this".
+  retirement: { min_age_days: 90, min_retrieval_events: 40 },
 };
+
+// The config block and the threshold defaults are the same shape; a project
+// overrides individual numbers without having to restate a whole block.
+export function healthThresholdsFromConfig(config) {
+  const base = structuredClone(DEFAULT_HEALTH_THRESHOLDS);
+  const override = config?.health;
+  if (!override) return base;
+  for (const key of Object.keys(base)) {
+    if (override[key] && typeof override[key] === 'object') Object.assign(base[key], override[key]);
+  }
+  return base;
+}
 
 export function topicPrefix(topicKey, depth = 2) {
   return String(topicKey ?? '').split('/').filter(Boolean).slice(0, depth).join('/');
@@ -78,6 +96,32 @@ function makeIndicator(id, layer, value, watch, deteriorated, offenders = [], ex
     offenders: capOffenders(offenders),
     ...extra,
   };
+}
+
+// The chances a trigger had to fire: retrievals this project ran after the
+// memory was written. A memory written yesterday into a quiet project has had
+// none, however old the project is.
+function opportunities(events, createdAt) {
+  const written = Date.parse(createdAt ?? '');
+  if (!Number.isFinite(written)) return 0;
+  return events.filter(event => Date.parse(event.created_at) >= written).length;
+}
+
+// Retirement by disuse, not by age. The conjunction is `dead_inferred`'s —
+// effective, low authority, past a minimum age, never activated — with two
+// tightenings: the thresholds are the retirement block's, and the trigger must
+// have had chances to fire. Contested memories are excluded: a dispute is a
+// human's open question, not disuse.
+export function retirementCandidates(snapshot, nowIso, thresholds = DEFAULT_HEALTH_THRESHOLDS) {
+  const policy = thresholds.retirement ?? DEFAULT_HEALTH_THRESHOLDS.retirement;
+  const events = snapshot.retrieval_events ?? [];
+  return (snapshot.atoms ?? []).filter(atom =>
+    atom.lifecycle_state === 'active'
+    && (atom.authority === 'inferred' || atom.authority === 'observed')
+    && (atom.activation_count ?? 0) === 0
+    && ageDays(atom.created_at, nowIso) >= policy.min_age_days
+    && opportunities(events, atom.created_at) >= policy.min_retrieval_events,
+  );
 }
 
 export function assessDeterioration(snapshot, nowIso, thresholds = DEFAULT_HEALTH_THRESHOLDS) {
@@ -173,6 +217,7 @@ export function assessDeterioration(snapshot, nowIso, thresholds = DEFAULT_HEALT
     thresholds.dead_inferred.watch,
     thresholds.dead_inferred.deteriorated,
     dead.map(atom => ({ id: atom.id, topic_key: atom.topic_key, created_at: atom.created_at })),
+    { retirable: retirementCandidates(snapshot, nowIso, thresholds).map(atom => atom.id) },
   ));
 
   const contests = atoms.filter(atom =>

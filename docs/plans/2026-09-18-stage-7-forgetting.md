@@ -2,7 +2,7 @@
 artifact_class: authored
 owner_domain: plans
 artifact_type: plan
-stability: draft
+stability: implemented
 last_validated: 2026-09-18
 depends_on:
   - architecture/plugin-constraints.md
@@ -262,3 +262,47 @@ Also:
 Depends on **stage 3** for `cap_saturation` context and the baseline. Independent of stages 4, 5 and 6.
 Unblocks nothing in this plan; it is the last stage, and the one most worth deferring if the effective
 set is not actually crowded.
+
+## Outcome
+
+Implemented. `npm test` 274/274 (247 before, 27 added), `npm run eval` 24/24 unchanged with f1 1.0 and
+evidence coverage 1.0, `npm run test:stress` 13/13. Stress `cold_ms` moved inside its run-to-run
+spread (1102–1388 across three runs, against a 937 baseline taken on a quieter machine); no hook module
+imports the new code, since `src/hooks/run.js` and `src/hooks/pre-tool.js` reach `retrieve.js` and never
+`write.js` or `lifecycle.js`.
+
+### What it does
+
+`retirementCandidates` (`src/engine/health/deterioration.js`) is the `dead_inferred` conjunction with
+two tightenings: its own thresholds, and an **opportunity count** — retrievals the project ran after the
+memory was written. `archiveMemory` and `restoreMemory` (`src/engine/lifecycle.js`) are the transitions;
+`retireByDisuse` drives them and is swept from `proposeMemory`, inside the lock it already holds, with a
+`try`/`catch` so a failure cannot fail the write (L5). The audit UI lists `archived` and restores one.
+
+### Where the plan was wrong, and where it was right
+
+- The *Files* list named `src/store/paths.js` for the thresholds. As the plan's own corrections section
+  predicted, that file only re-exports `DEFAULT_HEALTH_THRESHOLDS`; the block went in
+  `src/engine/health/deterioration.js`, and `healthThresholdsFromConfig` moved there from
+  `src/store/create-store.js` so the lifecycle layer and the store merge config the same way.
+- The plan's criterion was "never activated, past a minimum age". Implemented exactly as written, that
+  retires a memory in a project that has barely retrieved at all — the trigger never fired because
+  *nothing* fired. "Its trigger has had chances to fire and never did" is the plan's own sentence, and
+  the opportunity count is what makes it true rather than implied.
+- The plan did not say what to do with a `contested` memory. Retirement excludes it: a dispute is an
+  open human question, and archiving one side would leave the other contested against nothing.
+- The stage-6 coupling the plan predicted is real and is tested: archiving a memory sends any pending
+  revision naming it back to review with `replacement_changed_review_again`.
+- One thing the plan did not anticipate: `upsertAtom`'s `ON CONFLICT` clause never updates `created_at`,
+  so backdating a memory to test age only reaches the health snapshot after a rebuild from git. This is
+  correct behaviour — git is the authority and `created_at` is immutable identity — but it silently
+  makes a naive age test pass for the wrong reason.
+
+### The pending measurement
+
+There is **no baseline `cap_saturation` to compare against**: on this repository the indicator is
+`skipped` for want of the ten retrieval events it needs, and `dead_inferred` is 0. Nothing was measured
+before the change because there was nothing to measure. The defaults — 90 days *and* 40 of the ≤ 50
+retrievals in the snapshot postdating the memory — were chosen to almost never fire, not tuned against
+a figure. Whether retirement lowers `cap_saturation` on a project with a genuinely bloated effective set
+is longitudinal and still unanswered.

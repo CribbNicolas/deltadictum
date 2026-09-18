@@ -6,21 +6,11 @@ import { createGitFileStore } from './git-file-store.js';
 import { sqlitePath } from './paths.js';
 import { createSqliteIndex } from './sqlite-index.js';
 import { sourceFingerprint } from './fingerprint.js';
-import { assessDeterioration, DEFAULT_HEALTH_THRESHOLDS } from '../engine/health/deterioration.js';
+import { assessDeterioration, healthThresholdsFromConfig } from '../engine/health/deterioration.js';
 import { createTelemetry } from './telemetry.js';
 
 function nowIso() {
   return new Date().toISOString();
-}
-
-function healthThresholdsFromConfig(config) {
-  const base = structuredClone(DEFAULT_HEALTH_THRESHOLDS);
-  const override = config?.health;
-  if (!override) return base;
-  for (const key of Object.keys(base)) {
-    if (override[key] && typeof override[key] === 'object') Object.assign(base[key], override[key]);
-  }
-  return base;
 }
 
 export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddDir) }) {

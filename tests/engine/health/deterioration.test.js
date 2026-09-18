@@ -8,6 +8,8 @@ import {
   overallStatus,
   assessDeterioration,
   emptySnapshot,
+  healthThresholdsFromConfig,
+  retirementCandidates,
 } from '../../../src/engine/health/deterioration.js';
 
 const NOW = '2026-09-10T00:00:00.000Z';
@@ -33,6 +35,20 @@ describe('deterioration helpers', () => {
     assert.equal(DEFAULT_HEALTH_THRESHOLDS.prefix_crowding.depth, 2);
     assert.equal(DEFAULT_HEALTH_THRESHOLDS.trigger_collision.jaccard, 0.5);
     assert.equal(DEFAULT_HEALTH_THRESHOLDS.cap_saturation.min_events, 10);
+  });
+
+  // Retirement is deliberately out of reach of the warning that diagnoses it.
+  test('retirement defaults sit well above the dead_inferred warning', () => {
+    assert.ok(DEFAULT_HEALTH_THRESHOLDS.retirement.min_age_days > DEFAULT_HEALTH_THRESHOLDS.dead_inferred.min_age_days * 6);
+    assert.equal(DEFAULT_HEALTH_THRESHOLDS.retirement.min_age_days, 90);
+    assert.equal(DEFAULT_HEALTH_THRESHOLDS.retirement.min_retrieval_events, 40);
+  });
+
+  test('a project overrides one number without restating the block', () => {
+    const merged = healthThresholdsFromConfig({ health: { retirement: { min_retrieval_events: 5 } } });
+    assert.equal(merged.retirement.min_retrieval_events, 5);
+    assert.equal(merged.retirement.min_age_days, 90);
+    assert.equal(merged.live_bloat.watch, DEFAULT_HEALTH_THRESHOLDS.live_bloat.watch);
   });
 
   test('topicPrefix uses the first depth segments', () => {
@@ -259,5 +275,68 @@ describe('deterioration catalog cut rows', () => {
     const elapsed = Date.now() - started;
     assert.equal(report.live.active, 200);
     assert.ok(elapsed < 100, `assessed 200 live in ${elapsed}ms`);
+  });
+});
+
+describe('retirement candidates', () => {
+  const POLICY = { retirement: { min_age_days: 90, min_retrieval_events: 3 } };
+  const OLD = '2026-01-01T00:00:00.000Z';
+
+  function snapshotWith(atoms, eventCount = 4, eventAt = '2026-09-09T00:00:00.000Z') {
+    const snapshot = emptySnapshot('demo');
+    snapshot.atoms = atoms;
+    snapshot.retrieval_events = Array.from({ length: eventCount }, () => ({ returned_atom_ids: [], created_at: eventAt }));
+    return snapshot;
+  }
+
+  const disused = overrides => atom({ authority: 'inferred', activation_count: 0, created_at: OLD, ...overrides });
+
+  test('selects an effective, low-authority memory whose trigger had chances and never fired', () => {
+    const found = retirementCandidates(snapshotWith([disused()]), NOW, POLICY);
+    assert.deepEqual(found.map(a => a.id), ['a1']);
+  });
+
+  test('authority protects', () => {
+    for (const authority of ['validated', 'canonical', 'deprecated']) {
+      assert.deepEqual(retirementCandidates(snapshotWith([disused({ authority })]), NOW, POLICY), []);
+    }
+  });
+
+  test('one activation is enough', () => {
+    assert.deepEqual(retirementCandidates(snapshotWith([disused({ activation_count: 1 })]), NOW, POLICY), []);
+  });
+
+  test('age alone retires nothing: the retrievals must postdate the memory', () => {
+    const snapshot = snapshotWith([disused()], 4, '2025-06-01T00:00:00.000Z');
+    assert.deepEqual(retirementCandidates(snapshot, NOW, POLICY), []);
+  });
+
+  test('too few retrievals is not disuse', () => {
+    assert.deepEqual(retirementCandidates(snapshotWith([disused()], 2), NOW, POLICY), []);
+  });
+
+  test('a young memory stays, whatever the project has retrieved', () => {
+    const young = disused({ created_at: '2026-09-01T00:00:00.000Z' });
+    assert.deepEqual(retirementCandidates(snapshotWith([young], 50), NOW, POLICY), []);
+  });
+
+  test('a disputed memory is a human question, not disuse', () => {
+    assert.deepEqual(retirementCandidates(snapshotWith([disused({ lifecycle_state: 'contested' })]), NOW, POLICY), []);
+  });
+
+  test('candidates, superseded and already-archived memories are out of scope', () => {
+    for (const lifecycle_state of ['candidate', 'superseded', 'archived', 'rejected']) {
+      assert.deepEqual(retirementCandidates(snapshotWith([disused({ lifecycle_state })]), NOW, POLICY), []);
+    }
+  });
+
+  test('the health report names them on the indicator that diagnosed them', () => {
+    const report = assessDeterioration(snapshotWith([disused()]), NOW, { ...DEFAULT_HEALTH_THRESHOLDS, ...POLICY });
+    const dead = report.indicators.find(row => row.id === 'dead_inferred');
+    assert.deepEqual(dead.retirable, ['a1']);
+  });
+
+  test('the default policy retires nothing in a project with no retrieval history', () => {
+    assert.deepEqual(retirementCandidates(snapshotWith([disused()], 4), NOW), []);
   });
 });

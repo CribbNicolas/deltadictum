@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { startUiServer } from '../../src/ui/server.js';
 import { proposeMemory } from '../../src/engine/write.js';
+import { archiveMemory } from '../../src/engine/lifecycle.js';
 import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
 import { Script } from 'node:vm';
 
@@ -205,5 +206,49 @@ describe('audit UI recorded evidence', () => {
     assert.match(html, /id="evidence-list"/);
     assert.match(html, /Recorded evidence/);
     for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) new Script(script[1]);
+  });
+});
+
+describe('audit UI retirement', () => {
+  test('archived memories are listed and a reviewer can restore one', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-archive-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const written = await proposeMemory({
+      project_id: 'demo',
+      memory_type: 'lesson',
+      title: 'Reuse the idempotency key',
+      trigger: 'when retrying payment requests',
+      behavior_delta: 'Reuse the original idempotency key.',
+      what: 'Retries must not double charge.',
+      why: 'One logical payment is charged once.',
+      topic_key: 'payments/retry/idempotency',
+      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/write.js', summary: 'Write path' }],
+      retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the original idempotency key on retry.' },
+    }, { store });
+    await store.putAtom({ ...written.atom, lifecycle_state: 'active', authority: 'inferred' });
+    await archiveMemory(written.atom.id, { store, projectId: 'demo' });
+
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const base = ui.url;
+    const headers = await reviewHeaders(base);
+
+    const archived = await json(base + '/api/atoms?lifecycle=archived');
+    assert.equal(archived.status, 200);
+    assert.deepEqual(archived.body.map(a => a.id), [written.atom.id]);
+    assert.equal(archived.body[0].archived_reason, 'never_activated');
+
+    const anonymous = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST' });
+    assert.equal(anonymous.status, 403);
+
+    const restored = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST', headers });
+    assert.equal(restored.status, 200);
+    assert.equal(restored.body.lifecycle_state, 'active');
+
+    // Restoring is not deletion in reverse either: a second restore has nothing
+    // to act on and says so rather than reporting success.
+    const again = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST', headers });
+    assert.equal(again.status, 409);
+    assert.equal(again.body.error, 'archived_memory_required');
   });
 });
