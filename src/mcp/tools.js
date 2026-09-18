@@ -12,7 +12,10 @@ function proposalResult(result) {
     ...(result.atom ? { id: result.atom.id, lifecycle_state: result.atom.lifecycle_state,
       capture_origin: result.atom.capture_origin, capture_source: result.atom.capture_source,
       evidence_verified: result.atom.evidence_state?.verified_count ?? 0,
-      ...(result.atom.replaces ? { replaces: result.atom.replaces } : {}) } : {}),
+      ...(result.atom.replaces ? { replaces: result.atom.replaces } : {}),
+      // Why a proposal became a revision, or why review will see it beside another
+      // memory. Advisory: nothing is effective until a human approves it.
+      ...(result.atom.suspected_pair?.length ? { suspected_pair: result.atom.suspected_pair } : {}) } : {}),
     ...(result.collides_with?.length ? { collides_with: result.collides_with.map(a => a.id) } : {}) };
 }
 

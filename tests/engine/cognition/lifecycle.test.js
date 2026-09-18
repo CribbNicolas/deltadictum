@@ -108,8 +108,12 @@ test('resolving one pair preserves other disputes and clears peers with no remai
   const f = await setup();
   t.after(() => f.store.close());
   const ids = [];
+  // Four distinct memories, not one restated four times: a shared trigger and
+  // scope is a near-duplicate, which admission now routes as a revision. What
+  // this test is about is the contradiction graph over separate knowledge.
   for (const name of ['a', 'b', 'c', 'd']) {
-    const result = await proposeMemory({ ...f.payload, topic_key: `payments/retry/${name}` }, f);
+    const result = await proposeMemory({ ...f.payload, topic_key: `payments/retry/${name}`,
+      trigger: `when retrying ${name} payments`, applies_to: { components: [`payments-${name}`] } }, f);
     await admitMemory(result.atom.id, f.review);
     ids.push(result.atom.id);
   }

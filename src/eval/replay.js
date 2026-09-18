@@ -9,6 +9,8 @@ import { proposeMemory } from '../engine/write.js';
 import { admitMemory, HUMAN_REVIEW } from '../engine/lifecycle.js';
 import { retrieveMemories } from '../engine/retrieve.js';
 import { estimateTokens } from '../engine/budget.js';
+import { triggerJaccard } from '../engine/health/deterioration.js';
+import { agreesInDirection, compareScope } from '../engine/v2/admission.js';
 import { MEMORIES, CASES } from './cases.js';
 
 export async function evaluationStore() {
@@ -29,8 +31,11 @@ export function staticContext() {
 }
 
 const PROBE_PROJECT = 'eval-write';
+// Pinned, not read from config: the acceptance metric must not improve because a
+// project raised the threshold it is measuring.
+const MEASUREMENT_JACCARD = 0.5;
 // proposeMemory outcomes only. 'admit' is a later review event, not a write attempt.
-const WRITE_ATTEMPTS = ['write', 'ignore', 'block', 'observe'];
+const WRITE_ATTEMPTS = ['write', 'update', 'ignore', 'block', 'observe'];
 
 // The retrieval fixtures are seeded through putAtom, so they carry no admission
 // decisions and no verified evidence. The write-path probe exercises the real
@@ -38,10 +43,31 @@ const WRITE_ATTEMPTS = ['write', 'ignore', 'block', 'observe'];
 // it writes into the probe repository, so duplicate rate and evidence coverage
 // have something truthful to read.
 export function writeProbeProposals() {
-  return MEMORIES.map((memory, i) => ({ ...memory, project_id: PROBE_PROJECT, topic_key: memory.key,
+  return [...MEMORIES, ...NEAR_DUPLICATES].map((memory, i) => ({ ...memory, project_id: PROBE_PROJECT, topic_key: memory.key,
     evidence_refs: [{ source_type: 'file', source_ref: `evidence/${i}.md`,
       summary: `Authored evaluation fixture for ${memory.key}` }] }));
 }
+
+// Without these the duplicate rate judges an empty set: the authored corpus holds
+// no two memories that say the same thing, so a routing change cannot move a
+// number computed over it. Each of the three is a case the routing must get
+// right, and the last two are the ones that must NOT be merged.
+export const NEAR_DUPLICATES = [
+  { key: 'payments/retries/key-reuse', trigger: 'when retrying a payment request',
+    behavior_delta: 'Send the original idempotency key again.', why: 'One logical payment is charged once.',
+    applies_to: { components: ['payments'] } },
+  { key: 'payments/retry/keys', trigger: 'when retrying payment requests',
+    behavior_delta: 'Keep using the first idempotency key.', why: 'A second key is a second payment.' },
+  { key: 'shipping/retry/idempotency', trigger: 'when retrying payment requests',
+    behavior_delta: 'Reuse the original dispatch key.', why: 'A redispatch must not ship twice.',
+    applies_to: { components: ['shipping'] } },
+  { key: 'payments/retry/never', memory_type: 'anti_memory', trigger: 'when retrying payment requests',
+    behavior_delta: 'Do not retry a charge automatically.', why: 'An automatic retry hides the failure.',
+    applies_to: { components: ['payments'] } },
+  { key: 'tests/clock/fake-timers', trigger: 'when testing time dependent behaviour',
+    behavior_delta: 'Pass a clock into the service.', why: 'Tests must control time without sleeps.',
+    applies_to: { files: ['src/services/**'] } },
+];
 
 export async function runWritePathProbe({ proposals = writeProbeProposals(), missingEvidence = [] } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'dd-eval-write-'));
@@ -55,15 +81,16 @@ export async function runWritePathProbe({ proposals = writeProbeProposals(), mis
       await writeFile(path, `Evidence fixture for ${ref}
 `);
     }
-    const written = [];
+    // Promotion is the local review path; the probe stands in for the human, and
+    // only so that "effective" means what it means everywhere else in DD. Each
+    // proposal is reviewed before the next arrives, because that is the order
+    // real use produces: a memory is effective by the time it is restated weeks
+    // later. Reviewing in one batch at the end would leave every peer a
+    // candidate, and a candidate is never a revision target.
     for (const proposal of proposals) {
       const result = await proposeMemory(proposal, { store });
-      if (result.decision === 'write') written.push(result.atom.id);
-    }
-    // Promotion is the local review path; the probe stands in for the human, and
-    // only so that "effective" means what it means everywhere else in DD.
-    for (const id of written) {
-      await admitMemory(id, { store, projectId: PROBE_PROJECT, actor: HUMAN_REVIEW,
+      if (!['write', 'update'].includes(result.decision)) continue;
+      await admitMemory(result.atom.id, { store, projectId: PROBE_PROJECT, actor: HUMAN_REVIEW,
         rationale: 'Evaluation probe: deterministic local review of an authored fixture.' });
     }
     const decisions = await store.listAdmissions({ projectId: PROBE_PROJECT });
@@ -71,11 +98,32 @@ export async function runWritePathProbe({ proposals = writeProbeProposals(), mis
     const duplicates = attempts.filter(d => d.decision === 'ignore' && d.reasons.includes('equivalent_knowledge_exists'));
     const effective = await store.listAtoms({ projectId: PROBE_PROJECT, lifecycleStates: ['active', 'contested'] });
     const covered = effective.filter(a => (a.evidence_state?.artifacts ?? []).some(x => x.status === 'verified'));
+    // Two rates, because they move in opposite directions and mean different
+    // things. Detection counts near-duplicates the write path recognised;
+    // survival counts the ones that reached the effective set anyway. Only the
+    // second is the problem this stage exists to reduce.
+    const detected = attempts.filter(d => d.decision === 'update'
+      || d.reasons.includes('suspected_duplicate_pair'));
+    let survivingPairs = 0;
+    for (let i = 0; i < effective.length; i += 1) {
+      for (let j = i + 1; j < effective.length; j += 1) {
+        // Opposites are a contradiction, not a duplicate, and DD resolves those
+        // through review of a contested pair; they do not belong in this count.
+        if (triggerJaccard(effective[i].trigger, effective[j].trigger) >= MEASUREMENT_JACCARD
+          && compareScope(effective[i], effective[j]) === 'same'
+          && agreesInDirection(effective[i], effective[j])) survivingPairs += 1;
+      }
+    }
     return {
       write_attempts: attempts.length, duplicates: duplicates.length,
       // Exact equivalence only: sameKnowledge compares serialised authored fields,
       // so paraphrases do not register and this figure understates the problem.
       duplicate_rate_per_1000: attempts.length ? duplicates.length / attempts.length * 1000 : 0,
+      near_duplicates_detected: detected.length,
+      near_duplicate_detection_rate_per_1000: attempts.length ? detected.length / attempts.length * 1000 : 0,
+      // The acceptance number: pairs of effective memories that share a trigger
+      // and a scope, meaning a near-duplicate was created and survived review.
+      near_duplicate_pairs_surviving: survivingPairs,
       effective_memories: effective.length,
       evidence_coverage: effective.length ? covered.length / effective.length : 0,
     };

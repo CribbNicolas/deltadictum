@@ -156,6 +156,7 @@
         <p><span class="badge">${escapeHtml(selected.lifecycle_state)}</span> <span class="badge">${escapeHtml(selected.memory_type)}</span> ${escapeHtml(selected.id)}</p>
         <p>Capture: ${escapeHtml(captureLabel(selected))}. Approval is recorded separately.</p>
         ${selected.lifecycle_state === 'candidate' && selected.replaces ? `<p class="notice">Pending replacement of ${escapeHtml(selected.replaces)}. The current decision stays effective until approval.</p>` : ''}
+        ${selected.lifecycle_state === 'candidate' && selected.suspected_pair?.length ? `<p class="notice warning">Suspected duplicate of ${selected.suspected_pair.map(escapeHtml).join(', ')}. Read both before approving: approving this adds a second memory on the same trigger.</p>` : ''}
         ${selected.freshness.length ? `<p class="notice warning">Review required: ${escapeHtml(selected.freshness.join('; '))}</p>` : ''}
         ${selected.lifecycle_state === 'contested' ? '<p class="notice warning">Disputed knowledge. Inspect the conflicting memory before choosing a winner.</p>' : ''}
         ${field('title', selected.title)}

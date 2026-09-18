@@ -87,7 +87,10 @@ describe('propose + retrieve', () => {
       trigger: 'writing durable unit tests',
       topic_key: 'eval/collide/two',
     }), { store: db });
-    assert.equal(second.decision, 'write');
+    // Same trigger, same (empty) scope: the pair is routed as a revision rather
+    // than reported and dropped. The report itself is unchanged.
+    assert.equal(second.decision, 'update');
+    assert.equal(second.atom.replaces, first.atom.id);
     assert.equal(second.collides_with.length, 1);
     assert.equal(second.collides_with[0].id, first.atom.id);
     db.close();

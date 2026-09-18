@@ -215,4 +215,27 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
     const status = parseTool(await otherTools.status());
     assert.equal(status.counts.active, 200);
   });
+
+  test('the collision routing keeps the write path bounded at corpus scale', async () => {
+    // The comparison runs against every effective memory, so its cost grows with
+    // the store. This is the scale that has to stay affordable, not a microbenchmark.
+    const started = Date.now();
+    const result = parseTool(await tools.propose({ proposals: [{
+      memory_type: 'lesson', scope: 'project',
+      title: 'Collision cost at scale',
+      trigger: 'before writing durable memory to a large store',
+      behavior_delta: 'compare the trigger against effective memories before writing',
+      what: 'The collision check precedes the write.',
+      why: 'A decision cannot be routed on a value the write produces.',
+      topic_key: 'memory/demo/collision-cost',
+      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/write.js', summary: 'Write path' }],
+      retrieval_forms: { micro: 'Check collisions first.', short: 'Route the write on the collision result.' },
+    }] }));
+    const elapsed = Date.now() - started;
+
+    const [proposed] = result.proposals;
+    assert.ok(['write', 'update'].includes(proposed.decision), `decision was ${proposed.decision}`);
+    assert.ok(elapsed < 2000, `propose took ${elapsed}ms against ${CORPUS} atoms`);
+    console.log(`[stress] propose_ms=${elapsed} atoms=${CORPUS} decision=${proposed.decision}`);
+  });
 });

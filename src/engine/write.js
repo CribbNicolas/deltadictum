@@ -1,4 +1,4 @@
-import { decideAdmission } from './v2/admission.js';
+import { decideAdmission, routeTriggerCollision } from './v2/admission.js';
 import { prepareV5Write } from './v5/admission.js';
 import { domainOf } from './v5/vocab.js';
 import { triggerJaccard } from './health/deterioration.js';
@@ -36,8 +36,8 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
     if (prepared.needs_registration) payload.registry_key_id = (await store.createRegistryEntry(payload.project_id, payload.topic_key, 'provisional')).id;
 
     const existing = (await store.listByTopicLive(payload.project_id, payload.topic_key))[0];
-    const candidates = (await store.listAtoms({ projectId: payload.project_id, lifecycleStates: ['candidate'] }))
-      .filter(a => a.topic_key === payload.topic_key);
+    const pending = await store.listAtoms({ projectId: payload.project_id, lifecycleStates: ['candidate'] });
+    const candidates = pending.filter(a => a.topic_key === payload.topic_key);
     // Model-supplied evidence hashes, approval labels and lifecycle fields are ignored.
     payload.evidence_state = await verifyReferences(payload.evidence_refs, { store, projectId: payload.project_id });
     if (payload.evidence_state.artifacts.some(a => a.status === 'out_of_scope')) {
@@ -57,11 +57,26 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
         reasons: ['equivalent_knowledge_exists'], atom_id: duplicate.id });
       return { decision: 'ignore', reasons: ['equivalent_knowledge_exists'], atom: duplicate };
     }
+    // The collision is computed before the write, not after it: a decision cannot
+    // be routed on a value produced by the write it is supposed to route.
+    const { jaccard: threshold } = (await store.loadConfig()).health.trigger_collision;
+    const peers = await store.listAtoms({ projectId: payload.project_id, lifecycleStates: ['active', 'contested'] });
+    const collides_with = peers.filter(a => a.id !== payload.id).map(peer => ({ id: peer.id, topic_key: peer.topic_key,
+      jaccard: Math.round(triggerJaccard(peer.trigger, payload.trigger) * 1000) / 1000 })).filter(p => p.jaccard >= threshold).slice(0, 20);
+    // Candidates join the comparison. Repeated corrections on one topic arrive as
+    // candidates, and two near-identical candidates are the pair a reviewer should
+    // see together; a candidate is never a revision target, only a flag.
+    let route = routeTriggerCollision(payload, [...peers, ...pending], threshold, triggerJaccard);
+    if (route.decision === 'update' && existing) {
+      // The proposal already revises the live memory on its own topic. One
+      // candidate superseding two memories is not something review can express.
+      route = { decision: 'write', reasons: ['suspected_duplicate_pair'], suspected_pair: route.suspected_pair };
+    }
+    if (route.decision === 'update') payload.replaces = route.replaces;
+    if (route.suspected_pair?.length) payload.suspected_pair = route.suspected_pair;
+    const reasons_out = ['pending_review', ...route.reasons];
     const atom = await store.putAtom(payload);
-    const peers = await store.listAtoms({ projectId: atom.project_id, lifecycleStates: ['active', 'contested'] });
-    const collides_with = peers.filter(a => a.id !== atom.id).map(peer => ({ id: peer.id, topic_key: peer.topic_key,
-      jaccard: Math.round(triggerJaccard(peer.trigger, atom.trigger) * 1000) / 1000 })).filter(p => p.jaccard >= 0.5).slice(0, 20);
-    await store.logAdmission({ project_id: atom.project_id, decision: 'write', reasons: ['pending_review'], atom_id: atom.id });
-    return { decision: 'write', reasons: ['pending_review'], atom, collides_with };
+    await store.logAdmission({ project_id: atom.project_id, decision: route.decision, reasons: reasons_out, atom_id: atom.id });
+    return { decision: route.decision, reasons: reasons_out, atom, collides_with };
   });
 }

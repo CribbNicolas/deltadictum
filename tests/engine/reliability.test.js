@@ -150,8 +150,11 @@ describe('reliability at admission', () => {
     // reported successful several times.
     const claims = [];
     for (let i = 0; i < 12; i++) {
+      // Distinct scopes, so these are twelve memories rather than one restated
+      // twelve times: a near-duplicate is now routed as a revision, and the cap
+      // this test is about is a property of separate memories under volume.
       const proposed = await proposeMemory({ ...f.claimed, topic_key: `claims/volume/${i}`,
-        capture_origin: 'user_explicit',
+        capture_origin: 'user_explicit', applies_to: { components: [`claims-${i}`] },
         behavior_delta: `Reuse the idempotency key on attempt ${i}.` }, { store: f.store });
       assert.equal(proposed.decision, 'write');
       const admitted = await admitMemory(proposed.atom.id, f.review);
@@ -159,7 +162,7 @@ describe('reliability at admission', () => {
       // Re-proposing identical knowledge is ignored, so repetition cannot
       // accumulate standing even as a second candidate.
       const repeat = await proposeMemory({ ...f.claimed, topic_key: `claims/volume/${i}`,
-        capture_origin: 'user_explicit',
+        capture_origin: 'user_explicit', applies_to: { components: [`claims-${i}`] },
         behavior_delta: `Reuse the idempotency key on attempt ${i}.` }, { store: f.store });
       assert.equal(repeat.decision, 'ignore');
       assert.equal(repeat.atom.confidence, RELIABILITY_CAP.agent_claim);
