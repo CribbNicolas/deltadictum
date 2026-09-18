@@ -39,6 +39,32 @@ never changes without review**.
 
 Merging is the risky operation in this stage. Nothing here may alter an effective memory.
 
+## Start here: confirm the ground before writing code
+
+**This document may be wrong.** It was written against the repository at a point in time, and earlier
+stages move code. Run the checks below first. If any result disagrees with what the *Starting state*
+section claims, **stop and report the difference** instead of proceeding — a plan that no longer
+matches the code is information, not an obstacle to route around.
+
+This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection, and a stage
+instructed a rule that turned out to be wrong once implemented.
+
+```bash
+# The detector that already runs. Expect: a jaccard >= 0.5 filter, returned and unused.
+grep -n "collides_with" src/engine/write.js src/mcp/tools.js src/engine/v2/admission.js
+
+# Why paraphrases escape. Expect: exact JSON comparison over MATERIAL_FIELDS.
+grep -n "sameKnowledge" -A 5 src/engine/contract.js
+
+# The decision to emit. Expect: update declared and never emitted.
+grep -n "ADMISSION_DECISIONS" src/engine/v2/constants.js
+grep -rn "decision: 'update'" src/
+
+# The baseline to beat. Expect: a duplicate rate, from stage 3.
+npm run eval
+```
+
 ## Starting state
 
 **The detector already runs on every write.** `src/engine/write.js:52-54`:

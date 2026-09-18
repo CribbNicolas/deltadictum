@@ -39,6 +39,29 @@ From [`architecture/invariants.md`](../architecture/invariants.md):
 
 This stage deletes code. It must not change a single behaviour.
 
+## Start here: confirm the ground before writing code
+
+**This document may be wrong.** It was written against the repository at a point in time, and earlier
+stages move code. Run the checks below first. If any result disagrees with what the *Starting state*
+section claims, **stop and report the difference** instead of proceeding — a plan that no longer
+matches the code is information, not an obstacle to route around.
+
+This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection, and a stage
+instructed a rule that turned out to be wrong once implemented.
+
+```bash
+# The three modules, and who imports them. Expect: only their own tests.
+grep -rn "v3/admission|v3/evidence|v6/supersession" --include="*.js" src/ tests/
+
+# The MCP surface. Expect: advertised tools and implemented handlers to differ.
+grep -oE "^    [a-z]+: [" src/mcp/definition.js
+grep -oE "^    async [a-z]+(" src/mcp/tools.js
+
+# Expect: schema default 6 against SCHEMA_VERSION 7.
+grep -n "schema_version" src/store/schema.sql src/engine/contract.js
+```
+
 ## Starting state
 
 Three modules are imported by **nothing except their own test files**. Verified with

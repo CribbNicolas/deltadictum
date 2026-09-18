@@ -39,6 +39,35 @@ never entailment.
 
 This stage adds instrumentation only. It must not change a single retrieval decision.
 
+## Start here: confirm the ground before writing code
+
+**This document may be wrong.** It was written against the repository at a point in time, and earlier
+stages move code. Run the checks below first. If any result disagrees with what the *Starting state*
+section claims, **stop and report the difference** instead of proceeding — a plan that no longer
+matches the code is information, not an obstacle to route around.
+
+This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection, and a stage
+instructed a rule that turned out to be wrong once implemented.
+
+```bash
+# Current report shape. Expect: exact, precision, recall, f1, estimated_tokens —
+# and no abstention, duplicate or coverage figure.
+npm run eval
+
+# The abstention data that already exists. Expect: 9 of 24.
+grep -c "expected: \[\]" src/eval/cases.js
+grep -c "^  { id:" src/eval/cases.js
+
+# Where the duplicate signal comes from. Expect: an ignore decision with reason
+# equivalent_knowledge_exists, and logAdmission recording decisions.
+grep -n "equivalent_knowledge_exists" src/engine/write.js
+grep -n "logAdmission" src/engine/write.js src/store/create-store.js
+
+# Where coverage comes from. Expect: verified_count on evidence_state.
+grep -n "verified_count" src/engine/evidence.js
+```
+
 ## Starting state
 
 `src/eval/replay.js` seeds a real store with the seven fixtures in `src/eval/cases.js` and runs the
@@ -55,9 +84,10 @@ Current output, and the baseline this stage must preserve:
 
 What is missing, and what `docs/memory/evaluation-harness.md` already specifies but nothing implements:
 
-**Abstention has no figure of its own, although the data is already there.** Six of the 24 scenarios
+**Abstention has no figure of its own, although the data is already there.** Nine of the 24 scenarios
 expect `[]` — `payment-other-component`, `migration-unapplied`, `clock-wrong-scope`,
-`webhook-other-provider`, `retired-advice`, and the four `unrelated-*` cases. They currently fold into
+`webhook-other-provider`, `retired-advice`, and the four `unrelated-*` cases. That is more than a
+third of the suite, measured and then discarded into the same precision and recall as everything else. They currently fold into
 the same precision and recall as everything else. Abstaining correctly is half of what DD is for, and
 it is invisible.
 
@@ -76,7 +106,7 @@ Three numbers get added to the replay report. None of them changes behaviour.
 ### 1. Abstention as its own figure
 
 Report precision, recall and F1 of the **decision to abstain**, separately from retrieval F1. Treat
-"returned nothing" as the positive class over the 24 scenarios: the six that expect `[]` are the
+"returned nothing" as the positive class over the 24 scenarios: the nine that expect `[]` are the
 positives.
 
 This matters more than it looks. Retrieval F1 can stay at 1.0 while abstention silently degrades, and

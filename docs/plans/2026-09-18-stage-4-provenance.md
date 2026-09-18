@@ -43,6 +43,33 @@ for this stage:
   checked, not that the claim follows. Review remains a separate tier.
 - Promotion happens only through local human review.
 
+## Start here: confirm the ground before writing code
+
+**This document may be wrong.** It was written against the repository at a point in time, and earlier
+stages move code. Run the checks below first. If any result disagrees with what the *Starting state*
+section claims, **stop and report the difference** instead of proceeding — a plan that no longer
+matches the code is information, not an obstacle to route around.
+
+This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection, and a stage
+instructed a rule that turned out to be wrong once implemented.
+
+```bash
+# The two signals that exist. Expect: capture_origin set in the contract, and
+# three provenance values assigned during verification.
+grep -n "capture_origin" src/engine/contract.js
+grep -n "provenance" src/engine/evidence.js
+
+# That the gate reads neither. Expect: no hit.
+grep -n "provenance|capture_origin" src/engine/v2/admission.js
+
+# The constants to replace. Expect: 0.7 at proposal, 0.85 at admission.
+grep -n "confidence" src/engine/contract.js src/engine/lifecycle.js
+
+# The pattern to mirror. Expect: one ordered list with derived projections.
+cat src/engine/authority.js
+```
+
 ## Starting state
 
 Both halves of what this stage needs already exist, and the admission gate reads neither.

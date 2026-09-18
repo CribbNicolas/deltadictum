@@ -40,6 +40,30 @@ Full statement in [`architecture/plugin-constraints.md`](../architecture/plugin-
 Also in force and not to be disturbed: model output never mutates state; retrieval is project-scoped
 first; one effective memory per `topic_key`; a hook failure never blocks the host.
 
+## Start here: confirm the ground before writing code
+
+**This document may be wrong.** It was written against the repository at a point in time, and earlier
+stages move code. Run the checks below first. If any result disagrees with what the *Starting state*
+section claims, **stop and report the difference** instead of proceeding — a plan that no longer
+matches the code is information, not an obstacle to route around.
+
+This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection, and a stage
+instructed a rule that turned out to be wrong once implemented.
+
+```bash
+# The two halves of the collision. Expect: .dd accepted as a marker, and the
+# per-user data base living at ~/.dd.
+grep -n "exists(join(dir" src/project.js
+grep -n "dataBase" src/project.js
+
+# The failing test. Expect: red, in isolation, with ENOENT on .dd/.gitignore.
+node --test tests/store/transactions.test.js
+
+# What the bug already did on this machine. Expect: a project_id under the home.
+node scripts/check-home-artifacts.mjs
+```
+
 ## Starting state
 
 Two facts that are individually reasonable and together are a bug.
@@ -106,9 +130,14 @@ Three changes, each independently sufficient to stop the observed failure and wo
 - **Accept `.dd` only when it looks like a project.** A project `.dd` holds `atoms/`, `candidates/`,
   `registry/` or a `config.json` carrying a `project_id`. The data base holds `<slug>-<hash>/`
   directories. These are distinguishable without guessing.
-- **Never resolve to the home directory.** Stop the upward walk before it. A home directory is not a
-  project root under any circumstance, and this remains true even if someone later reintroduces a
-  `.dd` there.
+- **Never let an ancestor at or above the home capture a directory beneath it.** Stop the upward walk
+  before the home. The rule is about capture, not about the home being special: a directory that
+  contains everything must not claim the work inside it.
+
+  Note what this does **not** say. An earlier draft of this document instructed "never resolve to the
+  home directory", and implementing it showed that to be wrong: starting there is the user pointing at
+  it deliberately, and refusing would break a legitimate if unusual case while fixing nothing. Write
+  the test against capture-from-below, not against the home as a return value.
 
 ### 3. Report the existing damage; do not clean it silently
 
@@ -181,3 +210,25 @@ that directory**, and that `~/.dd-data` (or the chosen path) holds only `<slug>-
 Depends on nothing; independent of stage 1. Unblocks every later stage, which would otherwise inherit a
 project resolution that can silently merge unrelated directories into one store — and would be measured
 against a suite that is not green.
+
+---
+
+## Outcome
+
+Executed in commit `3308828`. **197 tests, 197 passing** — the first fully green suite of this plan.
+Replay unchanged at 24/24, f1 1.0, 2182 tokens. The pre-existing red test passed without being
+modified, which was the stated acceptance criterion.
+
+What the plan got wrong, and what a clean-context run should know:
+
+- **The home rule as first written was wrong**, corrected above. The first test asserted the home could
+  never be returned; implementation showed the real rule is about capture from below.
+- **Why the bug reproduced in a temp directory** was not stated and is the key to writing the test: on
+  Windows `os.tmpdir()` is itself under the home, so a `mkdtemp` there walks up into `~/.dd`. On Linux
+  and macOS `/tmp` is not under the home, so the incident would not reproduce from `tmpdir()` at all.
+  The tests use a synthetic boundary instead of the real home, so they exercise the rule on every
+  platform and create nothing under the user's actual home.
+- **`config.json` lives in `ddDir`, not `dataDir`**, which is what makes a project store and a cache
+  directory distinguishable without guessing. The marker list is `atoms`, `candidates`, `registry`,
+  `config.json`.
+- `exists()` already existed in `src/project.js`; no new helper was needed.

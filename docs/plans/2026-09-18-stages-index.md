@@ -21,26 +21,34 @@ An alignment audit contrasted every agent-facing surface against `src/` and foun
 both directions. The documentation described a system DD is not — that part is fixed. The code
 declares structure it never wired — that is what this plan closes.
 
-Concretely, the repository currently contains:
+What the audit found, and what the stages address:
 
-- Three engine modules imported by nothing but their own tests, which keeps them green and makes them
-  look alive.
-- An MCP handler that is implemented and never registered, so no caller can reach it.
+- Three engine modules imported by nothing but their own tests, which kept them green and made them
+  look alive. *Closed by stage 1.*
+- Two MCP handlers implemented and never registered, plus a routing indirection that gave a tool, a
+  handler of the same name, and the handler that actually ran three different identities.
+  *Closed by stage 1.*
+- A project-isolation bug that had already fired on a real machine, registering the user's home as a
+  DD project. *Closed by stage 2.*
 - Enum values no code path emits, a lifecycle state nothing transitions to, relation types nothing
-  writes, and a column nothing increments.
-- A project-isolation bug that already fired on a real machine.
+  writes. *Stages 6 and 7; the rest documented as reserved or unplanned.*
+- Provenance recorded and ignored, near-duplicates detected and tolerated, the most reliable signal
+  available never observed, and no way to measure whether any of it improved. *Stages 3 to 6.*
 
 ## Stages
 
-| # | Stage | Closes | Risk |
-|---|---|---|---|
-| 1 | [Cleanup](2026-09-18-stage-1-cleanup.md) | Dead modules, unreachable handler, unused enum value, schema default drift | Low |
-| 2 | [Project isolation](2026-09-18-stage-2-project-isolation.md) | `findRepoRoot` resolving to the home directory; the one red test | Medium |
-| 3 | [Measurement](2026-09-18-stage-3-measurement.md) | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
-| 4 | [Provenance](2026-09-18-stage-4-provenance.md) | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
-| 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | The highest-reliability signal available is never observed | Medium |
-| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
-| 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | `archived` is declared and unreachable; the effective set only grows | High |
+| # | Stage | Status | Closes | Risk |
+|---|---|---|---|---|
+| 1 | [Cleanup](2026-09-18-stage-1-cleanup.md) | **Done** `f839e93` | Dead modules, unreachable handlers, unused enum value, schema default drift | Low |
+| 2 | [Project isolation](2026-09-18-stage-2-project-isolation.md) | **Done** `3308828` | An ancestor capturing the work beneath it; the one red test | Medium |
+| 3 | [Measurement](2026-09-18-stage-3-measurement.md) | Next | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
+| 4 | [Provenance](2026-09-18-stage-4-provenance.md) | Waiting on 3 | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
+| 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | Waiting on 4 | The highest-reliability signal available is never observed | Medium |
+| 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Waiting on 3 | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
+| 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Waiting on 3 | `archived` is declared and unreachable; the effective set only grows | High |
+
+A stage marked **Done** carries an *Outcome* section recording what it actually did, including where
+the plan turned out to be wrong. Read that before assuming the stage body describes the current code.
 
 ## Dependency graph
 
@@ -66,13 +74,18 @@ Concretely, the repository currently contains:
 Every stage follows these. They are repeated in each document so a stage can be executed without
 reading this index.
 
+- **Start by confirming the ground.** Every stage opens with a *Start here* section of checks whose
+  expected output is stated. Run them before writing code. If the repository disagrees with the
+  document, stop and report it: three errors in this plan were found that way, including a stage that
+  described one unreachable handler where there were two, a rule that was wrong once implemented, and
+  a count of abstention scenarios that was off by a third.
 - **Tests first, and check the red is for the right reason.** This work has already produced a test
   that passed vacuously because the operation under test did not trigger the code being measured.
   A green that proves nothing is worse than a red.
 - **One commit per stage**, whose message explains the reasoning, not the diff.
-- **Baseline is sacred.** `npm test` is 213 tests with 212 passing; `npm run eval` is 24/24, f1 1.0,
-  2182 estimated tokens. The single permitted failure is `tests/store/transactions.test.js` **until
-  stage 2**, which fixes it. After that, zero failures.
+- **Baseline is sacred.** After stage 2: `npm test` is **197 tests, 197 passing — zero failures**, and
+  `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens. A stage that leaves a failing test is not
+  finished. (The count dropped from 213 because stage 1 removed three dead test files.)
 - **The replay may not get worse.** A stage that changes ranking runs the replay before and after and
   explains the difference in its commit.
 - **Documentation changes in the same commit.** If a stage changes behaviour that `docs/` describes,

@@ -38,6 +38,31 @@ must degrade to silence rather than damage the session**.
 
 An observation is evidence, not knowledge. Nothing here writes a memory.
 
+## Start here: confirm the ground before writing code
+
+**This document may be wrong.** It was written against the repository at a point in time, and earlier
+stages move code. Run the checks below first. If any result disagrees with what the *Starting state*
+section claims, **stop and report the difference** instead of proceeding — a plan that no longer
+matches the code is information, not an obstacle to route around.
+
+This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection, and a stage
+instructed a rule that turned out to be wrong once implemented.
+
+```bash
+# What becomes an observation today. Expect: failures and validation commands only.
+cat src/hooks/observe.js
+
+# The hook to attach to. Expect: the prompt branch already holds the text.
+grep -n "command === 'prompt'" -A 10 src/hooks/run.js
+
+# The lexical precedent to follow. Expect: an EN/ES regex in the anti-memory rule.
+grep -n "anti_memory" -A 2 src/engine/v2/admission.js
+
+# The ladder this source joins. Expect: it to exist, from stage 4.
+ls src/engine/reliability.js
+```
+
 ## Starting state
 
 **Only two things become observations.** `observationFromTool` (`src/hooks/observe.js:3-22`) returns
