@@ -63,6 +63,34 @@ grep -n "anti_memory" -A 2 src/engine/v2/admission.js
 ls src/engine/reliability.js
 ```
 
+## Corrections from stage 4
+
+Stage 4 shipped and moved code this document describes. Checked 2026-09-18 against commits `3c83529`
+and `29926ef`; the four *Start here* checks all still return what they should. What changed:
+
+**The ladder work in the *Files* list is already done.** The `user_correction` rung exists in
+`src/engine/reliability.js` with the highest cap, and `verifyReferences` derives which observation
+provenances count as verified from the ladder's own `observed` flag rather than testing `'host'`
+literally. Verified end to end: an observation stamped `metadata.provenance: 'user_correction'`, cited
+as a `tool_output` reference, verifies and admits at 0.95. **Do not add a rung and do not add a second
+list of verified provenances** — that is the third table `stage 4`'s risks section forbids. This stage's
+only job on the reliability side is to stamp that provenance when it writes the observation.
+
+**The Stop prompt does not surface observations from `src/hooks/capture.js`.** That file is a static
+prompt string and nothing else. The surfacing is `src/hooks/run.js:86`, which appends
+`Available host evidence for this session (get by ID; source_type=tool_output, source_ref=ID)`. A user
+correction is not host evidence, so that wording is what needs to change, in `run.js` — `capture.js` at
+most gains a sentence.
+
+**Codex Stop fires on any observation, not only a host one.** `src/hooks/run.js:82` skips the Codex
+capture turn when the session recorded no observations, with a comment scoping that to host validation
+and failure. Once a correction is an observation, a corrected turn will spend a Codex continuation.
+Decide that deliberately rather than inheriting it.
+
+**One line number drifted.** The anti-memory regex is at `src/engine/v2/admission.js:46`, not `:40`; the
+gate gained a reliability read above it. `src/hooks/observe.js:3-22` and `:16-17`, `src/hooks/run.js:60-71`
+and `:13-18` are all unchanged.
+
 ## Starting state
 
 **Only two things become observations.** `observationFromTool` (`src/hooks/observe.js:3-22`) returns
@@ -130,9 +158,11 @@ memory benefit of recording a correction never justifies degrading the turn it w
 
 - `src/hooks/observe.js` — new `observationFromPrompt`, reusing the existing redaction
 - `src/hooks/run.js` — the `prompt` branch records the observation before retrieving
-- `src/engine/reliability.js` — the new source takes its place on stage 4's ladder
-- `src/hooks/capture.js` — the `Stop` prompt can now surface correction observations as available
-  evidence, the same way it surfaces host observations today
+- ~~`src/engine/reliability.js`~~ — nothing to do; stage 4 already declared and wired the rung, see
+  *Corrections from stage 4* above
+- `src/hooks/run.js` — the `Stop` branch can now surface correction observations as available evidence,
+  the same way it surfaces host observations today. This is where the surfacing lives, not
+  `src/hooks/capture.js`
 - `docs/architecture/project-cognition.md` — the capture section
 - `docs/memory/roadmap.md` — Phase 2 item closes
 
