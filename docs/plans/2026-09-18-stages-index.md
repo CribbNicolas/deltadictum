@@ -43,7 +43,7 @@ What the audit found, and what the stages address:
 | 2 | [Project isolation](2026-09-18-stage-2-project-isolation.md) | **Done** `3308828` | An ancestor capturing the work beneath it; the one red test | Medium |
 | 3 | [Measurement](2026-09-18-stage-3-measurement.md) | **Done** `2765ed8` | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
 | 4 | [Provenance](2026-09-18-stage-4-provenance.md) | **Done** `3c83529` | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
-| 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | **Done** `b065e54` | The highest-reliability signal available is never observed | Medium |
+| 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | **Done** `e5b8c6f` | The highest-reliability signal available is never observed | Medium |
 | 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Ready | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
 | 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Ready | `archived` is declared and unreachable; the effective set only grows | High |
 
