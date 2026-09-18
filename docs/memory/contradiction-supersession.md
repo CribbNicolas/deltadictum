@@ -141,7 +141,7 @@ What is actually written today:
 
 | Column | Reality |
 |---|---|
-| `detection_source` | Only `explicit`. The schema also permits `same_key_supersede` and `worker_llm`; neither is ever written. |
+| `detection_source` | Only `explicit`. The schema also permits `same_key_supersede` (reserved: supersession is not logged yet) and `worker_llm` (**no producer and none planned** — a background judge needs a process that outlives a hook, L2). |
 | `action` | Only `contested` and `resolved`. `superseded` is permitted and never written. |
 | `winner_atom_id` | Populated on resolution, null on contest. |
 | `actor_ref` | **Never populated.** No call site supplies it. |
@@ -167,7 +167,7 @@ through the local audit UI.
 | Operation | Interface |
 |---|---|
 | Supersession-aware write | MCP `propose`. Detects a same-key effective atom and sets `replaces`; the swap happens on approval. |
-| Revise an existing memory | MCP `propose` with the same `topic_key`. There is **no update in place**: a revision is a new candidate that supersedes on approval, so the effective memory never changes without review. `createToolHandlers` also exposes an `update` handler that merges fields over a stored atom and re-proposes it, but `definition.js` does not register it as a tool, so no caller can reach it. |
+| Revise an existing memory | MCP `propose` with the same `topic_key`. There is **no update in place**: a revision is a new candidate that supersedes on approval, so the effective memory never changes without review. There is exactly one write handler and it is the registered tool; a test asserts that every implemented handler is advertised and every advertised tool is implemented. |
 | Declare a contradiction | MCP `contradict`. Both sides enter `contested`. |
 | List contested pairs | MCP `list` and the audit UI, always project-scoped (INV-01, INV-02). |
 | Resolve a contradiction | Audit UI `POST /api/resolve`. Local human review with a mandatory rationale; not reachable from MCP. |

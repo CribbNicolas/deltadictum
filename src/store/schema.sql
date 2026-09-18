@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS memory_atoms (
   topic_key TEXT NOT NULL CHECK (length(topic_key) > 0),
   tags TEXT NOT NULL DEFAULT '[]',
   lifecycle_state TEXT NOT NULL DEFAULT 'candidate' CHECK (lifecycle_state IN ('candidate','active','contested','superseded','archived','rejected')),
-  schema_version INTEGER NOT NULL DEFAULT 6,
+  schema_version INTEGER NOT NULL DEFAULT 7,
   activation_count INTEGER NOT NULL DEFAULT 0,
   predominance REAL NOT NULL DEFAULT 0 CHECK (predominance >= 0),
   contested_at TEXT,

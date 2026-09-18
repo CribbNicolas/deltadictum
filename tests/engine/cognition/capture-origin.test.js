@@ -78,16 +78,21 @@ test('equivalent user requests preserve the first capture attribution without du
 
 test('an agent revision records its own declared origin and defaults missing origin to user_explicit', async t => {
   const f = await setup(t);
+  // A revision travels the same road as any other proposal: same topic_key, new
+  // candidate, original untouched until review. There is no in-place update path.
   const first = (await proposeMemory({ ...f.payload, capture_origin: 'user_explicit' }, f)).atom;
   const tools = createToolHandlers({ store: f.store, projectId: 'demo' });
-  const result = await tools.update({ id: first.id, capture_origin: 'model_initiated', why: 'New evidence found while debugging retries.' });
+  const result = await tools.propose({ proposals: [{ ...f.payload, capture_origin: 'model_initiated',
+    why: 'New evidence found while debugging retries.' }] });
   assert.equal(result.isError, undefined);
-  const revised = JSON.parse(result.content[0].text);
+  const revised = JSON.parse(result.content[0].text).proposals[0];
   assert.equal(revised.capture_origin, 'model_initiated');
   assert.equal(revised.capture_source, 'agent');
   assert.equal((await f.store.getAtom(first.id, 'demo')).capture_origin, 'user_explicit');
-  const omitted = await tools.update({ id: revised.id, why: 'A further revision without a declared origin.' });
-  assert.equal(JSON.parse(omitted.content[0].text).capture_origin, 'user_explicit');
+  const { capture_origin, ...withoutOrigin } = f.payload;
+  const omitted = await tools.propose({ proposals: [{ ...withoutOrigin,
+    why: 'A further revision without a declared origin.' }] });
+  assert.equal(JSON.parse(omitted.content[0].text).proposals[0].capture_origin, 'user_explicit');
 });
 
 test('a new proposal with no capture field defaults to user_explicit in the persisted memory', async t => {

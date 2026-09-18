@@ -53,6 +53,6 @@ export function createMcpServer(options) {
     status: ['Get project counts and the audit URL.', {}],
     health: ['Inspect memory crowding and unresolved disputes; this is not a correctness score.', {}],
   };
-  for (const [name, [description, inputSchema]] of Object.entries(definitions)) server.registerTool(name, { description, inputSchema }, args => name === 'propose' ? handlers.capture(args) : handlers[name](args));
+  for (const [name, [description, inputSchema]] of Object.entries(definitions)) server.registerTool(name, { description, inputSchema }, args => handlers[name](args));
   return server;
 }

@@ -62,9 +62,15 @@ separate tiers: coverage says the artifacts are real, and review says the claim 
 The relation table permits six types: `supports`, `contradicts`, `supersedes`, `derived_from`,
 `blocks` and `related_to`. Supersession also records `superseded_by` directly on the atom.
 
-**Not implemented.** Only `supersedes` and `contradicts` are ever written. `supports`, `derived_from`,
-`blocks` and `related_to` exist in the schema and no code path produces them, so the relation graph
-carries succession and dispute and nothing else. Earlier versions of this document named
+**Not implemented.** Only `supersedes` and `contradicts` are ever written, so the relation graph
+carries succession and dispute and nothing else. The other four are not equal in status:
+
+- `supports`, `blocks` and `derived_from` are **reserved with a plan** — argumentation semantics and
+  the anti-memory veto path, both roadmap phase 3.
+- `related_to` has **no producer and none planned.** It survives only because removing a value from a
+  SQL `CHECK` would apply to new databases and not to existing ones: `migrate()` runs
+  `CREATE TABLE IF NOT EXISTS`, and the index rebuild repopulates rows without recreating tables.
+  Enforcing a constraint on some installs and not others is worse than leaving an unused value. Earlier versions of this document named
 `supported_by`, `refuted_by`, `caused_by` and `effective_during`; none of those exist under any name.
 
 ## V2 and V3 Boundary

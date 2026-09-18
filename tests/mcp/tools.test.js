@@ -30,7 +30,7 @@ describe('MCP tool handlers', () => {
     });
     const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
 
-    const proposed = JSON.parse((await tools.propose({ ...proposal(), project_id: 'demo' })).content[0].text);
+    const proposed = JSON.parse((await tools.propose({ proposals: [proposal()] })).content[0].text).proposals[0];
     assert.equal(proposed.decision, 'write');
 
     assert.equal(proposed.atom, undefined);

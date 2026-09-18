@@ -7,6 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { createMcpServer } from '../../src/mcp/definition.js';
+import { createToolHandlers } from '../../src/mcp/tools.js';
 
 test('actual MCP schema has one compact proposal surface and no self-approval operations', async t => {
   const root = await mkdtemp(join(tmpdir(), 'dd-protocol-'));
@@ -68,4 +69,22 @@ test('actual MCP schema has one compact proposal surface and no self-approval op
   assert.ok(imported.every(p => p.decision === 'write' && p.lifecycle_state === 'candidate'));
   const empty = await client.callTool({ name: 'propose', arguments: { proposals: [] } });
   assert.equal(empty.isError, true);
+});
+
+test('every implemented handler is reachable and every advertised tool is implemented', async t => {
+  // The audit that prompted this guard found an `update` handler that was fully
+  // implemented and never registered, so no caller could reach it, and a
+  // `propose` handler shadowed by a routing ternary. Both looked alive.
+  const root = await mkdtemp(join(tmpdir(), 'dd-parity-'));
+  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+  const server = createMcpServer({ store, projectId: 'demo' });
+  const client = new Client({ name: 'parity-test', version: '1' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  t.after(async () => { await client.close(); await server.close(); store.close(); });
+
+  const advertised = (await client.listTools()).tools.map(tool => tool.name).sort();
+  const implemented = Object.keys(createToolHandlers({ store, projectId: 'demo' })).sort();
+  assert.deepEqual(implemented, advertised,
+    'a handler nobody can call, or a tool nobody implements, is the drift this test exists to catch');
 });

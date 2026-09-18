@@ -32,10 +32,7 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       if (observation?.project_id === projectId) return { kind: 'observation', ...observation };
       throw new Error(`not_found:${id}`);
     },
-    async propose(payload) {
-      return proposalResult(await proposeMemory({ ...payload, project_id: projectId }, { store }));
-    },
-    async capture({ proposals }) {
+    async propose({ proposals }) {
       if (!Array.isArray(proposals) || !proposals.length) throw new Error('nonempty_proposals_required');
       const results = [];
       for (const proposal of proposals) results.push(proposalResult(await proposeMemory({ ...proposal, project_id: projectId }, { store })));
@@ -48,12 +45,6 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
       return { total: atoms.length, memories: atoms.slice(offset, offset + Math.min(50, limit)).map(atom => ({
         id: atom.id, title: atom.title, topic_key: atom.topic_key, memory_type: atom.memory_type, lifecycle_state: atom.lifecycle_state,
         capture_origin: atom.capture_origin, capture_source: atom.capture_source })) };
-    },
-    async update({ id, ...fields }) {
-      const atom = await store.getAtom(id, projectId);
-      if (!atom) throw new Error(`not_found:${id}`);
-      return proposalResult(await proposeMemory({ ...atom, ...fields, project_id: projectId,
-        capture_origin: fields.capture_origin ?? 'user_explicit' }, { store }));
     },
     async contradict({ id, contradicts }) { return declareContradiction(id, contradicts, { store, projectId }); },
     async ui() { return { url: `http://127.0.0.1:${uiPort}` }; },
