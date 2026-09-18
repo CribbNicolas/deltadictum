@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { proposeMemory } from '../engine/write.js';
-import { admitMemory, rejectMemory, resolveMemories, HUMAN_REVIEW } from '../engine/lifecycle.js';
+import { admitMemory, rejectMemory, resolveMemories, restoreMemory, HUMAN_REVIEW } from '../engine/lifecycle.js';
 import { projectContext } from '../engine/project-context.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { recommendResolution } from '../engine/v6/predominance.js';
@@ -86,7 +86,7 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
         return send(res, 200, await resolveMemories(body.winner_id, body.loser_id,
           { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale }));
       }
-      const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject))?$/);
+      const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject|restore))?$/);
       if (match) {
         const id = decodeURIComponent(match[1]);
         const action = match[2];
@@ -116,6 +116,7 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
         if (req.method === 'POST' && action === 'admit') return send(res, 200, await admitMemory(id,
           { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale, authority: body.authority }));
         if (req.method === 'POST' && action === 'reject') return send(res, 200, await rejectMemory(id, { store, projectId, actor: HUMAN_REVIEW }));
+        if (req.method === 'POST' && action === 'restore') return send(res, 200, await restoreMemory(id, { store, projectId, actor: HUMAN_REVIEW }));
       }
       send(res, 404, { error: 'not_found' });
     } catch (err) { send(res, 409, { error: err.message }); }

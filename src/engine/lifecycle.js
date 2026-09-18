@@ -1,4 +1,5 @@
 import { decideAdmission } from './v2/admission.js';
+import { healthThresholdsFromConfig, retirementCandidates } from './health/deterioration.js';
 import { stampRevisionFiles, verifyReferences } from './evidence.js';
 import { cappedConfidence } from './reliability.js';
 import { validateExplicitContradiction } from './v6/contradiction.js';
@@ -116,4 +117,47 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
       detection_source: 'explicit', action: 'resolved', winner_atom_id: winnerId, reasons: ['human_reviewed'] });
     return { winner_id: winnerId, loser_id: loserId };
   });
+}
+
+// Archiving is not deleting. The file moves to `archive/`, the memory leaves the
+// retrieval surface and the effective-set uniqueness predicate, and a human can
+// bring it back. Deletion stays a separate, manual, confirmed action.
+//
+// Authority protects: a human put `validated` or `canonical` there, so crowding
+// caused by reviewed knowledge is a review decision, never an automatic one.
+export async function archiveMemory(id, { store, projectId, reason = 'never_activated' } = {}) {
+  return store.withWriteLock(async () => {
+    const atom = await store.getAtom(id, projectId);
+    if (!atom || atom.lifecycle_state !== 'active') throw new Error('active_memory_required');
+    if (!['inferred', 'observed'].includes(atom.authority)) throw new Error('authority_protected');
+    return store.putAtom({ ...atom, lifecycle_state: 'archived',
+      archived_at: new Date().toISOString(), archived_reason: reason });
+  });
+}
+
+export async function restoreMemory(id, { store, projectId, actor } = {}) {
+  requireReview(actor);
+  return store.withWriteLock(async () => {
+    const atom = await store.getAtom(id, projectId);
+    if (!atom || atom.lifecycle_state !== 'archived') throw new Error('archived_memory_required');
+    // Archiving frees the topic_key, so another memory may hold it by now.
+    // Restoring cannot take it back: that would put two memories on one trigger.
+    const live = (await store.listByTopicLive(projectId, atom.topic_key))[0];
+    if (live && live.id !== atom.id) throw new Error('topic_key_taken');
+    return store.putAtom({ ...atom, lifecycle_state: 'active', archived_at: null, archived_reason: null });
+  });
+}
+
+// Lazily evaluated on a path that is already running and already holds the lock
+// (L2 forbids a background worker, L1 forbids the hot path). Retirement is never
+// urgent; a day late costs nothing. Callers must not let it fail their write (L5).
+export async function retireByDisuse({ store, projectId, now } = {}) {
+  const thresholds = healthThresholdsFromConfig(await store.loadConfig());
+  const snapshot = await store.loadHealthSnapshot(projectId);
+  const archived = [];
+  for (const atom of retirementCandidates(snapshot, now ?? new Date().toISOString(), thresholds)) {
+    // One memory that refuses the transition does not stop the others.
+    try { archived.push((await archiveMemory(atom.id, { store, projectId })).id); } catch { /* left effective */ }
+  }
+  return archived;
 }

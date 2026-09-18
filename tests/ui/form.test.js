@@ -35,4 +35,14 @@ describe('audit UI form fields', () => {
     assert.doesNotMatch(html, /<(input|textarea)[^>]*name="review_authority"/,
       'review_authority must not be an input or textarea, or formValues would resubmit it');
   });
+
+  test('a retired memory can be seen and brought back from the page', async () => {
+    const html = await readFile(htmlPath, 'utf8');
+    // Archiving is reversible only if the reversal is reachable. Without the
+    // filter option the archived set is invisible, and the loss is unnoticed.
+    assert.match(html, /<option value="archived">archived<\/option>/, 'the filter must list archived memories');
+    assert.match(html, /data-act="restore"/, 'an archived memory must offer a restore action');
+    assert.match(html, /encodeURIComponent\(selected\.id\) \+ '\/restore'/, 'restore must call the restore endpoint');
+    assert.match(html, /Nothing was deleted/, 'the page must say that archiving is not deletion');
+  });
 });
