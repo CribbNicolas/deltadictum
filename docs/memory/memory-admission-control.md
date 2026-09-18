@@ -55,10 +55,16 @@ proposal -> block | observe | write | ignore
 Two further decisions belong to the lifecycle layer rather than the gate: `admit`, when local human
 review promotes a candidate, and `contest`, when a caller declares a contradiction.
 
-**Not implemented.** `ADMISSION_DECISIONS` in `src/engine/v2/constants.js` also declares `update` and
-`warn`. Neither is ever emitted. `update` is the missing in-place merge path — see *Update, do not
-append* below. `warn` would be the middle ground between advising and blocking, which the write path
-has no use for while every write already stops at a candidate.
+**Not implemented.** `ADMISSION_DECISIONS` in `src/engine/v2/constants.js` also declares `update`,
+which is never emitted. It is the missing collision routing — see *Update, do not append* below — and
+is kept for that.
+
+`warn` was removed from the list. It would have been a middle ground between advising and blocking,
+and there is no such ground while every write already stops at a candidate awaiting review.
+
+Note that `ADMISSION_DECISIONS` is itself a declaration with no consumer: nothing imports it, and the
+decisions the gate returns are string literals. The vocabulary that is actually enforced lives in the
+SQL `CHECK` constraints.
 
 ## Equivalence and collision
 

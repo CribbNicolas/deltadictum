@@ -61,8 +61,11 @@ already exists elsewhere and is live: `recordOutcome` accepts a `refuted` outcom
 Two more declarations without a producer:
 
 - `src/mcp/tools.js` implements an `update` handler. `src/mcp/definition.js` registers ten tools and
-  **`update` is not one of them**, so no caller can reach it. (`capture` is also unregistered, but it
-  is reached internally: `definition.js` routes `propose` to `handlers.capture`.)
+  **`update` is not one of them**, so no caller can reach it.
+- The registered `propose` tool is routed by a ternary in `definition.js` to a handler named
+  `capture`, while a **second, unreachable handler also named `propose`** sits beside it. A tool, a
+  handler of the same name, and the handler that actually runs are three different things. This
+  indirection is why an earlier audit in this branch misreported the MCP surface.
 - `ADMISSION_DECISIONS` in `src/engine/v2/constants.js:4` declares `warn`. No code path emits it. The
   decisions actually emitted are `block`, `observe`, `write` and `ignore`.
 
@@ -75,6 +78,12 @@ value explicitly — and a trap for the next person who reads the schema.
 **Delete the three modules and their three test files.** The reason is not tidiness. Their tests are
 green, so the modules look like part of the system to anyone reading the repository or grepping it.
 That is exactly the failure the documentation pass just fixed, in code instead of prose.
+
+**Collapse the proposal surface to one name.** Delete the unreachable single-payload `propose`
+handler, rename `capture` to `propose`, and drop the routing ternary so the registered tool reaches
+the handler of the same name. Add a protocol test asserting parity in both directions: a handler
+nobody can call, or a tool nobody implements, must fail the suite instead of surviving as apparently
+live code.
 
 **Delete the `update` handler from `src/mcp/tools.js`.** The alternative — registering it — contradicts
 the design. Revisions go through `propose` with the same `topic_key`, which is what guarantees the
@@ -145,8 +154,12 @@ touched was reachable after all — stop and find out what.
 
 ## Risks and what not to do
 
-- **Do not delete `capture` from `src/mcp/tools.js`.** It is unregistered but reachable:
-  `definition.js` routes `propose` to it.
+- **Do not delete the `capture` handler's body.** It is the one that actually runs; it is being
+  renamed, not removed.
+- **A surviving test may break, and that is information.** One test called `tools.update` directly.
+  The handler was unreachable as claimed, but the behaviour it covered — a revision records its own
+  capture origin and does not rewrite the original's — is real and documented. Retarget such a test
+  onto the supported path; do not delete it, and do not conclude the code was alive.
 - **Do not edit SQL `CHECK` constraints**, for the reason above.
 - **Do not "fix" a test to make it pass** after a deletion. If a surviving test fails, something was
   not dead.
@@ -162,3 +175,22 @@ touched was reachable after all — stop and find out what.
 
 Depends on nothing. Unblocks nothing directly — it is independent of stage 2 and precedes stages 3–7 so
 that no later stage maintains code it should not.
+
+---
+
+## Outcome
+
+Executed in commit `f839e93`. 191 tests, 190 passing; the one failure was the pre-existing
+`transactions.test.js` case that stage 2 fixed. Replay byte-identical at 24/24, f1 1.0, 2182 tokens.
+
+Two things the plan did not anticipate:
+
+- The proposal surface carried **two** unreachable handlers, not one, plus a routing ternary that made
+  three different things share two names. Collapsing it was scope the plan had not called for, and is
+  recorded above so the document matches what was done.
+- A later review found that `LIFECYCLE_STATES`, `ADMISSION_DECISIONS`, `EVIDENCE_TYPES` and
+  `FORM_TYPES` in `src/engine/v2/constants.js` have **no consumers at all** — only `MEMORY_TYPES` and
+  `MEMORY_SCOPES` are imported, by `src/engine/contract.js`. This stage edited `ADMISSION_DECISIONS`
+  without noticing it was itself dead. The vocabulary that is actually enforced lives in the SQL
+  `CHECK` constraints. Deciding between deleting these and making them load-bearing is deliberately
+  left open rather than settled here.
