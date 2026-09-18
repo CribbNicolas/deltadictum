@@ -1,5 +1,6 @@
 import { MEMORY_TYPES, MEMORY_SCOPES } from './constants.js';
 import { hasUnsafeMemoryContent } from './sanitizer.js';
+import { reliabilityCeiling } from '../reliability.js';
 
 function hasText(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -23,6 +24,11 @@ function containsUnsafePayload(payload) {
 
 export function decideAdmission(payload = {}) {
   const reasons = [];
+  // Capture origin and evidence provenance are read and reported, never used to
+  // reject: an unverified claim is still admissible as a candidate awaiting
+  // review. What provenance decides is the ceiling the memory can reach, which
+  // is applied at admission, where a confidence actually affects retrieval.
+  const reliability = reliabilityCeiling(payload);
 
   if (!hasText(payload.project_id)) reasons.push('missing_project_id');
   if (!MEMORY_TYPES.includes(payload.memory_type)) reasons.push('invalid_memory_type');
@@ -42,12 +48,12 @@ export function decideAdmission(payload = {}) {
   }
 
   if (reasons.includes('missing_project_id') || reasons.includes('invalid_memory_type') || reasons.includes('invalid_scope') || reasons.includes('unsafe_memory_content') || reasons.includes('anti_memory_requires_preventive_delta')) {
-    return { decision: 'block', reasons, score: 0 };
+    return { decision: 'block', reasons, score: 0, reliability };
   }
 
   if (reasons.length > 0) {
-    return { decision: 'observe', reasons, score: 0.25 };
+    return { decision: 'observe', reasons, score: 0.25, reliability };
   }
 
-  return { decision: 'write', reasons: ['durable_contract_satisfied'], score: 1 };
+  return { decision: 'write', reasons: ['durable_contract_satisfied'], score: 1, reliability };
 }
