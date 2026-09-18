@@ -2,7 +2,7 @@
   "id": "a44ac912-cdbc-46ee-ac74-3c09f952689c",
   "schema_version": 6,
   "authority": "inferred",
-  "confidence": 0.7,
+  "confidence": 0.85,
   "scope": "project",
   "valid_from": "2026-09-10T07:39:35.274Z",
   "project_id": "supermem",
@@ -27,5 +27,22 @@
   "registry_key_id": "1a6f4bee-7212-4874-ba85-39fc00ff0dbe",
   "lifecycle_state": "active",
   "created_at": "2026-09-10T07:39:35.404Z",
-  "updated_at": "2026-09-10T07:39:35.410Z"
+  "updated_at": "2026-09-18T09:08:10.030Z",
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.026Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "tests/engine/health/abstention-eval.test.js",
+        "summary": "quality eval fixture",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "dc6c8cf115c1a5a07c31221b4be873476374af1bdb0a07d9a6e25c08515ea6dc"
+      }
+    ],
+    "verified_count": 1,
+    "support": "unreviewed"
+  }
 }

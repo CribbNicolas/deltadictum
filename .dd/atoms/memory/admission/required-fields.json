@@ -2,7 +2,7 @@
   "id": "22291eb8-42aa-47b8-abcd-83e9173bdfc9",
   "schema_version": 6,
   "authority": "inferred",
-  "confidence": 0.7,
+  "confidence": 0.85,
   "scope": "project",
   "valid_from": "2026-09-09T22:37:11.392Z",
   "memory_type": "lesson",
@@ -27,6 +27,23 @@
   "registry_key_id": "415e7baa-6cd8-4118-b139-d87453cda92d",
   "lifecycle_state": "active",
   "created_at": "2026-09-09T22:37:11.415Z",
-  "updated_at": "2026-09-09T22:39:00.028Z",
-  "activation_count": 1
+  "updated_at": "2026-09-18T09:08:10.165Z",
+  "activation_count": 1,
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.162Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/v2/admission.js",
+        "summary": "V2 admission gate",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d4ed2418c6079fa785b6d6760579f9e7c7e8922f17d33cdd7011d62209179df1"
+      }
+    ],
+    "verified_count": 1,
+    "support": "unreviewed"
+  }
 }

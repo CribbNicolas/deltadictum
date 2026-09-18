@@ -2,7 +2,7 @@
   "id": "d0776c3c-42d9-4a8c-a16a-3f772734e6d0",
   "schema_version": 6,
   "authority": "inferred",
-  "confidence": 0.7,
+  "confidence": 0.85,
   "scope": "project",
   "valid_from": "2026-09-10T05:52:06.139Z",
   "memory_type": "procedure",
@@ -32,5 +32,30 @@
   "registry_key_id": "5458261b-fea1-45c5-b797-e0ff7fa5f6ff",
   "lifecycle_state": "active",
   "created_at": "2026-09-10T05:52:06.189Z",
-  "updated_at": "2026-09-10T05:52:06.195Z"
+  "updated_at": "2026-09-18T09:08:10.088Z",
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.084Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/health/deterioration.js",
+        "summary": "Deterministic assessDeterioration",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "081cfa1bef1210c7142bfadd738a3dcae0b81cbee1946cbdcfd847eb11326272"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "docs/specs/2026-09-10-memory-deterioration-detection.md",
+        "summary": "Data-only deterioration spec",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "a53d4d89d51d707cdb104b963f786919abecbf54219e88c7bd5c1e6b5c81ef6d"
+      }
+    ],
+    "verified_count": 2,
+    "support": "unreviewed"
+  }
 }
