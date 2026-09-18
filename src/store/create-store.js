@@ -133,6 +133,15 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     await telemetry.prune();
   }
 
+  // Admission decisions were write-only until measurement needed them.
+  // Only proposeMemory outcomes are write attempts; 'admit' is a later review event.
+  async function listAdmissions({ projectId } = {}) {
+    const rows = projectId
+      ? index.db.prepare('SELECT decision, reasons, atom_id, created_at FROM memory_admission_decisions WHERE project_id = ? ORDER BY created_at').all(projectId)
+      : index.db.prepare('SELECT decision, reasons, atom_id, created_at FROM memory_admission_decisions ORDER BY created_at').all();
+    return rows.map(row => ({ ...row, reasons: JSON.parse(row.reasons) }));
+  }
+
   async function logContradiction(entry) {
     index.db.prepare(`
       INSERT INTO memory_contradiction_log (
@@ -334,6 +343,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     putAtom,
     deleteAtom,
     logAdmission,
+    listAdmissions,
     logRetrieval,
     logContradiction,
     incrementActivation,

@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: testing
 stability: draft
-last_validated: 2026-09-10
+last_validated: 2026-09-18
 depends_on:
   - memory/evidence-ledger.md
 used_by:
@@ -48,12 +48,56 @@ Later phases may adapt ideas from LongMemEval, LoCoMo and internal task replay. 
 
 Final QA accuracy is insufficient. The harness instruments:
 
-- **Write-path** — duplicate rate per 1,000 writes; share of writes rejected/downgraded correctly.
-- **Evidence** — evidence coverage per durable memory; claim-support precision; rate of unsupported claims.
+- **Write-path** — duplicate rate per 1,000 writes (**implemented**); share of writes rejected/downgraded correctly.
+- **Evidence** — evidence coverage per durable memory (**implemented**); claim-support precision; rate of unsupported claims.
 - **Truth/time** — contradiction rate; unresolved-contradiction time; share of superseded memories still retrieved by error; temporal freshness.
-- **Cost/latency** — tokens injected; utility-per-token; p50/p95/p99 retrieval latency.
-- **Abstention** — abstention F1 (correctly declining to inject memory).
+- **Cost/latency** — tokens injected (**implemented**); utility-per-token; p50/p95/p99 retrieval latency.
+- **Abstention** — abstention F1, correctly declining to inject memory (**implemented**).
 - **Security** — poisoning resistance; cross-project isolation; source-reliability caps holding under volume (cross-links to `memory-security.md`).
+
+## What `npm run eval` reports, and what each figure means
+
+`src/eval/replay.js` runs two phases against throwaway stores.
+
+**Retrieval phase** — 24 authored scenarios against 7 fixtures seeded through `putAtom`.
+
+| Figure | Definition |
+|---|---|
+| `exact` | Scenarios where the returned topic-key set equals the expected set exactly, and a `review`-flagged scenario surfaced a `review_required` memory. |
+| `precision` / `recall` / `f1` | Micro-averaged over topic keys across all 24 scenarios. |
+| `abstention.{precision,recall,f1}` | "Returned nothing" as the positive class. The 9 scenarios expecting `[]` are the positives; a scenario that abstains when it should have injected is a false positive. Scored separately because retrieval F1 can hold at 1.0 while abstention degrades. |
+| `estimated_tokens.reduction_vs_static` | Injected tokens against a baseline that loads every non-superseded fixture on every scenario. |
+
+**Write-path phase** (`runWritePathProbe`) — the same authored knowledge proposed through the real
+`proposeMemory`, promoted through the real `admitMemory`, against evidence files written into a
+temporary repository. The retrieval fixtures cannot supply these figures: they are seeded through
+`putAtom`, so they carry no admission decisions and no `evidence_state` at all.
+
+| Figure | Definition |
+|---|---|
+| `write_path.duplicate_rate_per_1000` | `ignore` decisions with reason `equivalent_knowledge_exists`, over `proposeMemory` outcomes (`write`, `ignore`, `block`, `observe`), read from `memory_admission_decisions`. `admit` is a later review event and is excluded. |
+| `write_path.evidence_coverage` | Share of effective memories (`active` or `contested`) with at least one `evidence_state.artifacts` entry at `status: 'verified'`. |
+
+### What these numbers cannot tell you
+
+- **The metric is strict set equality against authored ground truth.** It is not LLM-as-judge. The two
+  disagree by tens of points on the same system, so a figure from this harness is not comparable to a
+  published benchmark number that was scored by a judge.
+- **The fixtures are authored alongside the engine and its vocabulary.** This measures conditional
+  retrieval and context cost. It does not measure model task success, code quality, or whether a real
+  model would have found the same guidance by reading the repository.
+- **Duplicate rate catches exact equivalence only.** `sameKnowledge` compares thirteen authored fields
+  as serialised JSON, so paraphrases do not register as duplicates. The figure understates the problem
+  by construction; it is a regression signal for near-duplicate work, not a measure of redundancy.
+- **Sample sizes are single-developer sizes** (L6). 24 scenarios and 7 fixtures are regression signals,
+  not statistics. No confidence interval computed over them would mean anything.
+- **No latency figure belongs here.** Per-case `elapsed_ms` from the replay is not a percentile; the hot
+  path is exercised in `npm run test:stress`.
+
+### CI gate
+
+`npm run eval` exits non-zero when `f1 < 0.9`, `exact < 90%` of scenarios, or `abstention.f1 < 0.9`.
+Abstention has its own threshold rather than being folded into the existing one.
 
 ## Benchmark Roster
 
