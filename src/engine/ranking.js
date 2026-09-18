@@ -4,7 +4,9 @@ import { triggerJaccard } from './health/deterioration.js';
 // [0,1] so the value scale, and the value-per-token gate that reads it, keep
 // their meaning.
 
-export const AUTHORITY_WEIGHT = { canonical: 1, validated: 0.85, inferred: 0.6, observed: 0.5, deprecated: 0 };
+// Re-exported so retrieval keeps a single import, but owned by the authority
+// ladder: retrieval weights and resolution ranks must never disagree.
+export { AUTHORITY_WEIGHT } from './authority.js';
 
 // An injection that should not have happened costs more than one that was
 // missed, so knowledge that no human validated must clear a higher activation

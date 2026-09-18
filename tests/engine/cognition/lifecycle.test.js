@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../../src/store/create-store.js';
 import { proposeMemory } from '../../../src/engine/write.js';
 import { admitMemory, rejectMemory, declareContradiction, resolveMemories, HUMAN_REVIEW } from '../../../src/engine/lifecycle.js';
+import { PREDOMINANCE_WIN_BUMP } from '../../../src/engine/v6/predominance.js';
 
 async function setup() {
   const root = await mkdtemp(join(tmpdir(), 'dd-cognition-'));
@@ -120,4 +121,26 @@ test('resolving one pair preserves other disputes and clears peers with no remai
   assert.equal((await f.store.getAtom(d, 'demo')).lifecycle_state, 'active');
   await resolveMemories(a, c, f.review);
   assert.equal((await f.store.getAtom(a, 'demo')).lifecycle_state, 'active');
+});
+
+test('resolution records a track record on the winner without letting it outrank evidence', async t => {
+  const f = await setup();
+  t.after(() => f.store.close());
+  const winner = await proposeMemory(f.payload, f);
+  const loser = await proposeMemory({ ...f.payload, topic_key: 'payments/retry/manual',
+    behavior_delta: 'Do not retry automatically.' }, f);
+  for (const result of [winner, loser]) await admitMemory(result.atom.id, f.review);
+  await declareContradiction(winner.atom.id, loser.atom.id, { store: f.store, projectId: 'demo' });
+
+  const before = await f.store.getAtom(winner.atom.id, 'demo');
+  await resolveMemories(winner.atom.id, loser.atom.id, f.review);
+  const after = await f.store.getAtom(winner.atom.id, 'demo');
+
+  assert.equal(after.predominance, (before.predominance ?? 0) + PREDOMINANCE_WIN_BUMP);
+  assert.equal(after.lifecycle_state, 'active');
+  // A win is a track record, never evidence: authority and confidence stay put.
+  assert.equal(after.authority, before.authority);
+  assert.equal(after.confidence, before.confidence);
+  // The loser keeps none of it.
+  assert.equal((await f.store.getAtom(loser.atom.id, 'demo')).predominance ?? 0, 0);
 });

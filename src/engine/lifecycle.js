@@ -1,6 +1,7 @@
 import { decideAdmission } from './v2/admission.js';
 import { stampRevisionFiles, verifyReferences } from './evidence.js';
 import { validateExplicitContradiction } from './v6/contradiction.js';
+import { bumpPredominance } from './v6/predominance.js';
 
 // Only the local review transport constructs this capability. It is never an MCP argument.
 export const HUMAN_REVIEW = Symbol('local-human-review');
@@ -81,8 +82,11 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
       .map(r => r.source_atom_id === winnerId ? r.target_atom_id : r.source_atom_id).filter(id => id !== loserId);
     const peers = await Promise.all(peerIds.map(id => store.getAtom(id, projectId)));
     const stillContested = peers.some(a => a && ['active', 'contested'].includes(a.lifecycle_state));
+    // A win is a track record, not evidence: predominance is the lowest tier of
+    // the resolution order and can never outrank evidence, recency or authority.
     const atoms = [{ ...loser, lifecycle_state: 'superseded', superseded_by: winnerId, contested_at: null },
       { ...winner, lifecycle_state: stillContested ? 'contested' : 'active', contested_at: stillContested ? winner.contested_at : null,
+        predominance: bumpPredominance(winner),
         review: { source: 'local_ui', reviewed_at: new Date().toISOString(), rationale: rationale.trim() } }];
     // Other decisions cease to be disputed only if the retired loser was their
     // last effective opposing decision. Unrelated disputes remain unresolved.
