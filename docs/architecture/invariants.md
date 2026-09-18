@@ -86,7 +86,9 @@ automatic path reaches it.
 
 Retirement is also bounded by what review protects: only `inferred` and `observed` memories are
 reachable, and only by disuse — never activated, past a minimum age, and with enough retrievals after
-the memory was written that its trigger had real chances to fire. Age alone retires nothing.
+the memory was written that its trigger had real chances to fire. Age alone retires nothing. Nothing
+currently before a reviewer is retired either: a contested memory, or one a pending candidate names in
+`replaces`, is left effective.
 
 **Enforced by:** `archiveMemory` refuses any authority above `observed` and any state but `active`;
 `restoreMemory` requires the local review capability; deletion lives only on the audit UI's DELETE path.

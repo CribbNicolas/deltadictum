@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: testing
 stability: draft
-last_validated: 2026-09-10
+last_validated: 2026-09-18
 depends_on:
   - memory/evaluation-harness.md
   - specs/2026-09-09-retrieval-hot-path-and-scale.md
@@ -82,7 +82,7 @@ Measured once on this machine (not a pass bar, a baseline to beat):
 | Q10 | Shared-stopword flood cannot fill past 8 | `memories.length <= 8` | stress | `stress` |
 | Q11 | Abstention F1 on a labeled fixture set (should-inject vs should-abstain, ≥20 cases) | F1 `>= 0.8` | `tests/engine/health/abstention-eval.test.js` | `gate` |
 | Q12 | MCP retrieve JSON is compact (no pretty-print indent) | no `\\n\\s+` in tool text | `tests/mcp/tools.test.js` | `gate` |
-| Q13 | `superseded` / `rejected` / `archived` never appear in normal retrieve | no those ids in hits | new retrieve test | `later` |
+| Q13 | `superseded` / `rejected` / `archived` never appear in normal retrieve | no those ids in hits | `tests/engine/forgetting.test.js` (archived; the others by construction of the candidate query) | `gate` |
 | Q14 | Contested hits include `contradicts` ids from sqlite relations | `hit.contradicts` includes peer | new retrieve test | `later` |
 | Q15 | Tool-result tokens stay within 4× of sum(`token_estimate`) | ratio `< 4` | stress | `later` |
 

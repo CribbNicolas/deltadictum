@@ -89,7 +89,8 @@ O(n²) over the live set is acceptable at hundreds; do not scan archive.
 - `deteriorated` if `>= 20`
 - Offenders: atom ids (cap 20)
 - Also carries `retirable`: the subset that stage 7 would retire (see below). Diagnosis and action are
-  reported together, but they are not the same predicate and not the same numbers.
+  reported together, but they are not the same predicate and not the same numbers. Both read the same
+  selector, so the report cannot name a memory the sweep would decline to touch.
 
 ### 5. `unresolved_contest`
 
@@ -178,7 +179,10 @@ Constraints the action inherits:
 
 - **Authority protects.** Only `inferred` and `observed` are reachable. A human put `validated` or
   `canonical` there; crowding caused by reviewed knowledge is a review decision.
-- **Contested is excluded.** A dispute is a human's open question, not disuse.
+- **Nothing before a reviewer is retired.** A `contested` memory is excluded — a dispute is a human's
+  open question, not disuse — and so is one a pending candidate names in `replaces`. Retiring a
+  revision target would leave a candidate `admitMemory` can never approve, and the write path proposes
+  revisions and sweeps in the same call, so this is reachable in one operation rather than by a race.
 - **Archiving is not deleting.** The file moves to `archive/`, the memory leaves the retrieval surface
   and the effective-set uniqueness predicate, and the audit UI can restore it. Deletion stays manual
   and confirmed. Because the unique index covers only `active` and `contested`, archiving frees the

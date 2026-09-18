@@ -236,7 +236,8 @@ export function createSqliteIndex(dbPath) {
 
   function loadHealthSnapshot(projectId) {
     const atoms = db.prepare(`
-      SELECT id, topic_key, trigger, authority, lifecycle_state, activation_count, created_at, contested_at
+      SELECT id, topic_key, trigger, authority, lifecycle_state, activation_count, created_at, contested_at,
+             json_extract(payload, '$.replaces') AS replaces
       FROM memory_atoms
       WHERE project_id = ?
     `).all(projectId);

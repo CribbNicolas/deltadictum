@@ -306,3 +306,51 @@ before the change because there was nothing to measure. The defaults — 90 days
 retrievals in the snapshot postdating the memory — were chosen to almost never fire, not tuned against
 a figure. Whether retirement lowers `cap_saturation` on a project with a genuinely bloated effective set
 is longitudinal and still unanswered.
+
+## Review (2026-09-18, after `9f89761`)
+
+One defect, one measurement the commit asserted without taking, and one test-catalog row that stopped
+being `later`.
+
+### The sweep retired the memory the same call was revising
+
+`proposeMemory` sets `replaces` on a candidate that revises the live memory on its topic, and then
+sweeps. If that live memory was itself disused — `inferred`, never activated, old enough — the sweep
+archived it, and `admitMemory` then refused the candidate with `replacement_changed_review_again`. One
+call produced a candidate review could never approve, and the reviewer had no way to see why.
+
+This is the stage's own failure mode arriving early: the loss is silent. The candidate looks normal in
+the audit UI until someone presses Admit.
+
+The fix is in the selector, not the driver, so the `retirable` list in the health report and the sweep
+cannot disagree: a memory named in a pending candidate's `replaces` is excluded. Someone is revising
+it, so it is not disused. `loadHealthSnapshot` now reads `replaces` through `json_extract`, which keeps
+the snapshot compact and the selector pure.
+
+### The cost claim, measured rather than asserted
+
+The original commit said the sweep is not on the hot path, which is true, but said nothing about what
+it costs the write path — and it adds a config read plus a full project atom scan per write. Measured
+on the 2000-atom stress corpus, three runs each, against a worktree at `f29e063`:
+
+| | `propose_ms` |
+|---|---|
+| Before stage 7 | 53, 53, 100 |
+| After | 105, 56, 60 |
+
+Same distribution; the sweep is not visible against ordinary run-to-run spread at that size.
+
+### Q13 stopped being `later`
+
+`docs/specs/2026-09-10-memory-quality-and-performance-tests.md` listed "`superseded` / `rejected` /
+`archived` never appear in normal retrieve" as a `later` row needing a new retrieve test. The archived
+half of it is now a gate test, so the row names the file instead of a plan.
+
+### What the review did not change
+
+- Thresholds. There is still no `cap_saturation` figure to tune against, so they stay where they are.
+- The decision to sweep from the write path rather than from the health report. A report that mutates
+  is the side effect the invariants forbid; a write is already a deliberate state change.
+- `normalizeProposal` was checked for field leakage after `archived_at` and `archived_reason` were
+  added to the atom. It is a strict allowlist, so an edit of an archived memory cannot carry them into
+  a new candidate.

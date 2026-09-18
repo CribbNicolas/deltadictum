@@ -108,17 +108,26 @@ function opportunities(events, createdAt) {
 }
 
 // Retirement by disuse, not by age. The conjunction is `dead_inferred`'s —
-// effective, low authority, past a minimum age, never activated — with two
-// tightenings: the thresholds are the retirement block's, and the trigger must
-// have had chances to fire. Contested memories are excluded: a dispute is a
-// human's open question, not disuse.
+// effective, low authority, past a minimum age, never activated — with three
+// tightenings: the thresholds are the retirement block's, the trigger must have
+// had chances to fire, and nothing under review is touched.
+//
+// Contested is excluded because a dispute is a human's open question, not disuse.
+// A memory a pending candidate names in `replaces` is excluded because someone is
+// revising it right now: retiring it would leave a candidate review can never
+// approve, since `admitMemory` refuses a replacement that is no longer effective.
 export function retirementCandidates(snapshot, nowIso, thresholds = DEFAULT_HEALTH_THRESHOLDS) {
   const policy = thresholds.retirement ?? DEFAULT_HEALTH_THRESHOLDS.retirement;
   const events = snapshot.retrieval_events ?? [];
-  return (snapshot.atoms ?? []).filter(atom =>
+  const atoms = snapshot.atoms ?? [];
+  const underRevision = new Set(atoms
+    .filter(atom => atom.lifecycle_state === 'candidate' && atom.replaces)
+    .map(atom => atom.replaces));
+  return atoms.filter(atom =>
     atom.lifecycle_state === 'active'
     && (atom.authority === 'inferred' || atom.authority === 'observed')
     && (atom.activation_count ?? 0) === 0
+    && !underRevision.has(atom.id)
     && ageDays(atom.created_at, nowIso) >= policy.min_age_days
     && opportunities(events, atom.created_at) >= policy.min_retrieval_events,
   );
