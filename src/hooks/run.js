@@ -5,7 +5,7 @@ import { readUiUrl } from './banner.js';
 import { buildSessionStartContext, contextPayload } from './session-start.js';
 import { STOP_CAPTURE_PROMPT } from './capture.js';
 import { buildPreToolContext } from './pre-tool.js';
-import { observationFromTool } from './observe.js';
+import { observationFromTool, recordPromptObservation } from './observe.js';
 import { microPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
 
@@ -59,6 +59,7 @@ try {
 
   if (command === 'prompt') {
     await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
+    await recordPromptObservation(payload, { store, projectId });
     const action = payload.prompt || payload.text || payload.user_prompt || '';
     const result = await retrieveMemories({
       project_id: projectId,
@@ -79,12 +80,18 @@ try {
   if (command === 'stop') {
     const observations = await store.recentObservations(projectId, payload.session_id ?? payload.sessionId);
     // Codex Stop requires an explicit continuation. Spend that extra model turn
-    // only after a recorded host validation/failure; ordinary turns stay quiet.
+    // only on a turn that recorded something worth proposing from: a host
+    // validation or failure, or a user correction. A corrected turn now spends a
+    // continuation, which is deliberate — a correction is the most reliable input
+    // DD receives, so it is the turn least worth staying quiet on. Repeats are
+    // already bounded by the evidence-set claim below; ordinary turns stay quiet.
     if (codexHost && !observations.length) { store.close(); skip(); }
     if (payload.stop_hook_active || !await store.claimCapturePrompt(projectId, payload.session_id ?? payload.sessionId, observations)) {
       store.close(); skip();
     }
-    const references = observations.length ? `\nAvailable host evidence for this session (get by ID; source_type=tool_output, source_ref=ID): ${JSON.stringify(observations)}` : '';
+    // Host observations and user corrections are both recorded evidence, and are
+    // referenced the same way; the wording no longer calls all of it host.
+    const references = observations.length ? `\nAvailable recorded evidence for this session, host observations and user corrections (get by ID; source_type=tool_output, source_ref=ID): ${JSON.stringify(observations)}` : '';
     store.close();
     ok(contextPayload(
       'Stop',

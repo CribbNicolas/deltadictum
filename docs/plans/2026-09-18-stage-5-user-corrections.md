@@ -2,7 +2,7 @@
 artifact_class: authored
 owner_domain: plans
 artifact_type: plan
-stability: draft
+stability: implemented
 last_validated: 2026-09-18
 depends_on:
   - architecture/plugin-constraints.md
@@ -219,3 +219,36 @@ observation appears with sensible text.
 Depends on **stage 4**, which defines the ladder this source sits at the top of, and on **stage 3** for
 the baseline. Feeds stage 6: repeated corrections on the same topic are exactly the near-duplicates that
 stage acts on.
+
+## Outcome
+
+Implemented 2026-09-18. `npm test` is **237 tests, 237 passing**; `npm run eval` is unchanged at 24/24,
+f1 1.0, 2182 estimated tokens, evidence coverage 1.0; `npm run test:stress` passes with
+`cold_ms=1094 resident_ms=109` on 2000 atoms, the same class as before. The detector costs under a
+microsecond on a normal prompt and 16 microseconds on a 20 KB paste, against a Node start-up measured
+in hundreds of milliseconds.
+
+What this document got wrong, in the same spirit as its own *Start here* warning:
+
+**The *Files* list names one prompt handler; there are two.** `src/hooks/run.js:60` is the standalone
+hook process, but `callRunningStore` bridges `prompt` to `src/ui/server.js` whenever the audit UI is
+running, and that handler has its own copy of the `beginCaptureTurn`-then-retrieve sequence. Wiring
+only `run.js` would have made corrections invisible exactly when the user has the review UI open —
+which is when they are most likely to be correcting the agent. The recording is therefore
+`recordPromptObservation` in `src/hooks/observe.js`, called from both. This is the third time this
+plan series has met a pair of handlers where a document described one.
+
+**Everything the stage-4 corrections section said held.** `src/hooks/capture.js` was not touched; the
+surfacing wording changed in `run.js`, no rung was added to `src/engine/reliability.js`, and an
+observation stamped `user_correction` verifies through the existing `tool_output` path.
+
+**The Codex Stop question, decided.** A corrected turn now spends a Codex continuation. That is the
+turn least worth staying quiet on, and `claimCapturePrompt` already refuses to prompt twice on an
+unchanged evidence set, so the cost is one continuation per correction rather than one per turn
+afterwards.
+
+**Detection, as shipped.** One regular expression, English and Spanish, over a 4000-character bound of
+the sanitised and redacted prompt; the stored preview keeps 600. Families require a corrective marker
+rather than a bare keyword, because bare keywords match ordinary work: *"don't forget the docs"* and
+*"stop the server after the test"* are instructions. The negative test carries sixteen such prompts
+against twelve positives, which is the ratio that keeps the review queue usable.

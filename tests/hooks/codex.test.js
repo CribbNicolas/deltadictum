@@ -72,7 +72,7 @@ test('Codex hook capture can recur in later turns, without loops or repeated evi
   const stop = await hook(root, 'stop', {});
   assert.equal(stop.decision, 'block');
   assert.match(stop.reason, /propose/);
-  assert.match(stop.reason, /Available host evidence/);
+  assert.match(stop.reason, /Available recorded evidence/);
   assert.deepEqual(await hook(root, 'stop', { stop_hook_active: true }), {});
   assert.deepEqual(await hook(root, 'stop', {}), {});
   await hook(root, 'prompt', { prompt: 'Continue the next part of the task.' });

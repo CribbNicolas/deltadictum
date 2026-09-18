@@ -42,8 +42,8 @@ What the audit found, and what the stages address:
 | 1 | [Cleanup](2026-09-18-stage-1-cleanup.md) | **Done** `f839e93` | Dead modules, unreachable handlers, unused enum value, schema default drift | Low |
 | 2 | [Project isolation](2026-09-18-stage-2-project-isolation.md) | **Done** `3308828` | An ancestor capturing the work beneath it; the one red test | Medium |
 | 3 | [Measurement](2026-09-18-stage-3-measurement.md) | **Done** `2765ed8` | Abstention has no figure; duplicate rate and evidence coverage unmeasured | Low |
-| 4 | [Provenance](2026-09-18-stage-4-provenance.md) | Next | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
-| 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | Waiting on 4 | The highest-reliability signal available is never observed | Medium |
+| 4 | [Provenance](2026-09-18-stage-4-provenance.md) | **Done** `3c83529` | A model guess and an explicit user correction carry identical epistemic force | Medium-high |
+| 5 | [User corrections](2026-09-18-stage-5-user-corrections.md) | **Done** `b065e54` | The highest-reliability signal available is never observed | Medium |
 | 6 | [Trigger collisions](2026-09-18-stage-6-trigger-collisions.md) | Ready | Near-duplicate detection runs on every write and is acted on nowhere | Medium |
 | 7 | [Forgetting](2026-09-18-stage-7-forgetting.md) | Ready | `archived` is declared and unreachable; the effective set only grows | High |
 
@@ -86,7 +86,9 @@ reading this index.
   that passed vacuously because the operation under test did not trigger the code being measured.
   A green that proves nothing is worse than a red.
 - **One commit per stage**, whose message explains the reasoning, not the diff.
-- **Baseline is sacred.** After stage 3: `npm test` is **202 tests, 202 passing — zero failures**, and
+- **Baseline is sacred.** After stage 5: `npm test` is **237 tests, 237 passing — zero failures**, and
+  `npm run eval` is unchanged at 24/24, f1 1.0, 2182 estimated tokens, evidence coverage 1.0. After
+  stage 3 it was `npm test` **202 tests, 202 passing — zero failures**, and
   `npm run eval` is 24/24, f1 1.0, 2182 estimated tokens, abstention f1 1.0 over 9 scenarios, 0
   duplicates per 1000 write attempts, evidence coverage 1.0. A stage that leaves a failing test is not
   finished. (197 after stage 2, itself down from 213 because stage 1 removed three dead test files;

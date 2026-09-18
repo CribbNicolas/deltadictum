@@ -51,8 +51,10 @@ Known gaps, in the order they hurt:
    and acted on nowhere.
 3. **Nothing is ever forgotten.** `archived` is a declared lifecycle state that no code path reaches.
 4. **Advisory only.** `PreToolUse` always returns `allow`; an `anti_memory` cannot stop anything.
-5. **User corrections are not observed.** The observation log records tool failures and validation
-   commands; the highest-reliability signal available depends on the model remembering to propose it.
+5. ~~**User corrections are not observed.**~~ **Closed.** `observationFromPrompt` in
+   `src/hooks/observe.js` detects corrective language lexically on `UserPromptSubmit` and records it as
+   a `user_correction` observation, referenceable by ID at proposal time. The top rung of the
+   reliability ladder now has a producer.
 6. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
    `explicit`, and `actor_ref` is never populated. The log itself is now retained as audit rather
    than pruned as telemetry.
@@ -88,8 +90,15 @@ Remaining:
 
 Phase 1 filters the output. Phase 2 improves the input, which is the larger win.
 
-- Observe explicit user corrections as a first-class, high-reliability signal. The ladder's top rung
-  (`user_correction`) is declared and reachable; nothing produces that provenance yet.
+Done:
+
+- ✅ Observe explicit user corrections as a first-class, high-reliability signal. A deterministic
+  English/Spanish detector runs inline on `UserPromptSubmit` and writes a `user_correction`
+  observation; the capture prompt surfaces it alongside host evidence. Detection promotes nothing, so
+  the cheap error is a false positive and the expensive one is a silent miss.
+
+Remaining:
+
 - Generalise repeated corrections into one scoped rule instead of accumulating near-duplicates.
 - Route admission to add, ignore or merge rather than only accept or reject.
 - Order the review queue by expected value, since human review time is the scarce resource.
