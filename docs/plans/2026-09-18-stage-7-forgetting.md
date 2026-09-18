@@ -8,6 +8,7 @@ depends_on:
   - architecture/plugin-constraints.md
   - specs/2026-09-10-memory-deterioration-detection.md
   - plans/2026-09-18-stage-3-measurement.md
+  - plans/2026-09-18-stage-6-trigger-collisions.md
 do_not_co_load_with: []
 ---
 
@@ -44,9 +45,12 @@ stages move code. Run the checks below first. If any result disagrees with what 
 section claims, **stop and report the difference** instead of proceeding — a plan that no longer
 matches the code is information, not an obstacle to route around.
 
-This is not ceremony. Executing this plan has already produced two cases where it mattered: a stage
-described one unreachable handler where there were two plus a routing indirection, and a stage
-instructed a rule that turned out to be wrong once implemented.
+This is not ceremony. Executing this plan series has produced five cases where it mattered: a stage
+described one unreachable handler where there were two plus a routing indirection; a stage instructed a
+rule that turned out to be wrong once implemented; a stage named one prompt handler where two exist; a
+stage asserted a *Done when* line ("visible in the audit UI") that no code satisfied; and stage 6
+specified a guard that, implemented exactly as written, merged two memories that contradicted each
+other. The section below is the same check, already run for you.
 
 ```bash
 # That archived is unreachable. Expect: declared, and never written.
@@ -62,6 +66,61 @@ grep -n "cap_saturation" -A 3 src/engine/health/deterioration.js
 # The decision this stage must reconcile with, not override.
 grep -n "Recency decay" docs/specs/2026-09-10-memory-deterioration-detection.md
 ```
+
+## Corrections from stage 6
+
+Stage 6 shipped (`6e26e38`, review `56b1e02`). Checked 2026-09-18: **all four *Start here* checks still
+return what this document says they should**, and every file and line this document cites is still
+accurate — `src/engine/v2/constants.js:3`, `src/store/paths.js:37`, `src/store/schema.sql:35-37`,
+`src/engine/retrieve.js:55` (the eight-hit cap) and `:112` (the activation increment),
+`src/engine/health/deterioration.js:164-168` (`dead_inferred`). Only `cap_saturation` drifted: it is at
+`:213-238`, not `:230`. No code path writes `archived`; the state is still unreachable.
+
+What this document should know before it starts:
+
+**The project this runs on does not have the problem.** The health report of this repository, read
+today through `assessDeterioration`, is `healthy` on every indicator: `live_bloat` 17 against a watch
+of 80, `dead_inferred` **0**, and `cap_saturation` **skipped** — fewer than the ten retrieval events
+the indicator needs to say anything at all. This document's own risk section already names the right
+response, and the measurement now confirms it rather than leaving it hypothetical: **ship the mechanism
+with thresholds that almost never fire, and do not tune them against a saturation figure that does not
+yet exist.** There is no baseline `cap_saturation` to record before the change, and the commit should
+say that instead of implying a measurement was taken.
+
+**`src/engine/lifecycle.js` changed, and archiving now interacts with pending revisions.** Stage 6 gave
+`admitMemory` a second replacement path: a candidate may name a colliding memory on **another**
+`topic_key` in `replaces`, and the promotion is refused with `replacement_changed_review_again` unless
+that target is still `active` or `contested`. So **archiving a memory invalidates any pending candidate
+proposing to revise it** — correctly, because approving such a candidate would supersede nothing and
+leave two memories on one trigger. That is the behaviour to preserve, not a bug to route around, but it
+is a new coupling this document predates. A test that archives a memory with a revision pending, and
+asserts the revision goes back to review rather than silently promoting, belongs in this stage.
+
+**The threshold correction runs the opposite way to stage 6's.** Stage 6 was told, correctly, not to
+add a config key for a threshold that already existed in `DEFAULT_CONFIG.health`. `dead_inferred` is
+already there, already project-overridable, with `min_age_days: 14`. Do **not** conclude that this
+stage should reuse it: 14 days is when the *indicator warns*, and this document asks for a retirement
+threshold deliberately well above it. Those are two concepts, not one duplicated — a warning and an
+irreversible-feeling action should not share a number. Add the retirement policy as its own block in
+`DEFAULT_HEALTH_THRESHOLDS` (`src/engine/health/deterioration.js:4-11`), which is what
+`DEFAULT_CONFIG.health` *is*; **`src/store/paths.js` only re-exports it, so the *Files* list entry for
+that file is wrong for the same reason it was wrong in stage 6.**
+
+**`npm run eval` should still be unchanged, and the reason is now stronger than "fresh fixtures".**
+The write-path probe promotes through `admitMemory`, which grants `validated`. Authority protects, and
+`dead_inferred` only counts `inferred` or `observed`, so no probe memory is reachable by this stage's
+criterion whatever its age. Stage 6 added five near-duplicate scenarios to that probe; they are
+promoted the same way and are equally out of reach.
+
+**Archived genuinely leaves the retrieval surface** — verified, not assumed. `retrieveMemories` builds
+candidates with `lifecycleStates: ['active', 'contested']` (`src/engine/retrieve.js:36`),
+`listByTopicLive` filters to the same two (`src/store/sqlite-index.js:194-199`), and the unique index
+covers only those two, so an archived memory frees its `topic_key` exactly as this document says. The
+git file moves to `archive/` because `archived` is in `ARCHIVE_STATES`.
+
+**Baseline to hold.** `npm test` 247/247, `npm run eval` 24/24 with f1 1.0 and evidence coverage 1.0
+(write path: 12 attempts, 10 effective, near-duplicate detection 416.7 per 1000, 0 surviving pairs),
+`npm run test:stress` 13/13 at `cold_ms=937 resident_ms=94` on 2000 atoms.
 
 ## Starting state
 
