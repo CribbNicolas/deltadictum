@@ -28,7 +28,10 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
     if (domain && !vocab.domains.includes(domain)) await store.createVocabularyValue(payload.project_id, 'domain', domain);
     for (const tag of payload.tags) if (!vocab.tags.includes(tag)) await store.createVocabularyValue(payload.project_id, 'tag', tag);
     const prepared = await prepareV5Write(payload, { repository: store });
-    if (prepared.error) return { decision: 'block', reasons: [prepared.error.message], atom: null };
+    if (prepared.error) {
+      await store.logAdmission({ project_id: payload.project_id, decision: 'block', reasons: [prepared.error.message] });
+      return { decision: 'block', reasons: [prepared.error.message], atom: null };
+    }
     Object.assign(payload, prepared.payload, { registry_key_id: prepared.registry_key_id });
     if (prepared.needs_registration) payload.registry_key_id = (await store.createRegistryEntry(payload.project_id, payload.topic_key, 'provisional')).id;
 
@@ -38,6 +41,7 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
     // Model-supplied evidence hashes, approval labels and lifecycle fields are ignored.
     payload.evidence_state = await verifyReferences(payload.evidence_refs, { store, projectId: payload.project_id });
     if (payload.evidence_state.artifacts.some(a => a.status === 'out_of_scope')) {
+      await store.logAdmission({ project_id: payload.project_id, decision: 'block', reasons: ['evidence_scope_violation'] });
       return { decision: 'block', reasons: ['evidence_scope_violation'], atom: null };
     }
     if (existing) payload.replaces = existing.id;
@@ -47,7 +51,12 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
       (atom.revisit_when ?? []).map(rule => rule.hash ?? null)]);
     const duplicate = [existing, ...candidates].find(a => a && sameKnowledge(a, payload) && evidenceSignature(a) === evidenceSignature(payload));
     // A repeated request does not create knowledge or rewrite its original capture attribution.
-    if (duplicate) return { decision: 'ignore', reasons: ['equivalent_knowledge_exists'], atom: duplicate };
+    if (duplicate) {
+      // Recorded, not just returned: duplicate rate is measured from the admission log.
+      await store.logAdmission({ project_id: payload.project_id, decision: 'ignore',
+        reasons: ['equivalent_knowledge_exists'], atom_id: duplicate.id });
+      return { decision: 'ignore', reasons: ['equivalent_knowledge_exists'], atom: duplicate };
+    }
     const atom = await store.putAtom(payload);
     const peers = await store.listAtoms({ projectId: atom.project_id, lifecycleStates: ['active', 'contested'] });
     const collides_with = peers.filter(a => a.id !== atom.id).map(peer => ({ id: peer.id, topic_key: peer.topic_key,
