@@ -4,5 +4,12 @@
   "description": "DeltaDictum (DD): next-action doctrine. Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit locally. Share via git.",
   "author": {
     "name": "DeltaDictum"
+  },
+  "mcpServers": {
+    "dd": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp.js"]
+    }
   }
 }
