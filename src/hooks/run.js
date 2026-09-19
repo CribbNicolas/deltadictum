@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { retrieveMemories } from '../engine/retrieve.js';
 import { openStore, readJsonStdin, findRepoRoot } from '../project.js';
-import { readUiUrl } from './banner.js';
+import { join } from 'node:path';
+import { probeUi, readUiUrl, recordedUiUrl, uiPointer } from './banner.js';
 import { buildSessionStartContext, contextPayload } from './session-start.js';
 import { STOP_CAPTURE_PROMPT } from './capture.js';
 import { buildPreToolContext } from './pre-tool.js';
@@ -35,15 +36,28 @@ try {
   if (command === 'observe' && !observation) skip();
   if (command === 'pre-tool' && /(^|__)(dd|deltadictum)(__|_)/i.test(payload.tool_name || payload.toolName || '')) skip();
   const cwd = payload.cwd || process.env.DD_PROJECT_DIR || process.cwd();
-  const bridged = await callRunningStore(command, payload, await findRepoRoot(cwd));
-  if (bridged) ok(bridged);
+  const repoRoot = await findRepoRoot(cwd);
+  const bridged = await callRunningStore(command, payload, repoRoot);
+  if (bridged) {
+    // A bridged reply is proof an audit UI answered, so the pointer needs no
+    // probe. It is attached here rather than left to the UI: the response comes
+    // from whatever version of DD that process was started with, which may
+    // predate the pointer entirely.
+    if (command === 'session-start' && !bridged.systemMessage) {
+      const url = await recordedUiUrl(join(repoRoot, '.dd'));
+      if (url) bridged.systemMessage = uiPointer(url);
+    }
+    ok(bridged);
+  }
   const { store, projectId, ddDir } = await openStore({ cwd });
 
   if (command === 'session-start') {
+    const recorded = await recordedUiUrl(ddDir);
     const result = await buildSessionStartContext({
       store,
       projectId,
-      uiUrl: await readUiUrl(ddDir),
+      uiUrl: recorded ?? await readUiUrl(ddDir),
+      uiLive: recorded ? await probeUi(recorded) : false,
       sessionId: payload.session_id ?? payload.sessionId,
       source: payload.source,
     });
