@@ -1,8 +1,9 @@
 {
+  "plugin": ["deltadictum"],
   "mcp": {
     "dd": {
       "type": "local",
-      "command": ["node", "<absolute-plugin-path>/src/mcp/server.js"],
+      "command": ["npx", "-y", "deltadictum", "mcp"],
       "environment": { "DD_PROJECT_DIR": "<absolute-project-path>" },
       "enabled": true
     }

@@ -10,6 +10,9 @@
     "dd": "./src/cli.js",
     "deltadictum": "./src/cli.js"
   },
+  "exports": {
+    ".": "./adapters/opencode/index.js"
+  },
   "scripts": {
     "test": "node --test --test-concurrency=1 tests/engine/**/*.test.js tests/store/**/*.test.js tests/mcp/**/*.test.js tests/ui/**/*.test.js tests/hooks/**/*.test.js",
     "test:engine": "node --test --test-concurrency=1 tests/engine/**/*.test.js",
