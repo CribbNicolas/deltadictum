@@ -276,3 +276,35 @@ describe('auto-accept config', () => {
     assert.equal(invalid.status, 409);
   });
 });
+
+describe('seen tracking', () => {
+  test('a candidate is unseen until its detail view is fetched, and stays seen after', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-seen-'));
+    const dataDir = await mkdtemp(join(tmpdir(), 'dd-seen-userdata-'));
+    const previous = process.env.CLAUDE_PLUGIN_DATA;
+    process.env.CLAUDE_PLUGIN_DATA = dataDir;
+    t.after(() => { if (previous === undefined) delete process.env.CLAUDE_PLUGIN_DATA; else process.env.CLAUDE_PLUGIN_DATA = previous; });
+
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const written = await proposeMemory({
+      project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
+      title: 'Require trigger', trigger: 'before writing durable memory', behavior_delta: 'validate trigger first',
+      what: 'Durable memory needs a trigger.', why: 'Stops V1 dumps.', topic_key: 'memory/admission/required-fields',
+      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
+      retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
+    }, { store });
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const base = ui.url;
+    const headers = await reviewHeaders(base);
+
+    const beforeList = await json(base + '/api/atoms');
+    assert.equal(beforeList.body[0].seen, false);
+
+    const detail = await json(base + '/api/atoms/' + written.atom.id, { headers });
+    assert.equal(detail.body.seen, true);
+
+    const afterList = await json(base + '/api/atoms');
+    assert.equal(afterList.body[0].seen, true);
+  });
+});

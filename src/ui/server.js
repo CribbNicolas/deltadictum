@@ -14,6 +14,7 @@ import { recordPromptObservation } from '../hooks/observe.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
 import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
+import { readSeen, markSeen, isSeen } from '../store/seen.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 function send(res, status, body, type = 'application/json') {
@@ -98,7 +99,9 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         const lifecycle = url.searchParams.get('lifecycle');
         const origin = url.searchParams.get('capture_origin');
         const atoms = await store.listAtoms({ projectId, lifecycleStates: lifecycle ? [lifecycle] : undefined });
-        return send(res, 200, atoms.filter(atom => !origin || atom.capture_origin === origin));
+        const seen = await readSeen();
+        return send(res, 200, atoms.filter(atom => !origin || atom.capture_origin === origin)
+          .map(atom => ({ ...atom, seen: isSeen(atom.id, seen) })));
       }
       if (req.method === 'POST' && url.pathname === '/api/resolve') {
         const body = await readBody(req);
@@ -112,6 +115,7 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         const atom = await store.getAtom(id, projectId);
         if (!atom) return send(res, 404, { error: 'not_found' });
         if (req.method === 'GET') {
+          await markSeen(atom.id);
           const relations = await store.listRelations({ atomIds: [atom.id] });
           const ids = relations.filter(r => r.relation_type === 'contradicts')
             .map(r => r.source_atom_id === atom.id ? r.target_atom_id : r.source_atom_id);
@@ -122,7 +126,7 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
             .filter(a => a && ['active', 'contested'].includes(a.lifecycle_state))
             .map(a => ({ id: a.id, title: a.title, topic_key: a.topic_key,
               recommendation: recommendResolution(atom, a) }));
-          return send(res, 200, { ...atom, freshness: await checkEvidenceFreshness(atom, store), relations, opponents });
+          return send(res, 200, { ...atom, seen: true, freshness: await checkEvidenceFreshness(atom, store), relations, opponents });
         }
         const body = await readBody(req);
         if (req.method === 'DELETE' && !action) {
