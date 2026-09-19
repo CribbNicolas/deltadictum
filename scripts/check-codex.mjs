@@ -16,7 +16,7 @@ const pluginRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const transport = new StdioClientTransport({ command: process.execPath,
   args: [join(pluginRoot, 'src/mcp/server.js')], cwd: projectRoot, stderr: 'inherit',
   env: { ...process.env, DD_PROJECT_DIR: projectRoot, DD_DATA: join(projectRoot, '.dd/local') } });
-const client = new Client({ name: 'dd-codex-install-check', version: '0.2.0' });
+const client = new Client({ name: 'dd-codex-install-check', version: '0.3.0' });
 try {
   await client.connect(transport);
   const { tools } = await client.listTools();
