@@ -49,14 +49,18 @@ export function projectSlug(repoRoot) {
   return basename(repoRoot).toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
 }
 
+// Deliberately not `~/.dd`: that made the per-user cache indistinguishable
+// from a project marker, so the home resolved as a project root.
+export function resolveDataBase() {
+  return process.env.GROK_PLUGIN_DATA || process.env.CLAUDE_PLUGIN_DATA || join(homedir(), '.dd-data');
+}
+
 export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cwd() } = {}) {
   const repoRoot = await findRepoRoot(cwd);
   const ddDir = join(repoRoot, '.dd');
   const slug = projectSlug(repoRoot);
   const identity = createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12);
-  // Deliberately not `~/.dd`: that made the per-user cache indistinguishable
-  // from a project marker, so the home resolved as a project root.
-  const dataBase = process.env.GROK_PLUGIN_DATA || process.env.CLAUDE_PLUGIN_DATA || join(homedir(), '.dd-data');
+  const dataBase = resolveDataBase();
   const dataDir = process.env.DD_DATA || join(dataBase, `${slug}-${identity}`);
   const store = await createMemoryStore({ ddDir, dataDir, repoRoot });
   const config = await store.withWriteLock(async () => {
