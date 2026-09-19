@@ -4,11 +4,13 @@ DD can run in a local Codex project using a stdio MCP server, project skills and
 
 ## Install
 
-From the DD checkout, with dependencies installed:
+Runs without cloning this repository — `npx` fetches the published `deltadictum` package.
+(`scripts/install-codex.mjs`'s `planCodexInstall`/`applyCodexInstall` remain available directly for
+anyone working from a source checkout.)
 
 ```powershell
-node scripts/install-codex.mjs --project "C:/dev/Perfect Brew" --dry-run
-node scripts/install-codex.mjs --project "C:/dev/Perfect Brew"
+npx deltadictum install --host codex --project "C:/dev/Perfect Brew" --dry-run
+npx deltadictum install --host codex --project "C:/dev/Perfect Brew"
 node scripts/check-codex.mjs --project "C:/dev/Perfect Brew"
 ```
 
