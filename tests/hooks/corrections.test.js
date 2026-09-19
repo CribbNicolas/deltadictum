@@ -182,3 +182,9 @@ test('the capture prompt tells the model a correction is citable', async () => {
   assert.match(STOP_CAPTURE_PROMPT, /user correction/i);
   assert.match(STOP_CAPTURE_PROMPT, /never invent user approval/);
 });
+
+test('the plain (non-codex) host never sees the legacy top-level allow decision on PreToolUse', async () => {
+  const root = await project();
+  const result = await hook(root, 'pre-tool', { tool_name: 'Read', tool_input: { file_path: 'x.js' } });
+  assert.equal(result.decision, undefined);
+});
