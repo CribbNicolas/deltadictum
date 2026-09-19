@@ -252,3 +252,27 @@ describe('audit UI retirement', () => {
     assert.equal(again.body.error, 'archived_memory_required');
   });
 });
+
+describe('auto-accept config', () => {
+  test('defaults to disabled, round-trips a valid update, rejects an out-of-range threshold', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-config-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const base = ui.url;
+    const headers = await reviewHeaders(base);
+
+    const initial = await json(base + '/api/config');
+    assert.deepEqual(initial.body.auto_accept, { enabled: false, confidence_threshold: 0.8 });
+
+    const updated = await json(base + '/api/config/auto-accept', { method: 'POST', headers,
+      body: JSON.stringify({ enabled: true, confidence_threshold: 0.6 }) });
+    assert.equal(updated.status, 200);
+    assert.deepEqual(updated.body.auto_accept, { enabled: true, confidence_threshold: 0.6 });
+    assert.deepEqual((await json(base + '/api/config')).body.auto_accept, { enabled: true, confidence_threshold: 0.6 });
+
+    const invalid = await json(base + '/api/config/auto-accept', { method: 'POST', headers,
+      body: JSON.stringify({ enabled: true, confidence_threshold: 1.5 }) });
+    assert.equal(invalid.status, 409);
+  });
+});
