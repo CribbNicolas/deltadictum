@@ -13,6 +13,7 @@ import { buildPreToolContext } from '../hooks/pre-tool.js';
 import { recordPromptObservation } from '../hooks/observe.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
 import { retrieveMemories } from '../engine/retrieve.js';
+import { sweepAutoAccept } from '../engine/auto-accept.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 function send(res, status, body, type = 'application/json') {
@@ -27,8 +28,9 @@ async function readBody(req) {
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
 }
 
-export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1' }) {
+export async function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1' }) {
   if (!['127.0.0.1', '::1', 'localhost'].includes(host)) throw new Error('audit_requires_loopback');
+  await sweepAutoAccept({ store, projectId });
   const token = randomBytes(32).toString('hex');
   const hookToken = randomBytes(32).toString('hex');
   const server = createServer(async (req, res) => {
@@ -92,6 +94,7 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
         return send(res, 200, { auto_accept: config.auto_accept });
       }
       if (req.method === 'GET' && url.pathname === '/api/atoms') {
+        await sweepAutoAccept({ store, projectId });
         const lifecycle = url.searchParams.get('lifecycle');
         const origin = url.searchParams.get('capture_origin');
         const atoms = await store.listAtoms({ projectId, lifecycleStates: lifecycle ? [lifecycle] : undefined });
