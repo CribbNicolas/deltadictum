@@ -27,6 +27,8 @@
     .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
     .empty { padding: 40px; color: var(--muted); }
     .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: #2a2a33; }
+    .unseen-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--acc); margin-right: 6px; animation: dd-pulse 1.6s ease-in-out infinite; }
+    @keyframes dd-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
     .notice { padding: 12px; border-left: 3px solid var(--acc); background: var(--card); white-space: pre-wrap; }
     .warning { border-color: var(--danger); }
     pre { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -58,10 +60,29 @@
         <option value="model_initiated">model initiative</option>
         <option value="user_explicit">explicit user request</option>
       </select>
+      <select id="type-filter" aria-label="Memory type">
+        <option value="">all types</option>
+        <option value="lesson">lesson</option>
+        <option value="anti_memory">anti-memory</option>
+        <option value="procedure">procedure</option>
+        <option value="decision">decision</option>
+        <option value="claim">claim</option>
+      </select>
+      <label><input type="checkbox" id="unseen-only"> unseen only</label>
+      <select id="sort-by" aria-label="Sort by">
+        <option value="created_at">newest first</option>
+        <option value="confidence">confidence</option>
+        <option value="activation_count">most activated</option>
+      </select>
       <button id="reload">Reload</button>
     </nav>
   </header>
   <div id="project"></div>
+  <details id="auto-accept-settings">
+    <summary>Auto-accept settings</summary>
+    <label><input type="checkbox" id="auto-accept-enabled"> Auto-accept high-confidence candidates</label>
+    <label>Confidence threshold <input type="number" id="auto-accept-threshold" min="0" max="1" step="0.05"></label>
+  </details>
   <details id="evidence">
     <summary>Recorded evidence <span id="evidence-count"></span></summary>
     <div id="evidence-list"></div>
@@ -76,6 +97,11 @@
     const statusEl = document.getElementById('status');
     const filterEl = document.getElementById('filter');
     const originFilterEl = document.getElementById('origin-filter');
+    const typeFilterEl = document.getElementById('type-filter');
+    const unseenOnlyEl = document.getElementById('unseen-only');
+    const sortByEl = document.getElementById('sort-by');
+    const autoAcceptEnabledEl = document.getElementById('auto-accept-enabled');
+    const autoAcceptThresholdEl = document.getElementById('auto-accept-threshold');
     let atoms = [];
     let selected = null;
 
@@ -94,8 +120,13 @@
       const q = new URLSearchParams();
       if (filterEl.value) q.set('lifecycle', filterEl.value);
       if (originFilterEl.value) q.set('capture_origin', originFilterEl.value);
+      if (typeFilterEl.value) q.set('memory_type', typeFilterEl.value);
       await loadEvidence();
       atoms = await api('/api/atoms?' + q);
+      if (unseenOnlyEl.checked) atoms = atoms.filter(a => !a.seen);
+      const sortKey = sortByEl.value;
+      atoms = atoms.slice().sort((a, b) => sortKey === 'created_at'
+        ? new Date(b.created_at) - new Date(a.created_at) : (b[sortKey] ?? 0) - (a[sortKey] ?? 0));
       renderList();
       if (!atoms.length) {
         selected = null;
@@ -125,7 +156,7 @@
     function renderList() {
       listEl.innerHTML = atoms.map(atom => `
         <div class="item ${selected && selected.id === atom.id ? 'active' : ''}" data-id="${escapeHtml(atom.id)}">
-          <strong>${escapeHtml(atom.title)}</strong>
+          ${atom.seen ? '' : '<span class="unseen-dot" aria-label="not yet reviewed"></span>'}<strong>${escapeHtml(atom.title)}</strong>
           <small><span class="badge">${escapeHtml(atom.lifecycle_state)}</span> ${escapeHtml(atom.topic_key)}</small>
           <small>${escapeHtml(captureLabel(atom))}</small>
         </div>
@@ -258,11 +289,26 @@
     });
     filterEl.addEventListener('change', load);
     originFilterEl.addEventListener('change', load);
+    typeFilterEl.addEventListener('change', load);
+    unseenOnlyEl.addEventListener('change', load);
+    sortByEl.addEventListener('change', load);
     document.getElementById('reload').addEventListener('click', load);
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     }
+    async function loadAutoAcceptConfig() {
+      const { auto_accept } = await api('/api/config');
+      autoAcceptEnabledEl.checked = auto_accept.enabled;
+      autoAcceptThresholdEl.value = auto_accept.confidence_threshold;
+    }
+    async function saveAutoAcceptConfig() {
+      await api('/api/config/auto-accept', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ enabled: autoAcceptEnabledEl.checked, confidence_threshold: Number(autoAcceptThresholdEl.value) }) });
+    }
+    autoAcceptEnabledEl.addEventListener('change', saveAutoAcceptConfig);
+    autoAcceptThresholdEl.addEventListener('change', saveAutoAcceptConfig);
     load();
+    loadAutoAcceptConfig();
   </script>
 </body>
 </html>
