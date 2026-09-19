@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-import { access, mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+const requireFromHere = createRequire(import.meta.url);
 const slash = path => path.replaceAll('\\', '/');
 const quote = value => `'${String(value).replaceAll("'", "'\\''")}'`;
 const psQuote = value => `'${String(value).replaceAll("'", "''")}'`;
@@ -25,7 +27,11 @@ function managedBlock(text, start, end, content) {
 export async function planCodexInstall(project) {
   const projectRoot = await realpath(resolve(project));
   const dataDir = join(projectRoot, '.dd', 'local');
-  await access(join(pluginRoot, 'node_modules', '@modelcontextprotocol', 'sdk', 'package.json'));
+  // Node's own resolution, not a direct path check: a hoisted install (e.g. via
+  // npx/npm install, not a dev checkout's local node_modules) puts the dependency
+  // above pluginRoot, and require.resolve walks up to find it the same way the
+  // real `import` in src/mcp/server.js will at runtime.
+  requireFromHere.resolve('@modelcontextprotocol/sdk/package.json');
   const operations = [];
   async function plan(path, content, before = undefined) {
     before ??= await optionalText(path);
