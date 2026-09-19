@@ -98,9 +98,11 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         await sweepAutoAccept({ store, projectId });
         const lifecycle = url.searchParams.get('lifecycle');
         const origin = url.searchParams.get('capture_origin');
+        const memoryType = url.searchParams.get('memory_type');
         const atoms = await store.listAtoms({ projectId, lifecycleStates: lifecycle ? [lifecycle] : undefined });
         const seen = await readSeen();
         return send(res, 200, atoms.filter(atom => !origin || atom.capture_origin === origin)
+          .filter(atom => !memoryType || atom.memory_type === memoryType)
           .map(atom => ({ ...atom, seen: isSeen(atom.id, seen) })));
       }
       if (req.method === 'POST' && url.pathname === '/api/resolve') {
