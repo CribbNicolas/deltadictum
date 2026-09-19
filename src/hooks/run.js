@@ -11,11 +11,9 @@ import { microPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
 
 function ok(payload) {
-  if (codexHost) {
-    if (payload.decision === 'allow') delete payload.decision;
-    if (command === 'stop' && payload.hookSpecificOutput?.additionalContext) {
-      payload = { decision: 'block', reason: payload.hookSpecificOutput.additionalContext };
-    }
+  if (payload.decision === 'allow') delete payload.decision;
+  if (codexHost && command === 'stop' && payload.hookSpecificOutput?.additionalContext) {
+    payload = { decision: 'block', reason: payload.hookSpecificOutput.additionalContext };
   }
   process.stdout.write(JSON.stringify(payload));
   process.exit(0);
