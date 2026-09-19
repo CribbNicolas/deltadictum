@@ -191,8 +191,11 @@ Constraints the action inherits:
   `PreToolUse` (L1). A failure to retire anything cannot fail the write that swept (L5).
 
 `cap_saturation` remains the judge of whether any of this was needed. On the repository where it
-shipped, that indicator was `skipped` for want of telemetry and `dead_inferred` was 0 — the mechanism
-was shipped with thresholds that almost never fire, and the benefit is a pending measurement.
+shipped the indicator first read `skipped`, but only because that store's telemetry had been orphaned by
+a data-directory rename. Once the rows were recovered (2026-09-19) it read **0.000** over 50
+retrievals — 43 abstentions, 7 single hits, none returning more than one memory — with `dead_inferred`
+at 0. The cap has never been approached here, so the mechanism ships with thresholds that almost never
+fire; whether retirement lowers the figure on a genuinely crowded project is still unmeasured.
 
 ## Out of scope
 

@@ -62,7 +62,18 @@ Known gaps, in the order they hurt:
    `src/hooks/observe.js` detects corrective language lexically on `UserPromptSubmit` and records it as
    a `user_correction` observation, referenceable by ID at proposal time. The top rung of the
    reliability ladder now has a producer.
-6. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
+6. **A data-directory rename orphans telemetry, silently.** `dataBase` in `src/project.js` has moved
+   twice (`~/.supermem`, `~/.dd`, `~/.dd-data`). Atoms return from git on any rebuild, so a store with a
+   fresh index looks complete; retrieval events, admission decisions, observations and the contradiction
+   log live only in SQLite under the old path and are abandoned with no migration and no warning. Found
+   2026-09-19 with three stores for this project and its telemetry split three ways, which left
+   `cap_saturation` reporting `skipped` for want of data that existed. The rows were merged by hand;
+   nothing in the code does this.
+7. **The hook bridge answers with another process's build.** `callRunningStore` forwards
+   `session-start`, `prompt` and `pre-tool` to any audit UI recorded in `.dd/ui.json`, and that process
+   may have been started from an older DD. Its store receives the telemetry and its code shapes the
+   response, while the hook exits 0 either way. Nothing distinguishes a bridged reply from a local one.
+8. **The audit trail is partial.** Supersession writes no log row at all, `detection_source` is always
    `explicit`, and `actor_ref` is never populated. The log itself is now retained as audit rather
    than pruned as telemetry.
 
@@ -121,7 +132,9 @@ Remaining:
 - ✅ Retire knowledge that nothing activates, by disuse rather than by age. Shipped 2026-09-18 with
   deliberately conservative defaults (90 days *and* 40 retrievals that postdate the memory), because
   the repository it shipped on had `dead_inferred` 0 and `cap_saturation` skipped — the mechanism is
-  in place, the benefit is a pending longitudinal measurement of `cap_saturation`.
+  in place. Baseline measured 2026-09-19 once orphaned telemetry was recovered: `cap_saturation` 0.000
+  over 50 retrievals, 43 of them abstentions and none returning more than one memory. The cap has never
+  been approached here, so whether retirement lowers it stays a question for a crowded project.
 - Bounded automatic promotion, from inferred to validated only, on artifact-verified evidence only,
   reversible and logged. This is the only item that relaxes a current safety property and it does not
   begin without an explicit decision to relax it.

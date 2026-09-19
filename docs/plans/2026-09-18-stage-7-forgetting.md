@@ -354,3 +354,41 @@ half of it is now a gate test, so the row names the file instead of a plan.
 - `normalizeProposal` was checked for field leakage after `archived_at` and `archived_reason` were
   added to the atom. It is a strict allowlist, so an edit of an archived memory cannot carry them into
   a new candidate.
+
+## Baseline recovered (2026-09-19)
+
+The *Outcome* and *Review* sections above say there is no baseline `cap_saturation` to compare
+against. **That was true of the store being read, not of the project.** The telemetry existed; it was
+unreachable.
+
+`dataBase` moved twice as the product was renamed — `~/.supermem`, then `~/.dd`
+(`18c9920`), then `~/.dd-data` (stage 2, `3308828`) — and each move started a fresh SQLite index.
+Atoms came back from git every time, so every store looked complete; retrieval events, admission
+decisions and the rest stayed behind under the old path. Two long-lived MCP servers were still running
+from pre-stage-2 builds and still writing there, one of them intercepting every hook call through
+`callRunningStore`. Three stores, one project, telemetry split three ways.
+
+Merging the orphaned rows into the current store (`INSERT OR IGNORE` over the shared columns, all rows
+carrying `project_id: supermem`) recovered **55 retrieval events** spanning 2026-09-09 to 2026-09-19 and
+**27 admission decisions**. `cap_saturation` is no longer `skipped`.
+
+**The baseline, over the 50-event window:**
+
+| | |
+|---|---|
+| `cap_saturation` | **0.000** (0 of 50 returned the full eight hits) |
+| Abstained | 43 of 50 |
+| Returned exactly one memory | 7 of 50 |
+| Returned more than one | **0** |
+
+So the cap has never been approached on this project, let alone filled. The plan's risk section said
+retirement might be solving a problem the project does not have, and told the stage to ship thresholds
+that almost never fire. That was the right call, and it is now a measurement rather than a suspicion.
+The defaults stay where they are.
+
+What is still longitudinal: whether retirement *lowers* `cap_saturation` on a project whose effective
+set is genuinely crowded. This project cannot answer that, because its figure is already zero.
+
+One thing this measurement raises and does not settle: 43 abstentions in 50 retrievals against 17
+active memories. That is either a corpus that does not match the work or an activation floor doing more
+work than intended. It is not a stage 7 question and nothing here acts on it.
