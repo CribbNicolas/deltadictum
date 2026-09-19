@@ -57,4 +57,20 @@ describe('SessionStart context', () => {
     assert.match(payload.hookSpecificOutput.additionalContext, /DD - loaded for `demo` \(1 active\)/);
     store.close();
   });
+
+  // `ui.json` outlives the process that wrote it, so a recorded URL is a claim
+  // about the past. The person is only handed a link once something answered.
+  test('the audit URL reaches the person only when the UI is live', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+
+    const dark = await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733' });
+    assert.equal(dark.systemMessage, undefined);
+    assert.match(dark.hookSpecificOutput.additionalContext, /DD - Audit UI: http:\/\/127\.0\.0\.1:7733/);
+
+    const live = await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', uiLive: true });
+    assert.equal(live.systemMessage, 'DD audit UI: http://127.0.0.1:7733');
+    assert.match(live.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
+    store.close();
+  });
 });

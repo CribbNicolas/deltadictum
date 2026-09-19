@@ -45,7 +45,8 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
         const payload = body.payload ?? {};
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, await buildPreToolContext(payload, { store, projectId }));
         if (url.pathname.endsWith('/session-start')) return send(res, 200, await buildSessionStartContext({ store, projectId, uiUrl: `http://${expectedHost}`,
-          sessionId: payload.session_id ?? payload.sessionId, source: payload.source }));
+          // This request is being served by the audit UI, so it is live by construction.
+          uiLive: true, sessionId: payload.session_id ?? payload.sessionId, source: payload.source }));
         if (url.pathname.endsWith('/prompt')) {
           await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
           await recordPromptObservation(payload, { store, projectId });
