@@ -1,0 +1,12 @@
+{
+  "name": "deltadictum",
+  "owner": { "name": "DeltaDictum" },
+  "description": "DD: next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
+  "plugins": [
+    {
+      "name": "deltadictum",
+      "source": "./",
+      "description": "Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit locally. Share via git."
+    }
+  ]
+}
