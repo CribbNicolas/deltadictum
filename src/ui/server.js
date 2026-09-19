@@ -76,6 +76,21 @@ export function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1
         await store.reviewFeedback(body.id, projectId, body.accepted);
         return send(res, 200, { reviewed: true });
       }
+      if (req.method === 'GET' && url.pathname === '/api/config') {
+        const config = await store.loadConfig();
+        return send(res, 200, { auto_accept: config.auto_accept });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/config/auto-accept') {
+        const body = await readBody(req);
+        if (typeof body.enabled !== 'boolean') throw new Error('enabled_boolean_required');
+        if (typeof body.confidence_threshold !== 'number' || body.confidence_threshold < 0 || body.confidence_threshold > 1) {
+          throw new Error('confidence_threshold_must_be_0_to_1');
+        }
+        const config = await store.loadConfig();
+        config.auto_accept = { enabled: body.enabled, confidence_threshold: body.confidence_threshold };
+        await store.saveConfig(config);
+        return send(res, 200, { auto_accept: config.auto_accept });
+      }
       if (req.method === 'GET' && url.pathname === '/api/atoms') {
         const lifecycle = url.searchParams.get('lifecycle');
         const origin = url.searchParams.get('capture_origin');
