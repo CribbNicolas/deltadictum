@@ -1,0 +1,96 @@
+{
+  "id": "0e23ff13-fee9-4c0c-8abe-ef2ce26ae10d",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "procedure",
+  "scope": "project",
+  "title": "Audit UI's #msg now translates engine error codes -- keep ERROR_HINTS in sync when adding new throw/reasons.push sites",
+  "topic_key": "ui/audit-ui/error-hints-must-track-engine-codes",
+  "trigger": "Adding, renaming, or removing a `throw new Error('some_code')` or `reasons.push('some_code')` in src/engine/{lifecycle,contract,v2/admission,v5/admission,v5/vocab,v6/contradiction}.js or src/ui/server.js that can surface through an audit-UI action (admit/reject/resolve/restore/delete/save/feedback-review/settings).",
+  "behavior_delta": "src/ui/public/index.html previously rendered raw `err.message` (an internal error code like 'replacement_changed_review_again' or 'cannot_admit:missing_title,missing_why') directly into the #msg red hint, unexplained. Added an ERROR_HINTS dictionary + friendlyError() that maps every UI-reachable engine error code (flat codes, `cannot_admit:a,b` compounds, and the PATCH save flow's `'; '`-joined reasons list) to a plain-language, actionable sentence, while still falling back to the raw code for anything unmapped (so a gap is visible, not silently swallowed). All #msg assignments in index.html now go through friendlyError(). Consequence: any new error code thrown/pushed in the engine files above that can reach the audit UI needs a matching entry added to ERROR_HINTS in src/ui/public/index.html, or it will fall back to showing the raw code verbatim to the reviewer.",
+  "what": "src/ui/public/index.html previously rendered raw `err.message` (an internal error code like 'replacement_changed_review_again' or 'cannot_admit:missing_title,missing_why') directly into the #msg red hint, unexplained. Added an ERROR_HINTS dictionary + friendlyError() that maps every UI-reachable engine error code (flat codes, `cannot_admit:a,b` compounds, and the PATCH save flow's `'; '`-joined reasons list) to a plain-language, actionable sentence, while still falling back to the raw code for anything unmapped (so a gap is visible, not silently swallowed). All #msg assignments in index.html now go through friendlyError(). Consequence: any new error code thrown/pushed in the engine files above that can reach the audit UI needs a matching entry added to ERROR_HINTS in src/ui/public/index.html, or it will fall back to showing the raw code verbatim to the reviewer.",
+  "why": "User asked for descriptive red-hint error messages after hitting an unexplained 'replacement_changed_review_again' trying to admit a candidate whose replacement target was itself still an unreviewed candidate. Implemented by reading every throw/reasons.push site reachable from the audit UI's own routes in src/ui/server.js and building the full mapping, verified with `npm test` (302/302 passing).",
+  "tags": [
+    "ui",
+    "audit-ui",
+    "error-handling",
+    "maintenance"
+  ],
+  "trigger_variants": [
+    "Adding a new validation error in the admission/lifecycle engine",
+    "Audit UI shows a raw error code instead of a readable message",
+    "The #msg red hint in the audit UI is unhelpful / just shows a code"
+  ],
+  "applies_to": {
+    "files": [
+      "src/ui/public/index.html",
+      "src/engine/lifecycle.js",
+      "src/engine/contract.js",
+      "src/engine/v2/admission.js",
+      "src/engine/v5/admission.js",
+      "src/engine/v5/vocab.js",
+      "src/ui/server.js"
+    ],
+    "components": [
+      "audit-ui",
+      "error-handling"
+    ],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "diff",
+      "source_ref": "src/ui/public/index.html ERROR_HINTS / friendlyError / catch-block call sites",
+      "summary": "Added the error-code-to-hint dictionary and routed every #msg assignment through it."
+    },
+    {
+      "source_type": "test_log",
+      "source_ref": "npm test",
+      "summary": "302/302 tests passing after the change, no test files modified."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T14:44:49.719Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "src/ui/public/index.html previously rendered raw `err.message` (an internal error code like 'replacement_changed_review_again' or 'cannot_admit:missing_title,missing_why') directly into the #msg red hint, unexplained. Added an ERROR_HINTS dictionary + friendlyError() that maps every UI-reachable engine error code (flat codes, `cannot_admit:a,b` compounds, and the PATCH save flow's `'; '`-joined reasons list) to a plain-language, actionable sentence, while still falling back to the raw code for anything unmapped (so a gap is visible, not silently swallowed). All #msg assignments in index.html now go through friendlyError(). Consequence: any new error code thrown/pushed in the engine files above that can reach the audit UI needs a matching entry added to ERROR_HINTS in src/ui/public/index.html, or it will fall back to showing the raw code verbatim to the reviewer.",
+    "short": "src/ui/public/index.html previously rendered raw `err.message` (an internal error code like 'replacement_changed_review_again' or 'cannot_admit:missing_title,missing_why') directly into the #msg red hint, unexplained. Added an ERROR_HINTS dictionary + friendlyError() that maps every UI-reachable engine error code (flat codes, `cannot_admit:a,b` compounds, and the PATCH save flow's `'; '`-joined reasons list) to a plain-language, actionable sentence, while still falling back to the raw code for anything unmapped (so a gap is visible, not silently swallowed). All #msg assignments in index.html now go through friendlyError(). Consequence: any new error code thrown/pushed in the engine files above that can reach the audit UI needs a matching entry added to ERROR_HINTS in src/ui/public/index.html, or it will fall back to showing the raw code verbatim to the reviewer. Why: User asked for descriptive red-hint error messages after hitting an unexplained 'replacement_changed_review_again' trying to admit a candidate whose replacement target was itself still an unreviewed candidate. Implemented by reading every throw/reasons.push site reachable from the audit UI's own routes in src/ui/server.js and building the full mapping, verified with `npm test` (302/302 passing).",
+    "full": "src/ui/public/index.html previously rendered raw `err.message` (an internal error code like 'replacement_changed_review_again' or 'cannot_admit:missing_title,missing_why') directly into the #msg red hint, unexplained. Added an ERROR_HINTS dictionary + friendlyError() that maps every UI-reachable engine error code (flat codes, `cannot_admit:a,b` compounds, and the PATCH save flow's `'; '`-joined reasons list) to a plain-language, actionable sentence, while still falling back to the raw code for anything unmapped (so a gap is visible, not silently swallowed). All #msg assignments in index.html now go through friendlyError(). Consequence: any new error code thrown/pushed in the engine files above that can reach the audit UI needs a matching entry added to ERROR_HINTS in src/ui/public/index.html, or it will fall back to showing the raw code verbatim to the reviewer. Why: User asked for descriptive red-hint error messages after hitting an unexplained 'replacement_changed_review_again' trying to admit a candidate whose replacement target was itself still an unreviewed candidate. Implemented by reading every throw/reasons.push site reachable from the audit UI's own routes in src/ui/server.js and building the full mapping, verified with `npm test` (302/302 passing)."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "2c4c3c47-a964-466a-bc1d-3fff039975ff",
+  "evidence_state": {
+    "checked_at": "2026-09-19T14:45:35.304Z",
+    "artifacts": [
+      {
+        "source_type": "diff",
+        "source_ref": "src/ui/public/index.html ERROR_HINTS / friendlyError / catch-block call sites",
+        "summary": "Added the error-code-to-hint dictionary and routed every #msg assignment through it.",
+        "status": "unavailable",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "test_log",
+        "source_ref": "npm test",
+        "summary": "302/302 tests passing after the change, no test files modified.",
+        "status": "unavailable",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T14:44:49.808Z",
+  "updated_at": "2026-09-19T14:45:35.309Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T14:45:35.304Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

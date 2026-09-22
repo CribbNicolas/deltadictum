@@ -1,0 +1,86 @@
+{
+  "id": "9a955d61-56e2-42ba-b5de-ec262c449127",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "decision",
+  "scope": "user",
+  "title": "Legacy ~/.dd and ~/.supermem home-dir stores verified stale and deleted",
+  "topic_key": "dd/store/legacy-home-dirs-verified-and-purged",
+  "trigger": "When deciding whether to delete a pre-rename legacy data directory (~/.supermem, ~/.dd/<project-hash>) left over from before the project moved to per-project .dd/local",
+  "behavior_delta": "Before deleting a legacy home-dir store, open its sqlite (memory_atoms table) read-only and diff its topic_keys/lifecycle_state against the current project's .dd/atoms/ git-truth. If every topic_key already exists there as active (candidates included, since they may have since been reviewed under the same topic_key), the legacy dir holds nothing unmigrated and rm -rf is safe. This is the concrete check for roadmap Gap 6 (data-directory rename orphaning telemetry) when the orphaned copy is suspected empty of unique data.",
+  "what": "Before deleting a legacy home-dir store, open its sqlite (memory_atoms table) read-only and diff its topic_keys/lifecycle_state against the current project's .dd/atoms/ git-truth. If every topic_key already exists there as active (candidates included, since they may have since been reviewed under the same topic_key), the legacy dir holds nothing unmigrated and rm -rf is safe. This is the concrete check for roadmap Gap 6 (data-directory rename orphaning telemetry) when the orphaned copy is suspected empty of unique data.",
+  "why": "Ran this exact check on 2026-09-19: ~/.supermem/supermem/index.sqlite (17 active memory_atoms) and ~/.dd/supermem-3892c3ad040f/index.sqlite (17 active + 4 candidate) both had 100% topic_key overlap with .dd/atoms/ in this repo -- the 4 old candidates (dd/lifecycle/automatic-transitions-and-review, dd/telemetry/bridge-interception, dd/testing/backdated-created-at, dd/store/data-directory-renames) are now active under identical topic_keys in the current store. Confirmed nothing unique, deleted both dirs with user confirmation.",
+  "tags": [
+    "cleanup",
+    "roadmap-gap-6",
+    "legacy-store"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [
+      "dd/store"
+    ],
+    "operations": [
+      "cleanup",
+      "data-directory-rename"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "node --sqlite query of C:/Users/walle/.dd/supermem-3892c3ad040f/index.sqlite and C:/Users/walle/.supermem/supermem/index.sqlite memory_atoms tables",
+      "summary": "Listed topic_key + lifecycle_state from both legacy sqlite files; all 17+17 active and 4 candidate topic_keys matched entries already present and active in this repo's .dd/atoms/"
+    },
+    {
+      "source_type": "user_approval",
+      "source_ref": "AskUserQuestion: 'Delete old dirs' -> 'Yes, delete both (Recommended)'",
+      "summary": "User explicitly approved deleting ~/.dd and ~/.supermem after the verification was shown"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T15:28:48.658Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Before deleting a legacy home-dir store, open its sqlite (memory_atoms table) read-only and diff its topic_keys/lifecycle_state against the current project's .dd/atoms/ git-truth. If every topic_key already exists there as active (candidates included, since they may have since been reviewed under the same topic_key), the legacy dir holds nothing unmigrated and rm -rf is safe. This is the concrete check for roadmap Gap 6 (data-directory rename orphaning telemetry) when the orphaned copy is suspected empty of unique data.",
+    "short": "Before deleting a legacy home-dir store, open its sqlite (memory_atoms table) read-only and diff its topic_keys/lifecycle_state against the current project's .dd/atoms/ git-truth. If every topic_key already exists there as active (candidates included, since they may have since been reviewed under the same topic_key), the legacy dir holds nothing unmigrated and rm -rf is safe. This is the concrete check for roadmap Gap 6 (data-directory rename orphaning telemetry) when the orphaned copy is suspected empty of unique data. Why: Ran this exact check on 2026-09-19: ~/.supermem/supermem/index.sqlite (17 active memory_atoms) and ~/.dd/supermem-3892c3ad040f/index.sqlite (17 active + 4 candidate) both had 100% topic_key overlap with .dd/atoms/ in this repo -- the 4 old candidates (dd/lifecycle/automatic-transitions-and-review, dd/telemetry/bridge-interception, dd/testing/backdated-created-at, dd/store/data-directory-renames) are now active under identical topic_keys in the current store. Confirmed nothing unique, deleted both dirs with user confirmation.",
+    "full": "Before deleting a legacy home-dir store, open its sqlite (memory_atoms table) read-only and diff its topic_keys/lifecycle_state against the current project's .dd/atoms/ git-truth. If every topic_key already exists there as active (candidates included, since they may have since been reviewed under the same topic_key), the legacy dir holds nothing unmigrated and rm -rf is safe. This is the concrete check for roadmap Gap 6 (data-directory rename orphaning telemetry) when the orphaned copy is suspected empty of unique data. Why: Ran this exact check on 2026-09-19: ~/.supermem/supermem/index.sqlite (17 active memory_atoms) and ~/.dd/supermem-3892c3ad040f/index.sqlite (17 active + 4 candidate) both had 100% topic_key overlap with .dd/atoms/ in this repo -- the 4 old candidates (dd/lifecycle/automatic-transitions-and-review, dd/telemetry/bridge-interception, dd/testing/backdated-created-at, dd/store/data-directory-renames) are now active under identical topic_keys in the current store. Confirmed nothing unique, deleted both dirs with user confirmation."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "fbc1d874-66de-48d4-854e-7dbacbe90e60",
+  "evidence_state": {
+    "checked_at": "2026-09-19T16:22:29.261Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "node --sqlite query of C:/Users/walle/.dd/supermem-3892c3ad040f/index.sqlite and C:/Users/walle/.supermem/supermem/index.sqlite memory_atoms tables",
+        "summary": "Listed topic_key + lifecycle_state from both legacy sqlite files; all 17+17 active and 4 candidate topic_keys matched entries already present and active in this repo's .dd/atoms/",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "user_approval",
+        "source_ref": "AskUserQuestion: 'Delete old dirs' -> 'Yes, delete both (Recommended)'",
+        "summary": "User explicitly approved deleting ~/.dd and ~/.supermem after the verification was shown",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T15:28:48.793Z",
+  "updated_at": "2026-09-19T16:22:29.265Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T16:22:29.261Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

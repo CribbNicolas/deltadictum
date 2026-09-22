@@ -1,0 +1,90 @@
+{
+  "id": "60813084-2275-4aca-aa7c-3ef28be37513",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "A stale audit-UI server surfaces as 'Cannot read properties of undefined' in the browser console for any newly-added API field",
+  "topic_key": "ui/server-routes-need-restart/diagnose-via-console-exception",
+  "trigger": "When a frontend JS error like 'TypeError: Cannot read properties of undefined (reading ...)' appears in the audit UI right after adding a new field to a GET /api/* response in src/ui/server.js",
+  "behavior_delta": "Before debugging the frontend code, check whether the server process is stale (index.html is read fresh per file, but server.js route/logic changes need a process restart -- see ui/server-routes-need-restart). Confirm via read_console_messages(onlyErrors:true) for the exact TypeError and line, then curl the endpoint directly to see if the new field is actually present in the live response. If it's missing there but present in the source file, the fix is restarting the process, not editing the JS that reads the field.",
+  "what": "Before debugging the frontend code, check whether the server process is stale (index.html is read fresh per file, but server.js route/logic changes need a process restart -- see ui/server-routes-need-restart). Confirm via read_console_messages(onlyErrors:true) for the exact TypeError and line, then curl the endpoint directly to see if the new field is actually present in the live response. If it's missing there but present in the source file, the fix is restarting the process, not editing the JS that reads the field.",
+  "why": "Verified live on 2026-09-19: added auto_accept_threshold_levels to GET /api/config in src/ui/server.js, then opened the audit UI settings modal in a real browser. It threw 'TypeError: Cannot read properties of undefined (reading (\\'some\\'))' at loadAutoAcceptConfig, because the running mcp.js process (PID 28244, confirmed via Get-CimInstance) still served the pre-edit /api/config shape without that field -- the user had explicitly declined restarting it (shared MCP+UI process) earlier in this session. The server-side function itself was verified correct in isolation via a standalone node import.",
+  "tags": [
+    "ui",
+    "debugging",
+    "stale-process"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/ui/server.js",
+      "src/ui/public/index.html"
+    ],
+    "components": [
+      "ui"
+    ],
+    "operations": [
+      "debug-frontend-error",
+      "verify-ui-change"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "mcp__claude-in-chrome__read_console_messages on http://127.0.0.1:7733/ after opening Settings -> Confidence threshold slider",
+      "summary": "Exact exception: TypeError: Cannot read properties of undefined (reading 'some') at loadAutoAcceptConfig (index.html:625:55), caused by auto_accept_threshold_levels being undefined in the live /api/config response"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/ui/server.js",
+      "summary": "GET /api/config handler includes auto_accept_threshold_levels: autoAcceptThresholdLevels() in source, confirming the field exists in code but the running process predates this edit"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T15:53:34.666Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Before debugging the frontend code, check whether the server process is stale (index.html is read fresh per file, but server.js route/logic changes need a process restart -- see ui/server-routes-need-restart). Confirm via read_console_messages(onlyErrors:true) for the exact TypeError and line, then curl the endpoint directly to see if the new field is actually present in the live response. If it's missing there but present in the source file, the fix is restarting the process, not editing the JS that reads the field.",
+    "short": "Before debugging the frontend code, check whether the server process is stale (index.html is read fresh per file, but server.js route/logic changes need a process restart -- see ui/server-routes-need-restart). Confirm via read_console_messages(onlyErrors:true) for the exact TypeError and line, then curl the endpoint directly to see if the new field is actually present in the live response. If it's missing there but present in the source file, the fix is restarting the process, not editing the JS that reads the field. Why: Verified live on 2026-09-19: added auto_accept_threshold_levels to GET /api/config in src/ui/server.js, then opened the audit UI settings modal in a real browser. It threw 'TypeError: Cannot read properties of undefined (reading (\\'some\\'))' at loadAutoAcceptConfig, because the running mcp.js process (PID 28244, confirmed via Get-CimInstance) still served the pre-edit /api/config shape without that field -- the user had explicitly declined restarting it (shared MCP+UI process) earlier in this session. The server-side function itself was verified correct in isolation via a standalone node import.",
+    "full": "Before debugging the frontend code, check whether the server process is stale (index.html is read fresh per file, but server.js route/logic changes need a process restart -- see ui/server-routes-need-restart). Confirm via read_console_messages(onlyErrors:true) for the exact TypeError and line, then curl the endpoint directly to see if the new field is actually present in the live response. If it's missing there but present in the source file, the fix is restarting the process, not editing the JS that reads the field. Why: Verified live on 2026-09-19: added auto_accept_threshold_levels to GET /api/config in src/ui/server.js, then opened the audit UI settings modal in a real browser. It threw 'TypeError: Cannot read properties of undefined (reading (\\'some\\'))' at loadAutoAcceptConfig, because the running mcp.js process (PID 28244, confirmed via Get-CimInstance) still served the pre-edit /api/config shape without that field -- the user had explicitly declined restarting it (shared MCP+UI process) earlier in this session. The server-side function itself was verified correct in isolation via a standalone node import."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "adbc239d-55aa-4674-839a-e4592d290ca7",
+  "evidence_state": {
+    "checked_at": "2026-09-19T16:22:36.191Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "mcp__claude-in-chrome__read_console_messages on http://127.0.0.1:7733/ after opening Settings -> Confidence threshold slider",
+        "summary": "Exact exception: TypeError: Cannot read properties of undefined (reading 'some') at loadAutoAcceptConfig (index.html:625:55), caused by auto_accept_threshold_levels being undefined in the live /api/config response",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/ui/server.js",
+        "summary": "GET /api/config handler includes auto_accept_threshold_levels: autoAcceptThresholdLevels() in source, confirming the field exists in code but the running process predates this edit",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "ba2e9418819eefbb4ce0d0fa6012a0b438b1847d9cf81c0b7c4fc141d6d15fad"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T15:53:34.747Z",
+  "updated_at": "2026-09-19T16:22:36.195Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T16:22:36.191Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "id": "1e9d44c6-288e-450b-bc0c-d64b29dddc73",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "claim",
+  "scope": "project",
+  "title": "candidate.confidence at proposal time does not reflect evidence quality",
+  "topic_key": "engine/admission/proposal-time-confidence-is-constant",
+  "trigger": "Reading, filtering, ranking, or gating on a candidate atom's `confidence` field before it has been through `admitMemory` -- e.g. designing an auto-accept/auto-triage feature, or any UI sort/filter that treats a candidate's stored confidence as meaningful.",
+  "behavior_delta": "`normalizeProposal` (src/engine/contract.js:53) sets `atom.confidence = cappedConfidence(atom, {authority: 'inferred'})` at proposal time, but `cappedConfidence` -> `reliabilityCeiling` -> `sourceProvenance` reads `atom.evidence_state.artifacts`, which does not exist yet -- evidence is only verified later, inside `admitMemory` (src/engine/lifecycle.js:47), at review. So every model-proposed candidate's stored `confidence` is a constant: RELIABILITY_CAP['agent_claim'] (0.5) times CAPTURE_ORIGIN_FACTOR[capture_origin] (0.9 for model_initiated, 1 for user_explicit) -- 0.45 for the common case, regardless of whether evidence_refs are real, verified, numerous, or absent. Confirmed empirically: three of this project's own pending candidates with different evidence quality (verified files, an unavailable diff reference, unverified tool_output) all show confidence 0.45. To get a real, evidence-based number for a still-candidate atom, call verifyReferences(candidate.evidence_refs, {store, projectId}) then cappedConfidence({...candidate, evidence_state}, {authority: 'validated'}) yourself -- the same two calls admitMemory makes internally to produce the number it actually stamps.",
+  "what": "`normalizeProposal` (src/engine/contract.js:53) sets `atom.confidence = cappedConfidence(atom, {authority: 'inferred'})` at proposal time, but `cappedConfidence` -> `reliabilityCeiling` -> `sourceProvenance` reads `atom.evidence_state.artifacts`, which does not exist yet -- evidence is only verified later, inside `admitMemory` (src/engine/lifecycle.js:47), at review. So every model-proposed candidate's stored `confidence` is a constant: RELIABILITY_CAP['agent_claim'] (0.5) times CAPTURE_ORIGIN_FACTOR[capture_origin] (0.9 for model_initiated, 1 for user_explicit) -- 0.45 for the common case, regardless of whether evidence_refs are real, verified, numerous, or absent. Confirmed empirically: three of this project's own pending candidates with different evidence quality (verified files, an unavailable diff reference, unverified tool_output) all show confidence 0.45. To get a real, evidence-based number for a still-candidate atom, call verifyReferences(candidate.evidence_refs, {store, projectId}) then cappedConfidence({...candidate, evidence_state}, {authority: 'validated'}) yourself -- the same two calls admitMemory makes internally to produce the number it actually stamps.",
+  "why": "Found 2026-09-19 while implementing an auto-accept sweep that filters candidates by confidence threshold -- the first draft filtered on the stored field directly, which would have made the threshold meaningless (everything at 0.45, nothing above unless authority is canonical). Caught before shipping, during the writing-plans self-review, by tracing normalizeProposal and cappedConfidence and cross-checking against this project's own real pending candidates.",
+  "tags": [
+    "admission",
+    "confidence",
+    "reliability",
+    "auto-accept"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/contract.js",
+      "summary": "normalizeProposal line ~53, computes atom.confidence before evidence_state exists on the atom."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/reliability.js",
+      "summary": "sourceProvenance reads atom.evidence_state.artifacts; cappedConfidence/reliabilityCeiling define the RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR tables the constant derives from."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/lifecycle.js",
+      "summary": "admitMemory line ~47: the real evidence-based confidence is only computed here, at review time, via verifyReferences + cappedConfidence."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "mcp__dd__get on this project's own pending candidates, 2026-09-19",
+      "summary": "Three candidates with different evidence quality (verified filesystem refs, an unavailable diff, unverified tool_output) all report confidence: 0.45, empirically confirming the constant."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T08:24:51.178Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "`normalizeProposal` (src/engine/contract.js:53) sets `atom.confidence = cappedConfidence(atom, {authority: 'inferred'})` at proposal time, but `cappedConfidence` -> `reliabilityCeiling` -> `sourceProvenance` reads `atom.evidence_state.artifacts`, which does not exist yet -- evidence is only verified later, inside `admitMemory` (src/engine/lifecycle.js:47), at review. So every model-proposed candidate's stored `confidence` is a constant: RELIABILITY_CAP['agent_claim'] (0.5) times CAPTURE_ORIGIN_FACTOR[capture_origin] (0.9 for model_initiated, 1 for user_explicit) -- 0.45 for the common case, regardless of whether evidence_refs are real, verified, numerous, or absent. Confirmed empirically: three of this project's own pending candidates with different evidence quality (verified files, an unavailable diff reference, unverified tool_output) all show confidence 0.45. To get a real, evidence-based number for a still-candidate atom, call verifyReferences(candidate.evidence_refs, {store, projectId}) then cappedConfidence({...candidate, evidence_state}, {authority: 'validated'}) yourself -- the same two calls admitMemory makes internally to produce the number it actually stamps.",
+    "short": "`normalizeProposal` (src/engine/contract.js:53) sets `atom.confidence = cappedConfidence(atom, {authority: 'inferred'})` at proposal time, but `cappedConfidence` -> `reliabilityCeiling` -> `sourceProvenance` reads `atom.evidence_state.artifacts`, which does not exist yet -- evidence is only verified later, inside `admitMemory` (src/engine/lifecycle.js:47), at review. So every model-proposed candidate's stored `confidence` is a constant: RELIABILITY_CAP['agent_claim'] (0.5) times CAPTURE_ORIGIN_FACTOR[capture_origin] (0.9 for model_initiated, 1 for user_explicit) -- 0.45 for the common case, regardless of whether evidence_refs are real, verified, numerous, or absent. Confirmed empirically: three of this project's own pending candidates with different evidence quality (verified files, an unavailable diff reference, unverified tool_output) all show confidence 0.45. To get a real, evidence-based number for a still-candidate atom, call verifyReferences(candidate.evidence_refs, {store, projectId}) then cappedConfidence({...candidate, evidence_state}, {authority: 'validated'}) yourself -- the same two calls admitMemory makes internally to produce the number it actually stamps. Why: Found 2026-09-19 while implementing an auto-accept sweep that filters candidates by confidence threshold -- the first draft filtered on the stored field directly, which would have made the threshold meaningless (everything at 0.45, nothing above unless authority is canonical). Caught before shipping, during the writing-plans self-review, by tracing normalizeProposal and cappedConfidence and cross-checking against this project's own real pending candidates.",
+    "full": "`normalizeProposal` (src/engine/contract.js:53) sets `atom.confidence = cappedConfidence(atom, {authority: 'inferred'})` at proposal time, but `cappedConfidence` -> `reliabilityCeiling` -> `sourceProvenance` reads `atom.evidence_state.artifacts`, which does not exist yet -- evidence is only verified later, inside `admitMemory` (src/engine/lifecycle.js:47), at review. So every model-proposed candidate's stored `confidence` is a constant: RELIABILITY_CAP['agent_claim'] (0.5) times CAPTURE_ORIGIN_FACTOR[capture_origin] (0.9 for model_initiated, 1 for user_explicit) -- 0.45 for the common case, regardless of whether evidence_refs are real, verified, numerous, or absent. Confirmed empirically: three of this project's own pending candidates with different evidence quality (verified files, an unavailable diff reference, unverified tool_output) all show confidence 0.45. To get a real, evidence-based number for a still-candidate atom, call verifyReferences(candidate.evidence_refs, {store, projectId}) then cappedConfidence({...candidate, evidence_state}, {authority: 'validated'}) yourself -- the same two calls admitMemory makes internally to produce the number it actually stamps. Why: Found 2026-09-19 while implementing an auto-accept sweep that filters candidates by confidence threshold -- the first draft filtered on the stored field directly, which would have made the threshold meaningless (everything at 0.45, nothing above unless authority is canonical). Caught before shipping, during the writing-plans self-review, by tracing normalizeProposal and cappedConfidence and cross-checking against this project's own real pending candidates."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "6c29f5d5-1555-4771-84d9-974749b64149",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:13.898Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/contract.js",
+        "summary": "normalizeProposal line ~53, computes atom.confidence before evidence_state exists on the atom.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "8f5e170df962bd4bd03ad7179c5491b00a7c60f3538c5b63cf74d51c50967106"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/reliability.js",
+        "summary": "sourceProvenance reads atom.evidence_state.artifacts; cappedConfidence/reliabilityCeiling define the RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR tables the constant derives from.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "007cdf50d7489c3c87c609d78517145f02308253370e4f892b201be211d699dc"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/lifecycle.js",
+        "summary": "admitMemory line ~47: the real evidence-based confidence is only computed here, at review time, via verifyReferences + cappedConfidence.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "a4aea73de519652380927af08c3239edd34f534a2bc587032886231bece929f1"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "mcp__dd__get on this project's own pending candidates, 2026-09-19",
+        "summary": "Three candidates with different evidence quality (verified filesystem refs, an unavailable diff, unverified tool_output) all report confidence: 0.45, empirically confirming the constant.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T08:24:51.241Z",
+  "updated_at": "2026-09-19T10:36:13.900Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:13.898Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

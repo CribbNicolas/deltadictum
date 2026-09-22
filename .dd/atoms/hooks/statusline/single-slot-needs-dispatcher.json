@@ -1,0 +1,89 @@
+{
+  "id": "028493e6-c885-4b05-897d-596a2086412d",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Claude Code statusLine is a single global slot -- multi-plugin composition needs a dispatcher convention",
+  "topic_key": "hooks/statusline/single-slot-needs-dispatcher",
+  "trigger": "Designing DD's audit-UI terminal visibility (or any other user-visible persistent indicator) via Claude Code's statusLine feature, especially when other plugins (e.g. caveman) also want a statusLine badge.",
+  "behavior_delta": "settings.json has exactly one `statusLine` field (type: command, one script/command). Claude Code has no native mechanism for multiple plugins to each contribute a segment -- confirmed against the official statusline docs (code.claude.com/docs/en/statusline): the field runs one command, receives one JSON session blob on stdin, and whatever it prints (including multiple lines via multiple echo/print calls) is the whole status line. If DD needs to coexist with another plugin's statusLine ask (e.g. caveman's pending `[CAVEMAN]` badge), do not just overwrite the single slot -- propose a dispatcher pattern instead: a shared convention directory (e.g. ~/.claude/statusline.d/*.js), one small script per plugin dropped there, and a single aggregator script (configured once as the actual statusLine.command) that runs each file and joins their output as separate lines. This scales to N plugins without re-touching settings.json per addition, but it is a convention DD would have to invent and document, not something Claude Code provides or enforces -- a plugin that doesn't follow it still has to be integrated by hand.",
+  "what": "settings.json has exactly one `statusLine` field (type: command, one script/command). Claude Code has no native mechanism for multiple plugins to each contribute a segment -- confirmed against the official statusline docs (code.claude.com/docs/en/statusline): the field runs one command, receives one JSON session blob on stdin, and whatever it prints (including multiple lines via multiple echo/print calls) is the whole status line. If DD needs to coexist with another plugin's statusLine ask (e.g. caveman's pending `[CAVEMAN]` badge), do not just overwrite the single slot -- propose a dispatcher pattern instead: a shared convention directory (e.g. ~/.claude/statusline.d/*.js), one small script per plugin dropped there, and a single aggregator script (configured once as the actual statusLine.command) that runs each file and joins their output as separate lines. This scales to N plugins without re-touching settings.json per addition, but it is a convention DD would have to invent and document, not something Claude Code provides or enforces -- a plugin that doesn't follow it still has to be integrated by hand.",
+  "why": "User asked whether the statusLine slot necessarily conflicts across plugins and whether there's an easy way to scale to 3+ plugins wanting to use it. Read the official Claude Code statusline docs in full (fetched via WebFetch, code.claude.com/docs/en/statusline) to confirm there is exactly one settings.json slot and no built-in multi-source composition, then reasoned out the dispatcher-directory pattern as the only real scaling path, informed by the ongoing decision to show DD's audit UI URL via statusLine (per hooks/session-start/claude-code-output-model-only) while caveman's plugin separately wants the same slot for its badge.",
+  "tags": [
+    "hooks",
+    "claude-code",
+    "statusline",
+    "audit-ui",
+    "harness-divergence"
+  ],
+  "trigger_variants": [
+    "Can DD have its own status line separate from other plugins?",
+    "statusLine conflicts with another plugin's badge",
+    "how to show multiple plugin indicators in Claude Code's status bar"
+  ],
+  "applies_to": {
+    "files": [
+      "src/hooks/banner.js",
+      "src/hooks/session-start.js"
+    ],
+    "components": [
+      "hooks",
+      "audit-ui-pointer",
+      "statusline"
+    ],
+    "operations": [
+      "session-start"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "manual",
+      "description": "Re-check the statusline docs if a future Claude Code release adds native multi-source/plugin statusLine composition."
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "WebFetch of https://code.claude.com/docs/en/statusline (full page saved to tool-results/toolu_01Cpzjebuo2Xf58agtMAQWw7.txt)",
+      "summary": "Docs confirm statusLine is a single settings.json field of type 'command' running one script; 'What your script can output' section documents multiple lines/colors/links from that one script, but nothing about multiple independently-configured statusLine sources being merged by Claude Code itself."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T14:25:04.516Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "settings.json has exactly one `statusLine` field (type: command, one script/command). Claude Code has no native mechanism for multiple plugins to each contribute a segment -- confirmed against the official statusline docs (code.claude.com/docs/en/statusline): the field runs one command, receives one JSON session blob on stdin, and whatever it prints (including multiple lines via multiple echo/print calls) is the whole status line. If DD needs to coexist with another plugin's statusLine ask (e.g. caveman's pending `[CAVEMAN]` badge), do not just overwrite the single slot -- propose a dispatcher pattern instead: a shared convention directory (e.g. ~/.claude/statusline.d/*.js), one small script per plugin dropped there, and a single aggregator script (configured once as the actual statusLine.command) that runs each file and joins their output as separate lines. This scales to N plugins without re-touching settings.json per addition, but it is a convention DD would have to invent and document, not something Claude Code provides or enforces -- a plugin that doesn't follow it still has to be integrated by hand.",
+    "short": "settings.json has exactly one `statusLine` field (type: command, one script/command). Claude Code has no native mechanism for multiple plugins to each contribute a segment -- confirmed against the official statusline docs (code.claude.com/docs/en/statusline): the field runs one command, receives one JSON session blob on stdin, and whatever it prints (including multiple lines via multiple echo/print calls) is the whole status line. If DD needs to coexist with another plugin's statusLine ask (e.g. caveman's pending `[CAVEMAN]` badge), do not just overwrite the single slot -- propose a dispatcher pattern instead: a shared convention directory (e.g. ~/.claude/statusline.d/*.js), one small script per plugin dropped there, and a single aggregator script (configured once as the actual statusLine.command) that runs each file and joins their output as separate lines. This scales to N plugins without re-touching settings.json per addition, but it is a convention DD would have to invent and document, not something Claude Code provides or enforces -- a plugin that doesn't follow it still has to be integrated by hand. Why: User asked whether the statusLine slot necessarily conflicts across plugins and whether there's an easy way to scale to 3+ plugins wanting to use it. Read the official Claude Code statusline docs in full (fetched via WebFetch, code.claude.com/docs/en/statusline) to confirm there is exactly one settings.json slot and no built-in multi-source composition, then reasoned out the dispatcher-directory pattern as the only real scaling path, informed by the ongoing decision to show DD's audit UI URL via statusLine (per hooks/session-start/claude-code-output-model-only) while caveman's plugin separately wants the same slot for its badge.",
+    "full": "settings.json has exactly one `statusLine` field (type: command, one script/command). Claude Code has no native mechanism for multiple plugins to each contribute a segment -- confirmed against the official statusline docs (code.claude.com/docs/en/statusline): the field runs one command, receives one JSON session blob on stdin, and whatever it prints (including multiple lines via multiple echo/print calls) is the whole status line. If DD needs to coexist with another plugin's statusLine ask (e.g. caveman's pending `[CAVEMAN]` badge), do not just overwrite the single slot -- propose a dispatcher pattern instead: a shared convention directory (e.g. ~/.claude/statusline.d/*.js), one small script per plugin dropped there, and a single aggregator script (configured once as the actual statusLine.command) that runs each file and joins their output as separate lines. This scales to N plugins without re-touching settings.json per addition, but it is a convention DD would have to invent and document, not something Claude Code provides or enforces -- a plugin that doesn't follow it still has to be integrated by hand. Why: User asked whether the statusLine slot necessarily conflicts across plugins and whether there's an easy way to scale to 3+ plugins wanting to use it. Read the official Claude Code statusline docs in full (fetched via WebFetch, code.claude.com/docs/en/statusline) to confirm there is exactly one settings.json slot and no built-in multi-source composition, then reasoned out the dispatcher-directory pattern as the only real scaling path, informed by the ongoing decision to show DD's audit UI URL via statusLine (per hooks/session-start/claude-code-output-model-only) while caveman's plugin separately wants the same slot for its badge."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "f2e4419b-1cb3-4653-9f79-ce8626a378e7",
+  "evidence_state": {
+    "checked_at": "2026-09-19T14:35:54.680Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "WebFetch of https://code.claude.com/docs/en/statusline (full page saved to tool-results/toolu_01Cpzjebuo2Xf58agtMAQWw7.txt)",
+        "summary": "Docs confirm statusLine is a single settings.json field of type 'command' running one script; 'What your script can output' section documents multiple lines/colors/links from that one script, but nothing about multiple independently-configured statusLine sources being merged by Claude Code itself.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T14:25:04.575Z",
+  "updated_at": "2026-09-19T14:35:54.684Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T14:35:54.680Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

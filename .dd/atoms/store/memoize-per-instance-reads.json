@@ -1,0 +1,97 @@
+{
+  "id": "f1d79d20-3aa7-428c-94dc-e15dd9b29693",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Check every call site of the read across the whole request path, not just the one you're editing — a",
+  "topic_key": "store/memoize-per-instance-reads",
+  "trigger": "Adding or reviewing a store-layer read (like loadConfig) that multiple call sites invoke within a single hook invocation, or auditing PreToolUse/prompt hot-path cost.",
+  "behavior_delta": "Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes.",
+  "what": "Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes.",
+  "why": "Found while auditing PreToolUse cost: reading src/engine/project-context.js and src/hooks/pre-tool.js alone made loadConfig look like a single cheap read, but src/project.js's openStore, src/engine/retrieve.js, and src/store/telemetry.js's prune() each called it independently, so one PreToolUse invocation re-read and re-merged .dd/config.json from disk 3+ times before this was fixed.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/store/git-file-store.js",
+      "src/store/telemetry.js",
+      "src/engine/retrieve.js",
+      "src/project.js"
+    ],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/store/git-file-store.js",
+      "summary": "loadConfig/saveConfig/recover now memoize config.json per store instance, invalidated on both write and recover."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/store/telemetry.js",
+      "summary": "prune() holds its own reference to the git object and calls loadConfig independently of the store-level wrapper."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/retrieve.js",
+      "summary": "retrieveMemories calls store.loadConfig() again, a second independent call site within the same PreToolUse invocation."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T10:06:32.893Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes.",
+    "short": "Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes. Why: Found while auditing PreToolUse cost: reading src/engine/project-context.js and src/hooks/pre-tool.js alone made loadConfig look like a single cheap read, but src/project.js's openStore, src/engine/retrieve.js, and src/store/telemetry.js's prune() each called it independently, so one PreToolUse invocation re-read and re-merged .dd/config.json from disk 3+ times before this was fixed.",
+    "full": "Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes. Why: Found while auditing PreToolUse cost: reading src/engine/project-context.js and src/hooks/pre-tool.js alone made loadConfig look like a single cheap read, but src/project.js's openStore, src/engine/retrieve.js, and src/store/telemetry.js's prune() each called it independently, so one PreToolUse invocation re-read and re-merged .dd/config.json from disk 3+ times before this was fixed."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "7b7a9fae-684a-4831-badd-53c4fd4c2138",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:21.062Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/store/git-file-store.js",
+        "summary": "loadConfig/saveConfig/recover now memoize config.json per store instance, invalidated on both write and recover.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "2dcd49a7d3d94f933b59f7973082c829da52d5425341fff0e24e254c1c468cea"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/store/telemetry.js",
+        "summary": "prune() holds its own reference to the git object and calls loadConfig independently of the store-level wrapper.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d0c1641acbb89d922194ee6dc02b069dd5fd2e3582cee70ff5d6a6273fa76619"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/retrieve.js",
+        "summary": "retrieveMemories calls store.loadConfig() again, a second independent call site within the same PreToolUse invocation.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "8671f5d1e28c7c27059fa736aba0e3dd38bb017900de41dab7d2902ead9629bc"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T10:06:32.935Z",
+  "updated_at": "2026-09-19T10:36:21.065Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:21.062Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

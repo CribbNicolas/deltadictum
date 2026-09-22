@@ -1,0 +1,90 @@
+{
+  "id": "f2335ea1-6886-4976-8e27-e794be40d31e",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "file",
+  "title": "Toolbar select overflow: global `select{width:100%}` wins over flex:0 0 auto unless width is reset",
+  "topic_key": "ui/audit-ui/toolbar-select-width-flex-basis-bug",
+  "trigger": "A `.toolbar` (or any flex-row) child element uses `flex: 0 0 auto` but visually still stretches to fill/overflow its flex container in src/ui/public/index.html.",
+  "behavior_delta": "In src/ui/public/index.html, a generic rule (`input, textarea, select { width: 100%; ... }`) applied to every select on the page, including the compact toolbar filters. `.toolbar select { ...; flex: 0 0 auto; }` set a flex-basis of auto but never set `width`, and flex-basis:auto defers to the element's own `width` property -- so `width: 100%` from the generic rule still won, and each toolbar select tried to claim the full toolbar width (observed: toolbar rendered ~300vw wide with 3 such selects). Fix was a one-line addition of `width: auto;` to `.toolbar select`. General lesson: when giving a flex item `flex: 0 0 auto` (or any basis of `auto`) to make it size to content, always check for a competing `width` rule elsewhere in the cascade -- flex-basis:auto silently falls back to it, and the flex shorthand alone does not shrink an explicitly-widened element.",
+  "what": "In src/ui/public/index.html, a generic rule (`input, textarea, select { width: 100%; ... }`) applied to every select on the page, including the compact toolbar filters. `.toolbar select { ...; flex: 0 0 auto; }` set a flex-basis of auto but never set `width`, and flex-basis:auto defers to the element's own `width` property -- so `width: 100%` from the generic rule still won, and each toolbar select tried to claim the full toolbar width (observed: toolbar rendered ~300vw wide with 3 such selects). Fix was a one-line addition of `width: auto;` to `.toolbar select`. General lesson: when giving a flex item `flex: 0 0 auto` (or any basis of `auto`) to make it size to content, always check for a competing `width` rule elsewhere in the cascade -- flex-basis:auto silently falls back to it, and the flex shorthand alone does not shrink an explicitly-widened element.",
+  "why": "User reported the toolbar select filters were huge / the toolbar was using ~300vw. Traced to the CSS cascade interaction described above and fixed directly in src/ui/public/index.html.",
+  "tags": [
+    "ui",
+    "css",
+    "flexbox",
+    "audit-ui"
+  ],
+  "trigger_variants": [
+    "toolbar is way too wide / overflowing horizontally",
+    "select elements in the audit UI toolbar are huge"
+  ],
+  "applies_to": {
+    "files": [
+      "src/ui/public/index.html"
+    ],
+    "components": [
+      "audit-ui",
+      "toolbar"
+    ],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "diff",
+      "source_ref": "src/ui/public/index.html .toolbar select rule",
+      "summary": "Added `width: auto;` to `.toolbar select` to stop the generic `select{width:100%}` rule from expanding it via flex-basis:auto."
+    },
+    {
+      "source_type": "user_statement",
+      "source_ref": "user turn: \"Los filtros select son larguisimos, el toolbar debe estar usando 300 de vw ahora mismo.\"",
+      "summary": "User-reported symptom that led to the diagnosis."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T14:44:49.570Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "In src/ui/public/index.html, a generic rule (`input, textarea, select { width: 100%; ... }`) applied to every select on the page, including the compact toolbar filters. `.toolbar select { ...; flex: 0 0 auto; }` set a flex-basis of auto but never set `width`, and flex-basis:auto defers to the element's own `width` property -- so `width: 100%` from the generic rule still won, and each toolbar select tried to claim the full toolbar width (observed: toolbar rendered ~300vw wide with 3 such selects). Fix was a one-line addition of `width: auto;` to `.toolbar select`. General lesson: when giving a flex item `flex: 0 0 auto` (or any basis of `auto`) to make it size to content, always check for a competing `width` rule elsewhere in the cascade -- flex-basis:auto silently falls back to it, and the flex shorthand alone does not shrink an explicitly-widened element.",
+    "short": "In src/ui/public/index.html, a generic rule (`input, textarea, select { width: 100%; ... }`) applied to every select on the page, including the compact toolbar filters. `.toolbar select { ...; flex: 0 0 auto; }` set a flex-basis of auto but never set `width`, and flex-basis:auto defers to the element's own `width` property -- so `width: 100%` from the generic rule still won, and each toolbar select tried to claim the full toolbar width (observed: toolbar rendered ~300vw wide with 3 such selects). Fix was a one-line addition of `width: auto;` to `.toolbar select`. General lesson: when giving a flex item `flex: 0 0 auto` (or any basis of `auto`) to make it size to content, always check for a competing `width` rule elsewhere in the cascade -- flex-basis:auto silently falls back to it, and the flex shorthand alone does not shrink an explicitly-widened element. Why: User reported the toolbar select filters were huge / the toolbar was using ~300vw. Traced to the CSS cascade interaction described above and fixed directly in src/ui/public/index.html.",
+    "full": "In src/ui/public/index.html, a generic rule (`input, textarea, select { width: 100%; ... }`) applied to every select on the page, including the compact toolbar filters. `.toolbar select { ...; flex: 0 0 auto; }` set a flex-basis of auto but never set `width`, and flex-basis:auto defers to the element's own `width` property -- so `width: 100%` from the generic rule still won, and each toolbar select tried to claim the full toolbar width (observed: toolbar rendered ~300vw wide with 3 such selects). Fix was a one-line addition of `width: auto;` to `.toolbar select`. General lesson: when giving a flex item `flex: 0 0 auto` (or any basis of `auto`) to make it size to content, always check for a competing `width` rule elsewhere in the cascade -- flex-basis:auto silently falls back to it, and the flex shorthand alone does not shrink an explicitly-widened element. Why: User reported the toolbar select filters were huge / the toolbar was using ~300vw. Traced to the CSS cascade interaction described above and fixed directly in src/ui/public/index.html."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "3a723829-0157-4ecf-b97e-98047250fde0",
+  "evidence_state": {
+    "checked_at": "2026-09-19T14:45:33.282Z",
+    "artifacts": [
+      {
+        "source_type": "diff",
+        "source_ref": "src/ui/public/index.html .toolbar select rule",
+        "summary": "Added `width: auto;` to `.toolbar select` to stop the generic `select{width:100%}` rule from expanding it via flex-basis:auto.",
+        "status": "unavailable",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "user_statement",
+        "source_ref": "user turn: \"Los filtros select son larguisimos, el toolbar debe estar usando 300 de vw ahora mismo.\"",
+        "summary": "User-reported symptom that led to the diagnosis.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T14:44:49.695Z",
+  "updated_at": "2026-09-19T14:45:33.286Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T14:45:33.282Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

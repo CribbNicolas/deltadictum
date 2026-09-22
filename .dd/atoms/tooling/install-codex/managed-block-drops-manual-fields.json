@@ -1,0 +1,87 @@
+{
+  "id": "ccf342a4-8a20-4fff-83ed-e0722cbe3650",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "install-codex.mjs regen wipes custom fields inside managed block",
+  "topic_key": "tooling/install-codex/managed-block-drops-manual-fields",
+  "trigger": "Before re-running scripts/install-codex.mjs (or dd install --host codex) against a project whose .codex/config.toml managed DD block was hand-edited",
+  "behavior_delta": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
+  "what": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
+  "why": "Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
+  "tags": [
+    "codex",
+    "install",
+    "config",
+    "data-loss-risk"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "scripts/install-codex.mjs"
+    ],
+    "components": [],
+    "operations": [
+      "install",
+      "codex-config-refresh"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "scripts/install-codex.mjs",
+      "summary": "configBody template (lines ~43-52) has no tools.*.approval_mode fields; managedBlock() fully replaces prior BEGIN/END content with this template"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "C:/dev/Project-Patriark/.codex/config.toml",
+      "summary": "Post-install file lost [mcp_servers.dd.tools.orient] and [mcp_servers.dd.tools.retrieve] approval_mode=\"approve\" blocks that were present pre-install"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T15:12:52.690Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
+    "short": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
+    "full": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "536868de-8fac-4983-94dd-2a894a825509",
+  "evidence_state": {
+    "checked_at": "2026-09-19T15:13:48.005Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "scripts/install-codex.mjs",
+        "summary": "configBody template (lines ~43-52) has no tools.*.approval_mode fields; managedBlock() fully replaces prior BEGIN/END content with this template",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "eebc27c9f305d0dd950ee861a9609ec747ca17e21e7ea2410a1c4fe4fddf5728"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "C:/dev/Project-Patriark/.codex/config.toml",
+        "summary": "Post-install file lost [mcp_servers.dd.tools.orient] and [mcp_servers.dd.tools.retrieve] approval_mode=\"approve\" blocks that were present pre-install",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T15:12:52.792Z",
+  "updated_at": "2026-09-19T15:13:48.010Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T15:13:48.005Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

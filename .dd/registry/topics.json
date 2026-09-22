@@ -152,6 +152,303 @@
       "notes": null,
       "created_at": "2026-09-10T07:39:36.312Z",
       "updated_at": "2026-09-10T07:39:36.312Z"
+    },
+    {
+      "id": "22bc1142-55de-4dc6-9775-0495da8471ee",
+      "project_id": "supermem",
+      "canonical_key": "dd/telemetry/bridge-interception",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T01:16:55.728Z",
+      "updated_at": "2026-09-19T01:16:55.728Z"
+    },
+    {
+      "id": "10dd0e28-19f8-4960-be73-c003ef0135c8",
+      "project_id": "supermem",
+      "canonical_key": "dd/testing/backdated-created-at",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T01:16:55.757Z",
+      "updated_at": "2026-09-19T01:16:55.757Z"
+    },
+    {
+      "id": "252d222e-231c-4162-809d-c3397d88d9db",
+      "project_id": "supermem",
+      "canonical_key": "dd/lifecycle/automatic-transitions-and-review",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T01:16:55.788Z",
+      "updated_at": "2026-09-19T01:16:55.788Z"
+    },
+    {
+      "id": "4c52ce91-05bd-4498-8113-5f6bd8df65ea",
+      "project_id": "supermem",
+      "canonical_key": "dd/store/data-directory-renames",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T01:16:55.819Z",
+      "updated_at": "2026-09-19T01:16:55.819Z"
+    },
+    {
+      "id": "86d7730d-cdcc-421c-8da6-dd2ef879be85",
+      "project_id": "supermem",
+      "canonical_key": "debugging/dd-store/datadir-and-sqlite",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T04:09:59.436Z",
+      "updated_at": "2026-09-19T04:09:59.436Z"
+    },
+    {
+      "id": "cb4f10f3-e385-4b82-b9a6-240e6c8c58ab",
+      "project_id": "supermem",
+      "canonical_key": "distribution/harness-native-install-mechanisms",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T04:18:29.029Z",
+      "updated_at": "2026-09-19T04:18:29.029Z"
+    },
+    {
+      "id": "28af3fb1-8877-4563-855f-e35de0270e94",
+      "project_id": "supermem",
+      "canonical_key": "distribution/repo-internal-install-facts",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T05:31:39.051Z",
+      "updated_at": "2026-09-19T05:31:39.051Z"
+    },
+    {
+      "id": "7fc5abdd-799a-4e9a-a790-1d38cad70181",
+      "project_id": "supermem",
+      "canonical_key": "distribution/npm-hoisted-dependency-check",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T06:24:22.798Z",
+      "updated_at": "2026-09-19T06:24:22.798Z"
+    },
+    {
+      "id": "fa2e69fe-0d28-43a8-8321-e55e89ba9c7c",
+      "project_id": "supermem",
+      "canonical_key": "environment/dev-machine-harness-clis",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T06:24:22.922Z",
+      "updated_at": "2026-09-19T06:24:22.922Z"
+    },
+    {
+      "id": "0e53a905-c884-47a6-b2f4-e6d80ceb357b",
+      "project_id": "supermem",
+      "canonical_key": "engine/admission/auto-admit-config-unused",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T08:06:39.298Z",
+      "updated_at": "2026-09-19T08:06:39.298Z"
+    },
+    {
+      "id": "6c29f5d5-1555-4771-84d9-974749b64149",
+      "project_id": "supermem",
+      "canonical_key": "engine/admission/proposal-time-confidence-is-constant",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T08:24:51.219Z",
+      "updated_at": "2026-09-19T08:24:51.219Z"
+    },
+    {
+      "id": "54badd13-064c-44d8-be07-5f67089f4ffb",
+      "project_id": "supermem",
+      "canonical_key": "hooks/hot-path-cache-lifetime",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T09:29:15.181Z",
+      "updated_at": "2026-09-19T09:29:15.181Z"
+    },
+    {
+      "id": "7b7a9fae-684a-4831-badd-53c4fd4c2138",
+      "project_id": "supermem",
+      "canonical_key": "store/memoize-per-instance-reads",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T10:06:32.913Z",
+      "updated_at": "2026-09-19T10:06:32.913Z"
+    },
+    {
+      "id": "3bd3efaa-811d-4cfa-999e-f6a51d7a4b34",
+      "project_id": "supermem",
+      "canonical_key": "store/dedup-via-sentinel-key",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T10:14:26.335Z",
+      "updated_at": "2026-09-19T10:14:26.335Z"
+    },
+    {
+      "id": "5e647aac-2ef8-42fb-85a4-18a7f2b65e2f",
+      "project_id": "supermem",
+      "canonical_key": "hygiene/eval-fixtures-in-live-store",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T10:22:22.852Z",
+      "updated_at": "2026-09-19T10:22:22.852Z"
+    },
+    {
+      "id": "6e6b882c-5c9a-4660-ae93-ece70f458df3",
+      "project_id": "supermem",
+      "canonical_key": "ui/server-routes-need-restart",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T13:58:43.157Z",
+      "updated_at": "2026-09-19T13:58:43.157Z"
+    },
+    {
+      "id": "9a43326f-1890-47ef-a7e7-7252c1ed89df",
+      "project_id": "supermem",
+      "canonical_key": "hooks/session-start/claude-code-output-model-only",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T14:11:03.341Z",
+      "updated_at": "2026-09-19T14:11:03.341Z"
+    },
+    {
+      "id": "f2e4419b-1cb3-4653-9f79-ce8626a378e7",
+      "project_id": "supermem",
+      "canonical_key": "hooks/statusline/single-slot-needs-dispatcher",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T14:25:04.549Z",
+      "updated_at": "2026-09-19T14:25:04.549Z"
+    },
+    {
+      "id": "7a7468b4-6afd-460d-adbd-9a7d4457bdff",
+      "project_id": "supermem",
+      "canonical_key": "hooks/session-start/explicit-relay-instruction",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T14:29:44.658Z",
+      "updated_at": "2026-09-19T14:29:44.658Z"
+    },
+    {
+      "id": "3a723829-0157-4ecf-b97e-98047250fde0",
+      "project_id": "supermem",
+      "canonical_key": "ui/audit-ui/toolbar-select-width-flex-basis-bug",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T14:44:49.664Z",
+      "updated_at": "2026-09-19T14:44:49.664Z"
+    },
+    {
+      "id": "2c4c3c47-a964-466a-bc1d-3fff039975ff",
+      "project_id": "supermem",
+      "canonical_key": "ui/audit-ui/error-hints-must-track-engine-codes",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T14:44:49.777Z",
+      "updated_at": "2026-09-19T14:44:49.777Z"
+    },
+    {
+      "id": "536868de-8fac-4983-94dd-2a894a825509",
+      "project_id": "supermem",
+      "canonical_key": "tooling/install-codex/managed-block-drops-manual-fields",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T15:12:52.745Z",
+      "updated_at": "2026-09-19T15:12:52.745Z"
+    },
+    {
+      "id": "fbc1d874-66de-48d4-854e-7dbacbe90e60",
+      "project_id": "supermem",
+      "canonical_key": "dd/store/legacy-home-dirs-verified-and-purged",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T15:28:48.762Z",
+      "updated_at": "2026-09-19T15:28:48.762Z"
+    },
+    {
+      "id": "4a7a8cb8-9e65-4fbe-935d-20e8ff011579",
+      "project_id": "supermem",
+      "canonical_key": "engine/admission/auto-accept-threshold-unreachable-by-model-initiated",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T15:30:52.240Z",
+      "updated_at": "2026-09-19T15:30:52.240Z"
+    },
+    {
+      "id": "7437e183-113f-4658-b63d-adbfda68bc4d",
+      "project_id": "supermem",
+      "canonical_key": "engine/retrieval/abstain-rate-not-diagnostic-alone",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T15:33:21.296Z",
+      "updated_at": "2026-09-19T15:33:21.296Z"
+    },
+    {
+      "id": "25331968-eb4c-4aa1-9c8b-6b6ddfbeb1e5",
+      "project_id": "supermem",
+      "canonical_key": "ui/server-routes-need-restart/shared-process-with-mcp",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T15:48:23.141Z",
+      "updated_at": "2026-09-19T15:48:23.141Z"
+    },
+    {
+      "id": "adbc239d-55aa-4674-839a-e4592d290ca7",
+      "project_id": "supermem",
+      "canonical_key": "ui/server-routes-need-restart/diagnose-via-console-exception",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T15:53:34.712Z",
+      "updated_at": "2026-09-19T15:53:34.712Z"
+    },
+    {
+      "id": "5d333234-daf7-4d04-a927-c5051f9e5ab9",
+      "project_id": "supermem",
+      "canonical_key": "dd/engine/auto-accept-threshold-reachable-ceilings",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T16:11:44.194Z",
+      "updated_at": "2026-09-19T16:11:44.194Z"
+    },
+    {
+      "id": "00df81c0-d770-47e1-84b7-fccc411d84c0",
+      "project_id": "supermem",
+      "canonical_key": "dd/deployment/live-source-link-projects",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-19T16:39:22.347Z",
+      "updated_at": "2026-09-19T16:39:22.347Z"
+    },
+    {
+      "id": "500ae241-bc26-4340-901c-6be56df212c0",
+      "project_id": "supermem",
+      "canonical_key": "engine/retrieval/token-cost-lives-in-get",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-22T19:03:48.203Z",
+      "updated_at": "2026-09-22T19:03:48.203Z"
+    },
+    {
+      "id": "900d7093-1f10-4ce8-8478-b21d67c2a6bd",
+      "project_id": "supermem",
+      "canonical_key": "testing/store-handle-hangs-node-test",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-22T19:46:25.469Z",
+      "updated_at": "2026-09-22T19:46:25.469Z"
+    },
+    {
+      "id": "190b0807-19f4-400b-aba9-d20cb1bb021d",
+      "project_id": "supermem",
+      "canonical_key": "hooks/build-id-windows-path-case",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-22T21:44:43.581Z",
+      "updated_at": "2026-09-22T21:44:43.581Z"
+    },
+    {
+      "id": "a411a2da-9649-4b01-9627-e1754afcea08",
+      "project_id": "supermem",
+      "canonical_key": "tooling/scripted-edits-lose-escapes",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-22T21:44:43.642Z",
+      "updated_at": "2026-09-22T21:44:43.642Z"
     }
   ],
   "aliases": [],
@@ -203,6 +500,534 @@
       "value": "eval",
       "status": "active",
       "created_at": "2026-09-10T07:39:35.275Z"
+    },
+    {
+      "id": "ae401a84-5b26-4b93-ae1c-7464bafdbe2f",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "dd",
+      "status": "active",
+      "created_at": "2026-09-19T01:16:55.711Z"
+    },
+    {
+      "id": "2aba55c5-ee01-46f5-9c4e-03a2c9d2b5f6",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "dd-datadir-and-sqlite-inspection",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:47.304Z"
+    },
+    {
+      "id": "8a196864-c959-44d3-a9d4-6a2cb62d314f",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "dd",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:47.325Z"
+    },
+    {
+      "id": "b6543d7d-957d-4c3c-9628-1281f1d2b858",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "dataDir",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:47.337Z"
+    },
+    {
+      "id": "d5294add-d024-4b8b-96f2-55f27d5957b5",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "sqlite",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:47.349Z"
+    },
+    {
+      "id": "f43e6996-9116-4ae0-a215-257d34be291b",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "debugging",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:47.362Z"
+    },
+    {
+      "id": "48b390da-89de-4e43-bce8-62f0195233e5",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "windows",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:47.374Z"
+    },
+    {
+      "id": "cf3b56de-7589-4290-8724-d706857a9ce0",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "debugging",
+      "status": "active",
+      "created_at": "2026-09-19T04:09:59.423Z"
+    },
+    {
+      "id": "0a9b51ef-ae91-4787-b015-efced43ee705",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "distribution",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.886Z"
+    },
+    {
+      "id": "3f9a885b-018e-4edf-a5a7-f3d345439763",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "distribution",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.904Z"
+    },
+    {
+      "id": "3c3bff49-93af-4c56-b868-1c4ee2a0a0a4",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "claude-code",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.922Z"
+    },
+    {
+      "id": "1447072e-365a-4bde-9877-48c7c1345704",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "codex",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.939Z"
+    },
+    {
+      "id": "e1138320-1a66-4f09-877e-5cdc1ccf1b97",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "opencode",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.956Z"
+    },
+    {
+      "id": "3b4b733d-bf30-4c3c-9934-93f99ba3c59e",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "grok-build",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.976Z"
+    },
+    {
+      "id": "86738124-9b3a-465a-86ba-af7b7fdc9999",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "marketplace",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:28.994Z"
+    },
+    {
+      "id": "9ef2cd05-ae4e-46be-9be6-ccb68a600f71",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "npx",
+      "status": "active",
+      "created_at": "2026-09-19T04:18:29.011Z"
+    },
+    {
+      "id": "61b3061a-b333-4e1a-bc65-ded5a4d1b38f",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "cli",
+      "status": "active",
+      "created_at": "2026-09-19T05:31:39.008Z"
+    },
+    {
+      "id": "5bf649d7-42b5-4dfb-8b63-957fa078d6a7",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "mcp",
+      "status": "active",
+      "created_at": "2026-09-19T05:31:39.033Z"
+    },
+    {
+      "id": "a697ffdf-35eb-4f78-b2b2-9e4c22857505",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "npm",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.728Z"
+    },
+    {
+      "id": "30284c54-b299-46a7-aeba-6ae1673e8b53",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "hoisting",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.746Z"
+    },
+    {
+      "id": "be2dfc91-e802-46f0-a5c2-0f624c637f73",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "installer",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.763Z"
+    },
+    {
+      "id": "717e887d-b642-4a9e-b172-447fa7c57de2",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "testing",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.781Z"
+    },
+    {
+      "id": "1102f0ce-8d7d-47ac-8cbc-4b99a3b9c1f9",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "environment",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.842Z"
+    },
+    {
+      "id": "f319d85e-3fae-4aaf-b90b-cfbc755d0fee",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "environment",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.861Z"
+    },
+    {
+      "id": "94f025e1-cb23-41fc-a60b-da58fdb130cd",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "tooling",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.880Z"
+    },
+    {
+      "id": "95eb8bdb-822e-4a80-a4d3-e2c8ae6fb609",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "verification",
+      "status": "active",
+      "created_at": "2026-09-19T06:24:22.901Z"
+    },
+    {
+      "id": "1015d0df-3d31-43bb-9460-bc0ad24cde1f",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "engine",
+      "status": "active",
+      "created_at": "2026-09-19T08:06:39.195Z"
+    },
+    {
+      "id": "581f8881-104c-4d61-8360-0e7020392f99",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "admission",
+      "status": "active",
+      "created_at": "2026-09-19T08:06:39.216Z"
+    },
+    {
+      "id": "4a3e8ceb-fcc1-406f-9648-029a9a0f8a60",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "config",
+      "status": "active",
+      "created_at": "2026-09-19T08:06:39.238Z"
+    },
+    {
+      "id": "1f3cbed3-05e5-4951-a157-1354bf660c14",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "dead-code",
+      "status": "active",
+      "created_at": "2026-09-19T08:06:39.257Z"
+    },
+    {
+      "id": "075de319-ba96-442b-a9f3-66bab0359650",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "auto-accept",
+      "status": "active",
+      "created_at": "2026-09-19T08:06:39.276Z"
+    },
+    {
+      "id": "43078f38-79fe-4281-a597-6dd4c9f1dd47",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "confidence",
+      "status": "active",
+      "created_at": "2026-09-19T08:24:51.180Z"
+    },
+    {
+      "id": "e2136a7f-8082-4604-8475-fe1ef48f649a",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "reliability",
+      "status": "active",
+      "created_at": "2026-09-19T08:24:51.200Z"
+    },
+    {
+      "id": "328d8bbb-0472-4ecc-a884-d89857f805d6",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "hot-path-in-memory-cache-never-hits-ephemeral-hooks",
+      "status": "active",
+      "created_at": "2026-09-19T09:28:54.818Z"
+    },
+    {
+      "id": "6eae4d29-f05e-4e41-840a-7226fbfe888a",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "hooks",
+      "status": "active",
+      "created_at": "2026-09-19T09:29:15.162Z"
+    },
+    {
+      "id": "3fa88a22-498a-4bdd-8ceb-a092811abe66",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "store",
+      "status": "active",
+      "created_at": "2026-09-19T10:06:32.896Z"
+    },
+    {
+      "id": "c0f96bac-6e8f-4848-a1d0-2c25e71143b8",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "hygiene",
+      "status": "active",
+      "created_at": "2026-09-19T10:22:22.831Z"
+    },
+    {
+      "id": "9ecbf87e-d70c-435e-a767-1cf42af84906",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "ui",
+      "status": "active",
+      "created_at": "2026-09-19T13:58:43.132Z"
+    },
+    {
+      "id": "5996f497-b3ee-4579-a1cf-30df5cd1cae5",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "claude-code-sessionstart-hook-output-model-only",
+      "status": "active",
+      "created_at": "2026-09-19T14:10:33.625Z"
+    },
+    {
+      "id": "13e69df5-5cba-4363-ae08-c790f8b58bf9",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "hooks",
+      "status": "active",
+      "created_at": "2026-09-19T14:10:33.647Z"
+    },
+    {
+      "id": "4946cd95-23ec-4b1e-a28f-35950694ccbd",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "harness-divergence",
+      "status": "active",
+      "created_at": "2026-09-19T14:10:33.668Z"
+    },
+    {
+      "id": "5efb91b1-08ea-4776-9ff7-3bfe5fab0b55",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "session-start",
+      "status": "active",
+      "created_at": "2026-09-19T14:10:33.690Z"
+    },
+    {
+      "id": "6d2684e3-049e-409f-abfe-39b87b2f12a0",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "audit-ui",
+      "status": "active",
+      "created_at": "2026-09-19T14:10:33.711Z"
+    },
+    {
+      "id": "5a59a04c-cc2b-48f2-b96b-8b6b9f07f8a8",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "claude-mem",
+      "status": "active",
+      "created_at": "2026-09-19T14:21:45.426Z"
+    },
+    {
+      "id": "a2039db0-b44c-4a8d-b12e-72c957d62b01",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "statusline",
+      "status": "active",
+      "created_at": "2026-09-19T14:25:04.519Z"
+    },
+    {
+      "id": "371ae23e-2dcd-4fdc-8a29-adac7c07933c",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "wording",
+      "status": "active",
+      "created_at": "2026-09-19T14:29:44.619Z"
+    },
+    {
+      "id": "331a9fbf-00ff-4b31-9a1d-2b9ef7b9e368",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "decision",
+      "status": "active",
+      "created_at": "2026-09-19T14:29:44.639Z"
+    },
+    {
+      "id": "e65adc2f-89d1-4163-8752-c0c8cf93b2e4",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "ui",
+      "status": "active",
+      "created_at": "2026-09-19T14:44:49.574Z"
+    },
+    {
+      "id": "800e6b47-9c16-4984-9c05-e162072bfdaf",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "css",
+      "status": "active",
+      "created_at": "2026-09-19T14:44:49.605Z"
+    },
+    {
+      "id": "94b9976c-879d-4d2b-a79c-5163470c032b",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "flexbox",
+      "status": "active",
+      "created_at": "2026-09-19T14:44:49.637Z"
+    },
+    {
+      "id": "c736d1a9-ab3f-425f-a793-d27fb150b3c7",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "error-handling",
+      "status": "active",
+      "created_at": "2026-09-19T14:44:49.723Z"
+    },
+    {
+      "id": "087d9763-7fb3-4ae6-b603-670ff7ed9f0b",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "maintenance",
+      "status": "active",
+      "created_at": "2026-09-19T14:44:49.750Z"
+    },
+    {
+      "id": "c14ab085-3a43-40f8-a721-774b351b2e26",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "install-codex-managed-block-drops-manual-approval-mode",
+      "status": "active",
+      "created_at": "2026-09-19T15:12:24.287Z"
+    },
+    {
+      "id": "12d35601-f8b1-42da-b63b-5871fafbe255",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "install",
+      "status": "active",
+      "created_at": "2026-09-19T15:12:24.334Z"
+    },
+    {
+      "id": "5018bd1c-89f8-4ffb-940c-113d6fe823ba",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "data-loss-risk",
+      "status": "active",
+      "created_at": "2026-09-19T15:12:24.375Z"
+    },
+    {
+      "id": "e147a9cf-57ae-4878-a8c5-6db0d1b977e9",
+      "project_id": "supermem",
+      "kind": "domain",
+      "value": "tooling",
+      "status": "active",
+      "created_at": "2026-09-19T15:12:52.695Z"
+    },
+    {
+      "id": "e95a74fe-c452-43ee-bf2f-74173346b1ab",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "cleanup",
+      "status": "active",
+      "created_at": "2026-09-19T15:28:48.662Z"
+    },
+    {
+      "id": "3c92dc6e-8027-4a85-9fee-c03dbd0895e8",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "roadmap-gap-6",
+      "status": "active",
+      "created_at": "2026-09-19T15:28:48.700Z"
+    },
+    {
+      "id": "09ce35d7-4ef3-4dce-9735-1cc2828836cd",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "legacy-store",
+      "status": "active",
+      "created_at": "2026-09-19T15:28:48.730Z"
+    },
+    {
+      "id": "9fb45c31-6520-43fb-826c-ff1003a20812",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "reliability-ladder",
+      "status": "active",
+      "created_at": "2026-09-19T15:30:52.182Z"
+    },
+    {
+      "id": "4b9d958d-231f-4449-b0a2-817f86da76d9",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "calibration",
+      "status": "active",
+      "created_at": "2026-09-19T15:30:52.211Z"
+    },
+    {
+      "id": "321fd864-d1b7-4d14-ba0b-a51c8a53b300",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "abstention",
+      "status": "active",
+      "created_at": "2026-09-19T15:33:21.197Z"
+    },
+    {
+      "id": "86b203e0-ca91-419c-9936-a36f63a2caac",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "telemetry",
+      "status": "active",
+      "created_at": "2026-09-19T15:33:21.232Z"
+    },
+    {
+      "id": "81cb4a47-5890-4a6c-a22a-40f16e78f9b9",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "diagnostic-methodology",
+      "status": "active",
+      "created_at": "2026-09-19T15:33:21.263Z"
+    },
+    {
+      "id": "df07a812-6057-49cd-9e07-4dc453d762fd",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "process-lifecycle",
+      "status": "active",
+      "created_at": "2026-09-19T15:48:23.112Z"
+    },
+    {
+      "id": "e531ae23-496d-4304-a4a2-9eef84f6f4d4",
+      "project_id": "supermem",
+      "kind": "tag",
+      "value": "stale-process",
+      "status": "active",
+      "created_at": "2026-09-19T15:53:34.672Z"
     }
   ]
 }
