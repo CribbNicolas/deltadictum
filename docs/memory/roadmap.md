@@ -62,14 +62,21 @@ Known gaps, in the order they hurt:
    `src/hooks/observe.js` detects corrective language lexically on `UserPromptSubmit` and records it as
    a `user_correction` observation, referenceable by ID at proposal time. The top rung of the
    reliability ladder now has a producer.
-6. **A data-directory rename orphans telemetry, silently.** `dataBase` in `src/project.js` has moved
+6. ~~**A data-directory rename orphans telemetry, silently.**~~ **Closed.** When `openStore` creates a new
+   index, `adoptHistory` (`src/store/adopt.js`) copies this project's rows from every known earlier
+   location — `~/.supermem`, `~/.dd`, `~/.dd-data`, the plugin-host bases, `.dd/local` — by primary key,
+   and records what it adopted in `index_meta.adopted_history`. Sources are read, never removed. The
+   original finding: `dataBase` in `src/project.js` has moved
    twice (`~/.supermem`, `~/.dd`, `~/.dd-data`). Atoms return from git on any rebuild, so a store with a
    fresh index looks complete; retrieval events, admission decisions, observations and the contradiction
    log live only in SQLite under the old path and are abandoned with no migration and no warning. Found
    2026-09-19 with three stores for this project and its telemetry split three ways, which left
    `cap_saturation` reporting `skipped` for want of data that existed. The rows were merged by hand;
    nothing in the code does this.
-7. **The hook bridge answers with another process's build.** `callRunningStore` forwards
+7. ~~**The hook bridge answers with another process's build.**~~ **Closed.** The audit UI stamps hook
+   replies with `x-dd-build`, a hash of its source root, and the hook ignores any reply without its own;
+   the UI returns `409 build_stale` once its source tree has changed since it started (`src/hooks/build.js`).
+   The original finding: `callRunningStore` forwards
    `session-start`, `prompt` and `pre-tool` to any audit UI recorded in `.dd/ui.json`, and that process
    may have been started from an older DD. Its store receives the telemetry and its code shapes the
    response, while the hook exits 0 either way. Nothing distinguishes a bridged reply from a local one.

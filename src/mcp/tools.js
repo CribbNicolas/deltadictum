@@ -19,16 +19,35 @@ function proposalResult(result) {
     ...(result.collides_with?.length ? { collides_with: result.collides_with.map(a => a.id) } : {}) };
 }
 
-export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
+// Model-facing views. The engine keeps its bookkeeping (budget, intent, forms,
+// evidence hashes); the agent receives only what it can act on, once.
+const HIT_FIELDS = ['id', 'memory_type', 'content', 'lifecycle_state', 'contested', 'contradicts'];
+function retrieveView(result) {
+  return { abstained: result.abstained, memories: result.memories.map(hit =>
+    Object.fromEntries(HIT_FIELDS.filter(key => hit[key] !== undefined).map(key => [key, hit[key]]))) };
+}
+// retrieval_forms and what repeat behavior_delta/why; evidence_state repeats
+// evidence_refs plus hashes. Only each reference's verification status is new.
+const ENGINE_FIELDS = ['retrieval_forms', 'what', 'evidence_state', 'project_id', 'registry_key_id', 'schema_version', 'activation_count'];
+function atomView(atom) {
+  const status = new Map((atom.evidence_state?.artifacts ?? []).map(a => [`${a.source_type}\u0000${a.source_ref}`, a.status]));
+  const view = Object.fromEntries(Object.entries(atom).filter(([key]) => !ENGINE_FIELDS.includes(key)));
+  view.evidence_refs = (atom.evidence_refs ?? []).map(ref =>
+    ({ ...ref, status: status.get(`${ref.source_type}\u0000${ref.source_ref}`) ?? 'unchecked' }));
+  return view;
+}
+
+export function createToolHandlers({ store, projectId, uiPort = 7733, uiUrl = async () => `http://127.0.0.1:${uiPort}` }) {
   const handlers = {
     async orient(request = {}) { return orientProject(request, { store, projectId }); },
     async retrieve(request) {
       const map = await projectContext(store);
-      return retrieveMemories({ ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
+      const result = await retrieveMemories({ ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
+      return result.error ? result : retrieveView(result);
     },
-    async get({ id }) {
+    async get({ id, verbose = false }) {
       const atom = await store.getAtom(id, projectId);
-      if (atom) return { ...atom, freshness: await checkEvidenceFreshness(atom, store),
+      if (atom) return { ...(verbose ? atom : atomView(atom)), freshness: await checkEvidenceFreshness(atom, store),
         relations: await store.listRelations({ atomIds: [atom.id] }),
         outcomes: (await store.listFeedback(projectId, atom.id)).slice(0, 10) };
       const observation = await store.getObservation(id);
@@ -50,10 +69,10 @@ export function createToolHandlers({ store, projectId, uiPort = 7733 }) {
         capture_origin: atom.capture_origin, capture_source: atom.capture_source })) };
     },
     async contradict({ id, contradicts }) { return declareContradiction(id, contradicts, { store, projectId }); },
-    async ui() { return { url: `http://127.0.0.1:${uiPort}` }; },
+    async ui() { return { url: await uiUrl() }; },
     async status() {
       const { counts, total } = await store.countByLifecycle(projectId);
-      return { project_id: projectId, counts, total, ui_url: `http://127.0.0.1:${uiPort}` };
+      return { project_id: projectId, counts, total, ui_url: await uiUrl() };
     },
     async health() { return store.assessDeterioration(projectId); },
   };

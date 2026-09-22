@@ -21,7 +21,9 @@ const proposal = z.object({
   revisit_when: z.array(z.object({ kind: z.enum(['manual', 'file_changed', 'fact_changed', 'date']), description: z.string().max(300),
     path: z.string().max(200).optional(), key: z.string().max(100).optional(), equals: fact.optional(), date: z.string().optional() })).max(8).optional(),
   alternatives: z.array(z.object({ option: z.string().max(150), reason: z.string().max(300) })).max(6).optional(),
-  tags: z.array(z.string().max(50)).max(12).optional(), valid_from: z.string().optional(), valid_until: z.string().nullable().optional(),
+  tags: z.array(z.string().max(50)).max(12).optional()
+    .describe('Include "ambient" only for project-wide knowledge that applies to nearly every task (architecture, conventions); it is then sent once at every session start.'),
+  valid_from: z.string().optional(), valid_until: z.string().nullable().optional(),
 });
 const retrieval = {
   action: z.string().min(1).max(2000), query: text.optional(),
@@ -39,8 +41,9 @@ export function createMcpServer(options) {
   const definitions = {
     orient: ['Get bounded project facts, source pointers and knowledge for the coming action.', { ...retrieval, action: retrieval.action.optional() }],
     retrieve: ['Recall applicable decisions and lessons within a total estimated payload budget.', retrieval],
-    get: ['Expand a memory with current evidence freshness, or inspect a host evidence ID supplied at capture.', { id: z.string() }],
-    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Same topic_key proposes a replacement; never implies approval.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
+    get: ['Expand a memory with current evidence freshness, or inspect a host evidence ID supplied at capture. verbose=true returns the raw stored atom.',
+      { id: z.string(), verbose: z.boolean().optional() }],
+    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Same topic_key proposes a replacement; never implies approval.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
     feedback: ['Record task outcome and supporting references; frequency and claimed success do not raise authority.', {
       id: z.string(), task_id: z.string().min(1).max(200), outcome: z.enum(['helped', 'failed', 'refuted', 'not_applicable']),
       summary: z.string().min(1).max(800), evidence_refs: z.array(evidence).max(12).optional(),

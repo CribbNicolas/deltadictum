@@ -2,9 +2,11 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { microPack } from './session-start.js';
 import { projectContext } from '../engine/project-context.js';
 
-export async function buildPreToolContext(payload, { store, projectId }) {
+// The retrieval request a tool call becomes. Shared with the benchmark so a
+// simulated tool call is shaped exactly like a real one.
+export function preToolRequest(payload) {
   const tool = String(payload.toolName || payload.tool_name || '');
-  if (!tool || /(^|__)(dd|deltadictum)(__|_)/i.test(tool)) return { decision: 'allow' };
+  if (!tool || /(^|__)(dd|deltadictum)(__|_)/i.test(tool)) return null;
 
   const input = payload.toolInput ?? payload.tool_input ?? {};
   const serialized = typeof input === 'string' ? input : JSON.stringify(input);
@@ -18,11 +20,16 @@ export async function buildPreToolContext(payload, { store, projectId }) {
   const operation = /edit|write|replace|patch/i.test(tool) ? 'edit' : /read|search|grep/i.test(tool) ? 'read'
     : /\b(test|pytest|jest|vitest)\b/i.test(serialized) ? 'test'
     : /\b(deploy|deployment)\b/i.test(serialized) ? 'deploy' : undefined;
+  return { action, files, operation };
+}
+
+export async function buildPreToolContext(payload, { store, projectId, retrieve = retrieveMemories }) {
+  const request = preToolRequest(payload);
+  if (!request) return { decision: 'allow' };
   const context = await projectContext(store);
-  const result = await retrieveMemories({
+  const result = await retrieve({
     project_id: projectId,
-    action,
-    files, operation, facts: context.facts,
+    ...request, facts: context.facts,
     session_id: payload.session_id ?? payload.sessionId,
   }, { store });
   const pack = microPack(result.memories ?? []);

@@ -134,6 +134,22 @@ CREATE TABLE IF NOT EXISTS index_meta (
   value TEXT NOT NULL
 );
 
+-- Derived-only: a hash keyed by (atom_id, source_ref) plus the mtime/size it was
+-- computed from, so checkEvidenceFreshness can skip a re-read+re-hash when the
+-- file's mtime and size are unchanged. Never written into an atom's own
+-- evidence_state/git file (that would be cache bookkeeping in git-authoritative
+-- content); a stale or missing row here just costs one full re-hash, never a
+-- wrong answer, so it needs no place in rebuild().
+CREATE TABLE IF NOT EXISTS evidence_freshness_cache (
+  atom_id TEXT NOT NULL,
+  source_ref TEXT NOT NULL,
+  mtime_ms REAL NOT NULL,
+  size INTEGER NOT NULL,
+  hash TEXT NOT NULL,
+  checked_at TEXT NOT NULL,
+  PRIMARY KEY (atom_id, source_ref)
+);
+
 CREATE TABLE IF NOT EXISTS memory_feedback (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
@@ -187,4 +203,15 @@ CREATE TABLE IF NOT EXISTS memory_contradiction_log (
   actor_ref TEXT,
   reasons TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL
+);
+
+-- Embedding vectors for the resident process (L2/L3). Derived, like the rest of
+-- the index: keyed by model and by a hash of the embedded text, so an edited
+-- memory or a new model is re-embedded and nothing needs migrating.
+CREATE TABLE IF NOT EXISTS memory_vectors (
+  atom_id TEXT NOT NULL,
+  model TEXT NOT NULL,
+  text_hash TEXT NOT NULL,
+  vector BLOB NOT NULL,
+  PRIMARY KEY(atom_id, model)
 );

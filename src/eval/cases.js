@@ -15,6 +15,14 @@ export const MEMORIES = [
   { key: 'webhooks/dedupe/delivery', trigger: 'when processing webhook deliveries', trigger_variants: ['handle a redelivered webhook'],
     behavior_delta: 'Deduplicate by delivery_id within this provider.', why: 'Several deliveries can share an event type.',
     assumptions: [{ key: 'provider', equals: 'alpha', description: 'provider is alpha' }], action: 'delivery_id' },
+  // Shaped like real stores (2026-09-22): authored operations the hooks never
+  // send, and advice longer than one sentence.
+  { key: 'architecture/core/layers', memory_type: 'decision', trigger: 'when adding game logic, commands or presentation',
+    behavior_delta: 'Keep rules and invariants in domain, transactions and views in application, saves and catalogues in infrastructure, and engine input and rendering in client; the UI sends commands and reads views, never mutable state.',
+    why: 'Simulation must stay testable without the engine.', applies_to: { files: ['src/domain/**', 'src/application/**', 'src/client/**'], operations: ['implement', 'review'] }, action: 'layers' },
+  { key: 'build/export/sequential', memory_type: 'procedure', trigger: 'when exporting release builds for windows and android',
+    behavior_delta: 'Export one platform at a time with the export scripts and the main executable, holding the shared lock; after the Android export restore the editor target in locked mode, because project.assets.json becomes Android-specific and the next Windows build would otherwise fail to restore.',
+    why: 'Parallel exports corrupted the shared restore state twice.', action: 'sequential_export' },
   { key: 'legacy/cache/retired', trigger: 'when caching product data', behavior_delta: 'Cache forever.', why: 'Historical behavior.', lifecycle_state: 'superseded', action: 'cache_forever' },
 ];
 
@@ -38,6 +46,13 @@ export const CASES = [
   { id: 'webhook-exact', action: 'when processing webhook deliveries', facts: { provider: 'alpha' }, expected: ['webhooks/dedupe/delivery'], decision: 'delivery_id' },
   { id: 'webhook-paraphrase', action: 'handle a redelivered webhook', facts: { provider: 'alpha' }, expected: ['webhooks/dedupe/delivery'], decision: 'delivery_id' },
   { id: 'webhook-other-provider', action: 'when processing webhook deliveries', facts: { provider: 'beta' }, expected: [], decision: 'inspect_project' },
+  { id: 'layers-edit-tool-call', action: 'Edit {"file_path":"src/domain/combat/Resolver.cs","old_string":"var roll"}', files: ['src/domain/combat/Resolver.cs'], operation: 'edit',
+    expected: ['architecture/core/layers'], contains: 'never mutable state', decision: 'layers' },
+  { id: 'layers-read-tool-call', action: 'Read {"file_path":"src/client/shell/GameShell.cs"}', files: ['src/client/shell/GameShell.cs'], operation: 'read',
+    expected: ['architecture/core/layers'], contains: 'never mutable state', decision: 'layers' },
+  { id: 'layers-outside-scope', action: 'Edit {"file_path":"tools/build.ps1"}', files: ['tools/build.ps1'], operation: 'edit', expected: [], decision: 'inspect_project' },
+  { id: 'export-long-procedure', action: 'export release builds for windows and android', expected: ['build/export/sequential'],
+    contains: 'restore the editor target in locked mode', decision: 'sequential_export' },
   { id: 'retired-advice', action: 'when caching product data', expected: [], decision: 'inspect_project' },
   { id: 'unrelated-css', action: 'adjust button border radius', expected: [], decision: 'inspect_project' },
   { id: 'unrelated-readme', action: 'translate contribution instructions', expected: [], decision: 'inspect_project' },

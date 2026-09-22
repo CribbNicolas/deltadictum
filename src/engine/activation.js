@@ -44,9 +44,16 @@ export function assessApplicability(atom, request, now = Date.now()) {
     const incoming = kind === 'operations' ? (request.operation ? [request.operation] : []) : request[kind] ?? [];
     const matches = incoming.some(value => scope[kind].some(expected => kind === 'files' ? matchesGlob(value, expected)
       : kind === 'operations' ? conceptTokens(value).join(' ') === conceptTokens(expected).join(' ') : value.toLowerCase() === expected.toLowerCase()));
-    if (incoming.length && !matches) return { applies: false };
-    if (matches) contextScore = Math.max(contextScore, 0.8);
-    constraints.push(`${kind}: ${scope[kind].join(', ')}`);
+    // Operations are authored free-form (implement, review, design) while hosts
+    // report a handful (edit, read, test). A mismatch there is vocabulary, not
+    // scope, so it never excludes; files and components still do.
+    if (incoming.length && !matches && kind !== 'operations') return { applies: false };
+    // A matching file or component places the request inside the memory's scope.
+    // A matching operation does not: "test" or "edit" names most of a session,
+    // so it would activate the memory on every such call.
+    if (matches && kind !== 'operations') contextScore = Math.max(contextScore, 0.8);
+    // A scope the request already verified needs no restating in the advice.
+    if (!matches) constraints.push(`${kind}: ${scope[kind].join(', ')}`);
   }
   for (const a of atom.assumptions ?? []) {
     const value = a.key ? request.facts?.[a.key] : undefined;

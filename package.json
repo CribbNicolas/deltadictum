@@ -14,7 +14,7 @@
     ".": "./adapters/opencode/index.js"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/engine/**/*.test.js tests/store/**/*.test.js tests/mcp/**/*.test.js tests/ui/**/*.test.js tests/hooks/**/*.test.js",
+    "test": "node --test --test-concurrency=1 tests/engine/**/*.test.js tests/store/**/*.test.js tests/mcp/**/*.test.js tests/ui/**/*.test.js tests/hooks/**/*.test.js tests/semantic/**/*.test.js",
     "test:engine": "node --test --test-concurrency=1 tests/engine/**/*.test.js",
     "test:store": "node --test --test-concurrency=1 tests/store/**/*.test.js",
     "test:mcp": "node --test --test-concurrency=1 tests/mcp/**/*.test.js",
@@ -25,7 +25,9 @@
     "eval": "node src/eval/replay.js",
     "eval:models": "node src/eval/model-runner.js",
     "start": "node src/cli.js",
-    "mcp": "node src/mcp/server.js"
+    "mcp": "node src/mcp/server.js",
+    "bench": "node src/eval/bench/run.js --project=.",
+    "bench:semantic": "node src/eval/bench/run.js --project=. --provider=semantic"
   },
   "files": [
     "src",
@@ -42,5 +44,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.6.0"
+  },
+  "optionalDependencies": {
+    "@huggingface/transformers": "^4.3.0"
   }
 }

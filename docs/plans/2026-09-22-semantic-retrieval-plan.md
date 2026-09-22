@@ -1,0 +1,76 @@
+# Semantic retrieval: prod-a (lexical) vs prod-b (embeddings in a resident process)
+
+Status: phases 1-5 implemented 2026-09-22; phase 6 pending. Decision owner: the user.
+
+## Why the constraint changes
+
+L2 and L3 in `docs/architecture/plugin-constraints.md` were written while removing the Orquesta system,
+whose embeddings lived in a separate service (llama.cpp, Docker, Qdrant, PostgreSQL). That cannot ship
+in a plugin. The removal generalised it to "no embeddings", which does not follow: an ONNX runtime inside
+a Node process is an npm package with prebuilt binaries.
+
+Measured on this machine (Windows, Node 24, `@huggingface/transformers` 4.3.0,
+`Xenova/multilingual-e5-small` q8): install 479 MB, model 130 MB; first load 29 s (download), cached
+load 0.5 s, one query embedding 3 ms warm, 384 dimensions.
+
+So L1 still holds (0.5 s per hook process is not acceptable on every tool call) and the model can only
+live in a long-lived process. L2 becomes "a resident process may be started and relied on for better
+answers, never for correct ones": hooks fall back to lexical retrieval when it is absent (L5).
+
+## Phases
+
+1. **Constraints and language.** Relax L2/L3 in the docs. Memories are authored in English whatever the
+   conversation language (tokens, and one vocabulary for matching); the model is multilingual anyway.
+2. **Benchmark.** Scenarios written from the real store: each names the memories it *must* get and the
+   ones that *orbit* it (useful, not required), in the three shapes DD sees: a user prompt (English and
+   Spanish), tool calls on the files involved, and unrelated work that must stay quiet. Memories may be
+   added to make a case realistic. Metrics: must-recall, orbit-recall, precision, abstention, injected
+   tokens.
+3. **prod-b.** Vectors per atom in the SQLite index, keyed by model and text hash; candidates are the
+   union of FTS and nearest vectors; activation takes the best of lexical, scope and calibrated
+   similarity; applicability gates are unchanged. Knobs: similarity floor, calibration, weight.
+4. **Compare** prod-a and prod-b on the benchmark, then calibrate the winner.
+5. **Resident process.** The audit UI process already answers hooks (`src/hooks/bridge.js`); it loads
+   the model and serves prod-b. SessionStart starts it when absent; the banner says when it is not
+   running and how to fix it (README section: task). The embedding runtime is an optional dependency.
+6. **Agent-level measurement.** The same task run without DD and with DD, comparing result and tokens
+   (`src/eval/model-runner.js`).
+
+## Open items
+
+- `memory/product/not-embeddings` (anti-memory, active) contradicts this plan; supersede it through
+  review once the comparison is in.
+- Patriark's memories are in Spanish; they become the multilingual test corpus before translation.
+
+## Results (2026-09-22, `npm run bench` / `npm run bench:semantic`)
+
+15 tasks from this repository's store (11 with needed memories, 4 that must stay quiet), 45 probes.
+
+| | must recall | orbit recall | precision | quiet negatives | tokens/task |
+|---|---|---|---|---|---|
+| prod-a lexical, before the reach fixes | 0.59 | 0.14 | 0.78 | 4/4 | 376 |
+| prod-a lexical, with headlines | 0.67 | 0.23 | 0.80 | 4/4 | 409 |
+| **prod-b semantic, floor 0.04** | **0.83** | **0.32** | **0.86** | **4/4** | 519 |
+| prod-b semantic, floor 0.025 | 0.83 | 0.45 | 0.85 | 3/4 | 624 |
+
+prod-b wins on every axis at the default. Its one calibration dial is `floor`: must-recall holds at 0.83
+from 0.015 to 0.04, and lowering it buys orbit recall at the cost of silence. `topK` (3-8) changes nothing.
+Cross-language works: Spanish prompts place English memories as well as English prompts do.
+
+Found and fixed while measuring: a memory whose micro form is the whole behaviour (~470 tokens) filled the
+pack alone; lower-ranked applicable memories now arrive as a one-sentence headline with the id to `get`.
+
+End to end: a real `UserPromptSubmit` hook, bridged to the resident process, returns the needed memory in
+~36 ms. The resident answers only when it runs this build and its code is unchanged since it started;
+otherwise hooks fall back to lexical retrieval and SessionStart replaces it.
+
+## Still open
+
+- Phase 6: the same task with and without DD, comparing outcome and tokens (`src/eval/model-runner.js`).
+- Patriark as a second, Spanish, benchmark corpus; then translate its memories (new ones are refused).
+- The MCP `retrieve` tool still runs lexically in the session's own process; route it to the resident.
+- Session dedup re-delivers after 1 hour (`since(1)` in `src/store/telemetry.js`), and two parallel
+  tool calls can both deliver the same memory before either marks it.
+- README section "Resident process": how to tell whether it runs and how to fix it (the SessionStart notice
+  already points there).
+- `memory/product/not-embeddings` and `memory/retrieval/compact-fts` describe the old design; revise in review.

@@ -6,83 +6,182 @@
   <title>DeltaDictum audit</title>
   <meta name="dd-review-token" content="__DD_REVIEW_TOKEN__" />
   <style>
-    :root { color-scheme: dark light; --bg: #101014; --fg: #e8e8ea; --muted: #9a9aaa; --card: #1b1b22; --acc: #7c9cff; --danger: #ff6b6b; --ok: #6dd6a2; }
-    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
-    header { padding: 16px 20px; border-bottom: 1px solid #2a2a33; display: flex; gap: 12px; align-items: center; }
-    h1 { font-size: 16px; margin: 0; }
-    #status { color: var(--muted); }
-    nav { display: flex; gap: 8px; }
-    button, select { background: var(--card); color: var(--fg); border: 1px solid #333; border-radius: 6px; padding: 6px 10px; }
-    button.danger { border-color: var(--danger); color: var(--danger); }
-    button.ok { border-color: var(--ok); color: var(--ok); }
-    main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 58px); }
-    #list { border-right: 1px solid #2a2a33; overflow: auto; }
-    .item { padding: 10px 14px; border-bottom: 1px solid #2a2a33; cursor: pointer; }
-    .item:hover, .item.active { background: var(--card); }
-    .item small { display: block; color: var(--muted); }
-    #detail { padding: 20px; overflow: auto; }
-    label { display: block; margin: 10px 0 4px; color: var(--muted); }
-    input, textarea { width: 100%; box-sizing: border-box; background: var(--card); color: var(--fg); border: 1px solid #333; border-radius: 6px; padding: 8px; }
-    textarea { min-height: 70px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
-    .empty { padding: 40px; color: var(--muted); }
-    .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: #2a2a33; }
-    .unseen-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--acc); margin-right: 6px; animation: dd-pulse 1.6s ease-in-out infinite; }
-    @keyframes dd-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
-    .notice { padding: 12px; border-left: 3px solid var(--acc); background: var(--card); white-space: pre-wrap; }
-    .warning { border-color: var(--danger); }
-    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
-    #project { padding: 12px 20px; color: var(--muted); border-bottom: 1px solid #2a2a33; }
-    #evidence { border-bottom: 1px solid #2a2a33; color: var(--muted); }
-    #evidence > summary { padding: 12px 20px; cursor: pointer; }
-    #evidence-list { max-height: 240px; overflow: auto; padding: 0 20px 12px; }
-    .observation { padding: 8px 0; border-top: 1px solid #2a2a33; }
+    :root {
+      color-scheme: dark light;
+      --bg: #0b0b0f; --bg-elevated: #14141a; --bg-hover: #1b1b22; --border: #212129;
+      --fg: #e9e9ee; --muted: #8f8fa3; --accent: #7c9cff;
+      --danger: #ff9b9b; --danger-bg: #341717; --danger-border: #5c2a2a;
+      --ok: #7fe0b3; --ok-bg: #12321f; --ok-border: #1c4a2c;
+      --warn: #f0c674; --warn-bg: #201a10; --warn-border: #4a3a1c;
+      --mono: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg); color: var(--fg);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+
+    /* Top bar */
+    header { flex: 0 0 auto; height: 52px; padding: 0 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); background: #0e0e13; }
+    header h1 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: 0.2px; }
+    .live-pill { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; border: 1px solid var(--ok-border); background: var(--ok-bg); color: var(--ok); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
+    .live-pill.is-down { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; animation: dd-pulse 1.6s ease-in-out infinite; }
+    #status { color: var(--muted); font-size: 12.5px; }
+    .spacer { flex: 1; }
+    .unseen-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .unseen-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+    .vdivider { width: 1px; height: 20px; background: var(--border); }
+    .icon-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--fg); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .icon-btn:hover { background: var(--bg-hover); }
+
+    /* Toolbar */
+    .toolbar { flex: 0 0 auto; height: 48px; padding: 0 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .search-box { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 30px; border-radius: 8px; background: var(--bg-elevated); border: 1px solid var(--border); width: 200px; flex: 0 0 auto; }
+    .search-box svg { flex-shrink: 0; color: var(--muted); }
+    .search-box input { border: none; background: transparent; color: var(--fg); font-size: 13px; outline: none; width: 100%; padding: 0; font-family: inherit; }
+    .chips { display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 9px; background: var(--bg-elevated); border: 1px solid var(--border); flex: 0 0 auto; }
+    .chip { height: 24px; padding: 0 9px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .chip.active { background: var(--accent); color: #0b0b0f; }
+    /* width: auto overrides the global `select { width: 100% }` rule below --
+       without it, flex: 0 0 auto's basis defers to that 100%, and each toolbar
+       select tries to claim the full toolbar width. */
+    .toolbar select { height: 30px; border-radius: 8px; background: var(--bg-elevated); color: var(--fg); border: 1px solid var(--border); padding: 0 8px; font-size: 12px; flex: 0 0 auto; width: auto; }
+    .pill-toggle { height: 30px; padding: 0 10px 0 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--muted); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; flex: 0 0 auto; font-family: inherit; }
+    .pill-toggle .knob { width: 24px; height: 14px; border-radius: 999px; background: var(--border); position: relative; transition: background 0.15s; }
+    .pill-toggle .knob::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #0b0b0f; transition: left 0.15s; }
+    .pill-toggle[aria-pressed="true"] { color: var(--fg); }
+    .pill-toggle[aria-pressed="true"] .knob { background: var(--accent); }
+    .pill-toggle[aria-pressed="true"] .knob::after { left: 12px; background: #0b0b0f; }
+    #visible-count { font-family: var(--mono); font-size: 11.5px; color: var(--muted); flex: 0 0 auto; }
+
+    #project { padding: 8px 18px; color: var(--muted); font-size: 12.5px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+    #evidence { border-bottom: 1px solid var(--border); color: var(--muted); flex: 0 0 auto; }
+    #evidence > summary { padding: 8px 18px; cursor: pointer; font-size: 12.5px; }
+    #evidence-list { max-height: 200px; overflow: auto; padding: 0 18px 12px; }
+    .observation { padding: 8px 0; border-top: 1px solid var(--border); }
     .observation p { margin: 4px 0 0; color: var(--fg); overflow-wrap: anywhere; }
-    @media (max-width: 760px) { main { grid-template-columns: 1fr; } #list { max-height: 240px; } header { flex-wrap: wrap; } }
+
+    /* Body */
+    main { flex: 1; min-height: 0; display: grid; grid-template-columns: 320px 1fr; }
+    #list { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); background: #0a0a0e; }
+    .item { padding: 10px 14px; border-bottom: 1px solid #17171d; border-left: 2px solid transparent; cursor: pointer; }
+    .item:hover { background: var(--bg-hover); }
+    .item.active { background: var(--bg-elevated); border-left-color: var(--accent); }
+    .item small { display: block; color: var(--muted); font-family: var(--mono); font-size: 11px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-top { display: flex; align-items: center; gap: 7px; }
+    .unseen-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; animation: dd-pulse 1.6s ease-in-out infinite; }
+    .unseen-dot.spacer-dot { visibility: hidden; animation: none; }
+
+    #detail { min-height: 0; display: flex; flex-direction: column; }
+    #detail.empty { align-items: center; justify-content: center; color: var(--muted); padding: 40px; }
+    .detail-actions { flex: 0 0 auto; padding: 12px 22px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--border); background: rgba(14,14,19,0.92); backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 1; }
+    .detail-body { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 22px 40px; }
+    #msg { padding: 0 22px; color: var(--danger); font-size: 12.5px; min-height: 1em; }
+
+    label { display: flex; align-items: center; gap: 5px; margin: 14px 0 5px; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    label:first-of-type { margin-top: 0; }
+    input, textarea, select { width: 100%; box-sizing: border-box; background: var(--bg-elevated); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font: inherit; font-size: 13.5px; }
+    /* No manual resize and no internal scroll: height tracks content via the
+       autoGrow() JS helper, called on render and on every input event. */
+    textarea { min-height: 42px; resize: none; overflow: hidden; }
+    textarea.json-field { font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+
+    /* Field hints: a small "?" glyph next to the label. Click pins it open
+       (closes on an outside click); hover/focus opens it while the pointer
+       stays over the icon or the panel, and closes on leaving both. */
+    .hint-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font-size: 9.5px; font-weight: 700; font-family: var(--sans, inherit); text-transform: none; letter-spacing: 0; cursor: help; flex-shrink: 0; }
+    .hint-icon:hover, .hint-icon.pinned { border-color: var(--accent); color: var(--accent); }
+    .hint-panel { display: none; position: absolute; z-index: 5; top: 20px; left: 0; width: 260px; max-width: 60vw; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elevated); box-shadow: 0 8px 24px rgba(0,0,0,0.45); color: var(--fg); font-size: 12px; font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.4; cursor: text; white-space: normal; }
+    .hint-icon:hover .hint-panel, .hint-icon:focus-visible .hint-panel, .hint-icon.pinned .hint-panel { display: block; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    button { font: inherit; }
+    .row button, .detail-actions button { height: 32px; padding: 0 14px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--fg); cursor: pointer; font-size: 13px; font-weight: 500; }
+    .row button.danger, .detail-actions button.danger { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
+    .row button.ok, .detail-actions button.ok { border-color: var(--ok-border); background: var(--ok-bg); color: var(--ok); }
+    .badge { font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 5px; background: var(--bg-elevated); border: 1px solid var(--border); letter-spacing: 0.3px; }
+    .notice { padding: 12px 14px; border-radius: 8px; border-left: 3px solid var(--accent); background: var(--bg-elevated); white-space: pre-wrap; font-size: 13px; margin-bottom: 16px; }
+    .notice.warning { border-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12px; }
+    @keyframes dd-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
+
+    /* Settings modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(6,6,9,0.6); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .modal-backdrop[hidden] { display: none; }
+    .modal { width: 400px; max-width: calc(100vw - 40px); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); overflow: hidden; }
+    .modal-header { padding: 14px 18px; display: flex; align-items: center; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+    .modal-body { padding: 18px; }
+    .modal-body label { margin-top: 0; }
+    .field-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .field-row input[type="checkbox"] { width: auto; }
+    .modal-body .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    @media (max-width: 760px) {
+      main { grid-template-columns: 1fr; }
+      #list { max-height: 220px; }
+      .toolbar { flex-wrap: nowrap; }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>DeltaDictum</h1>
+    <button id="live-pill" class="live-pill" type="button" title="Live updates connected">
+      <span class="live-dot"></span><span id="live-label">Live</span>
+    </button>
     <span id="status">loading…</span>
-    <nav>
-      <select id="filter">
-        <option value="">all</option>
-        <option value="candidate">candidates</option>
-        <option value="active">active</option>
-        <option value="contested">contested</option>
-        <option value="rejected">rejected</option>
-        <option value="superseded">superseded</option>
-        <option value="archived">archived</option>
-      </select>
-      <select id="origin-filter" aria-label="Capture origin">
-        <option value="">all origins</option>
-        <option value="model_initiated">model initiative</option>
-        <option value="user_explicit">explicit user request</option>
-      </select>
-      <select id="type-filter" aria-label="Memory type">
-        <option value="">all types</option>
-        <option value="lesson">lesson</option>
-        <option value="anti_memory">anti-memory</option>
-        <option value="procedure">procedure</option>
-        <option value="decision">decision</option>
-        <option value="claim">claim</option>
-      </select>
-      <label><input type="checkbox" id="unseen-only"> unseen only</label>
-      <select id="sort-by" aria-label="Sort by">
-        <option value="created_at">newest first</option>
-        <option value="confidence">confidence</option>
-        <option value="activation_count">most activated</option>
-      </select>
-      <button id="reload">Reload</button>
-    </nav>
+    <div class="spacer"></div>
+    <div class="unseen-indicator"><span class="dot"></span><span id="unseen-count">0</span> unseen</div>
+    <div class="vdivider"></div>
+    <button id="open-settings" class="icon-btn" type="button" aria-label="Open settings" title="Settings">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
   </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input id="search" placeholder="Filter memories…" aria-label="Filter memories by keyword" />
+    </div>
+    <select id="filter" class="visually-hidden" aria-hidden="true" tabindex="-1">
+      <option value="">all</option>
+      <option value="candidate">candidates</option>
+      <option value="active">active</option>
+      <option value="contested">contested</option>
+      <option value="rejected">rejected</option>
+      <option value="superseded">superseded</option>
+      <option value="archived">archived</option>
+    </select>
+    <div class="chips" id="state-chips" role="group" aria-label="Filter by lifecycle state"></div>
+    <select id="origin-filter" aria-label="Capture origin">
+      <option value="">all origins</option>
+      <option value="model_initiated">model initiative</option>
+      <option value="user_explicit">explicit user request</option>
+    </select>
+    <select id="type-filter" aria-label="Memory type">
+      <option value="">all types</option>
+      <option value="lesson">lesson</option>
+      <option value="anti_memory">anti-memory</option>
+      <option value="procedure">procedure</option>
+      <option value="decision">decision</option>
+      <option value="claim">claim</option>
+    </select>
+    <select id="sort-by" aria-label="Sort by">
+      <option value="created_at">newest first</option>
+      <option value="confidence">confidence</option>
+      <option value="activation_count">most activated</option>
+    </select>
+    <button id="unseen-toggle" class="pill-toggle" type="button" aria-pressed="false">
+      <span class="knob"></span>Unseen only
+    </button>
+    <div class="spacer"></div>
+    <div id="visible-count"></div>
+  </div>
+
   <div id="project"></div>
-  <details id="auto-accept-settings">
-    <summary>Auto-accept settings</summary>
-    <label><input type="checkbox" id="auto-accept-enabled"> Auto-accept high-confidence candidates</label>
-    <label>Confidence threshold <input type="number" id="auto-accept-threshold" min="0" max="1" step="0.05"></label>
-  </details>
   <details id="evidence">
     <summary>Recorded evidence <span id="evidence-count"></span></summary>
     <div id="evidence-list"></div>
@@ -91,6 +190,29 @@
     <section id="list"></section>
     <section id="detail" class="empty">Select a memory.</section>
   </main>
+
+  <div id="settings-backdrop" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-header">
+        <span id="settings-title">Settings</span>
+        <button id="close-settings" class="icon-btn" type="button" aria-label="Close settings" style="margin-left: auto;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <label for="auto-accept-enabled" style="margin: 0;">Auto-accept high-confidence candidates</label>
+          <input type="checkbox" id="auto-accept-enabled">
+        </div>
+        <div class="hint">Approves candidates above the threshold without a manual review.</div>
+        <label for="auto-accept-threshold">Confidence threshold</label>
+        <input type="range" id="auto-accept-threshold" min="0" max="0" step="1" list="auto-accept-threshold-ticks">
+        <datalist id="auto-accept-threshold-ticks"></datalist>
+        <div id="auto-accept-threshold-readout" class="hint"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const listEl = document.getElementById('list');
     const detailEl = document.getElementById('detail');
@@ -98,18 +220,120 @@
     const filterEl = document.getElementById('filter');
     const originFilterEl = document.getElementById('origin-filter');
     const typeFilterEl = document.getElementById('type-filter');
-    const unseenOnlyEl = document.getElementById('unseen-only');
+    const unseenOnlyEl = document.getElementById('unseen-toggle');
     const sortByEl = document.getElementById('sort-by');
+    const searchEl = document.getElementById('search');
     const autoAcceptEnabledEl = document.getElementById('auto-accept-enabled');
     const autoAcceptThresholdEl = document.getElementById('auto-accept-threshold');
+    const stateChipsEl = document.getElementById('state-chips');
+    const STATE_CHIPS = [
+      { value: '', label: 'All' }, { value: 'candidate', label: 'Candidate' }, { value: 'active', label: 'Active' },
+      { value: 'contested', label: 'Contested' }, { value: 'rejected', label: 'Rejected' },
+      { value: 'superseded', label: 'Superseded' }, { value: 'archived', label: 'Archived' },
+    ];
     let atoms = [];
     let selected = null;
+    let unseenOnly = false;
+    // A blank rationale falls back to this rather than blocking the review: still
+    // a written decision on the record (INV-04's audit trail is a stamp, not a
+    // book report), but no longer friction for a reviewer approving as-is.
+    const DEFAULT_REVIEW_RATIONALE = 'Reviewed as proposed.';
+
+    // Every code here is a raw `Error.message` (or one token of a `;`- or
+    // `,`-joined reasons list) that the engine can actually surface through
+    // this UI's own actions -- see src/engine/{lifecycle,contract,v2/admission,
+    // v5/admission,v5/vocab}.js and src/ui/server.js. Keep this in sync with
+    // those `throw new Error('...')` / `reasons.push('...')` call sites.
+    const ERROR_HINTS = {
+      not_found: 'This memory no longer exists (deleted, or the link is stale). Reload the list.',
+      local_review_required: 'Session expired -- the audit UI likely restarted since this page loaded. Reload this page.',
+      invalid_host: 'Blocked: this request came in on the wrong host header. Reload this page.',
+      audit_requires_loopback: 'The audit UI only serves 127.0.0.1/localhost.',
+      hook_auth_required: 'Hook request was missing its auth token.',
+      project_mismatch: 'That request was for a different project than this audit UI serves.',
+      unknown_hook: 'Unknown hook endpoint.',
+      request_too_large: 'This edit is too large to save (over 64KB). Shorten a field and try again.',
+      canonical_confirm_required: 'Deleting a canonical memory needs confirmation. Try again.',
+      candidate_required: 'This memory is no longer a pending candidate -- it may already have been admitted, rejected, or replaced. Reload and check its current state.',
+      review_rationale_required: 'A review rationale is required.',
+      replacement_changed_review_again: 'The memory this candidate would replace is not currently active or contested -- it may still be an unreviewed candidate itself, or was superseded/rejected/resolved since this one was proposed. Admit or reject that earlier memory first, then re-review this candidate against the current state.',
+      evidence_scope_violation: 'One of the evidence references points outside this project and cannot be verified. Fix or remove that evidence_refs entry.',
+      contested_pair_required: 'Both memories must currently be in the contested state and actually conflict with each other to resolve this way. Reload and check their state.',
+      archived_memory_required: 'Only archived memories can be restored.',
+      topic_key_taken: 'Another memory now holds this topic key. Restoring would create a duplicate -- resolve or archive the current holder first.',
+      active_memory_required: 'Only active memories can be archived.',
+      authority_protected: 'A human-reviewed memory (validated or canonical) cannot be auto-archived.',
+      human_review_required: 'This action can only be performed through human review.',
+      missing_project_id: 'project_id is missing.',
+      invalid_memory_type: 'memory_type is missing or not one of the allowed values.',
+      invalid_scope: 'scope is missing or not one of the allowed values.',
+      missing_title: 'Title is required.',
+      missing_trigger: 'Trigger is required.',
+      missing_behavior_delta: 'Behavior delta is required.',
+      missing_what: 'The "what" field is required.',
+      missing_why: 'Why is required -- explain the reasoning.',
+      missing_topic_key: 'Topic key is required.',
+      missing_evidence_refs: 'At least one complete evidence reference (source_type, source_ref, summary) is required.',
+      missing_retrieval_forms: 'retrieval_forms.micro and retrieval_forms.short are both required.',
+      unsafe_memory_content: 'This content was flagged as unsafe -- it reads like an attempt to inject instructions rather than describe a lesson.',
+      anti_memory_requires_preventive_delta: 'An anti_memory needs a preventive behavior_delta (e.g. containing "do not", "avoid", "block", "prevent").',
+      invalid_capture_origin: 'capture_origin is not a recognized value.',
+      invalid_capture_source: 'capture_source is not a recognized value.',
+      invalid_valid_from: 'valid_from is not a valid date.',
+      invalid_valid_until: 'valid_until must be a valid date after valid_from.',
+      memory_too_large: 'This memory is too large to store (over 16KB serialized). Shorten it.',
+      invalid_assumption: 'Every assumption needs a description; if it has a key, its "equals" value must be a string, boolean, or number.',
+      invalid_revision_condition: 'Every revisit_when entry needs a kind (manual/file_changed/fact_changed/date) and a description.',
+      revision_path_required: 'A file_changed revisit_when entry needs a path.',
+      revision_fact_required: 'A fact_changed revisit_when entry needs both a key and an equals value.',
+      invalid_revision_date: 'A date revisit_when entry needs a valid date.',
+      invalid_file_scope: 'One of the applies_to.files globs is invalid (absolute path, contains "..", a drive letter, or over 200 characters).',
+      topic_key_deprecated: 'This topic_key is deprecated in the registry -- use its replacement instead.',
+      empty_key: 'topic_key cannot be empty.',
+      invalid_key_format: 'topic_key must be lowercase, path-like segments (e.g. "area/topic/detail") -- no spaces or invalid characters.',
+      unknown_domain: 'The first segment of this topic_key is not a recognized domain.',
+      unknown_tag: 'One of the tags is not yet in the project vocabulary.',
+      memory_must_be_english: 'Write the trigger, behaviour and rationale in English, whatever language the conversation uses. Code, paths and names can stay as they are.',
+      enabled_boolean_required: 'The auto-accept "enabled" setting must be true or false.',
+      confidence_threshold_must_be_0_to_1: 'Confidence threshold must be between 0 and 1.',
+      accepted_boolean_required: 'The feedback "accepted" value must be true or false.',
+    };
+
+    // Most codes are a flat lookup; a few carry a dynamic suffix (a field name,
+    // a file path) after a colon, which reads better appended to the hint than
+    // looked up verbatim.
+    function tokenHint(token) {
+      const clean = token.trim();
+      if (!clean) return null;
+      if (clean.startsWith('too_many_')) return `Too many entries in "${clean.slice('too_many_'.length)}" (max 12).`;
+      if (clean.startsWith('invalid_json:')) return `"${clean.slice('invalid_json:'.length)}" is not valid JSON -- check for a missing comma, quote, or bracket.`;
+      return ERROR_HINTS[clean] || null;
+    }
+
+    // Turns a raw engine error code (or a `cannot_admit:a,b` /
+    // `reason1; reason2` compound one) into a sentence a reviewer can act on,
+    // without hiding the underlying code -- unrecognized codes still show
+    // verbatim so a gap here is visible, not silently swallowed.
+    function friendlyError(raw) {
+      if (!raw) return 'Unknown error.';
+      if (raw.startsWith('cannot_admit:')) {
+        const codes = raw.slice('cannot_admit:'.length).split(',');
+        const hints = codes.map(c => tokenHint(c) || c);
+        return `Cannot admit: ${hints.join(' ')}`;
+      }
+      if (raw.includes('; ')) return raw.split('; ').map(t => tokenHint(t) || t).join(' ');
+      return tokenHint(raw) || raw;
+    }
 
     async function api(path, opts) {
       const res = await fetch(path, { ...opts, headers: { 'x-dd-review-token': document.querySelector('meta[name="dd-review-token"]').content, ...opts?.headers } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
       return data;
+    }
+
+    function renderChips() {
+      stateChipsEl.innerHTML = STATE_CHIPS.map(c => `<button type="button" class="chip ${filterEl.value === c.value ? 'active' : ''}" data-value="${escapeHtml(c.value)}">${escapeHtml(c.label)}</button>`).join('');
     }
 
     async function load() {
@@ -122,20 +346,29 @@
       if (originFilterEl.value) q.set('capture_origin', originFilterEl.value);
       if (typeFilterEl.value) q.set('memory_type', typeFilterEl.value);
       await loadEvidence();
-      atoms = await api('/api/atoms?' + q);
-      if (unseenOnlyEl.checked) atoms = atoms.filter(a => !a.seen);
+      let fetched = await api('/api/atoms?' + q);
+      document.getElementById('unseen-count').textContent = fetched.filter(a => !a.seen).length;
+      atoms = fetched;
+      if (unseenOnly) atoms = atoms.filter(a => !a.seen);
+      const query = searchEl.value.trim().toLowerCase();
+      if (query) {
+        atoms = atoms.filter(a => [a.title, a.topic_key, a.trigger, a.behavior_delta, a.why]
+          .some(field => String(field ?? '').toLowerCase().includes(query)));
+      }
       const sortKey = sortByEl.value;
       atoms = atoms.slice().sort((a, b) => sortKey === 'created_at'
         ? new Date(b.created_at) - new Date(a.created_at) : (b[sortKey] ?? 0) - (a[sortKey] ?? 0));
+      document.getElementById('visible-count').textContent = `${atoms.length} / ${fetched.length}`;
+      renderChips();
       renderList();
       if (!atoms.length) {
         selected = null;
         detailEl.className = 'empty';
-        detailEl.textContent = filterEl.value || originFilterEl.value ? 'No memories match these filters.' : 'No memories yet. Propose one from the agent, then admit it here.';
+        detailEl.textContent = filterEl.value || originFilterEl.value || query ? 'No memories match these filters.' : 'No memories yet. Propose one from the agent, then admit it here.';
       } else if (selected) {
         const still = atoms.find(a => a.id === selected.id);
         if (still) await select(still.id);
-        else { selected = null; detailEl.textContent = 'Select a memory.'; }
+        else { selected = null; detailEl.className = 'empty'; detailEl.textContent = 'Select a memory.'; }
       }
     }
 
@@ -156,22 +389,60 @@
     function renderList() {
       listEl.innerHTML = atoms.map(atom => `
         <div class="item ${selected && selected.id === atom.id ? 'active' : ''}" data-id="${escapeHtml(atom.id)}">
-          ${atom.seen ? '' : '<span class="unseen-dot" aria-label="not yet reviewed"></span>'}<strong>${escapeHtml(atom.title)}</strong>
-          <small><span class="badge">${escapeHtml(atom.lifecycle_state)}</span> ${escapeHtml(atom.topic_key)}</small>
+          <div class="item-top">
+            <span class="unseen-dot ${atom.seen ? 'spacer-dot' : ''}" aria-label="${atom.seen ? '' : 'not yet reviewed'}"></span>
+            <strong>${escapeHtml(atom.title)}</strong>
+          </div>
+          <small><span class="badge">${escapeHtml(atom.lifecycle_state)}</span>${atom.evidence_changed ? ' <span class="badge" title="A file this memory cites changed since review. It is still injected, flagged; re-review to clear.">evidence changed</span>' : ''} ${escapeHtml(atom.topic_key)}</small>
           <small>${escapeHtml(captureLabel(atom))}</small>
         </div>
       `).join('');
     }
 
-    function field(name, value, area) {
+    // One sentence per field: what it means and how it's used, not a restatement
+    // of the label. Shown via the "?" hint icon field() and hintIcon() attach.
+    const FIELD_HINTS = {
+      title: 'Short name shown in lists. Not matched against anything -- trigger and topic_key do that.',
+      topic_key: 'Stable, path-like identifier (e.g. "area/topic/detail", lowercase). Only one memory can be live per topic_key -- proposing this key again revises the current one instead of creating a duplicate.',
+      trigger: 'The situation that should surface this memory during retrieval: when should an agent recall it?',
+      behavior_delta: 'The concrete change in behavior this memory causes -- what to do differently, not what happened.',
+      why: 'The reasoning behind behavior_delta. Shown to reviewers and injected as context; not itself matched for retrieval.',
+      trigger_variants: 'Other phrasings of the same trigger, one per line. Widens matching without duplicating the memory. Max 12.',
+      applies_to: 'JSON scope: { files: [...], components: [...], operations: [...] }. Narrows when this memory is relevant; empty or omitted arrays mean unscoped (applies everywhere).',
+      assumptions: 'JSON array of { description, key?, equals? }. Conditions this memory\'s advice depends on -- if one stops holding, the memory should be revisited.',
+      revisit_when: 'JSON array of { kind: "manual"/"file_changed"/"fact_changed"/"date", description, ...kind-specific fields }. When this memory should be re-checked for staleness.',
+      alternatives: 'JSON array of { option, reason }. Other approaches considered and why they were passed over -- optional context for a future reviewer.',
+      evidence_refs: 'JSON array of { source_type, source_ref, summary }. What backs this claim (a file, diff, test log, tool output, or human statement/approval/decision/artifact); verified against the filesystem at propose and admit time.',
+      review_rationale: 'Your own reasoning for this review decision, recorded on the memory. Left blank, it defaults to "Reviewed as proposed."',
+      review_authority: '"validated" accepts the confidence ceiling the evidence already earns. "canonical" lifts that ceiling -- your judgment overriding the evidence\'s own rating, so grant it deliberately.',
+      loser_id: 'Which of the conflicting memories to retire in favor of the one you\'re viewing. The other is superseded, not deleted -- its history stays.',
+    };
+
+    function hintIcon(name) {
+      const text = FIELD_HINTS[name];
+      if (!text) return '';
+      return `<span class="hint-icon" tabindex="0" aria-label="What is ${escapeHtml(name)}?">?<span class="hint-panel">${escapeHtml(text)}</span></span>`;
+    }
+
+    // Pin-on-click / preview-on-hover for .hint-icon, attached once. Hover is
+    // pure CSS (:hover); this only handles the click-to-pin / click-away-to-close
+    // half, since that needs state the CSS pseudo-classes can't hold.
+    document.addEventListener('click', (ev) => {
+      if (ev.target.closest('.hint-panel')) return;
+      const icon = ev.target.closest('.hint-icon');
+      document.querySelectorAll('.hint-icon.pinned').forEach(el => { if (el !== icon) el.classList.remove('pinned'); });
+      if (icon) icon.classList.toggle('pinned');
+    });
+
+    function field(name, value, area, json) {
       const labels = { topic_key: 'Topic', trigger: 'When this applies', behavior_delta: 'Recommended action', why: 'Rationale', trigger_variants: 'Other ways this situation is described (one per line)',
         applies_to: 'File, component and operation scope', assumptions: 'Assumptions', revisit_when: 'When to reconsider', alternatives: 'Alternatives considered',
         evidence_refs: 'Evidence references', review_rationale: 'Your review rationale', loser_id: 'Conflicting memory to supersede' };
       const label = labels[name] || name;
       if (area) {
-        return `<label for="field-${name}">${label}</label><textarea id="field-${name}" name="${name}">${escapeHtml(value ?? '')}</textarea>`;
+        return `<label for="field-${name}">${label}${hintIcon(name)}</label><textarea id="field-${name}" name="${name}"${json ? ' class="json-field"' : ''}>${escapeHtml(value ?? '')}</textarea>`;
       }
-      return `<label for="field-${name}">${label}</label><input name="${name}" value="${escapeHtml(value ?? '')}" id="field-${name}" />`;
+      return `<label for="field-${name}">${label}${hintIcon(name)}</label><input name="${name}" value="${escapeHtml(value ?? '')}" id="field-${name}" />`;
     }
 
     function captureLabel(atom) {
@@ -182,14 +453,33 @@
 
     async function select(id) {
       selected = await api('/api/atoms/' + encodeURIComponent(id));
+      // The server already marked it seen; reflect that locally now so the
+      // unseen dot and counter clear immediately, with no reload needed.
+      const local = atoms.find(a => a.id === id);
+      if (local && !local.seen) {
+        local.seen = true;
+        document.getElementById('unseen-count').textContent = atoms.filter(a => !a.seen).length;
+      }
       const outcomes = await api('/api/feedback?atom=' + encodeURIComponent(id));
       detailEl.className = '';
       detailEl.innerHTML = `
-        <p><span class="badge">${escapeHtml(selected.lifecycle_state)}</span> <span class="badge">${escapeHtml(selected.memory_type)}</span> ${escapeHtml(selected.id)}</p>
+        <div class="detail-actions">
+          <span class="badge">${escapeHtml(selected.lifecycle_state)}</span> <span class="badge">${escapeHtml(selected.memory_type)}</span>
+          <small style="color: var(--muted); font-family: var(--mono);">${escapeHtml(selected.id)}</small>
+          <div class="row" style="margin: 0 0 0 auto;">
+            ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
+            <button data-act="save">Save</button>
+            ${selected.lifecycle_state === 'contested' ? '<button class="ok" data-act="resolve">Keep this decision and supersede the other</button>' : ''}
+            ${selected.lifecycle_state === 'archived' ? '<button class="ok" data-act="restore">Restore</button>' : ''}
+            <button class="danger" data-act="delete">Delete</button>
+          </div>
+        </div>
+        <p id="msg"></p>
+        <div class="detail-body">
         <p>Capture: ${escapeHtml(captureLabel(selected))}. Approval is recorded separately.</p>
         ${selected.lifecycle_state === 'candidate' && selected.replaces ? `<p class="notice">Pending replacement of ${escapeHtml(selected.replaces)}. The current decision stays effective until approval.</p>` : ''}
         ${selected.lifecycle_state === 'candidate' && selected.suspected_pair?.length ? `<p class="notice warning">Suspected duplicate of ${selected.suspected_pair.map(escapeHtml).join(', ')}. Read both before approving: approving this adds a second memory on the same trigger.</p>` : ''}
-        ${selected.freshness.length ? `<p class="notice warning">Review required: ${escapeHtml(selected.freshness.join('; '))}</p>` : ''}
+        ${selected.freshness.length ? `<p class="notice warning">Evidence changed since review: ${escapeHtml(selected.freshness.join('; '))}. Agents still receive this advice, flagged. Re-propose or re-admit it to clear the flag.</p>` : ''}
         ${selected.lifecycle_state === 'contested' ? '<p class="notice warning">Disputed knowledge. Inspect the conflicting memory before choosing a winner.</p>' : ''}
         ${selected.lifecycle_state === 'archived' ? `<p class="notice">Retired by disuse${selected.archived_at ? ' on ' + escapeHtml(selected.archived_at) : ''}: its trigger had chances to fire and never did. Nothing was deleted. Restoring makes it retrievable again, unless another memory has taken its topic since.</p>` : ''}
         ${field('title', selected.title)}
@@ -198,39 +488,44 @@
         ${field('behavior_delta', selected.behavior_delta, true)}
         ${field('why', selected.why, true)}
         ${field('trigger_variants', (selected.trigger_variants || []).join('\n'), true)}
-        ${field('applies_to', JSON.stringify(selected.applies_to || {}, null, 2), true)}
-        ${field('assumptions', JSON.stringify(selected.assumptions || [], null, 2), true)}
-        ${field('revisit_when', JSON.stringify(selected.revisit_when || [], null, 2), true)}
-        ${field('alternatives', JSON.stringify(selected.alternatives || [], null, 2), true)}
-        ${field('evidence_refs', JSON.stringify(selected.evidence_refs || [], null, 2), true)}
+        ${field('applies_to', JSON.stringify(selected.applies_to || {}, null, 2), true, true)}
+        ${field('assumptions', JSON.stringify(selected.assumptions || [], null, 2), true, true)}
+        ${field('revisit_when', JSON.stringify(selected.revisit_when || [], null, 2), true, true)}
+        ${field('alternatives', JSON.stringify(selected.alternatives || [], null, 2), true, true)}
+        ${field('evidence_refs', JSON.stringify(selected.evidence_refs || [], null, 2), true, true)}
         <details open><summary>Evidence and review</summary><pre>${escapeHtml(JSON.stringify({ evidence: selected.evidence_state || selected.evidence_refs, review: selected.review }, null, 2))}</pre></details>
         <details><summary>Derived compact forms</summary><pre>${escapeHtml(JSON.stringify(selected.retrieval_forms, null, 2))}</pre></details>
         <details open><summary>Task outcomes (${outcomes.length})</summary>${outcomes.map(o => `<p>${escapeHtml(o.outcome)} · ${escapeHtml(o.summary)} · ${escapeHtml(o.verification)} <button data-feedback="${escapeHtml(o.id)}" data-accept="true">Accept evidence</button> <button data-feedback="${escapeHtml(o.id)}" data-accept="false">Dismiss report</button></p>`).join('')}</details>
         ${field('review_rationale', '', true)}
-        <small>Explain why the evidence supports this decision. Saving edits creates a new proposal.</small>
-        ${selected.lifecycle_state === 'candidate' ? `<label for="field-review_authority">Authority to grant</label>
+        <small>Explain why the evidence supports this decision, or leave blank to record "${escapeHtml(DEFAULT_REVIEW_RATIONALE)}". Saving edits creates a new proposal.</small>
+        ${selected.lifecycle_state === 'candidate' ? `<label for="field-review_authority">Authority to grant${hintIcon('review_authority')}</label>
         <select id="field-review_authority" name="review_authority">
           <option value="validated" selected>validated — accept the ceiling this memory's source earns</option>
           <option value="canonical">canonical — lift the source ceiling; this is your decision, not the evidence's</option>
         </select>
         <small>Source reliability caps confidence. Granting canonical is the only review action that lifts that cap.</small>` : ''}
-        ${selected.lifecycle_state === 'contested' ? `<label for="field-loser_id">Conflicting decision to supersede</label><select id="field-loser_id" name="loser_id">${selected.opponents.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.topic_key)} · ${escapeHtml(a.title)}</option>`).join('')}</select><button data-act="inspect-opponent">Inspect selected conflict</button>` : ''}
-        <div class="row">
-          ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
-          <button data-act="save">Save</button>
-          ${selected.lifecycle_state === 'contested' ? '<button class="ok" data-act="resolve">Keep this decision and supersede the other</button>' : ''}
-          ${selected.lifecycle_state === 'archived' ? '<button class="ok" data-act="restore">Restore</button>' : ''}
-          <button class="danger" data-act="delete">Delete</button>
+        ${selected.lifecycle_state === 'contested' ? `<label for="field-loser_id">Conflicting decision to supersede${hintIcon('loser_id')}</label><select id="field-loser_id" name="loser_id">${selected.opponents.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.topic_key)} · ${escapeHtml(a.title)}</option>`).join('')}</select><button data-act="inspect-opponent">Inspect selected conflict</button>` : ''}
         </div>
-        <p id="msg"></p>
       `;
       renderList();
+      detailEl.querySelectorAll('textarea').forEach(autoGrow);
     }
+
+    // Height tracks content instead of scrolling internally: shrink to 0 first
+    // so a paste that shortens the text also shrinks the box, not just grows it.
+    function autoGrow(el) {
+      el.style.height = '0px';
+      el.style.height = el.scrollHeight + 'px';
+    }
+    detailEl.addEventListener('input', (ev) => { if (ev.target.tagName === 'TEXTAREA') autoGrow(ev.target); });
 
     function formValues() {
       const data = {};
       detailEl.querySelectorAll('input, textarea').forEach(el => { data[el.name] = el.value; });
-      for (const key of ['applies_to', 'assumptions', 'revisit_when', 'alternatives', 'evidence_refs']) data[key] = JSON.parse(data[key]);
+      for (const key of ['applies_to', 'assumptions', 'revisit_when', 'alternatives', 'evidence_refs']) {
+        try { data[key] = JSON.parse(data[key]); }
+        catch { throw new Error(`invalid_json:${key}`); }
+      }
       data.trigger_variants = data.trigger_variants.split('\n').filter(Boolean);
       delete data.review_rationale; delete data.loser_id;
       return data;
@@ -241,7 +536,7 @@
         try {
           await api('/api/feedback/review', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: ev.target.dataset.feedback, accepted: ev.target.dataset.accept === 'true' }) });
           return await select(selected.id);
-        } catch (err) { document.getElementById('msg').textContent = err.message; return; }
+        } catch (err) { document.getElementById('msg').textContent = friendlyError(err.message); return; }
       }
       const act = ev.target.dataset.act;
       if (!act || !selected) return;
@@ -262,7 +557,7 @@
             : 'Proposal saved for review.';
         } else if (act === 'admit') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/admit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-            rationale: detailEl.querySelector('[name="review_rationale"]').value,
+            rationale: detailEl.querySelector('[name="review_rationale"]').value.trim() || DEFAULT_REVIEW_RATIONALE,
             authority: detailEl.querySelector('[name="review_authority"]').value }) });
         } else if (act === 'reject') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/reject', { method: 'POST' });
@@ -273,13 +568,13 @@
           await api('/api/atoms/' + encodeURIComponent(selected.id), { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirm: true }) });
           selected = null;
         } else if (act === 'resolve') {
-          await api('/api/resolve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ winner_id: selected.id, loser_id: detailEl.querySelector('[name="loser_id"]').value, rationale: detailEl.querySelector('[name="review_rationale"]').value }) });
+          await api('/api/resolve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ winner_id: selected.id, loser_id: detailEl.querySelector('[name="loser_id"]').value, rationale: detailEl.querySelector('[name="review_rationale"]').value.trim() || DEFAULT_REVIEW_RATIONALE }) });
         } else if (act === 'inspect-opponent') {
           return await select(detailEl.querySelector('[name="loser_id"]').value);
         }
         await load();
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = friendlyError(err.message);
       }
     });
 
@@ -287,26 +582,95 @@
       const item = ev.target.closest('.item');
       if (item) select(item.dataset.id);
     });
-    filterEl.addEventListener('change', load);
+
+    stateChipsEl.addEventListener('click', (ev) => {
+      const chip = ev.target.closest('.chip');
+      if (!chip) return;
+      filterEl.value = chip.dataset.value;
+      load();
+    });
     originFilterEl.addEventListener('change', load);
     typeFilterEl.addEventListener('change', load);
-    unseenOnlyEl.addEventListener('change', load);
     sortByEl.addEventListener('change', load);
-    document.getElementById('reload').addEventListener('click', load);
+    unseenOnlyEl.addEventListener('click', () => {
+      unseenOnly = !unseenOnly;
+      unseenOnlyEl.setAttribute('aria-pressed', String(unseenOnly));
+      load();
+    });
+    let searchDebounce;
+    searchEl.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(load, 150);
+    });
+
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     }
+
+    // Settings modal
+    const settingsBackdrop = document.getElementById('settings-backdrop');
+    document.getElementById('open-settings').addEventListener('click', () => { settingsBackdrop.hidden = false; });
+    document.getElementById('close-settings').addEventListener('click', () => { settingsBackdrop.hidden = true; });
+    settingsBackdrop.addEventListener('click', (ev) => { if (ev.target === settingsBackdrop) settingsBackdrop.hidden = true; });
+
+    const autoAcceptTicksEl = document.getElementById('auto-accept-threshold-ticks');
+    const autoAcceptReadoutEl = document.getElementById('auto-accept-threshold-readout');
+    let autoAcceptLevels = [];
+    function renderAutoAcceptReadout() {
+      const level = autoAcceptLevels[Number(autoAcceptThresholdEl.value)];
+      autoAcceptReadoutEl.textContent = level ? `${level.value} — ${level.description}` : '';
+    }
     async function loadAutoAcceptConfig() {
-      const { auto_accept } = await api('/api/config');
+      const { auto_accept, auto_accept_threshold_levels } = await api('/api/config');
+      const current = auto_accept.confidence_threshold;
+      autoAcceptLevels = auto_accept_threshold_levels.some(l => l.value === current)
+        ? auto_accept_threshold_levels
+        : [...auto_accept_threshold_levels, { value: current, label: `Current custom value (${current})`,
+            description: 'Not one of the reachable ceilings -- pick a step to replace it.' }].sort((a, b) => a.value - b.value);
+      autoAcceptThresholdEl.min = 0;
+      autoAcceptThresholdEl.max = autoAcceptLevels.length - 1;
+      autoAcceptTicksEl.innerHTML = autoAcceptLevels.map((l, i) => `<option value="${i}" label="${l.value}"></option>`).join('');
+      autoAcceptThresholdEl.value = autoAcceptLevels.findIndex(l => l.value === current);
       autoAcceptEnabledEl.checked = auto_accept.enabled;
-      autoAcceptThresholdEl.value = auto_accept.confidence_threshold;
+      autoAcceptThresholdEl.disabled = !auto_accept.enabled;
+      renderAutoAcceptReadout();
     }
     async function saveAutoAcceptConfig() {
-      await api('/api/config/auto-accept', { method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ enabled: autoAcceptEnabledEl.checked, confidence_threshold: Number(autoAcceptThresholdEl.value) }) });
+      try {
+        const value = autoAcceptLevels[Number(autoAcceptThresholdEl.value)].value;
+        await api('/api/config/auto-accept', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ enabled: autoAcceptEnabledEl.checked, confidence_threshold: value }) });
+      } catch (err) { document.getElementById('msg').textContent = friendlyError(err.message); }
     }
-    autoAcceptEnabledEl.addEventListener('change', saveAutoAcceptConfig);
+    autoAcceptEnabledEl.addEventListener('change', () => {
+      autoAcceptThresholdEl.disabled = !autoAcceptEnabledEl.checked;
+      saveAutoAcceptConfig();
+    });
+    autoAcceptThresholdEl.addEventListener('input', renderAutoAcceptReadout);
     autoAcceptThresholdEl.addEventListener('change', saveAutoAcceptConfig);
+
+    // Live updates: the audit UI is itself a persistent local server whenever it
+    // is running, so it can push instead of waiting for a manual reload. A drop
+    // degrades to the pill going red; EventSource retries on its own, and
+    // clicking the pill forces an immediate reconnect rather than waiting it out.
+    const livePillEl = document.getElementById('live-pill');
+    const liveLabelEl = document.getElementById('live-label');
+    let liveSource;
+    function setLive(connected) {
+      livePillEl.classList.toggle('is-down', !connected);
+      liveLabelEl.textContent = connected ? 'Live' : 'Reconnect';
+      livePillEl.title = connected ? 'Live updates connected' : 'Live updates dropped — click to reconnect';
+    }
+    function connectLive() {
+      try { liveSource?.close(); } catch { /* already closed */ }
+      liveSource = new EventSource('/api/events');
+      liveSource.addEventListener('open', () => setLive(true));
+      liveSource.addEventListener('error', () => setLive(false));
+      liveSource.addEventListener('changed', () => load().catch(() => {}));
+    }
+    livePillEl.addEventListener('click', connectLive);
+    if (typeof EventSource !== 'undefined') connectLive(); else setLive(false);
+
     load();
     loadAutoAcceptConfig();
   </script>

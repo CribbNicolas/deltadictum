@@ -33,24 +33,31 @@ start-up, not by the work.
 Forbidden: loading a model, an index or any warm state on the hot path. Amortising a cost "after the
 first call" does not work, because there is no second call in the same process.
 
-### L2 — No guaranteed persistent process
+### L2 — A resident process is relied on for better answers, never for correct ones
 
-Only two hosts can hold deferred work, and **both are optional**:
+A resident local process may be started by the first session and kept alive, and DD may rely on it for
+work a hook cannot do (holding an embedding model, see L3). It is still not guaranteed to be running,
+so every hook degrades to lexical retrieval without it. Revised 2026-09-22
+(`docs/plans/2026-09-22-semantic-retrieval-plan.md`); the earlier wording forbade relying on it at all.
 
-- the local audit UI, reached over HTTP on `127.0.0.1` with a 1500 ms timeout (`src/hooks/bridge.js`);
+The hosts that can hold deferred work:
+
+- the local audit UI, reached over HTTP on `127.0.0.1` with a 250 ms timeout for `pre-tool` and 1500 ms otherwise (`src/hooks/bridge.js`), accepted only from a UI running the same source tree whose code has not changed since it started;
 - the per-session MCP server (`src/mcp/server.js`).
 
-Forbidden: requiring a background worker. Anything that uses either host must degrade to a correct,
-quieter behaviour when it is not running — never to an error and never to a wrong answer.
+Forbidden: requiring the resident process for a correct answer. Anything that uses it must degrade to a
+correct, quieter behaviour when it is not running — never to an error and never to a wrong answer.
 
-### L3 — Two dependencies
+### L3 — Two required dependencies; a local model runtime is optional
 
-`@modelcontextprotocol/sdk` and `zod`, on Node ≥ 22 (`package.json`). No native modules, no ONNX, no
-BLAS, no model runtime.
+`@modelcontextprotocol/sdk` and `zod` are required, on Node ≥ 22 (`package.json`). A local embedding
+runtime (ONNX via `@huggingface/transformers`) is an optional dependency, loaded only by the resident
+process (L2), never on the hot path (L1): a cached model takes about 0.5 s to load.
 
-Forbidden: local embeddings and every technique built on them — dense retrieval, vector search,
-reciprocal-rank fusion over a dense arm, late chunking, embedding-space density estimation. Lexical and
-structural signals are what DD has, so they must be made to work well rather than treated as a stopgap.
+Revised 2026-09-22. The earlier text forbade local embeddings outright. That came from removing the
+Orquesta system, whose embeddings were a separate service; an in-process runtime is a package, not a
+service. Still forbidden: a hosted or remote model, an inference server, a GPU requirement. Lexical and
+structural signals remain the fallback and must keep working on their own.
 
 ### L4 — The hook contract differs per harness
 
@@ -85,9 +92,9 @@ Forbidden: any mechanism that needs aggregation across users, a shared model, or
 ## What this rules out permanently
 
 - PostgreSQL, Qdrant, any external database or vector store.
-- An inference server, a GPU requirement, a bundled model.
+- An inference server, a GPU requirement, a hosted or remote model.
 - Federation, multi-tenancy, RBAC, organisation-level vaults.
-- Background conservation workers, scheduled jobs, daemons.
+- Background conservation workers and scheduled jobs. (A resident process for retrieval is allowed, L2.)
 - Importance scores or rankings learned online from user traffic.
 
 Documents describing these belonged to the earlier Orquesta system. They have been removed rather than

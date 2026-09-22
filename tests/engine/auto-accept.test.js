@@ -32,6 +32,9 @@ describe('sweepAutoAccept', () => {
   test('disabled config admits nothing', async t => {
     const store = await fixtureStore();
     t.after(() => store.close());
+    const config = await store.loadConfig();
+    config.auto_accept = { ...config.auto_accept, enabled: false };
+    await store.saveConfig(config);
     const { atom } = await proposeMemory(proposal(), { store });
     const result = await sweepAutoAccept({ store, projectId: 'demo' });
     assert.deepEqual(result.admitted, []);
