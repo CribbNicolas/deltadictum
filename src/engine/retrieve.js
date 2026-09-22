@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { isAbsolute, relative } from 'node:path';
+import { isAbsolute } from 'node:path';
+import { projectRelative } from '../paths.js';
 import { classifyIntent, profileFor } from './v4/intent.js';
 import { ftsQuery } from './v4/fts-query.js';
 import { expandTopicTerms } from './v5/expander.js';
@@ -35,7 +36,7 @@ const revisionOf = atom => createHash('sha256').update(JSON.stringify([atom.upda
 export async function retrieveMemories(request = {}, { store, vptThreshold, semantic } = {}) {
   if (!request.project_id) return { error: { code: 400, message: 'project_id is required' } };
   if (!String(request.action ?? '').trim()) return { error: { code: 400, message: 'action is required' } };
-  request = { ...request, files: (request.files ?? []).map(file => isAbsolute(file) ? relative(store.repoRoot, file).replaceAll('\\', '/') : file) };
+  request = { ...request, files: (request.files ?? []).map(file => isAbsolute(file) ? projectRelative(store.repoRoot, file) : file) };
   const config = await store.loadConfig();
   let budget;
   try { budget = boundedBudget(request.budget_tokens, config.budget_tokens ?? 600); }

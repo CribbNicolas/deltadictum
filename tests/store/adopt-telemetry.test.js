@@ -37,3 +37,29 @@ test('a fresh data directory adopts telemetry left in an earlier location for th
   t.after(() => again.store.close());
   assert.deepEqual(again.adopted, []);
 });
+
+test('history under the pre-2026-09-22 data directory name is adopted after the identity change', async t => {
+  const { createHash } = await import('node:crypto');
+  const { resolve } = await import('node:path');
+  const base = await mkdtemp(join(tmpdir(), 'dd-rename-'));
+  const repo = join(base, 'Repo');
+  await mkdir(join(repo, '.git'), { recursive: true });
+  await mkdir(join(repo, '.dd'), { recursive: true });
+  await writeFile(join(repo, '.dd', 'config.json'), JSON.stringify({ project_id: 'demo' }));
+  const plugin = join(base, 'plugin-data');
+  // The old name: basename as spelled, hash of the path as spelled.
+  const oldName = `repo-${createHash('sha256').update(resolve(repo)).digest('hex').slice(0, 12)}`;
+  const old = await createMemoryStore({ ddDir: join(repo, '.dd'), dataDir: join(plugin, oldName), repoRoot: repo });
+  await old.logRetrieval({ project_id: 'demo', action: 'before-rename', returned_atom_ids: [], abstained: true, budget_used: 1 });
+  old.close();
+  const previous = { ...process.env };
+  delete process.env.DD_DATA;
+  process.env.CLAUDE_PLUGIN_DATA = plugin;
+  t.after(() => { process.env = previous; });
+  const { store, dataDir, adopted } = await openStore({ cwd: repo });
+  t.after(() => store.close());
+  if (dataDir !== join(plugin, oldName)) {
+    assert.deepEqual(adopted.map(a => a.rows), [1]);
+    assert.equal(store.index.db.prepare('SELECT action FROM memory_retrieval_events').get().action, 'before-rename');
+  }
+});
