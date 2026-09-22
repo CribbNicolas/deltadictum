@@ -16,7 +16,7 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
 import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
-import { BUILD_ID, codeFingerprint, normalizePath } from '../hooks/build.js';
+import { BUILD_ID, codeFingerprint, samePath } from '../hooks/build.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -86,7 +86,7 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         lastActivity = Date.now();
         res.setHeader('x-dd-build', BUILD_ID);
         const body = await readBody(req);
-        if (normalizePath(body.repo_root ?? '') !== normalizePath(store.repoRoot)) return send(res, 403, { error: 'project_mismatch' });
+        if (!samePath(body.repo_root ?? '', store.repoRoot)) return send(res, 403, { error: 'project_mismatch' });
         await store.refreshIfChanged();
         const payload = body.payload ?? {};
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, await buildPreToolContext(payload, { store, projectId, retrieve }));

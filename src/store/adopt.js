@@ -10,11 +10,10 @@ const HISTORY_TABLES = ['memory_retrieval_events', 'memory_admission_decisions',
 
 // Every place a DD build has kept this project's index (roadmap gap 6): the
 // renamed per-user bases, the plugin-host bases, and the in-repo layouts.
-export function legacyDataDirs({ repoRoot, slug, identity, env = process.env }) {
-  const named = `${slug}-${identity}`;
+export function legacyDataDirs({ repoRoot, slug, names, env = process.env }) {
   const bases = [join(homedir(), '.dd-data'), join(homedir(), '.dd'), env.CLAUDE_PLUGIN_DATA, env.GROK_PLUGIN_DATA].filter(Boolean);
   return [...new Set([
-    ...bases.map(base => join(base, named)),
+    ...bases.flatMap(base => names.map(name => join(base, name))),
     join(homedir(), '.supermem', slug), join(homedir(), '.dd', slug),
     join(repoRoot, '.dd', 'local'), join(repoRoot, '.dd', 'data'),
   ].map(dir => resolve(dir)))];

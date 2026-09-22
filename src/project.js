@@ -5,6 +5,7 @@ import { access } from 'node:fs/promises';
 import { createMemoryStore } from './store/create-store.js';
 import { sqlitePath } from './store/paths.js';
 import { adoptHistory, legacyDataDirs } from './store/adopt.js';
+import { normalizePath, physicalPath, samePath } from './paths.js';
 
 async function exists(path) {
   try {
@@ -37,7 +38,7 @@ async function isProjectStore(ddDir) {
 export async function findRepoRoot(start = process.cwd(), { stopAt = homedir() } = {}) {
   const boundary = resolve(stopAt);
   let dir = resolve(start);
-  while (dir !== boundary) {
+  while (!samePath(dir, boundary)) {
     if (await exists(join(dir, '.git'))) return dir;
     if (await isProjectStore(join(dir, '.dd'))) return dir;
     const parent = dirname(dir);
@@ -60,8 +61,12 @@ export function resolveDataBase() {
 export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cwd() } = {}) {
   const repoRoot = await findRepoRoot(cwd);
   const ddDir = join(repoRoot, '.dd');
-  const slug = projectSlug(repoRoot);
-  const identity = createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12);
+  // Named and hashed from the physical, normalized path, so the physical path (process.cwd() in the
+  // MCP server) and a symlinked or differently cased spelling (a harness's cwd)
+  // name one data directory. Before 2026-09-22 it hashed the path as spelled.
+  const slug = projectSlug(physicalPath(repoRoot));
+  const identity = createHash('sha256').update(normalizePath(repoRoot)).digest('hex').slice(0, 12);
+  const spelledName = `${projectSlug(repoRoot)}-${createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12)}`;
   const dataBase = resolveDataBase();
   const dataDir = process.env.DD_DATA || join(dataBase, `${slug}-${identity}`);
   const freshIndex = !await exists(sqlitePath(dataDir));
@@ -76,7 +81,7 @@ export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cw
   });
   // A new index is where a moved data directory would lose history (gap 6).
   const adopted = freshIndex ? await adoptHistory(store.index.db, { projectId: config.project_id, dataDir,
-    candidates: legacyDataDirs({ repoRoot, slug, identity }) }).catch(() => []) : [];
+    candidates: legacyDataDirs({ repoRoot, slug, names: [`${slug}-${identity}`, spelledName] }) }).catch(() => []) : [];
   if (adopted.length) store.index.setMeta('adopted_history', JSON.stringify({ at: new Date().toISOString(), adopted }));
   return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id, adopted };
 }
