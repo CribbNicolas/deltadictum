@@ -73,4 +73,37 @@ describe('SessionStart context', () => {
     assert.match(live.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
     store.close();
   });
+
+  test('a same-session reconnect gets the banner only, not the full advisory blob again', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const opts = { store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'sess-1' };
+    const first = await buildSessionStartContext(opts);
+    assert.match(first.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+
+    const second = await buildSessionStartContext(opts);
+    assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    assert.match(second.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
+    store.close();
+  });
+
+  test('compact clears the reconnect dedup, so the full advisory is resent', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const base = { store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'sess-2' };
+    await buildSessionStartContext(base);
+    const afterCompact = await buildSessionStartContext({ ...base, source: 'compact' });
+    assert.match(afterCompact.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    store.close();
+  });
+
+  test('a different session_id always gets the full advisory, regardless of a prior session', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const shared = { store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733' };
+    await buildSessionStartContext({ ...shared, sessionId: 'sess-3' });
+    const other = await buildSessionStartContext({ ...shared, sessionId: 'sess-4' });
+    assert.match(other.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    store.close();
+  });
 });

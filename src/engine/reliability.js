@@ -82,3 +82,50 @@ export function cappedConfidence(atom, { authority } = {}) {
   if (authority === 'canonical') return 1;
   return reliabilityCeiling(atom).cap;
 }
+
+const PROVENANCE_LABEL = Object.freeze({
+  agent_claim: 'Unverified claim', host: 'Host-observed', filesystem: 'Verified file', user_correction: 'User correction',
+});
+const CAPTURE_ORIGIN_LABEL = Object.freeze({ model_initiated: 'model-initiated', user_explicit: 'user-explicit' });
+
+// What autonomy this gate actually grants, phrased as the minimum a proposal
+// must show to clear it -- not a promise about what it excludes, since a
+// stronger combo always clears a weaker gate too.
+const AUTONOMY_DESCRIPTION = Object.freeze({
+  agent_claim: {
+    model_initiated: 'Lowest gate. Admits any autonomous proposal, verified evidence or not -- effectively no confidence check on the model.',
+    user_explicit: 'Admits any proposal flagged as an explicit user request, even with unverified evidence.',
+  },
+  host: {
+    model_initiated: 'Requires at least a recorded host observation behind an autonomous proposal (no file evidence needed).',
+    user_explicit: 'Requires at least a recorded host observation behind an explicit user request.',
+  },
+  filesystem: {
+    model_initiated: 'Requires at least one verified file, diff, or test-log reference on an autonomous proposal. Practical floor for trusting the model’s own findings.',
+    user_explicit: 'Requires verified file evidence AND an explicit user request -- autonomous proposals no longer qualify here.',
+  },
+  user_correction: {
+    model_initiated: 'Requires an observed user correction behind an autonomous proposal. Very conservative.',
+    user_explicit: 'Highest gate. Only an explicit user request backed by an observed correction is admitted.',
+  },
+});
+
+// Every confidence value an auto-accept threshold could ever actually compare
+// against: the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR. A
+// threshold set to anything between two of these is a dead zone -- no
+// candidate's ceiling can ever land there -- so a picker should offer exactly
+// these values rather than a free 0-1 range.
+export function autoAcceptThresholdLevels() {
+  const levels = [];
+  for (const level of RELIABILITY_LADDER) {
+    for (const [origin, factor] of Object.entries(CAPTURE_ORIGIN_FACTOR)) {
+      const value = Math.round(level.cap * factor * 1000) / 1000;
+      levels.push({
+        value,
+        label: `${PROVENANCE_LABEL[level.name]} + ${CAPTURE_ORIGIN_LABEL[origin]} (${value})`,
+        description: AUTONOMY_DESCRIPTION[level.name][origin],
+      });
+    }
+  }
+  return levels.sort((a, b) => a.value - b.value);
+}

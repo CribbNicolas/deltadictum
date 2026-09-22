@@ -27,6 +27,10 @@ export function createTelemetry(index, git) {
     db.prepare('DELETE FROM capture_sessions WHERE updated_at < ?').run(since(config.session.retention_hours / 24));
     db.prepare('DELETE FROM capture_prompts WHERE updated_at < ?').run(since(config.session.retention_hours / 24));
     db.prepare('DELETE FROM capture_prompts WHERE rowid IN (SELECT rowid FROM capture_prompts ORDER BY updated_at DESC LIMIT -1 OFFSET ?)').run(config.session.max_entries);
+    // Derived-only cache (src/store/schema.sql): losing a row just costs one full
+    // re-hash on the next check, so it is bounded the same way telemetry is.
+    db.prepare('DELETE FROM evidence_freshness_cache WHERE checked_at < ?').run(since(telemetry.retention_days));
+    db.prepare('DELETE FROM evidence_freshness_cache WHERE rowid IN (SELECT rowid FROM evidence_freshness_cache ORDER BY checked_at DESC LIMIT -1 OFFSET ?)').run(telemetry.max_events);
   }
 
   async function putObservation(observation) {

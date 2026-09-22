@@ -89,6 +89,26 @@ test('a stale replacement cannot silently overwrite a newer reviewed decision', 
   f.store.close();
 });
 
+test('two candidates proposed before either is live: admitting the second is not blocked by the first', async () => {
+  const f = await setup();
+  // Neither proposal has anything live to declare as `replaces` yet -- both are
+  // independent candidates on the same topic_key, exactly as two agent proposals
+  // racing ahead of review would look.
+  const first = await proposeMemory({ ...f.payload, why: 'First proposal.' }, f);
+  const second = await proposeMemory({ ...f.payload, why: 'Second, better proposal.' }, f);
+  assert.equal(first.atom.replaces, undefined);
+  assert.equal(second.atom.replaces, undefined);
+  await admitMemory(first.atom.id, f.review);
+  // `second` never named `first` as what it replaces (it couldn't -- `first` was
+  // still a candidate when `second` was proposed), but `first` is now the live
+  // holder of this topic_key. Admitting `second` should supersede it, not reject
+  // it forever for a `replaces` link that had no way to exist at proposal time.
+  const approved = await admitMemory(second.atom.id, f.review);
+  assert.equal(approved.lifecycle_state, 'active');
+  assert.equal((await f.store.getAtom(first.atom.id, 'demo')).lifecycle_state, 'superseded');
+  f.store.close();
+});
+
 test('replacing disputed knowledge preserves the unresolved disagreement with the current version', async t => {
   const f = await setup();
   t.after(() => f.store.close());

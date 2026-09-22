@@ -28,7 +28,12 @@ export async function admitMemory(id, { store, projectId, actor, rationale, auth
     const evidence_state = await verifyReferences(candidate.evidence_refs, { store, projectId });
     if (evidence_state.artifacts.some(a => a.status === 'out_of_scope')) throw new Error('evidence_scope_violation');
     const live = (await store.listByTopicLive(projectId, candidate.topic_key))[0];
-    if (live && candidate.replaces !== live.id) throw new Error('replacement_changed_review_again');
+    // A candidate proposed while nothing on its topic_key was live yet never had
+    // a target to name -- `replaces` is unset, not stale. Only reject when it
+    // names a target that has since stopped being the live one: that is the
+    // actual "reviewed against an understanding that is no longer current" case
+    // this guards against.
+    if (live && candidate.replaces && candidate.replaces !== live.id) throw new Error('replacement_changed_review_again');
     // A trigger-collision `update` names a replacement on another topic_key, so the
     // target cannot be found by topic. It is resolved by id and must still be
     // effective: if it was superseded or retired since the proposal, the revision

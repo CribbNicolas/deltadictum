@@ -22,3 +22,23 @@ test('orientation derives cited manifest facts, respects budget and refreshes af
   await writeFile(path, JSON.stringify({ name: 'example', type: 'commonjs' }));
   assert.equal((await projectContext(store)).facts['package.type'], 'commonjs');
 });
+
+test('the project-context cache survives across store instances, not just within one', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'dd-orient-cache-'));
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'example', type: 'module' }));
+  const ddDir = join(root, '.dd');
+  const dataDir = join(root, 'data');
+
+  const first = await createMemoryStore({ ddDir, dataDir });
+  await projectContext(first);
+  first.close();
+
+  // A brand-new store instance against the same data dir is what every ephemeral
+  // PreToolUse hook actually opens; the cache must be visible there without
+  // recomputing, not just within the process that first wrote it.
+  const second = await createMemoryStore({ ddDir, dataDir });
+  t.after(() => second.close());
+  const cached = second.index.getMeta('project_context');
+  assert.ok(cached, 'expected a project_context row to persist for a fresh store instance to read');
+  assert.equal(JSON.parse(cached).value.facts['package.type'], 'module');
+});

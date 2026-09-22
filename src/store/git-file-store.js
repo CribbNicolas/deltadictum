@@ -15,6 +15,11 @@ async function walk(dir) {
 
 export function createGitFileStore(ddDir) {
   const withWriteLock = createWriteLock(ddDir);
+  // `.dd/config.json` does not change mid-process outside of `saveConfig`/`recover`,
+  // both of which clear this. Memoizing avoids re-reading and re-merging it on every
+  // call: retrieval, telemetry pruning and project bootstrap all call loadConfig once
+  // per hook invocation today, which meant one hook could hit disk for it 3+ times.
+  let configCache = null;
   const effective = atom => ['active', 'contested'].includes(atom.lifecycle_state);
   const rel = path => relative(ddDir, path).replaceAll('\\', '/');
   function destination(atom) {
@@ -87,15 +92,19 @@ export function createGitFileStore(ddDir) {
   }
 
   async function loadConfig() {
+    if (configCache) return configCache;
     const stored = await readJson(configPath(ddDir), {});
-    return Object.fromEntries(Object.entries({ ...DEFAULT_CONFIG, ...stored }).map(([key, value]) =>
+    return configCache = Object.fromEntries(Object.entries({ ...DEFAULT_CONFIG, ...stored }).map(([key, value]) =>
       [key, value && typeof value === 'object' && !Array.isArray(value) ? { ...DEFAULT_CONFIG[key], ...value } : value]));
   }
 
   return {
     ddDir, withWriteLock, commit, getAtom, listAtoms, listByTopicLive, loadConfig,
-    recover: () => withWriteLock(() => recoverTransaction(ddDir)),
-    saveConfig: config => withWriteLock(async () => { await writeJson(configPath(ddDir), config); return config; }),
+    // An out-of-band edit to config.json (another process, a person editing it by
+    // hand) must still be picked up here, same as it would be for any other file
+    // under ddDir, so recover() clears the memo along with everything else it recovers.
+    recover: () => withWriteLock(async () => { configCache = null; return recoverTransaction(ddDir); }),
+    saveConfig: config => withWriteLock(async () => { await writeJson(configPath(ddDir), config); configCache = null; return config; }),
     putAtom: async atom => (await commit({ atoms: [atom] }))[0],
     deleteAtom: async atom => { await commit({ deleteAtoms: [atom] }); return true; },
     loadRegistry: () => readJson(registryPath(ddDir), { entries: [], aliases: [], vocabularies: [] }),
