@@ -1,0 +1,92 @@
+{
+  "id": "c2984ddd-20f0-4f42-90c7-3b0a88d17082",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "claim",
+  "scope": "project",
+  "title": "Default auto_accept threshold (0.8) is structurally unreachable for model_initiated + filesystem evidence",
+  "topic_key": "engine/admission/auto-accept-threshold-unreachable-by-model-initiated",
+  "trigger": "When evaluating or tuning auto_accept.confidence_threshold, or explaining why a well-evidenced model-proposed candidate never auto-admits",
+  "behavior_delta": "Compute the ceiling before assuming a threshold is reachable: cappedConfidence = RELIABILITY_CAP[provenance] * CAPTURE_ORIGIN_FACTOR[capture_origin]. For the most common autonomous case (capture_origin: model_initiated, best verified evidence: filesystem), the ceiling is 0.85 * 0.9 = 0.765, which is below the default auto_accept.confidence_threshold of 0.8. That default therefore only ever admits capture_origin: user_explicit proposals (0.85*1=0.85) or ones carrying an observed user_correction artifact (0.855-0.95) -- never a model's own filesystem-evidenced finding. Don't diagnose this as a bug in the proposal or in sweepAutoAccept; it's the reliability ladder in src/engine/reliability.js working as designed. Flag it as a product decision (intentional gate vs. needs recalibration) rather than silently reproposing with different evidence to force a pass.",
+  "what": "Compute the ceiling before assuming a threshold is reachable: cappedConfidence = RELIABILITY_CAP[provenance] * CAPTURE_ORIGIN_FACTOR[capture_origin]. For the most common autonomous case (capture_origin: model_initiated, best verified evidence: filesystem), the ceiling is 0.85 * 0.9 = 0.765, which is below the default auto_accept.confidence_threshold of 0.8. That default therefore only ever admits capture_origin: user_explicit proposals (0.85*1=0.85) or ones carrying an observed user_correction artifact (0.855-0.95) -- never a model's own filesystem-evidenced finding. Don't diagnose this as a bug in the proposal or in sweepAutoAccept; it's the reliability ladder in src/engine/reliability.js working as designed. Flag it as a product decision (intentional gate vs. needs recalibration) rather than silently reproposing with different evidence to force a pass.",
+  "why": "Verified live on 2026-09-19: proposed a genuinely well-evidenced lesson (dd/store/legacy-home-dirs-verified-and-purged) with a filesystem-verified evidence_ref and capture_origin model_initiated. It computed to confidence 0.765 and stayed lifecycle_state candidate after a listing fetch (which runs sweepAutoAccept per commit f8bc4de) with auto_accept enabled and threshold 0.8. Confirmed the 0.765 ceiling algebraically from RELIABILITY_CAP.filesystem=0.85 and CAPTURE_ORIGIN_FACTOR.model_initiated=0.9 in src/engine/reliability.js.",
+  "tags": [
+    "auto-accept",
+    "reliability-ladder",
+    "calibration"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/engine/reliability.js",
+      "src/engine/auto-accept.js"
+    ],
+    "components": [
+      "auto-accept",
+      "admission"
+    ],
+    "operations": [
+      "tune-threshold",
+      "diagnose-non-admission"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/reliability.js",
+      "summary": "RELIABILITY_CAP.filesystem=0.85, CAPTURE_ORIGIN_FACTOR.model_initiated=0.9, cappedConfidence()=reliabilityCeiling(atom).cap when authority!=='canonical'"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/auto-accept.js",
+      "summary": "sweepAutoAccept computes projectedConfidence via cappedConfidence and skips admission when projectedConfidence < config.auto_accept.confidence_threshold"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T15:30:52.178Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Compute the ceiling before assuming a threshold is reachable: cappedConfidence = RELIABILITY_CAP[provenance] * CAPTURE_ORIGIN_FACTOR[capture_origin]. For the most common autonomous case (capture_origin: model_initiated, best verified evidence: filesystem), the ceiling is 0.85 * 0.9 = 0.765, which is below the default auto_accept.confidence_threshold of 0.8. That default therefore only ever admits capture_origin: user_explicit proposals (0.85*1=0.85) or ones carrying an observed user_correction artifact (0.855-0.95) -- never a model's own filesystem-evidenced finding. Don't diagnose this as a bug in the proposal or in sweepAutoAccept; it's the reliability ladder in src/engine/reliability.js working as designed. Flag it as a product decision (intentional gate vs. needs recalibration) rather than silently reproposing with different evidence to force a pass.",
+    "short": "Compute the ceiling before assuming a threshold is reachable: cappedConfidence = RELIABILITY_CAP[provenance] * CAPTURE_ORIGIN_FACTOR[capture_origin]. For the most common autonomous case (capture_origin: model_initiated, best verified evidence: filesystem), the ceiling is 0.85 * 0.9 = 0.765, which is below the default auto_accept.confidence_threshold of 0.8. That default therefore only ever admits capture_origin: user_explicit proposals (0.85*1=0.85) or ones carrying an observed user_correction artifact (0.855-0.95) -- never a model's own filesystem-evidenced finding. Don't diagnose this as a bug in the proposal or in sweepAutoAccept; it's the reliability ladder in src/engine/reliability.js working as designed. Flag it as a product decision (intentional gate vs. needs recalibration) rather than silently reproposing with different evidence to force a pass. Why: Verified live on 2026-09-19: proposed a genuinely well-evidenced lesson (dd/store/legacy-home-dirs-verified-and-purged) with a filesystem-verified evidence_ref and capture_origin model_initiated. It computed to confidence 0.765 and stayed lifecycle_state candidate after a listing fetch (which runs sweepAutoAccept per commit f8bc4de) with auto_accept enabled and threshold 0.8. Confirmed the 0.765 ceiling algebraically from RELIABILITY_CAP.filesystem=0.85 and CAPTURE_ORIGIN_FACTOR.model_initiated=0.9 in src/engine/reliability.js.",
+    "full": "Compute the ceiling before assuming a threshold is reachable: cappedConfidence = RELIABILITY_CAP[provenance] * CAPTURE_ORIGIN_FACTOR[capture_origin]. For the most common autonomous case (capture_origin: model_initiated, best verified evidence: filesystem), the ceiling is 0.85 * 0.9 = 0.765, which is below the default auto_accept.confidence_threshold of 0.8. That default therefore only ever admits capture_origin: user_explicit proposals (0.85*1=0.85) or ones carrying an observed user_correction artifact (0.855-0.95) -- never a model's own filesystem-evidenced finding. Don't diagnose this as a bug in the proposal or in sweepAutoAccept; it's the reliability ladder in src/engine/reliability.js working as designed. Flag it as a product decision (intentional gate vs. needs recalibration) rather than silently reproposing with different evidence to force a pass. Why: Verified live on 2026-09-19: proposed a genuinely well-evidenced lesson (dd/store/legacy-home-dirs-verified-and-purged) with a filesystem-verified evidence_ref and capture_origin model_initiated. It computed to confidence 0.765 and stayed lifecycle_state candidate after a listing fetch (which runs sweepAutoAccept per commit f8bc4de) with auto_accept enabled and threshold 0.8. Confirmed the 0.765 ceiling algebraically from RELIABILITY_CAP.filesystem=0.85 and CAPTURE_ORIGIN_FACTOR.model_initiated=0.9 in src/engine/reliability.js."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "4a7a8cb8-9e65-4fbe-935d-20e8ff011579",
+  "evidence_state": {
+    "checked_at": "2026-09-19T16:22:31.611Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/reliability.js",
+        "summary": "RELIABILITY_CAP.filesystem=0.85, CAPTURE_ORIGIN_FACTOR.model_initiated=0.9, cappedConfidence()=reliabilityCeiling(atom).cap when authority!=='canonical'",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d2f90a8a08c00dfbbec9dc6b11267c4c7b287abca625cb8ea3263fb62dc3ad3b"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/auto-accept.js",
+        "summary": "sweepAutoAccept computes projectedConfidence via cappedConfidence and skips admission when projectedConfidence < config.auto_accept.confidence_threshold",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "86b02ed5b1ae04d1ad160b6bb7358f57ce9c963df4e0bee115b1e8817b0cedcf"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T15:30:52.274Z",
+  "updated_at": "2026-09-19T16:22:31.616Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T16:22:31.611Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

@@ -8,5 +8,61 @@
     "procedure": "candidate",
     "decision": "candidate",
     "claim": "candidate"
+  },
+  "auto_accept": {
+    "enabled": true,
+    "confidence_threshold": 0.765
+  },
+  "health": {
+    "live_bloat": {
+      "watch": 80,
+      "deteriorated": 200
+    },
+    "prefix_crowding": {
+      "depth": 2,
+      "watch": 12,
+      "deteriorated": 25
+    },
+    "trigger_collision": {
+      "jaccard": 0.5,
+      "watch": 1,
+      "deteriorated": 8
+    },
+    "dead_inferred": {
+      "min_age_days": 14,
+      "watch": 5,
+      "deteriorated": 20
+    },
+    "unresolved_contest": {
+      "min_age_days": 7,
+      "watch": 1,
+      "deteriorated": 3
+    },
+    "supersession_churn": {
+      "watch": 3,
+      "deteriorated": 5
+    },
+    "cap_saturation": {
+      "window": 50,
+      "min_events": 10,
+      "watch": 0.2,
+      "deteriorated": 0.5
+    },
+    "retirement": {
+      "min_age_days": 90,
+      "min_retrieval_events": 40
+    }
+  },
+  "capture": {
+    "retention_days": 14,
+    "max_observations": 200
+  },
+  "telemetry": {
+    "retention_days": 90,
+    "max_events": 2000
+  },
+  "session": {
+    "retention_hours": 24,
+    "max_entries": 500
   }
 }

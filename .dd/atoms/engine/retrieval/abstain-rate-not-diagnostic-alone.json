@@ -1,0 +1,77 @@
+{
+  "id": "6829e2af-b30e-4434-bcc6-23d2af753f73",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "High PreToolUse abstain rate is expected noise, not a recall failure, unless conditioned on relevant tool calls",
+  "topic_key": "engine/retrieval/abstain-rate-not-diagnostic-alone",
+  "trigger": "When investigating a high abstention rate reported by memory_retrieval_events (e.g. 'X abstained out of Y retrievals') as a possible recall/quality problem",
+  "behavior_delta": "Before treating a high abstain rate as a bug, split the sample: check whether the retrievals that DID return atoms (abstained=0) matched genuinely relevant tool calls (they did, in every case checked), then check what the abstained calls actually were. PreToolUse fires a retrieval attempt on every single tool call (L1), so a session dominated by ad-hoc exploratory bash/read/grep calls with no related stored memory will show 90-100% abstention even with a healthy store and working retrieval -- that is correct behavior (advisory injection should not fire on unrelated calls), not degraded recall. The real diagnostic is the precision/relevance of the non-abstained subset, not the raw abstain percentage across an unfiltered tool-call stream.",
+  "what": "Before treating a high abstain rate as a bug, split the sample: check whether the retrievals that DID return atoms (abstained=0) matched genuinely relevant tool calls (they did, in every case checked), then check what the abstained calls actually were. PreToolUse fires a retrieval attempt on every single tool call (L1), so a session dominated by ad-hoc exploratory bash/read/grep calls with no related stored memory will show 90-100% abstention even with a healthy store and working retrieval -- that is correct behavior (advisory injection should not fire on unrelated calls), not degraded recall. The real diagnostic is the precision/relevance of the non-abstained subset, not the raw abstain percentage across an unfiltered tool-call stream.",
+  "why": "Investigated live on 2026-09-19 against the actual production telemetry store (~/.dd-data/supermem-3892c3ad040f/index.sqlite -- found via src/project.js resolveDataBase(), not .dd/data or .dd/local as first assumed). 1008/1029 all-time retrievals abstained (98%), 200/200 of the most recent (100%). Of the 21 all-time non-abstained events, every one checked was a legitimate match: editing .claude-plugin/marketplace.json returned the harness-install-mechanisms memory, grepping topic_key returned the admission-required-fields memory, a telemetry-related git commit returned the anti-memory against writing retrieval telemetry to git. The high rate tracked entirely with a recent run of one-off diagnostic bash/read/grep commands with no matching stored trigger, not with a retrieval defect.",
+  "tags": [
+    "retrieval",
+    "abstention",
+    "telemetry",
+    "diagnostic-methodology"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [
+      "retrieval",
+      "telemetry"
+    ],
+    "operations": [
+      "diagnose-abstention",
+      "investigate-metric"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/project.js",
+      "summary": "resolveDataBase() defaults to ~/.dd-data (not .dd/data or .dd/local), and openStore() derives the actual per-project data dir as `${slug}-${identity}` under it"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T15:33:21.192Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Before treating a high abstain rate as a bug, split the sample: check whether the retrievals that DID return atoms (abstained=0) matched genuinely relevant tool calls (they did, in every case checked), then check what the abstained calls actually were. PreToolUse fires a retrieval attempt on every single tool call (L1), so a session dominated by ad-hoc exploratory bash/read/grep calls with no related stored memory will show 90-100% abstention even with a healthy store and working retrieval -- that is correct behavior (advisory injection should not fire on unrelated calls), not degraded recall. The real diagnostic is the precision/relevance of the non-abstained subset, not the raw abstain percentage across an unfiltered tool-call stream.",
+    "short": "Before treating a high abstain rate as a bug, split the sample: check whether the retrievals that DID return atoms (abstained=0) matched genuinely relevant tool calls (they did, in every case checked), then check what the abstained calls actually were. PreToolUse fires a retrieval attempt on every single tool call (L1), so a session dominated by ad-hoc exploratory bash/read/grep calls with no related stored memory will show 90-100% abstention even with a healthy store and working retrieval -- that is correct behavior (advisory injection should not fire on unrelated calls), not degraded recall. The real diagnostic is the precision/relevance of the non-abstained subset, not the raw abstain percentage across an unfiltered tool-call stream. Why: Investigated live on 2026-09-19 against the actual production telemetry store (~/.dd-data/supermem-3892c3ad040f/index.sqlite -- found via src/project.js resolveDataBase(), not .dd/data or .dd/local as first assumed). 1008/1029 all-time retrievals abstained (98%), 200/200 of the most recent (100%). Of the 21 all-time non-abstained events, every one checked was a legitimate match: editing .claude-plugin/marketplace.json returned the harness-install-mechanisms memory, grepping topic_key returned the admission-required-fields memory, a telemetry-related git commit returned the anti-memory against writing retrieval telemetry to git. The high rate tracked entirely with a recent run of one-off diagnostic bash/read/grep commands with no matching stored trigger, not with a retrieval defect.",
+    "full": "Before treating a high abstain rate as a bug, split the sample: check whether the retrievals that DID return atoms (abstained=0) matched genuinely relevant tool calls (they did, in every case checked), then check what the abstained calls actually were. PreToolUse fires a retrieval attempt on every single tool call (L1), so a session dominated by ad-hoc exploratory bash/read/grep calls with no related stored memory will show 90-100% abstention even with a healthy store and working retrieval -- that is correct behavior (advisory injection should not fire on unrelated calls), not degraded recall. The real diagnostic is the precision/relevance of the non-abstained subset, not the raw abstain percentage across an unfiltered tool-call stream. Why: Investigated live on 2026-09-19 against the actual production telemetry store (~/.dd-data/supermem-3892c3ad040f/index.sqlite -- found via src/project.js resolveDataBase(), not .dd/data or .dd/local as first assumed). 1008/1029 all-time retrievals abstained (98%), 200/200 of the most recent (100%). Of the 21 all-time non-abstained events, every one checked was a legitimate match: editing .claude-plugin/marketplace.json returned the harness-install-mechanisms memory, grepping topic_key returned the admission-required-fields memory, a telemetry-related git commit returned the anti-memory against writing retrieval telemetry to git. The high rate tracked entirely with a recent run of one-off diagnostic bash/read/grep commands with no matching stored trigger, not with a retrieval defect."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "7437e183-113f-4658-b63d-adbfda68bc4d",
+  "evidence_state": {
+    "checked_at": "2026-09-19T16:22:33.293Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/project.js",
+        "summary": "resolveDataBase() defaults to ~/.dd-data (not .dd/data or .dd/local), and openStore() derives the actual per-project data dir as `${slug}-${identity}` under it",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "c59b66f838b66473a52d93424702b3d2cc9041f68399ed56da018666d781ecf0"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T15:33:21.330Z",
+  "updated_at": "2026-09-19T16:22:33.298Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T16:22:33.293Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

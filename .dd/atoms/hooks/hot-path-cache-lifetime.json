@@ -1,0 +1,96 @@
+{
+  "id": "7db33256-a35d-4d83-bcdf-39cc54ce1742",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across h",
+  "topic_key": "hooks/hot-path-cache-lifetime",
+  "trigger": "Reviewing or optimizing PreToolUse/observe/prompt hook cost, or adding an in-memory cache on the store object anywhere in src/engine or src/hooks.",
+  "behavior_delta": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across hook invocations, check whether the code path is reached only through an ephemeral per-event process (PreToolUse, UserPromptSubmit, PostToolUse, Stop via run.js) or through a long-lived process (the MCP server in src/mcp/server.js, or the audit UI). A cache written on `store` only pays off in the long-lived case; in the ephemeral case a fresh store is constructed every hook event, so the cache always misses and the guarded work (stat/readdir/readFile, hashing, etc.) still runs every time. Concretely: `projectContext()` in src/engine/project-context.js sets `store.projectContextCache` (lines 23, 54), but every PreToolUse call reopens a new store in a new Node process, so it never hits outside the MCP/UI process — every tool call still pays 6 stat() + 1 readdir() + up to 5 readFile() calls. If a cache needs to survive across ephemeral hook processes, it has to be persisted in the SQLite derived index (already the pattern used by loadConfig), not just kept as a JS object property.",
+  "what": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across hook invocations, check whether the code path is reached only through an ephemeral per-event process (PreToolUse, UserPromptSubmit, PostToolUse, Stop via run.js) or through a long-lived process (the MCP server in src/mcp/server.js, or the audit UI). A cache written on `store` only pays off in the long-lived case; in the ephemeral case a fresh store is constructed every hook event, so the cache always misses and the guarded work (stat/readdir/readFile, hashing, etc.) still runs every time. Concretely: `projectContext()` in src/engine/project-context.js sets `store.projectContextCache` (lines 23, 54), but every PreToolUse call reopens a new store in a new Node process, so it never hits outside the MCP/UI process — every tool call still pays 6 stat() + 1 readdir() + up to 5 readFile() calls. If a cache needs to survive across ephemeral hook processes, it has to be persisted in the SQLite derived index (already the pattern used by loadConfig), not just kept as a JS object property.",
+  "why": "L1 in docs/architecture/plugin-constraints.md states one Node process is spawned per hook event and explicitly forbids 'amortising a cost after the first call' because there is no second call in the same process. Reading src/engine/project-context.js and src/hooks/run.js together shows an in-memory cache that silently violates this: it looks like an optimization but only ever activates in the two processes (MCP server, audit UI) that persist, not in the default single-developer path with no UI/MCP server running.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/engine/project-context.js",
+      "src/hooks/run.js",
+      "src/hooks/pre-tool.js"
+    ],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/project-context.js",
+      "summary": "projectContextCache is a plain property on the store object, set/read at lines 23 and 54, with no persistence layer."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "docs/architecture/plugin-constraints.md",
+      "summary": "L1 states hooks are ephemeral Node processes, one per event, and forbids amortizing cost after the first call since there is no second call in the same process."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/run.js",
+      "summary": "openStore is called fresh inside each hook invocation for the non-bridged path, so any per-store in-memory cache is discarded when the process exits."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T09:29:15.160Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across hook invocations, check whether the code path is reached only through an ephemeral per-event process (PreToolUse, UserPromptSubmit, PostToolUse, Stop via run.js) or through a long-lived process (the MCP server in src/mcp/server.js, or the audit UI). A cache written on `store` only pays off in the long-lived case; in the ephemeral case a fresh store is constructed every hook event, so the cache always misses and the guarded work (stat/readdir/readFile, hashing, etc.) still runs every time. Concretely: `projectContext()` in src/engine/project-context.js sets `store.projectContextCache` (lines 23, 54), but every PreToolUse call reopens a new store in a new Node process, so it never hits outside the MCP/UI process — every tool call still pays 6 stat() + 1 readdir() + up to 5 readFile() calls. If a cache needs to survive across ephemeral hook processes, it has to be persisted in the SQLite derived index (already the pattern used by loadConfig), not just kept as a JS object property.",
+    "short": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across hook invocations, check whether the code path is reached only through an ephemeral per-event process (PreToolUse, UserPromptSubmit, PostToolUse, Stop via run.js) or through a long-lived process (the MCP server in src/mcp/server.js, or the audit UI). A cache written on `store` only pays off in the long-lived case; in the ephemeral case a fresh store is constructed every hook event, so the cache always misses and the guarded work (stat/readdir/readFile, hashing, etc.) still runs every time. Concretely: `projectContext()` in src/engine/project-context.js sets `store.projectContextCache` (lines 23, 54), but every PreToolUse call reopens a new store in a new Node process, so it never hits outside the MCP/UI process — every tool call still pays 6 stat() + 1 readdir() + up to 5 readFile() calls. If a cache needs to survive across ephemeral hook processes, it has to be persisted in the SQLite derived index (already the pattern used by loadConfig), not just kept as a JS object property. Why: L1 in docs/architecture/plugin-constraints.md states one Node process is spawned per hook event and explicitly forbids 'amortising a cost after the first call' because there is no second call in the same process. Reading src/engine/project-context.js and src/hooks/run.js together shows an in-memory cache that silently violates this: it looks like an optimization but only ever activates in the two processes (MCP server, audit UI) that persist, not in the default single-developer path with no UI/MCP server running.",
+    "full": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across hook invocations, check whether the code path is reached only through an ephemeral per-event process (PreToolUse, UserPromptSubmit, PostToolUse, Stop via run.js) or through a long-lived process (the MCP server in src/mcp/server.js, or the audit UI). A cache written on `store` only pays off in the long-lived case; in the ephemeral case a fresh store is constructed every hook event, so the cache always misses and the guarded work (stat/readdir/readFile, hashing, etc.) still runs every time. Concretely: `projectContext()` in src/engine/project-context.js sets `store.projectContextCache` (lines 23, 54), but every PreToolUse call reopens a new store in a new Node process, so it never hits outside the MCP/UI process — every tool call still pays 6 stat() + 1 readdir() + up to 5 readFile() calls. If a cache needs to survive across ephemeral hook processes, it has to be persisted in the SQLite derived index (already the pattern used by loadConfig), not just kept as a JS object property. Why: L1 in docs/architecture/plugin-constraints.md states one Node process is spawned per hook event and explicitly forbids 'amortising a cost after the first call' because there is no second call in the same process. Reading src/engine/project-context.js and src/hooks/run.js together shows an in-memory cache that silently violates this: it looks like an optimization but only ever activates in the two processes (MCP server, audit UI) that persist, not in the default single-developer path with no UI/MCP server running."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "54badd13-064c-44d8-be07-5f67089f4ffb",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:17.487Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/project-context.js",
+        "summary": "projectContextCache is a plain property on the store object, set/read at lines 23 and 54, with no persistence layer.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "62de98509a6cff96a6de77a0375bccae9a0a065b0cc1a3b76efd7f8cac9eee71"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "docs/architecture/plugin-constraints.md",
+        "summary": "L1 states hooks are ephemeral Node processes, one per event, and forbids amortizing cost after the first call since there is no second call in the same process.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "1bd13abc032a15387561c0ab45e963e41c14e3332b4dd281d373964d93bb45ec"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/run.js",
+        "summary": "openStore is called fresh inside each hook invocation for the non-bridged path, so any per-store in-memory cache is discarded when the process exits.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "e175635fc60747ffb0bfb5a7e3d4631754b7a5b79b5e3a133d5bf8042fb36713"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T09:29:15.203Z",
+  "updated_at": "2026-09-19T10:36:17.490Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:17.487Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

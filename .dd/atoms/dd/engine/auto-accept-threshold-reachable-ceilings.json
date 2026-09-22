@@ -1,0 +1,116 @@
+{
+  "id": "d3d5bf57-a811-4a48-b183-c1601c0886f8",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "auto_accept threshold must be one of the reachable reliability ceilings",
+  "topic_key": "dd/engine/auto-accept-threshold-reachable-ceilings",
+  "trigger": "Setting or reviewing auto_accept.confidence_threshold (config default in src/store/paths.js, a project's .dd/config.json, or the audit UI slider at src/ui/public/index.html).",
+  "behavior_delta": "Before accepting or proposing any confidence_threshold value, check it against the reachable set computed by autoAcceptThresholdLevels() in src/engine/reliability.js -- the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR: 0.45, 0.5, 0.63, 0.7, 0.765, 0.85, 0.855, 0.95. A value between two of these is a dead zone: no candidate's ceiling can ever land there, so the threshold silently behaves exactly like the next reachable value above it, while looking like a distinct, deliberate setting. Flag any off-ladder value and replace it with the nearest real ceiling that matches the intended policy, rather than leaving or introducing an arbitrary number.",
+  "what": "Before accepting or proposing any confidence_threshold value, check it against the reachable set computed by autoAcceptThresholdLevels() in src/engine/reliability.js -- the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR: 0.45, 0.5, 0.63, 0.7, 0.765, 0.85, 0.855, 0.95. A value between two of these is a dead zone: no candidate's ceiling can ever land there, so the threshold silently behaves exactly like the next reachable value above it, while looking like a distinct, deliberate setting. Flag any off-ladder value and replace it with the nearest real ceiling that matches the intended policy, rather than leaving or introducing an arbitrary number.",
+  "why": "DEFAULT_CONFIG.auto_accept.confidence_threshold in src/store/paths.js shipped as 0.8, which is not reachable by any source-reliability x capture-origin combination. It behaved identically to 0.85 (only user_explicit+filesystem or user_correction sources ever cleared it) but looked like a meaningfully different, lower bar. This produced a real debugging session (recorded in PENDIENTES.md item 0.2) where a model-initiated + verified-filesystem proposal was expected to auto-accept under a 0.8 threshold and never could, because its real ceiling (0.765) sits below the 0.8 dead zone. The UI itself already codes this distinction (src/ui/public/index.html:628 labels an off-ladder value 'Not one of the reachable ceilings'), confirming this is a recognized invariant of the auto-accept design, not a one-off assumption.",
+  "tags": [],
+  "trigger_variants": [
+    "Choosing a confidence threshold value for auto-accept",
+    "Debugging why auto-accept never fires for a given source"
+  ],
+  "applies_to": {
+    "files": [
+      "src/store/paths.js",
+      "src/engine/reliability.js",
+      "src/ui/public/index.html",
+      "src/ui/server.js"
+    ],
+    "components": [
+      "auto-accept",
+      "config defaults",
+      "audit UI"
+    ],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/store/paths.js",
+      "summary": "DEFAULT_CONFIG.auto_accept.confidence_threshold changed from 0.8 (dead zone) to 0.85 (reachable ceiling: filesystem cap x user_explicit factor)"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/reliability.js",
+      "summary": "autoAcceptThresholdLevels() computes the exact reachable set (cross of RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR) and documents in-code that any value between two levels is a dead zone"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/ui/public/index.html",
+      "summary": "Line 628: UI already labels a stored threshold not in the reachable set as 'Not one of the reachable ceilings -- pick a step to replace it'"
+    },
+    {
+      "source_type": "test_log",
+      "source_ref": "tests/ui/server.test.js",
+      "summary": "Updated default-threshold assertion from 0.8 to 0.85 and reran tests/ui/server.test.js plus tests/ui/form.test.js: 14 pass, 0 fail"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T16:11:44.188Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Before accepting or proposing any confidence_threshold value, check it against the reachable set computed by autoAcceptThresholdLevels() in src/engine/reliability.js -- the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR: 0.45, 0.5, 0.63, 0.7, 0.765, 0.85, 0.855, 0.95. A value between two of these is a dead zone: no candidate's ceiling can ever land there, so the threshold silently behaves exactly like the next reachable value above it, while looking like a distinct, deliberate setting. Flag any off-ladder value and replace it with the nearest real ceiling that matches the intended policy, rather than leaving or introducing an arbitrary number.",
+    "short": "Before accepting or proposing any confidence_threshold value, check it against the reachable set computed by autoAcceptThresholdLevels() in src/engine/reliability.js -- the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR: 0.45, 0.5, 0.63, 0.7, 0.765, 0.85, 0.855, 0.95. A value between two of these is a dead zone: no candidate's ceiling can ever land there, so the threshold silently behaves exactly like the next reachable value above it, while looking like a distinct, deliberate setting. Flag any off-ladder value and replace it with the nearest real ceiling that matches the intended policy, rather than leaving or introducing an arbitrary number. Why: DEFAULT_CONFIG.auto_accept.confidence_threshold in src/store/paths.js shipped as 0.8, which is not reachable by any source-reliability x capture-origin combination. It behaved identically to 0.85 (only user_explicit+filesystem or user_correction sources ever cleared it) but looked like a meaningfully different, lower bar. This produced a real debugging session (recorded in PENDIENTES.md item 0.2) where a model-initiated + verified-filesystem proposal was expected to auto-accept under a 0.8 threshold and never could, because its real ceiling (0.765) sits below the 0.8 dead zone. The UI itself already codes this distinction (src/ui/public/index.html:628 labels an off-ladder value 'Not one of the reachable ceilings'), confirming this is a recognized invariant of the auto-accept design, not a one-off assumption.",
+    "full": "Before accepting or proposing any confidence_threshold value, check it against the reachable set computed by autoAcceptThresholdLevels() in src/engine/reliability.js -- the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR: 0.45, 0.5, 0.63, 0.7, 0.765, 0.85, 0.855, 0.95. A value between two of these is a dead zone: no candidate's ceiling can ever land there, so the threshold silently behaves exactly like the next reachable value above it, while looking like a distinct, deliberate setting. Flag any off-ladder value and replace it with the nearest real ceiling that matches the intended policy, rather than leaving or introducing an arbitrary number. Why: DEFAULT_CONFIG.auto_accept.confidence_threshold in src/store/paths.js shipped as 0.8, which is not reachable by any source-reliability x capture-origin combination. It behaved identically to 0.85 (only user_explicit+filesystem or user_correction sources ever cleared it) but looked like a meaningfully different, lower bar. This produced a real debugging session (recorded in PENDIENTES.md item 0.2) where a model-initiated + verified-filesystem proposal was expected to auto-accept under a 0.8 threshold and never could, because its real ceiling (0.765) sits below the 0.8 dead zone. The UI itself already codes this distinction (src/ui/public/index.html:628 labels an off-ladder value 'Not one of the reachable ceilings'), confirming this is a recognized invariant of the auto-accept design, not a one-off assumption."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "5d333234-daf7-4d04-a927-c5051f9e5ab9",
+  "evidence_state": {
+    "checked_at": "2026-09-19T16:22:37.801Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/store/paths.js",
+        "summary": "DEFAULT_CONFIG.auto_accept.confidence_threshold changed from 0.8 (dead zone) to 0.85 (reachable ceiling: filesystem cap x user_explicit factor)",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "2774b25d13974981a9022ede995365c5f28b3c94bc02b8754b4674606bf31425"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/reliability.js",
+        "summary": "autoAcceptThresholdLevels() computes the exact reachable set (cross of RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR) and documents in-code that any value between two levels is a dead zone",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d2f90a8a08c00dfbbec9dc6b11267c4c7b287abca625cb8ea3263fb62dc3ad3b"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/ui/public/index.html",
+        "summary": "Line 628: UI already labels a stored threshold not in the reachable set as 'Not one of the reachable ceilings -- pick a step to replace it'",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "3990ccfcd7a2f2daee4537816534ce764e913c6939afd169ab6fec49779aeec4"
+      },
+      {
+        "source_type": "test_log",
+        "source_ref": "tests/ui/server.test.js",
+        "summary": "Updated default-threshold assertion from 0.8 to 0.85 and reran tests/ui/server.test.js plus tests/ui/form.test.js: 14 pass, 0 fail",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "2e3edfc6e065a731694d5165cdcc435c1f1783462ac591bea678696f8547e18b"
+      }
+    ],
+    "verified_count": 4,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T16:11:44.248Z",
+  "updated_at": "2026-09-19T16:22:37.805Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T16:22:37.801Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

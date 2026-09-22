@@ -1,0 +1,71 @@
+{
+  "id": "cf1ad3c5-9c4b-4cdf-83ce-73df45201ffb",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Do not assume a running audit UI process picks up a src/ui/server.js edit. index.html is read fresh ",
+  "topic_key": "ui/server-routes-need-restart",
+  "trigger": "editing src/ui/server.js (adding or changing a route/handler) while an audit UI process is already running, or verifying a UI change against a live instance",
+  "behavior_delta": "Do not assume a running audit UI process picks up a src/ui/server.js edit. index.html is read fresh from disk on every GET '/' request (src/ui/server.js), so front-end changes show up on a browser refresh with no restart. Route/handler logic, by contrast, is only the code loaded into the Node process at startup — a new endpoint (e.g. an SSE route) or a changed handler returns 404 or old behavior against an already-running process until that process is restarted. When verifying a server-side change, start a fresh process (or confirm the live one was restarted after the edit) rather than trusting a live reload.",
+  "what": "Do not assume a running audit UI process picks up a src/ui/server.js edit. index.html is read fresh from disk on every GET '/' request (src/ui/server.js), so front-end changes show up on a browser refresh with no restart. Route/handler logic, by contrast, is only the code loaded into the Node process at startup — a new endpoint (e.g. an SSE route) or a changed handler returns 404 or old behavior against an already-running process until that process is restarted. When verifying a server-side change, start a fresh process (or confirm the live one was restarted after the edit) rather than trusting a live reload.",
+  "why": "Verified this in-session: added GET /api/events to src/ui/server.js, then tested against the project's own already-running audit UI process and got a 404, while a freshly started instance on a different port served it correctly (200, working SSE stream). The two files degrade differently and it is easy to misread a stale-process 404 as a code bug.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/ui/server.js"
+    ],
+    "components": [],
+    "operations": [
+      "review",
+      "debug"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/ui/server.js",
+      "summary": "index.html is readFile'd per request (line ~65); routes are handled by the createServer callback installed once at startup."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T13:58:43.128Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Do not assume a running audit UI process picks up a src/ui/server.js edit. index.html is read fresh from disk on every GET '/' request (src/ui/server.js), so front-end changes show up on a browser refresh with no restart. Route/handler logic, by contrast, is only the code loaded into the Node process at startup — a new endpoint (e.g. an SSE route) or a changed handler returns 404 or old behavior against an already-running process until that process is restarted. When verifying a server-side change, start a fresh process (or confirm the live one was restarted after the edit) rather than trusting a live reload.",
+    "short": "Do not assume a running audit UI process picks up a src/ui/server.js edit. index.html is read fresh from disk on every GET '/' request (src/ui/server.js), so front-end changes show up on a browser refresh with no restart. Route/handler logic, by contrast, is only the code loaded into the Node process at startup — a new endpoint (e.g. an SSE route) or a changed handler returns 404 or old behavior against an already-running process until that process is restarted. When verifying a server-side change, start a fresh process (or confirm the live one was restarted after the edit) rather than trusting a live reload. Why: Verified this in-session: added GET /api/events to src/ui/server.js, then tested against the project's own already-running audit UI process and got a 404, while a freshly started instance on a different port served it correctly (200, working SSE stream). The two files degrade differently and it is easy to misread a stale-process 404 as a code bug.",
+    "full": "Do not assume a running audit UI process picks up a src/ui/server.js edit. index.html is read fresh from disk on every GET '/' request (src/ui/server.js), so front-end changes show up on a browser refresh with no restart. Route/handler logic, by contrast, is only the code loaded into the Node process at startup — a new endpoint (e.g. an SSE route) or a changed handler returns 404 or old behavior against an already-running process until that process is restarted. When verifying a server-side change, start a fresh process (or confirm the live one was restarted after the edit) rather than trusting a live reload. Why: Verified this in-session: added GET /api/events to src/ui/server.js, then tested against the project's own already-running audit UI process and got a 404, while a freshly started instance on a different port served it correctly (200, working SSE stream). The two files degrade differently and it is easy to misread a stale-process 404 as a code bug."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "6e6b882c-5c9a-4660-ae93-ece70f458df3",
+  "evidence_state": {
+    "checked_at": "2026-09-19T14:35:47.656Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/ui/server.js",
+        "summary": "index.html is readFile'd per request (line ~65); routes are handled by the createServer callback installed once at startup.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "977dfcdd2f88eb9598f9b8e4bec84c51bb77c598082b9f9a9ab42f947c793c86"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T13:58:43.176Z",
+  "updated_at": "2026-09-19T14:35:47.660Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T14:35:47.656Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

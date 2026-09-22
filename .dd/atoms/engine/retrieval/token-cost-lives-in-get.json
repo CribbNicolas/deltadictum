@@ -1,0 +1,93 @@
+{
+  "id": "61bc43e7-196f-4f2b-a11c-3f3cf2ddf9c9",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "decision",
+  "scope": "project",
+  "title": "MCP tools return model-facing views, not engine records",
+  "topic_key": "engine/retrieval/token-cost-lives-in-get",
+  "trigger": "When adding fields to retrieve results or atoms, or changing what MCP retrieve/get return",
+  "behavior_delta": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.",
+  "what": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.",
+  "why": "Measured 2026-09-22: ~4.2 KB of the ~7 KB get payload was exact duplication of authored text plus evidence hashes. The compact view cut get by 60.9% (7158 to 2796 B avg over 35 active atoms) with no authored content removed. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/mcp/tools.js",
+      "src/mcp/definition.js",
+      "src/engine/retrieve.js"
+    ],
+    "components": [],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "model-facing view definitions change",
+      "path": "src/mcp/tools.js",
+      "hash": "b7e1d1295ff7d4766136e041f5594161aaca0fa36cf447ce82f42b952889a6be"
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/mcp/tools.js",
+      "summary": "retrieveView/atomView with HIT_FIELDS and ENGINE_FIELDS; get accepts verbose"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "tests/mcp/tools.test.js",
+      "summary": "asserts exact retrieve keys, compact get fields, evidence status and verbose raw atom"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-22T19:46:25.426Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.",
+    "short": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default. Why: Measured 2026-09-22: ~4.2 KB of the ~7 KB get payload was exact duplication of authored text plus evidence hashes. The compact view cut get by 60.9% (7158 to 2796 B avg over 35 active atoms) with no authored content removed. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced.",
+    "full": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default. Why: Measured 2026-09-22: ~4.2 KB of the ~7 KB get payload was exact duplication of authored text plus evidence hashes. The compact view cut get by 60.9% (7158 to 2796 B avg over 35 active atoms) with no authored content removed. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "500ae241-bc26-4340-901c-6be56df212c0",
+  "evidence_state": {
+    "checked_at": "2026-09-22T19:59:37.563Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/mcp/tools.js",
+        "summary": "retrieveView/atomView with HIT_FIELDS and ENGINE_FIELDS; get accepts verbose",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "b7e1d1295ff7d4766136e041f5594161aaca0fa36cf447ce82f42b952889a6be"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "tests/mcp/tools.test.js",
+        "summary": "asserts exact retrieve keys, compact get fields, evidence status and verbose raw atom",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "92ca90f8b6a84e28366cb4f4d03f483b29a3dbadce6611529206387935d1e62f"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "replaces": "9ecd7282-056a-4612-b8b7-5cf7129488c6",
+  "created_at": "2026-09-22T19:46:25.435Z",
+  "updated_at": "2026-09-22T19:59:37.568Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-22T19:59:37.563Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

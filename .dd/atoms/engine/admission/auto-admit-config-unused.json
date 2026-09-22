@@ -1,0 +1,83 @@
+{
+  "id": "4cc886b4-d79a-46a1-85bb-b68c944fcf5c",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "claim",
+  "scope": "project",
+  "title": "config.json's auto_admit block is declared but never read",
+  "topic_key": "engine/admission/auto-admit-config-unused",
+  "trigger": "Touching admission policy, config.json's schema, or designing any per-type/per-source auto-promotion feature.",
+  "behavior_delta": "DEFAULT_CONFIG.auto_admit (src/store/paths.js:70-76, per memory_type: lesson/anti_memory/procedure/decision/claim, each defaulting to 'candidate') is NOT consumed anywhere in src/ -- confirmed by grepping the whole tree outside node_modules/.dd for `auto_admit`; the only hit is its own declaration. A project's .dd/config.json can override it (this project's does, setting anti_memory to 'active') with zero effect on actual behavior -- every proposal still lands as lifecycle_state:'candidate' via normalizeProposal regardless of this field. Do not assume editing it does anything; do not build a new admission-policy feature by 'just wiring up' this field without first deciding whether its per-type shape is actually the right one, since it was never load-bearing.",
+  "what": "DEFAULT_CONFIG.auto_admit (src/store/paths.js:70-76, per memory_type: lesson/anti_memory/procedure/decision/claim, each defaulting to 'candidate') is NOT consumed anywhere in src/ -- confirmed by grepping the whole tree outside node_modules/.dd for `auto_admit`; the only hit is its own declaration. A project's .dd/config.json can override it (this project's does, setting anti_memory to 'active') with zero effect on actual behavior -- every proposal still lands as lifecycle_state:'candidate' via normalizeProposal regardless of this field. Do not assume editing it does anything; do not build a new admission-policy feature by 'just wiring up' this field without first deciding whether its per-type shape is actually the right one, since it was never load-bearing.",
+  "why": "Found 2026-09-19 while designing an auto-accept feature (per-user config + confidence threshold) and checking for existing precedent -- wanted to know if DD already had an admission-policy mechanism before building a new one.",
+  "tags": [
+    "admission",
+    "config",
+    "dead-code",
+    "auto-accept"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/store/paths.js",
+      "summary": "DEFAULT_CONFIG.auto_admit declaration, lines ~70-76."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "grep -rn auto_admit --include=*.js --include=*.md . (excluding node_modules, .dd)",
+      "summary": "Only match is the declaration itself in src/store/paths.js -- no consumer anywhere."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T08:06:39.192Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "DEFAULT_CONFIG.auto_admit (src/store/paths.js:70-76, per memory_type: lesson/anti_memory/procedure/decision/claim, each defaulting to 'candidate') is NOT consumed anywhere in src/ -- confirmed by grepping the whole tree outside node_modules/.dd for `auto_admit`; the only hit is its own declaration. A project's .dd/config.json can override it (this project's does, setting anti_memory to 'active') with zero effect on actual behavior -- every proposal still lands as lifecycle_state:'candidate' via normalizeProposal regardless of this field. Do not assume editing it does anything; do not build a new admission-policy feature by 'just wiring up' this field without first deciding whether its per-type shape is actually the right one, since it was never load-bearing.",
+    "short": "DEFAULT_CONFIG.auto_admit (src/store/paths.js:70-76, per memory_type: lesson/anti_memory/procedure/decision/claim, each defaulting to 'candidate') is NOT consumed anywhere in src/ -- confirmed by grepping the whole tree outside node_modules/.dd for `auto_admit`; the only hit is its own declaration. A project's .dd/config.json can override it (this project's does, setting anti_memory to 'active') with zero effect on actual behavior -- every proposal still lands as lifecycle_state:'candidate' via normalizeProposal regardless of this field. Do not assume editing it does anything; do not build a new admission-policy feature by 'just wiring up' this field without first deciding whether its per-type shape is actually the right one, since it was never load-bearing. Why: Found 2026-09-19 while designing an auto-accept feature (per-user config + confidence threshold) and checking for existing precedent -- wanted to know if DD already had an admission-policy mechanism before building a new one.",
+    "full": "DEFAULT_CONFIG.auto_admit (src/store/paths.js:70-76, per memory_type: lesson/anti_memory/procedure/decision/claim, each defaulting to 'candidate') is NOT consumed anywhere in src/ -- confirmed by grepping the whole tree outside node_modules/.dd for `auto_admit`; the only hit is its own declaration. A project's .dd/config.json can override it (this project's does, setting anti_memory to 'active') with zero effect on actual behavior -- every proposal still lands as lifecycle_state:'candidate' via normalizeProposal regardless of this field. Do not assume editing it does anything; do not build a new admission-policy feature by 'just wiring up' this field without first deciding whether its per-type shape is actually the right one, since it was never load-bearing. Why: Found 2026-09-19 while designing an auto-accept feature (per-user config + confidence threshold) and checking for existing precedent -- wanted to know if DD already had an admission-policy mechanism before building a new one."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "0e53a905-c884-47a6-b2f4-e6d80ceb357b",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:10.016Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/store/paths.js",
+        "summary": "DEFAULT_CONFIG.auto_admit declaration, lines ~70-76.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d9b172b29abd2183117567b67789605f2312554abc6ebf5bf63375d2264a57c1"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "grep -rn auto_admit --include=*.js --include=*.md . (excluding node_modules, .dd)",
+        "summary": "Only match is the declaration itself in src/store/paths.js -- no consumer anywhere.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T08:06:39.323Z",
+  "updated_at": "2026-09-19T10:36:10.019Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:10.016Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

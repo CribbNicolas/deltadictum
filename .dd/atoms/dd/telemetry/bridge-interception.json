@@ -1,0 +1,92 @@
+{
+  "id": "b06e473d-1e2a-4379-9b9c-c2b2b6afb36f",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Check for a live audit UI before trusting a telemetry count",
+  "topic_key": "dd/telemetry/bridge-interception",
+  "trigger": "when DD telemetry looks empty or a hook's effect is missing from the store, or when measuring retrieval events, cap_saturation or activation counts",
+  "behavior_delta": "Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one.",
+  "what": "Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one.",
+  "why": "A stale audit UI from an older build silently absorbed every hook call while the current store stayed at zero retrieval events. The empty count reads as 'retrieval never ran' when the real cause is that another process answered.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/hooks/bridge.js",
+      "src/hooks/run.js"
+    ],
+    "components": [],
+    "operations": [
+      "debug",
+      "measure"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "The bridge gains a marker distinguishing a bridged response from a local one",
+      "path": "src/hooks/bridge.js",
+      "hash": "d2a71068c7099ab47c9f7d709e9806a40251637e7fce2f1dce410bf1ff12098b"
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/bridge.js",
+      "summary": "callRunningStore posts session-start, prompt and pre-tool to the URL in .dd/ui.json and returns the response"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/run.js",
+      "summary": "if (bridged) ok(bridged) short-circuits before openStore, so the local store is never touched"
+    }
+  ],
+  "authority": "validated",
+  "confidence": 0.765,
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T01:16:55.709Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one.",
+    "short": "Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one. Why: A stale audit UI from an older build silently absorbed every hook call while the current store stayed at zero retrieval events. The empty count reads as 'retrieval never ran' when the real cause is that another process answered.",
+    "full": "Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one. Why: A stale audit UI from an older build silently absorbed every hook call while the current store stayed at zero retrieval events. The empty count reads as 'retrieval never ran' when the real cause is that another process answered."
+  },
+  "registry_key_id": "22bc1142-55de-4dc6-9775-0495da8471ee",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:35:48.565Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/bridge.js",
+        "summary": "callRunningStore posts session-start, prompt and pre-tool to the URL in .dd/ui.json and returns the response",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d2a71068c7099ab47c9f7d709e9806a40251637e7fce2f1dce410bf1ff12098b"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/run.js",
+        "summary": "if (bridged) ok(bridged) short-circuits before openStore, so the local store is never touched",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "e175635fc60747ffb0bfb5a7e3d4631754b7a5b79b5e3a133d5bf8042fb36713"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T01:16:55.740Z",
+  "updated_at": "2026-09-19T10:35:48.568Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:35:48.565Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

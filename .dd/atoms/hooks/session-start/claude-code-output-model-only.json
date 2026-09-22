@@ -1,0 +1,114 @@
+{
+  "id": "3306d069-f9fa-4998-841c-072b7fc271e4",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Claude Code SessionStart systemMessage stopped reaching the terminal at v2.1.227+ (cross-validated against claude-mem)",
+  "topic_key": "hooks/session-start/claude-code-output-model-only",
+  "trigger": "Designing or debugging a DD hook (session-start.js, banner.js) that relies on systemMessage or hookSpecificOutput.additionalContext being shown to the human user for the SessionStart event under the Claude Code harness, or comparing DD's audit-UI pointer against how another plugin (e.g. claude-mem) surfaces a URL at session start.",
+  "behavior_delta": "Confirmed (not just documented, but cross-validated against a real third-party plugin's source) that DD's own systemMessage-on-SessionStart pattern in src/hooks/session-start.js is not broken or DD-specific -- it is the same pattern claude-mem uses (src/cli/handlers/context.ts on github.com/thedotmack/claude-mem: `systemMessage = ... 'View Observations Live @ http://localhost:' + port`). The Claude Agent SDK hooks reference states the terminal-surfacing behavior changed at Claude Code v2.1.227: before that version the SDK surfaced hook output in the message stream for SessionStart and Setup hooks; at v2.1.227+ it became conditional per event, and the SessionStart event's own doc section states its JSON output (both systemMessage and hookSpecificOutput.additionalContext) is displayed to the model only, never the user's terminal. This means: (1) do not chase this as a DD bug -- it is a platform-level regression/change affecting every plugin using this pattern, not something fixable from the hook side; (2) the only mechanism unaffected by this change is Claude Code's `statusLine` feature (a persistent status bar the user configures once in ~/.claude/settings.json), which does not go through the hook-output routing rules at all; (3) if the user's own Claude Code version is below 2.1.227, systemMessage-on-SessionStart may still work for them, so this is worth re-checking against `claude --version` before concluding it is broken.",
+  "what": "Confirmed (not just documented, but cross-validated against a real third-party plugin's source) that DD's own systemMessage-on-SessionStart pattern in src/hooks/session-start.js is not broken or DD-specific -- it is the same pattern claude-mem uses (src/cli/handlers/context.ts on github.com/thedotmack/claude-mem: `systemMessage = ... 'View Observations Live @ http://localhost:' + port`). The Claude Agent SDK hooks reference states the terminal-surfacing behavior changed at Claude Code v2.1.227: before that version the SDK surfaced hook output in the message stream for SessionStart and Setup hooks; at v2.1.227+ it became conditional per event, and the SessionStart event's own doc section states its JSON output (both systemMessage and hookSpecificOutput.additionalContext) is displayed to the model only, never the user's terminal. This means: (1) do not chase this as a DD bug -- it is a platform-level regression/change affecting every plugin using this pattern, not something fixable from the hook side; (2) the only mechanism unaffected by this change is Claude Code's `statusLine` feature (a persistent status bar the user configures once in ~/.claude/settings.json), which does not go through the hook-output routing rules at all; (3) if the user's own Claude Code version is below 2.1.227, systemMessage-on-SessionStart may still work for them, so this is worth re-checking against `claude --version` before concluding it is broken.",
+  "why": "User asked specifically how claude-mem manages to show a summary+URL at session start and wanted the same for DD. Fetched claude-mem's actual GitHub source (not the locally installed orphaned/minified plugin copy) via `gh api repos/thedotmack/claude-mem/contents/...` and found it uses the exact same systemMessage-on-SessionStart JSON field DD already uses, guarded by a `CLAUDE_MEM_CONTEXT_SHOW_TERMINAL_OUTPUT` setting whose very name assumes terminal display. Combined with the claude-code-guide subagent's earlier finding that Claude Code v2.1.227+ changed SessionStart's systemMessage routing to model-only, this explains why the user remembers seeing it working before (older Claude Code, or before the routing change) but does not see it now on their installed v2.1.278.",
+  "tags": [
+    "hooks",
+    "claude-code",
+    "harness-divergence",
+    "session-start",
+    "audit-ui",
+    "claude-mem"
+  ],
+  "trigger_variants": [
+    "Why doesn't the audit UI URL show up when Claude Code starts?",
+    "How does claude-mem show a summary and URL at session start -- can DD do the same?",
+    "systemMessage not appearing in Claude Code terminal on session start"
+  ],
+  "applies_to": {
+    "files": [
+      "src/hooks/session-start.js",
+      "src/hooks/banner.js",
+      "src/hooks/run.js"
+    ],
+    "components": [
+      "hooks",
+      "audit-ui-pointer"
+    ],
+    "operations": [
+      "session-start"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "manual",
+      "description": "Re-check Claude Code hooks docs and claude --version if the user reports the URL suddenly appearing or disappearing again, or before implementing any SessionStart-output-based fix."
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "gh api repos/thedotmack/claude-mem/contents/src/cli/handlers/context.ts",
+      "summary": "claude-mem's SessionStart handler builds systemMessage = `${displayContent}\\n\\nView Observations Live @ http://localhost:${port}...` and returns it alongside hookSpecificOutput.additionalContext -- the identical pattern used in DD's src/hooks/session-start.js."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "claude-code-guide subagent report (agent a5473d7aad046ef4a) + WebFetch of https://code.claude.com/docs/en/hooks#sessionstart",
+      "summary": "Official docs: 'On Claude Code v2.1.227 or later ... Whether [systemMessage surfaces] depends on the event. Before v2.1.227, the SDK surfaced hook output in the message stream only for SessionStart and Setup hooks.' And the SessionStart section itself: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal.'"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "bash: claude --version",
+      "summary": "Installed Claude Code version is 2.1.278, above the v2.1.227 gate, consistent with the user not seeing systemMessage in their terminal."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T14:21:45.423Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Confirmed (not just documented, but cross-validated against a real third-party plugin's source) that DD's own systemMessage-on-SessionStart pattern in src/hooks/session-start.js is not broken or DD-specific -- it is the same pattern claude-mem uses (src/cli/handlers/context.ts on github.com/thedotmack/claude-mem: `systemMessage = ... 'View Observations Live @ http://localhost:' + port`). The Claude Agent SDK hooks reference states the terminal-surfacing behavior changed at Claude Code v2.1.227: before that version the SDK surfaced hook output in the message stream for SessionStart and Setup hooks; at v2.1.227+ it became conditional per event, and the SessionStart event's own doc section states its JSON output (both systemMessage and hookSpecificOutput.additionalContext) is displayed to the model only, never the user's terminal. This means: (1) do not chase this as a DD bug -- it is a platform-level regression/change affecting every plugin using this pattern, not something fixable from the hook side; (2) the only mechanism unaffected by this change is Claude Code's `statusLine` feature (a persistent status bar the user configures once in ~/.claude/settings.json), which does not go through the hook-output routing rules at all; (3) if the user's own Claude Code version is below 2.1.227, systemMessage-on-SessionStart may still work for them, so this is worth re-checking against `claude --version` before concluding it is broken.",
+    "short": "Confirmed (not just documented, but cross-validated against a real third-party plugin's source) that DD's own systemMessage-on-SessionStart pattern in src/hooks/session-start.js is not broken or DD-specific -- it is the same pattern claude-mem uses (src/cli/handlers/context.ts on github.com/thedotmack/claude-mem: `systemMessage = ... 'View Observations Live @ http://localhost:' + port`). The Claude Agent SDK hooks reference states the terminal-surfacing behavior changed at Claude Code v2.1.227: before that version the SDK surfaced hook output in the message stream for SessionStart and Setup hooks; at v2.1.227+ it became conditional per event, and the SessionStart event's own doc section states its JSON output (both systemMessage and hookSpecificOutput.additionalContext) is displayed to the model only, never the user's terminal. This means: (1) do not chase this as a DD bug -- it is a platform-level regression/change affecting every plugin using this pattern, not something fixable from the hook side; (2) the only mechanism unaffected by this change is Claude Code's `statusLine` feature (a persistent status bar the user configures once in ~/.claude/settings.json), which does not go through the hook-output routing rules at all; (3) if the user's own Claude Code version is below 2.1.227, systemMessage-on-SessionStart may still work for them, so this is worth re-checking against `claude --version` before concluding it is broken. Why: User asked specifically how claude-mem manages to show a summary+URL at session start and wanted the same for DD. Fetched claude-mem's actual GitHub source (not the locally installed orphaned/minified plugin copy) via `gh api repos/thedotmack/claude-mem/contents/...` and found it uses the exact same systemMessage-on-SessionStart JSON field DD already uses, guarded by a `CLAUDE_MEM_CONTEXT_SHOW_TERMINAL_OUTPUT` setting whose very name assumes terminal display. Combined with the claude-code-guide subagent's earlier finding that Claude Code v2.1.227+ changed SessionStart's systemMessage routing to model-only, this explains why the user remembers seeing it working before (older Claude Code, or before the routing change) but does not see it now on their installed v2.1.278.",
+    "full": "Confirmed (not just documented, but cross-validated against a real third-party plugin's source) that DD's own systemMessage-on-SessionStart pattern in src/hooks/session-start.js is not broken or DD-specific -- it is the same pattern claude-mem uses (src/cli/handlers/context.ts on github.com/thedotmack/claude-mem: `systemMessage = ... 'View Observations Live @ http://localhost:' + port`). The Claude Agent SDK hooks reference states the terminal-surfacing behavior changed at Claude Code v2.1.227: before that version the SDK surfaced hook output in the message stream for SessionStart and Setup hooks; at v2.1.227+ it became conditional per event, and the SessionStart event's own doc section states its JSON output (both systemMessage and hookSpecificOutput.additionalContext) is displayed to the model only, never the user's terminal. This means: (1) do not chase this as a DD bug -- it is a platform-level regression/change affecting every plugin using this pattern, not something fixable from the hook side; (2) the only mechanism unaffected by this change is Claude Code's `statusLine` feature (a persistent status bar the user configures once in ~/.claude/settings.json), which does not go through the hook-output routing rules at all; (3) if the user's own Claude Code version is below 2.1.227, systemMessage-on-SessionStart may still work for them, so this is worth re-checking against `claude --version` before concluding it is broken. Why: User asked specifically how claude-mem manages to show a summary+URL at session start and wanted the same for DD. Fetched claude-mem's actual GitHub source (not the locally installed orphaned/minified plugin copy) via `gh api repos/thedotmack/claude-mem/contents/...` and found it uses the exact same systemMessage-on-SessionStart JSON field DD already uses, guarded by a `CLAUDE_MEM_CONTEXT_SHOW_TERMINAL_OUTPUT` setting whose very name assumes terminal display. Combined with the claude-code-guide subagent's earlier finding that Claude Code v2.1.227+ changed SessionStart's systemMessage routing to model-only, this explains why the user remembers seeing it working before (older Claude Code, or before the routing change) but does not see it now on their installed v2.1.278."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "9a43326f-1890-47ef-a7e7-7252c1ed89df",
+  "evidence_state": {
+    "checked_at": "2026-09-19T14:59:10.228Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "gh api repos/thedotmack/claude-mem/contents/src/cli/handlers/context.ts",
+        "summary": "claude-mem's SessionStart handler builds systemMessage = `${displayContent}\\n\\nView Observations Live @ http://localhost:${port}...` and returns it alongside hookSpecificOutput.additionalContext -- the identical pattern used in DD's src/hooks/session-start.js.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "claude-code-guide subagent report (agent a5473d7aad046ef4a) + WebFetch of https://code.claude.com/docs/en/hooks#sessionstart",
+        "summary": "Official docs: 'On Claude Code v2.1.227 or later ... Whether [systemMessage surfaces] depends on the event. Before v2.1.227, the SDK surfaced hook output in the message stream only for SessionStart and Setup hooks.' And the SessionStart section itself: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal.'",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "bash: claude --version",
+        "summary": "Installed Claude Code version is 2.1.278, above the v2.1.227 gate, consistent with the user not seeing systemMessage in their terminal.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T14:21:45.452Z",
+  "updated_at": "2026-09-19T14:59:10.234Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T14:59:10.228Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

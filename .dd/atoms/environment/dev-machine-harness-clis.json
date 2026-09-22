@@ -1,0 +1,83 @@
+{
+  "id": "098759d4-731d-446a-9f5e-90f4f1fc3a8e",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "claim",
+  "scope": "user",
+  "title": "Grok Build and OpenCode CLIs are actually installed on this dev machine",
+  "topic_key": "environment/dev-machine-harness-clis",
+  "trigger": "Deciding whether a Grok Build or OpenCode integration check can be run directly versus deferred as \"manual verification, not available in this environment.\"",
+  "behavior_delta": "Both `grok` (Grok Build, confirmed v1.0.25 here) and `opencode` (confirmed v1.16.2 here) are real, working CLIs on this machine -- `which grok` / `which opencode` both resolve. Useful subcommands confirmed working: `grok inspect` (lists discovered instructions/skills/hooks/MCP servers for the current project), `grok plugin validate <path>` (validates a plugin manifest, reports discovered components including auto-discovered skills/ and .mcp.json), and `opencode debug startup` (loads configured plugins, including a local file:// path in the `plugin` array, and reports whether startup completed without an import-time crash). Prefer running these directly over assuming a harness integration can only get a manual, unverified check.",
+  "what": "Both `grok` (Grok Build, confirmed v1.0.25 here) and `opencode` (confirmed v1.16.2 here) are real, working CLIs on this machine -- `which grok` / `which opencode` both resolve. Useful subcommands confirmed working: `grok inspect` (lists discovered instructions/skills/hooks/MCP servers for the current project), `grok plugin validate <path>` (validates a plugin manifest, reports discovered components including auto-discovered skills/ and .mcp.json), and `opencode debug startup` (loads configured plugins, including a local file:// path in the `plugin` array, and reports whether startup completed without an import-time crash). Prefer running these directly over assuming a harness integration can only get a manual, unverified check.",
+  "why": "Discovered 2026-09-19 while executing docs/plans/2026-09-19-harness-native-install-plan.md Tasks 2 and 4, which had planned for `grok inspect` / a live OpenCode session as manual, likely-unavailable steps -- both tools turned out to be present and gave real signal (grok plugin validate . passed; opencode debug startup completed clean).",
+  "tags": [
+    "environment",
+    "grok-build",
+    "opencode",
+    "tooling",
+    "verification"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "grok inspect / grok plugin validate . (this session, 2026-09-19)",
+      "summary": "Confirmed grok v1.0.25 installed and working against this repository, including auto-discovery of skills/ and .mcp.json as plugin components."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "opencode debug startup (this session, 2026-09-19)",
+      "summary": "Confirmed opencode v1.16.2 installed and working, including resolving a local file:// plugin path."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T06:24:22.839Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Both `grok` (Grok Build, confirmed v1.0.25 here) and `opencode` (confirmed v1.16.2 here) are real, working CLIs on this machine -- `which grok` / `which opencode` both resolve. Useful subcommands confirmed working: `grok inspect` (lists discovered instructions/skills/hooks/MCP servers for the current project), `grok plugin validate <path>` (validates a plugin manifest, reports discovered components including auto-discovered skills/ and .mcp.json), and `opencode debug startup` (loads configured plugins, including a local file:// path in the `plugin` array, and reports whether startup completed without an import-time crash). Prefer running these directly over assuming a harness integration can only get a manual, unverified check.",
+    "short": "Both `grok` (Grok Build, confirmed v1.0.25 here) and `opencode` (confirmed v1.16.2 here) are real, working CLIs on this machine -- `which grok` / `which opencode` both resolve. Useful subcommands confirmed working: `grok inspect` (lists discovered instructions/skills/hooks/MCP servers for the current project), `grok plugin validate <path>` (validates a plugin manifest, reports discovered components including auto-discovered skills/ and .mcp.json), and `opencode debug startup` (loads configured plugins, including a local file:// path in the `plugin` array, and reports whether startup completed without an import-time crash). Prefer running these directly over assuming a harness integration can only get a manual, unverified check. Why: Discovered 2026-09-19 while executing docs/plans/2026-09-19-harness-native-install-plan.md Tasks 2 and 4, which had planned for `grok inspect` / a live OpenCode session as manual, likely-unavailable steps -- both tools turned out to be present and gave real signal (grok plugin validate . passed; opencode debug startup completed clean).",
+    "full": "Both `grok` (Grok Build, confirmed v1.0.25 here) and `opencode` (confirmed v1.16.2 here) are real, working CLIs on this machine -- `which grok` / `which opencode` both resolve. Useful subcommands confirmed working: `grok inspect` (lists discovered instructions/skills/hooks/MCP servers for the current project), `grok plugin validate <path>` (validates a plugin manifest, reports discovered components including auto-discovered skills/ and .mcp.json), and `opencode debug startup` (loads configured plugins, including a local file:// path in the `plugin` array, and reports whether startup completed without an import-time crash). Prefer running these directly over assuming a harness integration can only get a manual, unverified check. Why: Discovered 2026-09-19 while executing docs/plans/2026-09-19-harness-native-install-plan.md Tasks 2 and 4, which had planned for `grok inspect` / a live OpenCode session as manual, likely-unavailable steps -- both tools turned out to be present and gave real signal (grok plugin validate . passed; opencode debug startup completed clean)."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "fa2e69fe-0d28-43a8-8321-e55e89ba9c7c",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:06.701Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "grok inspect / grok plugin validate . (this session, 2026-09-19)",
+        "summary": "Confirmed grok v1.0.25 installed and working against this repository, including auto-discovery of skills/ and .mcp.json as plugin components.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "opencode debug startup (this session, 2026-09-19)",
+        "summary": "Confirmed opencode v1.16.2 installed and working, including resolving a local file:// plugin path.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T06:24:22.941Z",
+  "updated_at": "2026-09-19T10:36:06.704Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:06.701Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

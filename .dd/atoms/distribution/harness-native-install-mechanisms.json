@@ -1,0 +1,87 @@
+{
+  "id": "1b8bdaba-9f19-489e-a2e1-56b8f1c7ecf4",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "claim",
+  "scope": "project",
+  "title": "Native plugin/install mechanism per coding-agent harness (2026) -- revised: OpenCode has no per-tool context-injection hook",
+  "topic_key": "distribution/harness-native-install-mechanisms",
+  "trigger": "Designing or implementing how DD is installed/distributed into a target project for Claude Code, Grok Build, OpenCode, or Codex.",
+  "behavior_delta": "Supersedes the OpenCode row of the prior version of this memory (id 23b85e93), which assumed tool.execute.before/session.created/session.idle could carry DD's advisory context the way Claude Code's PreToolUse does. Confirmed false by reading @opencode-ai/plugin@1.18.31's actual .d.ts and a real installed plugin's source (opencode-helicone-session): tool.execute.before's output is {args} only, no text-injection field; event (session lifecycle) returns void, no output object at all. The ONLY OpenCode hook that accepts injectable text is experimental.chat.system.transform: (input:{sessionID?,model}, output:{system:string[]}), firing once per chat turn, not once per tool call -- there is no OpenCode hook shaped like Claude Code's PreToolUse. tool.execute.after's output ({title,output,metadata}) also has no structured exit/error signal, so wiring tool-execution observation there risks misclassifying results rather than skipping them as unknown. The other three rows (Claude Code marketplace, Grok Build marketplace mirroring it almost exactly including auto-discovery of root-level skills/ and .mcp.json, Codex having no marketplace/npm-pull at all) held up under implementation and stay as originally recorded.",
+  "what": "Supersedes the OpenCode row of the prior version of this memory (id 23b85e93), which assumed tool.execute.before/session.created/session.idle could carry DD's advisory context the way Claude Code's PreToolUse does. Confirmed false by reading @opencode-ai/plugin@1.18.31's actual .d.ts and a real installed plugin's source (opencode-helicone-session): tool.execute.before's output is {args} only, no text-injection field; event (session lifecycle) returns void, no output object at all. The ONLY OpenCode hook that accepts injectable text is experimental.chat.system.transform: (input:{sessionID?,model}, output:{system:string[]}), firing once per chat turn, not once per tool call -- there is no OpenCode hook shaped like Claude Code's PreToolUse. tool.execute.after's output ({title,output,metadata}) also has no structured exit/error signal, so wiring tool-execution observation there risks misclassifying results rather than skipping them as unknown. The other three rows (Claude Code marketplace, Grok Build marketplace mirroring it almost exactly including auto-discovery of root-level skills/ and .mcp.json, Codex having no marketplace/npm-pull at all) held up under implementation and stay as originally recorded.",
+  "why": "Verified 2026-09-19 while implementing adapters/opencode/index.js for docs/plans/2026-09-19-harness-native-install-plan.md Task 4. The first version of this memory was written from doc-summary research only (WebFetch of opencode.ai/docs/plugins/, which described hook *names* but not exact signatures); this revision is from reading the actual published type definitions and a real plugin's compiled source before writing any code, exactly the verification step the plan's own Task 4 Step 1 required.",
+  "tags": [
+    "distribution",
+    "opencode",
+    "claude-code",
+    "grok-build",
+    "codex",
+    "marketplace",
+    "npx"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "adapters/opencode/index.js",
+      "summary": "Header comment cites the exact @opencode-ai/plugin version and real reference plugin read before writing the shim; the shim itself only wires experimental.chat.system.transform, nothing per-tool."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "docs/integrations/opencode.md",
+      "summary": "States the confirmed hook-signature findings and what was/wasn't verified (opencode debug startup ran clean; live mid-conversation firing not verified)."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T06:24:22.703Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Supersedes the OpenCode row of the prior version of this memory (id 23b85e93), which assumed tool.execute.before/session.created/session.idle could carry DD's advisory context the way Claude Code's PreToolUse does. Confirmed false by reading @opencode-ai/plugin@1.18.31's actual .d.ts and a real installed plugin's source (opencode-helicone-session): tool.execute.before's output is {args} only, no text-injection field; event (session lifecycle) returns void, no output object at all. The ONLY OpenCode hook that accepts injectable text is experimental.chat.system.transform: (input:{sessionID?,model}, output:{system:string[]}), firing once per chat turn, not once per tool call -- there is no OpenCode hook shaped like Claude Code's PreToolUse. tool.execute.after's output ({title,output,metadata}) also has no structured exit/error signal, so wiring tool-execution observation there risks misclassifying results rather than skipping them as unknown. The other three rows (Claude Code marketplace, Grok Build marketplace mirroring it almost exactly including auto-discovery of root-level skills/ and .mcp.json, Codex having no marketplace/npm-pull at all) held up under implementation and stay as originally recorded.",
+    "short": "Supersedes the OpenCode row of the prior version of this memory (id 23b85e93), which assumed tool.execute.before/session.created/session.idle could carry DD's advisory context the way Claude Code's PreToolUse does. Confirmed false by reading @opencode-ai/plugin@1.18.31's actual .d.ts and a real installed plugin's source (opencode-helicone-session): tool.execute.before's output is {args} only, no text-injection field; event (session lifecycle) returns void, no output object at all. The ONLY OpenCode hook that accepts injectable text is experimental.chat.system.transform: (input:{sessionID?,model}, output:{system:string[]}), firing once per chat turn, not once per tool call -- there is no OpenCode hook shaped like Claude Code's PreToolUse. tool.execute.after's output ({title,output,metadata}) also has no structured exit/error signal, so wiring tool-execution observation there risks misclassifying results rather than skipping them as unknown. The other three rows (Claude Code marketplace, Grok Build marketplace mirroring it almost exactly including auto-discovery of root-level skills/ and .mcp.json, Codex having no marketplace/npm-pull at all) held up under implementation and stay as originally recorded. Why: Verified 2026-09-19 while implementing adapters/opencode/index.js for docs/plans/2026-09-19-harness-native-install-plan.md Task 4. The first version of this memory was written from doc-summary research only (WebFetch of opencode.ai/docs/plugins/, which described hook *names* but not exact signatures); this revision is from reading the actual published type definitions and a real plugin's compiled source before writing any code, exactly the verification step the plan's own Task 4 Step 1 required.",
+    "full": "Supersedes the OpenCode row of the prior version of this memory (id 23b85e93), which assumed tool.execute.before/session.created/session.idle could carry DD's advisory context the way Claude Code's PreToolUse does. Confirmed false by reading @opencode-ai/plugin@1.18.31's actual .d.ts and a real installed plugin's source (opencode-helicone-session): tool.execute.before's output is {args} only, no text-injection field; event (session lifecycle) returns void, no output object at all. The ONLY OpenCode hook that accepts injectable text is experimental.chat.system.transform: (input:{sessionID?,model}, output:{system:string[]}), firing once per chat turn, not once per tool call -- there is no OpenCode hook shaped like Claude Code's PreToolUse. tool.execute.after's output ({title,output,metadata}) also has no structured exit/error signal, so wiring tool-execution observation there risks misclassifying results rather than skipping them as unknown. The other three rows (Claude Code marketplace, Grok Build marketplace mirroring it almost exactly including auto-discovery of root-level skills/ and .mcp.json, Codex having no marketplace/npm-pull at all) held up under implementation and stay as originally recorded. Why: Verified 2026-09-19 while implementing adapters/opencode/index.js for docs/plans/2026-09-19-harness-native-install-plan.md Task 4. The first version of this memory was written from doc-summary research only (WebFetch of opencode.ai/docs/plugins/, which described hook *names* but not exact signatures); this revision is from reading the actual published type definitions and a real plugin's compiled source before writing any code, exactly the verification step the plan's own Task 4 Step 1 required."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "cb4f10f3-e385-4b82-b9a6-240e6c8c58ab",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:00.225Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "adapters/opencode/index.js",
+        "summary": "Header comment cites the exact @opencode-ai/plugin version and real reference plugin read before writing the shim; the shim itself only wires experimental.chat.system.transform, nothing per-tool.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "df961c3f2329e95b26d71005328555604bdac0a414352fa90e18ff0001fe4562"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "docs/integrations/opencode.md",
+        "summary": "States the confirmed hook-signature findings and what was/wasn't verified (opencode debug startup ran clean; live mid-conversation firing not verified).",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "ad826e11fc02154fc61b57c8c57a54335087329e05ea2c0e065377d0585b7805"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T06:24:22.708Z",
+  "updated_at": "2026-09-19T10:36:00.228Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:00.225Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

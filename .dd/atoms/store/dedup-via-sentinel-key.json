@@ -1,0 +1,82 @@
+{
+  "id": "a6d05274-6b25-4a62-9c5a-d7ac9739bdd8",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Before adding a new table or a new in-memory flag, check whether an existing telemetry/dedup table c",
+  "topic_key": "store/dedup-via-sentinel-key",
+  "trigger": "Needing to deduplicate or cache a non-atom concept (a whole session's context blob, a computed aggregate, etc.) against something already tracked in an atom-shaped table like session_deliveries.",
+  "behavior_delta": "Before adding a new table or a new in-memory flag, check whether an existing telemetry/dedup table can be reused by inserting a sentinel key (e.g. atom_id = '__session_context__') that never collides with a real id. src/hooks/session-start.js does this to dedupe the full SessionStart advisory blob against session_deliveries (built for per-atom delivery tracking) instead of adding a parallel mechanism, and inherits its existing recency window, its clearSessionDeliveries cleanup on compact/clear, and its retention pruning for free. Document the reuse with a one-line comment where the sentinel is defined, since a future reader joining that table against memory_atoms would otherwise wrongly assume every row names a real atom.",
+  "what": "Before adding a new table or a new in-memory flag, check whether an existing telemetry/dedup table can be reused by inserting a sentinel key (e.g. atom_id = '__session_context__') that never collides with a real id. src/hooks/session-start.js does this to dedupe the full SessionStart advisory blob against session_deliveries (built for per-atom delivery tracking) instead of adding a parallel mechanism, and inherits its existing recency window, its clearSessionDeliveries cleanup on compact/clear, and its retention pruning for free. Document the reuse with a one-line comment where the sentinel is defined, since a future reader joining that table against memory_atoms would otherwise wrongly assume every row names a real atom.",
+  "why": "Found while implementing a fix for SessionStart resending its full project-context blob on every reconnect: reusing session_deliveries with a sentinel id was safer and cheaper than guessing at harness-specific `source` values or building a second dedup path, and it degrades correctly (falls back to the old always-send behavior) on any harness whose session_id semantics differ or are absent.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/hooks/session-start.js",
+      "src/store/telemetry.js"
+    ],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/session-start.js",
+      "summary": "buildSessionStartContext uses SESSION_CONTEXT_ATOM_ID as a sentinel row in session_deliveries to dedupe the advisory blob across reconnects."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/store/telemetry.js",
+      "summary": "session_deliveries's wasDelivered/markDelivered/clearSessionDeliveries have no foreign key on atom_id, so a sentinel string is a safe reuse."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T10:14:26.332Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Before adding a new table or a new in-memory flag, check whether an existing telemetry/dedup table can be reused by inserting a sentinel key (e.g. atom_id = '__session_context__') that never collides with a real id. src/hooks/session-start.js does this to dedupe the full SessionStart advisory blob against session_deliveries (built for per-atom delivery tracking) instead of adding a parallel mechanism, and inherits its existing recency window, its clearSessionDeliveries cleanup on compact/clear, and its retention pruning for free. Document the reuse with a one-line comment where the sentinel is defined, since a future reader joining that table against memory_atoms would otherwise wrongly assume every row names a real atom.",
+    "short": "Before adding a new table or a new in-memory flag, check whether an existing telemetry/dedup table can be reused by inserting a sentinel key (e.g. atom_id = '__session_context__') that never collides with a real id. src/hooks/session-start.js does this to dedupe the full SessionStart advisory blob against session_deliveries (built for per-atom delivery tracking) instead of adding a parallel mechanism, and inherits its existing recency window, its clearSessionDeliveries cleanup on compact/clear, and its retention pruning for free. Document the reuse with a one-line comment where the sentinel is defined, since a future reader joining that table against memory_atoms would otherwise wrongly assume every row names a real atom. Why: Found while implementing a fix for SessionStart resending its full project-context blob on every reconnect: reusing session_deliveries with a sentinel id was safer and cheaper than guessing at harness-specific `source` values or building a second dedup path, and it degrades correctly (falls back to the old always-send behavior) on any harness whose session_id semantics differ or are absent.",
+    "full": "Before adding a new table or a new in-memory flag, check whether an existing telemetry/dedup table can be reused by inserting a sentinel key (e.g. atom_id = '__session_context__') that never collides with a real id. src/hooks/session-start.js does this to dedupe the full SessionStart advisory blob against session_deliveries (built for per-atom delivery tracking) instead of adding a parallel mechanism, and inherits its existing recency window, its clearSessionDeliveries cleanup on compact/clear, and its retention pruning for free. Document the reuse with a one-line comment where the sentinel is defined, since a future reader joining that table against memory_atoms would otherwise wrongly assume every row names a real atom. Why: Found while implementing a fix for SessionStart resending its full project-context blob on every reconnect: reusing session_deliveries with a sentinel id was safer and cheaper than guessing at harness-specific `source` values or building a second dedup path, and it degrades correctly (falls back to the old always-send behavior) on any harness whose session_id semantics differ or are absent."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "3bd3efaa-811d-4cfa-999e-f6a51d7a4b34",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:36:28.817Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/session-start.js",
+        "summary": "buildSessionStartContext uses SESSION_CONTEXT_ATOM_ID as a sentinel row in session_deliveries to dedupe the advisory blob across reconnects.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6df9db99e7a1a5fd44756d70117441527152deb42722f274d8ee5c1b1c955594"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/store/telemetry.js",
+        "summary": "session_deliveries's wasDelivered/markDelivered/clearSessionDeliveries have no foreign key on atom_id, so a sentinel string is a safe reuse.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d0c1641acbb89d922194ee6dc02b069dd5fd2e3582cee70ff5d6a6273fa76619"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T10:14:26.360Z",
+  "updated_at": "2026-09-19T10:36:28.820Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:36:28.817Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

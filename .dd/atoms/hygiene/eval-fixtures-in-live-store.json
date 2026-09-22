@@ -1,0 +1,81 @@
+{
+  "id": "4714630f-2317-4326-adf5-be31e78b9587",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "anti_memory",
+  "scope": "project",
+  "title": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/",
+  "topic_key": "hygiene/eval-fixtures-in-live-store",
+  "trigger": "when reviewing pending or active memories in this project's own DD store during an audit, or when writing/running a test that seeds memories through proposeMemory/putAtom for evaluation purposes",
+  "behavior_delta": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/ combined with a `why` mentioning 'eval fixture' or 'safe to delete' — that combination is a strong signal it is leftover test content mistakenly promoted into a real project's live store. Reject or flag it for deletion in the audit UI instead. A full audit of this project's own store (2026-09-19) found 10 such memories sitting `active` under project_id 'supermem' with content copied from tests/engine/health/abstention-eval.test.js, several already delivered as real advisory context in real sessions (activation_count > 0). The eval harness's own fixtures (src/eval/replay.js's evaluationStore()) are correctly isolated in a separate temp store under project_id 'eval' and never touch a real project's store — the contamination found came from fixture content copied into the real store some other way (manual proposal or exploratory testing), not a bug in the eval harness itself.",
+  "what": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/ combined with a `why` mentioning 'eval fixture' or 'safe to delete' — that combination is a strong signal it is leftover test content mistakenly promoted into a real project's live store. Reject or flag it for deletion in the audit UI instead. A full audit of this project's own store (2026-09-19) found 10 such memories sitting `active` under project_id 'supermem' with content copied from tests/engine/health/abstention-eval.test.js, several already delivered as real advisory context in real sessions (activation_count > 0). The eval harness's own fixtures (src/eval/replay.js's evaluationStore()) are correctly isolated in a separate temp store under project_id 'eval' and never touch a real project's store — the contamination found came from fixture content copied into the real store some other way (manual proposal or exploratory testing), not a bug in the eval harness itself.",
+  "why": "Ten memories with identical boilerplate (`why: 'Eval fixture for retrieve quality. Safe to delete later.'`) were live and retrievable in this project's real store, spending real retrieval budget and occasionally getting injected into real coding sessions as if they were genuine lessons about this codebase.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [],
+    "components": [],
+    "operations": [
+      "review"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "tests/engine/health/abstention-eval.test.js",
+      "summary": "Source of the fixture content that was copied into the real project_id:'supermem' store; the test itself correctly uses project_id 'demo' in an isolated store."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/eval/replay.js",
+      "summary": "The correct isolation pattern: evaluationStore() seeds fixtures under project_id 'eval' in a separate mkdtemp store, never the real project's store."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-19T10:22:22.828Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/ combined with a `why` mentioning 'eval fixture' or 'safe to delete' — that combination is a strong signal it is leftover test content mistakenly promoted into a real project's live store. Reject or flag it for deletion in the audit UI instead. A full audit of this project's own store (2026-09-19) found 10 such memories sitting `active` under project_id 'supermem' with content copied from tests/engine/health/abstention-eval.test.js, several already delivered as real advisory context in real sessions (activation_count > 0). The eval harness's own fixtures (src/eval/replay.js's evaluationStore()) are correctly isolated in a separate temp store under project_id 'eval' and never touch a real project's store — the contamination found came from fixture content copied into the real store some other way (manual proposal or exploratory testing), not a bug in the eval harness itself.",
+    "short": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/ combined with a `why` mentioning 'eval fixture' or 'safe to delete' — that combination is a strong signal it is leftover test content mistakenly promoted into a real project's live store. Reject or flag it for deletion in the audit UI instead. A full audit of this project's own store (2026-09-19) found 10 such memories sitting `active` under project_id 'supermem' with content copied from tests/engine/health/abstention-eval.test.js, several already delivered as real advisory context in real sessions (activation_count > 0). The eval harness's own fixtures (src/eval/replay.js's evaluationStore()) are correctly isolated in a separate temp store under project_id 'eval' and never touch a real project's store — the contamination found came from fixture content copied into the real store some other way (manual proposal or exploratory testing), not a bug in the eval harness itself. Why: Ten memories with identical boilerplate (`why: 'Eval fixture for retrieve quality. Safe to delete later.'`) were live and retrievable in this project's real store, spending real retrieval budget and occasionally getting injected into real coding sessions as if they were genuine lessons about this codebase.",
+    "full": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/ combined with a `why` mentioning 'eval fixture' or 'safe to delete' — that combination is a strong signal it is leftover test content mistakenly promoted into a real project's live store. Reject or flag it for deletion in the audit UI instead. A full audit of this project's own store (2026-09-19) found 10 such memories sitting `active` under project_id 'supermem' with content copied from tests/engine/health/abstention-eval.test.js, several already delivered as real advisory context in real sessions (activation_count > 0). The eval harness's own fixtures (src/eval/replay.js's evaluationStore()) are correctly isolated in a separate temp store under project_id 'eval' and never touch a real project's store — the contamination found came from fixture content copied into the real store some other way (manual proposal or exploratory testing), not a bug in the eval harness itself. Why: Ten memories with identical boilerplate (`why: 'Eval fixture for retrieve quality. Safe to delete later.'`) were live and retrievable in this project's real store, spending real retrieval budget and occasionally getting injected into real coding sessions as if they were genuine lessons about this codebase."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "5e647aac-2ef8-42fb-85a4-18a7f2b65e2f",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:35:36.345Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "tests/engine/health/abstention-eval.test.js",
+        "summary": "Source of the fixture content that was copied into the real project_id:'supermem' store; the test itself correctly uses project_id 'demo' in an isolated store.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "dc6c8cf115c1a5a07c31221b4be873476374af1bdb0a07d9a6e25c08515ea6dc"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/eval/replay.js",
+        "summary": "The correct isolation pattern: evaluationStore() seeds fixtures under project_id 'eval' in a separate mkdtemp store, never the real project's store.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "28e0ff50434c7af34275d3beba76e427d129731495f3f0fafddb93ddc7f725d0"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T10:22:22.873Z",
+  "updated_at": "2026-09-19T10:35:36.347Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:35:36.345Z",
+    "rationale": "Reviewed as proposed."
+  }
+}

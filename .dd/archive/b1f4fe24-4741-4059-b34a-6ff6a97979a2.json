@@ -1,0 +1,116 @@
+{
+  "id": "b1f4fe24-4741-4059-b34a-6ff6a97979a2",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Claude Code SessionStart hook output never reaches the terminal",
+  "topic_key": "hooks/session-start/claude-code-output-model-only",
+  "trigger": "Designing or debugging a DD hook (session-start.js, banner.js) that relies on systemMessage or hookSpecificOutput.additionalContext being shown to the human user, specifically for the SessionStart event under the Claude Code harness.",
+  "behavior_delta": "Do not assume systemMessage or additionalContext from a SessionStart hook is visible to the person in Claude Code. Per Claude Code's own hooks reference, ALL SessionStart hook JSON output (systemMessage AND hookSpecificOutput.additionalContext) is delivered to the model only, never printed to the user's terminal, and exit code 2 is not honored for this event. This is a per-harness divergence (L4 in docs/architecture/plugin-constraints.md): other harnesses (Codex, opencode) may print SessionStart hook stdout straight to the user's terminal, so a URL/banner that appears there will not appear the same way in Claude Code. The comment in src/hooks/session-start.js ('systemMessage is the line the person sees') is stale/incorrect for Claude Code and should not be trusted as harness-general truth. The only way the audit UI URL reaches the Claude Code user is via the model relaying it in a reply, or the user starting the audit UI process directly and reading its own stdout.",
+  "what": "Do not assume systemMessage or additionalContext from a SessionStart hook is visible to the person in Claude Code. Per Claude Code's own hooks reference, ALL SessionStart hook JSON output (systemMessage AND hookSpecificOutput.additionalContext) is delivered to the model only, never printed to the user's terminal, and exit code 2 is not honored for this event. This is a per-harness divergence (L4 in docs/architecture/plugin-constraints.md): other harnesses (Codex, opencode) may print SessionStart hook stdout straight to the user's terminal, so a URL/banner that appears there will not appear the same way in Claude Code. The comment in src/hooks/session-start.js ('systemMessage is the line the person sees') is stale/incorrect for Claude Code and should not be trusted as harness-general truth. The only way the audit UI URL reaches the Claude Code user is via the model relaying it in a reply, or the user starting the audit UI process directly and reading its own stdout.",
+  "why": "User asked why the audit UI URL doesn't appear at Claude Code startup like it does in other harnesses. Investigated via claude-code-guide subagent, which fetched the official Claude Code hooks docs (code.claude.com/docs/en/hooks, SessionStart section) and got the explicit quote: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal.' Confirmed against installed version 2.1.278 (feature gate mentioned in docs is v2.1.227+, so the current behavior is the documented terminal-suppression, not a version-lag issue).",
+  "tags": [
+    "hooks",
+    "claude-code",
+    "harness-divergence",
+    "session-start",
+    "audit-ui"
+  ],
+  "trigger_variants": [
+    "Why doesn't the audit UI URL show up when Claude Code starts?",
+    "systemMessage not appearing in Claude Code terminal on session start",
+    "SessionStart hook output routing in Claude Code"
+  ],
+  "applies_to": {
+    "files": [
+      "src/hooks/session-start.js",
+      "src/hooks/banner.js",
+      "src/hooks/run.js",
+      "docs/architecture/plugin-constraints.md"
+    ],
+    "components": [
+      "hooks",
+      "audit-ui-pointer"
+    ],
+    "operations": [
+      "session-start"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "manual",
+      "description": "Re-check Claude Code hooks docs if a future Claude Code release changelog mentions SessionStart output display changes."
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "claude-code-guide subagent report + WebFetch of https://code.claude.com/docs/en/hooks#sessionstart",
+      "summary": "Official docs quote: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal. The systemMessage and hookSpecificOutput.additionalContext fields ... are not shown directly to the user in the terminal.'"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/session-start.js",
+      "summary": "Comment claims systemMessage 'is the line the person sees' -- contradicted by current Claude Code docs for the SessionStart event specifically."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "bash: claude --version",
+      "summary": "Installed Claude Code version 2.1.278, above the v2.1.227 gate the docs mention, ruling out version-lag as the explanation."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-19T14:11:03.337Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Do not assume systemMessage or additionalContext from a SessionStart hook is visible to the person in Claude Code. Per Claude Code's own hooks reference, ALL SessionStart hook JSON output (systemMessage AND hookSpecificOutput.additionalContext) is delivered to the model only, never printed to the user's terminal, and exit code 2 is not honored for this event. This is a per-harness divergence (L4 in docs/architecture/plugin-constraints.md): other harnesses (Codex, opencode) may print SessionStart hook stdout straight to the user's terminal, so a URL/banner that appears there will not appear the same way in Claude Code. The comment in src/hooks/session-start.js ('systemMessage is the line the person sees') is stale/incorrect for Claude Code and should not be trusted as harness-general truth. The only way the audit UI URL reaches the Claude Code user is via the model relaying it in a reply, or the user starting the audit UI process directly and reading its own stdout.",
+    "short": "Do not assume systemMessage or additionalContext from a SessionStart hook is visible to the person in Claude Code. Per Claude Code's own hooks reference, ALL SessionStart hook JSON output (systemMessage AND hookSpecificOutput.additionalContext) is delivered to the model only, never printed to the user's terminal, and exit code 2 is not honored for this event. This is a per-harness divergence (L4 in docs/architecture/plugin-constraints.md): other harnesses (Codex, opencode) may print SessionStart hook stdout straight to the user's terminal, so a URL/banner that appears there will not appear the same way in Claude Code. The comment in src/hooks/session-start.js ('systemMessage is the line the person sees') is stale/incorrect for Claude Code and should not be trusted as harness-general truth. The only way the audit UI URL reaches the Claude Code user is via the model relaying it in a reply, or the user starting the audit UI process directly and reading its own stdout. Why: User asked why the audit UI URL doesn't appear at Claude Code startup like it does in other harnesses. Investigated via claude-code-guide subagent, which fetched the official Claude Code hooks docs (code.claude.com/docs/en/hooks, SessionStart section) and got the explicit quote: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal.' Confirmed against installed version 2.1.278 (feature gate mentioned in docs is v2.1.227+, so the current behavior is the documented terminal-suppression, not a version-lag issue).",
+    "full": "Do not assume systemMessage or additionalContext from a SessionStart hook is visible to the person in Claude Code. Per Claude Code's own hooks reference, ALL SessionStart hook JSON output (systemMessage AND hookSpecificOutput.additionalContext) is delivered to the model only, never printed to the user's terminal, and exit code 2 is not honored for this event. This is a per-harness divergence (L4 in docs/architecture/plugin-constraints.md): other harnesses (Codex, opencode) may print SessionStart hook stdout straight to the user's terminal, so a URL/banner that appears there will not appear the same way in Claude Code. The comment in src/hooks/session-start.js ('systemMessage is the line the person sees') is stale/incorrect for Claude Code and should not be trusted as harness-general truth. The only way the audit UI URL reaches the Claude Code user is via the model relaying it in a reply, or the user starting the audit UI process directly and reading its own stdout. Why: User asked why the audit UI URL doesn't appear at Claude Code startup like it does in other harnesses. Investigated via claude-code-guide subagent, which fetched the official Claude Code hooks docs (code.claude.com/docs/en/hooks, SessionStart section) and got the explicit quote: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal.' Confirmed against installed version 2.1.278 (feature gate mentioned in docs is v2.1.227+, so the current behavior is the documented terminal-suppression, not a version-lag issue)."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "9a43326f-1890-47ef-a7e7-7252c1ed89df",
+  "evidence_state": {
+    "checked_at": "2026-09-19T14:35:50.204Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "claude-code-guide subagent report + WebFetch of https://code.claude.com/docs/en/hooks#sessionstart",
+        "summary": "Official docs quote: 'Hook JSON output for SessionStart is displayed to the model only, not to the user's terminal. The systemMessage and hookSpecificOutput.additionalContext fields ... are not shown directly to the user in the terminal.'",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/session-start.js",
+        "summary": "Comment claims systemMessage 'is the line the person sees' -- contradicted by current Claude Code docs for the SessionStart event specifically.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6df9db99e7a1a5fd44756d70117441527152deb42722f274d8ee5c1b1c955594"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "bash: claude --version",
+        "summary": "Installed Claude Code version 2.1.278, above the v2.1.227 gate the docs mention, ruling out version-lag as the explanation.",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T14:11:03.366Z",
+  "updated_at": "2026-09-19T14:59:10.234Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T14:35:50.204Z",
+    "rationale": "Reviewed as proposed."
+  },
+  "superseded_by": "3306d069-f9fa-4998-841c-072b7fc271e4"
+}

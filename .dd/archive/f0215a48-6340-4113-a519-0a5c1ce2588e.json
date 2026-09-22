@@ -1,0 +1,112 @@
+{
+  "id": "f0215a48-6340-4113-a519-0a5c1ce2588e",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "DD token overhead: JSON bloat is in MCP get, not in retrieve count",
+  "topic_key": "engine/retrieval/token-cost-lives-in-get",
+  "trigger": "When investigating DD token cost, JSON overhead, or the claim that too many small memories are retrieved",
+  "behavior_delta": "Measure before assuming retrieval volume is the cost. Production telemetry showed 98% abstention and 1.17 memories per injection (max 3); the 600-token budget fits about 2 hits. The PreToolUse hook injects plain text with ~7% overhead, MCP retrieve JSON adds ~178 B per hit plus a 119 B envelope (~26%), but MCP get returns the whole atom (~7 KB, ~90% metadata such as evidence_state). Target get's payload and the retrieval forms first.",
+  "what": "Measure before assuming retrieval volume is the cost. Production telemetry showed 98% abstention and 1.17 memories per injection (max 3); the 600-token budget fits about 2 hits. The PreToolUse hook injects plain text with ~7% overhead, MCP retrieve JSON adds ~178 B per hit plus a 119 B envelope (~26%), but MCP get returns the whole atom (~7 KB, ~90% metadata such as evidence_state). Target get's payload and the retrieval forms first.",
+  "why": "Measured on 2026-09-22 against ~/.dd-data/supermem-*/index.sqlite (1118 retrieval events) and the 34 active atoms. deriveForms makes micro = full behavior_delta (avg 667 B), and short == full in 29/34 atoms, so the form ladder barely compacts. Byte counts use the plugin's bytes/3 estimate, not a real tokenizer.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/mcp/tools.js",
+      "src/engine/contract.js",
+      "src/engine/retrieve.js",
+      "src/hooks/session-start.js"
+    ],
+    "components": [],
+    "operations": [
+      "read",
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "get payload shape changes",
+      "path": "src/mcp/tools.js",
+      "hash": "5b8edabdcfc1790358ae54518e819b1353033beec8feb51291f9071bc81e4e14"
+    },
+    {
+      "kind": "file_changed",
+      "description": "form derivation changes",
+      "path": "src/engine/contract.js",
+      "hash": "8f5e170df962bd4bd03ad7179c5491b00a7c60f3538c5b63cf74d51c50967106"
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/mcp/tools.js",
+      "summary": "get handler returns the full atom plus freshness, relations and outcomes; jsonResult serializes it verbatim"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/contract.js",
+      "summary": "deriveForms: micro = behavior_delta, short = micro + Why, full = short + alternatives"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "scratchpad m2.mjs measurement 2026-09-22",
+      "summary": "avg micro 667 B, hit JSON 846 B, envelope 119 B, full atom 7036 B, short==full 29/34"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-22T19:03:48.197Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Measure before assuming retrieval volume is the cost. Production telemetry showed 98% abstention and 1.17 memories per injection (max 3); the 600-token budget fits about 2 hits. The PreToolUse hook injects plain text with ~7% overhead, MCP retrieve JSON adds ~178 B per hit plus a 119 B envelope (~26%), but MCP get returns the whole atom (~7 KB, ~90% metadata such as evidence_state). Target get's payload and the retrieval forms first.",
+    "short": "Measure before assuming retrieval volume is the cost. Production telemetry showed 98% abstention and 1.17 memories per injection (max 3); the 600-token budget fits about 2 hits. The PreToolUse hook injects plain text with ~7% overhead, MCP retrieve JSON adds ~178 B per hit plus a 119 B envelope (~26%), but MCP get returns the whole atom (~7 KB, ~90% metadata such as evidence_state). Target get's payload and the retrieval forms first. Why: Measured on 2026-09-22 against ~/.dd-data/supermem-*/index.sqlite (1118 retrieval events) and the 34 active atoms. deriveForms makes micro = full behavior_delta (avg 667 B), and short == full in 29/34 atoms, so the form ladder barely compacts. Byte counts use the plugin's bytes/3 estimate, not a real tokenizer.",
+    "full": "Measure before assuming retrieval volume is the cost. Production telemetry showed 98% abstention and 1.17 memories per injection (max 3); the 600-token budget fits about 2 hits. The PreToolUse hook injects plain text with ~7% overhead, MCP retrieve JSON adds ~178 B per hit plus a 119 B envelope (~26%), but MCP get returns the whole atom (~7 KB, ~90% metadata such as evidence_state). Target get's payload and the retrieval forms first. Why: Measured on 2026-09-22 against ~/.dd-data/supermem-*/index.sqlite (1118 retrieval events) and the 34 active atoms. deriveForms makes micro = full behavior_delta (avg 667 B), and short == full in 29/34 atoms, so the form ladder barely compacts. Byte counts use the plugin's bytes/3 estimate, not a real tokenizer."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "500ae241-bc26-4340-901c-6be56df212c0",
+  "evidence_state": {
+    "checked_at": "2026-09-22T19:18:15.936Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/mcp/tools.js",
+        "summary": "get handler returns the full atom plus freshness, relations and outcomes; jsonResult serializes it verbatim",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "5b8edabdcfc1790358ae54518e819b1353033beec8feb51291f9071bc81e4e14"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/contract.js",
+        "summary": "deriveForms: micro = behavior_delta, short = micro + Why, full = short + alternatives",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "8f5e170df962bd4bd03ad7179c5491b00a7c60f3538c5b63cf74d51c50967106"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "scratchpad m2.mjs measurement 2026-09-22",
+        "summary": "avg micro 667 B, hit JSON 846 B, envelope 119 B, full atom 7036 B, short==full 29/34",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-22T19:03:48.244Z",
+  "updated_at": "2026-09-22T19:40:56.114Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-22T19:18:15.937Z",
+    "rationale": "Reviewed as proposed."
+  },
+  "superseded_by": "9ecd7282-056a-4612-b8b7-5cf7129488c6"
+}
