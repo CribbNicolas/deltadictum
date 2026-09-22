@@ -45,8 +45,26 @@ describe('MCP tool handlers', () => {
     assert.match(retrieved.memories[0].content, /validate trigger first/);
     assert.equal(retrieved.memories[0].evidence_refs, undefined);
     assert.ok(!JSON.stringify(retrieved).includes('src/engine/v2/admission.js'));
-    const rawRetrieve = (await tools.retrieve({ action: 'before writing durable memory' })).content[0].text;
+    const rawRetrieve = (await tools.retrieve({ action: 'before writing durable memory', repeat: true })).content[0].text;
     assert.doesNotMatch(rawRetrieve, /\n\s+/);
+    // Engine bookkeeping is not knowledge; the agent sees only what it can act on.
+    assert.deepEqual(Object.keys(retrieved).sort(), ['abstained', 'memories']);
+    assert.deepEqual(Object.keys(retrieved.memories[0]).sort(), ['content', 'id', 'memory_type']);
+
+    const expanded = JSON.parse((await tools.get({ id: proposed.id })).content[0].text);
+    assert.equal(expanded.behavior_delta, 'validate trigger first');
+    assert.equal(expanded.why, 'Stops V1 dumps.');
+    assert.equal(expanded.trigger, 'before writing durable memory');
+    // Duplicates of authored text and verification internals stay out of the default view.
+    for (const field of ['retrieval_forms', 'what', 'evidence_state', 'project_id', 'registry_key_id', 'schema_version'])
+      assert.equal(expanded[field], undefined, field);
+    assert.equal(expanded.evidence_refs[0].source_ref, 'src/engine/v2/admission.js');
+    assert.ok('status' in expanded.evidence_refs[0]);
+    assert.equal(expanded.evidence_refs[0].hash, undefined);
+    assert.ok(Array.isArray(expanded.freshness));
+    const verbose = JSON.parse((await tools.get({ id: proposed.id, verbose: true })).content[0].text);
+    assert.ok(verbose.retrieval_forms && verbose.evidence_state);
+    assert.ok(JSON.stringify(expanded).length < JSON.stringify(verbose).length);
 
     const listed = JSON.parse((await tools.list({})).content[0].text);
     assert.equal(listed.total, 1);

@@ -12,6 +12,9 @@ import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { startUiServer } from '../../src/ui/server.js';
 import { writeUiUrl } from '../../src/hooks/banner.js';
 
+// Hook processes spawned here must not start a resident DD process (src/resident.js).
+process.env.DD_RESIDENT = '0';
+
 async function fixture() {
   const root = join(await mkdtemp(join(tmpdir(), 'dd-codex-')), 'Project with spaces');
   await mkdir(root);

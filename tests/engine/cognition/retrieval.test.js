@@ -41,14 +41,15 @@ test('mismatched scope/facts suppress advice and missing facts preserve conditio
   assert.match(unknown.memories[0].content, /verify assumption/);
 });
 
-test('changed evidence produces a review notice, and a session cannot hide the change', async t => {
+test('changed evidence flags the advice for review, and a session cannot hide the change', async t => {
   const f = await fixture(t);
   assert.equal((await f.retrieve({ session_id: 's' })).memories.length, 1);
   assert.equal((await f.retrieve({ session_id: 's' })).memories.length, 0);
   await writeFile(join(f.root, 'contract.md'), 'The provider contract has changed.');
   const stale = await f.retrieve({ session_id: 's' });
   assert.equal(stale.memories[0].lifecycle_state, 'review_required');
-  assert.doesNotMatch(stale.memories[0].content, /Reuse the idempotency key/);
+  assert.match(stale.memories[0].content, /EVIDENCE CHANGED since review/);
+  assert.match(stale.memories[0].content, /Reuse the idempotency key/);
   const refreshed = await proposeMemory(f.proposal, { store: f.store });
   assert.equal(refreshed.atom.lifecycle_state, 'candidate');
   assert.notEqual(refreshed.atom.id, f.atom.id);
@@ -74,11 +75,11 @@ test('session deduplication emits changed conditions even when the memory itself
   assert.equal((await f.retrieve({ session_id: 'conditions' })).memories.length, 0);
 });
 
-test('long preferred form falls back at both large and small budgets; full payload is charged', async t => {
+test('a preferred form over half the budget falls back to micro; full payload is charged', async t => {
   const f = await fixture(t, { why: 'A detailed rationale about network timing and duplicate charges. '.repeat(8) });
-  for (const budget of [180, 600]) {
+  for (const [budget, form] of [[180, 'micro'], [600, 'short']]) {
     const recalled = await f.retrieve({ budget_tokens: budget });
-    assert.equal(recalled.memories[0]?.form_type, 'micro');
+    assert.equal(recalled.memories[0]?.form_type, form);
     assert.ok(estimateTokens(recalled) <= budget);
     assert.ok(recalled.budget.used >= estimateTokens(recalled));
   }

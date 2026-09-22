@@ -11,10 +11,28 @@ import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, r
 
 const ORDER = { full: ['full', 'short', 'micro'], short: ['short', 'micro'], micro: ['micro'] };
 const ACTIVATION_FLOOR = 0.35;
+// Revision of a memory as delivered at session start, independent of any
+// request: ambient memories are marked with it so tool calls do not repeat them.
+export const AMBIENT_TAG = 'ambient';
+export const ambientRevision = atom => `ambient:${revisionOf(atom)}`;
+// The first sentence of the advice, for a memory that applies but whose
+// authored forms no longer fit the pack. It names the rule and where to read the
+// rest, so a long memory costs the pack a line instead of being dropped.
+const HEADLINE_CHARS = 200;
+export function headline(atom) {
+  const text = String(atom.behavior_delta ?? '').replace(/\s+/g, ' ').trim();
+  const first = text.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? text;
+  const cut = first.length > HEADLINE_CHARS ? `${first.slice(0, HEADLINE_CHARS).replace(/\s+\S*$/, '')}...` : first;
+  return `${cut} (get ${atom.id.slice(0, 8)} for the full advice)`;
+}
 const revisionOf = atom => createHash('sha256').update(JSON.stringify([atom.updated_at, atom.lifecycle_state,
   atom.evidence_state, atom.retrieval_forms, atom.assumptions, atom.revisit_when])).digest('hex').slice(0, 16);
 
-export async function retrieveMemories(request = {}, { store, vptThreshold } = {}) {
+// `semantic`, when a resident process supplies it (L2/L3), is a Map from atom id
+// to an activation in [0,1] computed from embeddings. It widens the candidate
+// set and competes with lexical and scope activation; every applicability gate
+// still applies. Without it retrieval is purely lexical.
+export async function retrieveMemories(request = {}, { store, vptThreshold, semantic } = {}) {
   if (!request.project_id) return { error: { code: 400, message: 'project_id is required' } };
   if (!String(request.action ?? '').trim()) return { error: { code: 400, message: 'action is required' } };
   request = { ...request, files: (request.files ?? []).map(file => isAbsolute(file) ? relative(store.repoRoot, file).replaceAll('\\', '/') : file) };
@@ -36,12 +54,22 @@ export async function retrieveMemories(request = {}, { store, vptThreshold } = {
     candidates = query ? await store.search({ projectId: request.project_id, query, lifecycleStates: ['active', 'contested'],
       memoryTypes: request.memory_types, limit: 50 }) : [];
   } catch { candidates = []; } // Never replace a failed search with arbitrary newest memories.
+  if (semantic?.size) {
+    const have = new Set(candidates.map(atom => atom.id));
+    for (const id of semantic.keys()) {
+      if (have.has(id) || !(semantic.get(id) > 0)) continue;
+      const atom = await store.getAtom(id, request.project_id);
+      if (atom && ['active', 'contested'].includes(atom.lifecycle_state)
+          && (!request.memory_types?.length || request.memory_types.includes(atom.memory_type))) candidates.push(atom);
+    }
+  }
 
   const effective = candidates.filter(a => a.authority !== 'deprecated');
   const usage = usageFactors(effective);
   const scored = effective.map((atom, index) => {
     const applicability = assessApplicability(atom, request);
-    const activation = applicability.applies ? activationScore(atom, activationText, applicability.contextScore) : 0;
+    const activation = applicability.applies
+      ? Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0) : 0;
     return { atom, applicability, activation, floor: requiredActivation(atom, ACTIVATION_FLOOR),
       value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
   }).filter(c => c.activation >= c.floor).sort((a, b) => b.value - a.value || a.atom.id.localeCompare(b.atom.id));
@@ -58,10 +86,21 @@ export async function retrieveMemories(request = {}, { store, vptThreshold } = {
     const penalty = redundancyPenalty(atom, selected.map(s => s.atom));
     if (penalty >= NEAR_DUPLICATE) continue;
     const marginal = applyRedundancy(value, penalty);
+    // vpt_threshold is a floor on marginal value. It used to divide by the form's
+    // tokens, which capped every memory near 50 tokens: reviewed advice longer
+    // than a sentence could never be injected. Size is the budget's job.
+    if (marginal < threshold) continue;
+    if (request.session_id && !request.repeat && store.wasDelivered && (atom.tags ?? []).includes(AMBIENT_TAG)
+        && await store.wasDelivered(request.project_id, request.session_id, atom.id, ambientRevision(atom))) continue;
     const freshness = await checkEvidenceFreshness(atom, store);
-    const revisionReasons = [...(applicability.revisions ?? []), ...freshness];
-    if (feedback[atom.id]?.refuted > 0) revisionReasons.push('reported counterevidence; review the outcome before reuse');
+    // Changed evidence files are the ordinary state of a project under
+    // development: the advice stays visible, flagged. A fact that no longer
+    // holds, a due revisit or verified counterevidence withholds it instead.
+    const withheldReasons = [...(applicability.revisions ?? [])];
+    if (feedback[atom.id]?.refuted > 0) withheldReasons.push('reported counterevidence; review the outcome before reuse');
+    const revisionReasons = [...withheldReasons, ...freshness];
     const reviewRequired = revisionReasons.length > 0;
+    const withheld = withheldReasons.length > 0;
     const contested = atom.lifecycle_state === 'contested';
     const relations = contested ? await store.listRelations({ atomIds: [atom.id] }) : [];
     const relatedIds = relations.filter(r => r.relation_type === 'contradicts')
@@ -69,25 +108,35 @@ export async function retrieveMemories(request = {}, { store, vptThreshold } = {
     const peers = await Promise.all(relatedIds.map(id => store.getAtom(id, request.project_id)));
     const contradicts = peers.filter(a => a && ['active', 'contested'].includes(a.lifecycle_state)).map(a => a.id);
     const state = reviewRequired ? 'review_required' : contested ? 'contested' : 'active';
+    // Scope constraints are left out: which ones are restated depends on how the
+    // call was shaped, not on the memory, so they would defeat session dedup.
+    // Warnings (unknown assumptions) and revision reasons do change what the
+    // agent should know, so a change in them delivers the memory again.
     const contextRevision = createHash('sha256').update(JSON.stringify([state, revisionReasons,
-      applicability.constraints, applicability.warnings, contradicts])).digest('hex').slice(0, 16);
+      applicability.warnings, contradicts])).digest('hex').slice(0, 16);
     const revision = revisionOf(atom) + contextRevision;
     if (request.session_id && !request.repeat && store.wasDelivered
         && await store.wasDelivered(request.project_id, request.session_id, atom.id, revision)) continue;
 
-    const options = reviewRequired
+    const options = withheld
       ? [{ form_type: 'micro', content: `Review ${atom.topic_key}: ${revisionReasons.join('; ')}. Fetch this memory before applying its advice.` }]
-      : (ORDER[request.form_type ?? profile.form_type] ?? ORDER.short)
-        .map(type => formsList(atom).find(f => f.form_type === type)).filter(Boolean);
+      : reviewRequired
+        ? formsList(atom).filter(f => f.form_type === 'micro').map(f => ({ ...f,
+          content: `EVIDENCE CHANGED since review (${freshness.slice(0, 2).join('; ')}); verify before relying on it. ${f.content}` }))
+        : [...(ORDER[request.form_type ?? profile.form_type] ?? ORDER.short)
+          .map(type => formsList(atom).find(f => f.form_type === type)).filter(Boolean),
+          { form_type: 'headline', content: headline(atom) }];
     for (const form of options) {
       // Try a smaller form when the preferred form is too expensive OR too dilute.
       // Compact forms cannot remove the scope/assumptions that make advice valid.
       let content = form.content;
       if (contested) content = `DISPUTED; do not treat as settled. ${content}`;
-      if (!reviewRequired && applicability.constraints?.length) content += ` Only within: ${applicability.constraints.join('; ')}.`;
-      if (!reviewRequired && applicability.warnings?.length) content += ` Check: ${applicability.warnings.join('; ')}.`;
+      if (!withheld && applicability.constraints?.length) content += ` Only within: ${applicability.constraints.join('; ')}.`;
+      if (!withheld && applicability.warnings?.length) content += ` Check: ${applicability.warnings.join('; ')}.`;
       const contentTokens = estimateTokens(content);
-      if (!reviewRequired && marginal / Math.max(1, estimateTokens(form.content)) < threshold) continue;
+      // One memory may not take more than half the pack in a larger form, so a
+      // long rationale falls back to micro instead of crowding out the rest.
+      if (form.form_type !== 'micro' && contentTokens > budget / 2) continue;
       const hit = { id: atom.id, topic_key: atom.topic_key, memory_type: atom.memory_type,
         form_type: form.form_type, content, token_estimate: contentTokens,
         ...(state !== 'active' ? { lifecycle_state: state } : {}),

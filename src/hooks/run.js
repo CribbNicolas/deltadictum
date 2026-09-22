@@ -9,6 +9,7 @@ import { buildPreToolContext } from './pre-tool.js';
 import { observationFromTool, recordPromptObservation } from './observe.js';
 import { microPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
+import { ensureResident } from '../resident.js';
 
 function ok(payload) {
   if (payload.decision === 'allow') delete payload.decision;
@@ -50,8 +51,11 @@ try {
   const { store, projectId, ddDir } = await openStore({ cwd });
 
   if (command === 'session-start') {
+    // No resident answered this session: start one for the sessions to come.
+    const resident = await ensureResident(repoRoot).catch(() => ({ state: 'unavailable' }));
     const recorded = await recordedUiUrl(ddDir);
     const result = await buildSessionStartContext({
+      resident,
       store,
       projectId,
       uiUrl: recorded ?? await readUiUrl(ddDir),
@@ -91,13 +95,14 @@ try {
 
   if (command === 'stop') {
     const observations = await store.recentObservations(projectId, payload.session_id ?? payload.sessionId);
-    // Codex Stop requires an explicit continuation. Spend that extra model turn
-    // only on a turn that recorded something worth proposing from: a host
-    // validation or failure, or a user correction. A corrected turn now spends a
-    // continuation, which is deliberate — a correction is the most reliable input
-    // DD receives, so it is the turn least worth staying quiet on. Repeats are
-    // already bounded by the evidence-set claim below; ordinary turns stay quiet.
-    if (codexHost && !observations.length) { store.close(); skip(); }
+    // Ask only after a turn that recorded something worth proposing from: a host
+    // validation or failure, or a user correction. On Codex the prompt costs an
+    // extra model turn; on every host an unconditional prompt trains the agent to
+    // propose noise and fills the review queue. A correction is the most reliable
+    // input DD receives, so a corrected turn is the one least worth staying quiet
+    // on. Repeats are bounded by the evidence-set claim below. The agent can still
+    // propose unprompted through MCP whenever it learns something.
+    if (!observations.length) { store.close(); skip(); }
     if (payload.stop_hook_active || !await store.claimCapturePrompt(projectId, payload.session_id ?? payload.sessionId, observations)) {
       store.close(); skip();
     }

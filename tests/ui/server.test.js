@@ -263,7 +263,7 @@ describe('auto-accept config', () => {
     const headers = await reviewHeaders(base);
 
     const initial = await json(base + '/api/config');
-    assert.deepEqual(initial.body.auto_accept, { enabled: false, confidence_threshold: 0.8 });
+    assert.deepEqual(initial.body.auto_accept, { enabled: true, confidence_threshold: 0.765 });
 
     const updated = await json(base + '/api/config/auto-accept', { method: 'POST', headers,
       body: JSON.stringify({ enabled: true, confidence_threshold: 0.6 }) });
@@ -306,5 +306,71 @@ describe('seen tracking', () => {
 
     const afterList = await json(base + '/api/atoms');
     assert.equal(afterList.body[0].seen, true);
+  });
+});
+
+describe('audit UI live updates', () => {
+  test('a store mutation reaches an already-connected SSE client as a changed event', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-sse-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    t.after(async () => { await ui.close(); store.close(); });
+    const base = ui.url;
+
+    const controller = new AbortController();
+    t.after(() => controller.abort());
+    const res = await fetch(base + '/api/events', { signal: controller.signal });
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-type'), /text\/event-stream/);
+
+    // Read the stream in the background until a 'changed' event shows up, or
+    // time out — a client that never hears about a mutation it should have
+    // heard about is the actual regression this guards against.
+    let buffered = '';
+    let resolveChanged;
+    const changed = new Promise(resolve => { resolveChanged = resolve; });
+    (async () => {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) return;
+        buffered += decoder.decode(value, { stream: true });
+        if (buffered.includes('event: changed')) return resolveChanged();
+      }
+    })().catch(() => {});
+
+    await proposeMemory({
+      project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
+      title: 'Require trigger', trigger: 'before writing durable memory', behavior_delta: 'validate trigger first',
+      what: 'Durable memory needs a trigger.', why: 'Stops V1 dumps.', topic_key: 'memory/admission/required-fields',
+      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
+      retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
+    }, { store });
+
+    await Promise.race([
+      changed,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timed out waiting for the SSE changed event')), 2000)),
+    ]);
+  });
+
+  test('closing the UI server ends any open SSE connection', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-ui-sse-close-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    t.after(() => store.close());
+    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
+    const base = ui.url;
+
+    const res = await fetch(base + '/api/events');
+    assert.equal(res.status, 200);
+    const reader = res.body.getReader();
+    await reader.read(); // the leading ':ok' comment, proving the stream opened
+
+    await ui.close();
+    const { done } = await Promise.race([
+      reader.read(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SSE connection was not closed by ui.close()')), 2000)),
+    ]);
+    assert.equal(done, true);
   });
 });

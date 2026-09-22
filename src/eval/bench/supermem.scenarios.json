@@ -1,0 +1,164 @@
+{
+  "project": "supermem",
+  "note": "Tasks written from this repository's own store (2026-09-22). must: the memory is needed to do the task right. orbit: useful while doing it, not required. Ids are 8-character prefixes. Probes run in order within one session, as a task would.",
+  "tasks": [
+    {
+      "id": "ui-toolbar-filter",
+      "must": ["f2335ea1", "cf1ad3c5", "0e23ff13"],
+      "orbit": ["8b7195a9", "60813084"],
+      "probes": [
+        { "prompt": "Add a new filter dropdown to the audit UI toolbar, backed by a new server route that filters atoms." },
+        { "prompt": "Agregá un filtro desplegable nuevo en la barra de la UI de auditoría, con una ruta nueva en el servidor que filtre los átomos." },
+        { "tool": "Read", "input": { "file_path": "src/ui/public/index.html" } },
+        { "tool": "Edit", "input": { "file_path": "src/ui/public/index.html", "old_string": "<select id=\"filter-type\">", "new_string": "<select id=\"filter-type\"></select><select id=\"filter-origin\">" } },
+        { "tool": "Edit", "input": { "file_path": "src/ui/server.js", "old_string": "const origin = url.searchParams.get('capture_origin');", "new_string": "const origin = url.searchParams.get('capture_origin');\nconst fresh = url.searchParams.get('fresh');" } }
+      ]
+    },
+    {
+      "id": "ui-typeerror-after-endpoint-change",
+      "must": ["60813084", "cf1ad3c5"],
+      "orbit": ["8b7195a9", "0e23ff13"],
+      "probes": [
+        { "prompt": "The audit UI now shows TypeError: Cannot read properties of undefined (reading 'map') after I changed the atoms endpoint. Fix it." },
+        { "prompt": "La UI de auditoría tira TypeError: Cannot read properties of undefined después de cambiar el endpoint de átomos. Arreglalo." },
+        { "tool": "Grep", "input": { "pattern": "api/atoms", "path": "src/ui" } },
+        { "tool": "Read", "input": { "file_path": "src/ui/server.js" } }
+      ]
+    },
+    {
+      "id": "auto-accept-slider",
+      "must": ["d3d5bf57", "c2984ddd"],
+      "orbit": ["1e9d44c6", "4cc886b4"],
+      "probes": [
+        { "prompt": "Change the auto-accept confidence threshold slider so users can pick a lower value for model-proposed memories." },
+        { "prompt": "Cambiá el slider del umbral de auto-accept para que se pueda elegir un valor más bajo para memorias propuestas por el modelo." },
+        { "tool": "Read", "input": { "file_path": "src/engine/reliability.js" } },
+        { "tool": "Edit", "input": { "file_path": "src/store/paths.js", "old_string": "confidence_threshold: 0.765", "new_string": "confidence_threshold: 0.7" } }
+      ]
+    },
+    {
+      "id": "telemetry-looks-empty",
+      "must": ["b06e473d", "e57a21a9", "292df784"],
+      "orbit": ["6829e2af", "9a955d61"],
+      "probes": [
+        { "prompt": "Retrieval telemetry looks empty after the last update; memory_retrieval_events has no new rows. Find out why." },
+        { "prompt": "La telemetría de retrieval parece vacía después de la última actualización, no hay filas nuevas. Averiguá por qué." },
+        { "tool": "Bash", "input": { "command": "node -e \"const {DatabaseSync}=require('node:sqlite');console.log(new DatabaseSync('.dd/data/index.sqlite').prepare('select count(*) from memory_retrieval_events').get())\"" } },
+        { "tool": "Read", "input": { "file_path": "src/project.js" } }
+      ]
+    },
+    {
+      "id": "hot-path-config-cache",
+      "must": ["7db33256", "f1d79d20"],
+      "orbit": ["a6d05274"],
+      "probes": [
+        { "prompt": "PreToolUse is slow. Add a cache so loadConfig is not read from disk several times per hook call." },
+        { "prompt": "El hook PreToolUse está lento, agregá una caché para no leer loadConfig varias veces por llamada." },
+        { "tool": "Read", "input": { "file_path": "src/hooks/pre-tool.js" } },
+        { "tool": "Edit", "input": { "file_path": "src/store/git-file-store.js", "old_string": "async function loadConfig() {", "new_string": "let cachedConfig;\nasync function loadConfig() {" } }
+      ]
+    },
+    {
+      "id": "session-start-banner",
+      "must": ["bfacc975", "3306d069"],
+      "orbit": ["028493e6", "a6d05274"],
+      "probes": [
+        { "prompt": "Change what the SessionStart hook tells the user about the audit UI URL; they never see it." },
+        { "prompt": "Cambiá lo que el hook de SessionStart le dice al usuario sobre la URL de la UI de auditoría, nunca la ve." },
+        { "tool": "Read", "input": { "file_path": "src/hooks/banner.js" } },
+        { "tool": "Edit", "input": { "file_path": "src/hooks/session-start.js", "old_string": "systemMessage: uiPointer(uiUrl)", "new_string": "systemMessage: `DD audit UI: ${uiUrl}`" } }
+      ]
+    },
+    {
+      "id": "retrieve-payload-field",
+      "must": ["61bc43e7", "0775e2e0"],
+      "orbit": ["59ff2c0d"],
+      "probes": [
+        { "prompt": "Add the memory title to what the retrieve tool returns to the agent." },
+        { "prompt": "Agregá el título de la memoria a lo que devuelve la herramienta retrieve al agente." },
+        { "tool": "Read", "input": { "file_path": "src/mcp/tools.js" } },
+        { "tool": "Edit", "input": { "file_path": "src/mcp/tools.js", "old_string": "const HIT_FIELDS = ['id', 'memory_type', 'content',", "new_string": "const HIT_FIELDS = ['id', 'title', 'memory_type', 'content'," } }
+      ]
+    },
+    {
+      "id": "retirement-test",
+      "must": ["e03da901"],
+      "orbit": ["9dc49d33", "e96a63b1"],
+      "probes": [
+        { "prompt": "Write a test that a memory unused for 120 days is retired by disuse." },
+        { "prompt": "Escribí un test que verifique que una memoria sin uso por 120 días se retira por desuso." },
+        { "tool": "Read", "input": { "file_path": "tests/engine/forgetting.test.js" } },
+        { "tool": "Edit", "input": { "file_path": "tests/engine/forgetting.test.js", "old_string": "describe('retirement'", "new_string": "describe('retirement after 120 days'" } },
+        { "tool": "Bash", "input": { "command": "node --test tests/engine/forgetting.test.js" } }
+      ]
+    },
+    {
+      "id": "codex-reinstall",
+      "must": ["ccf342a4", "8724c2f2"],
+      "orbit": ["c61d7902", "1b8bdaba"],
+      "probes": [
+        { "prompt": "Re-run the Codex installer on Project-Patriark so it picks up the new hooks." },
+        { "prompt": "Volvé a correr el instalador de Codex en Project-Patriark para que tome los hooks nuevos." },
+        { "tool": "Read", "input": { "file_path": "scripts/install-codex.mjs" } },
+        { "tool": "Bash", "input": { "command": "node scripts/install-codex.mjs C:/dev/Project-Patriark" } }
+      ]
+    },
+    {
+      "id": "grok-opencode-check",
+      "must": ["098759d4", "1b8bdaba"],
+      "orbit": ["78f72b36", "c61d7902"],
+      "probes": [
+        { "prompt": "Check whether the Grok Build and OpenCode integrations actually inject DD context in a live session." },
+        { "prompt": "Verificá si las integraciones con Grok Build y OpenCode realmente inyectan el contexto de DD en una sesión real." },
+        { "tool": "Bash", "input": { "command": "grok plugin validate ." } },
+        { "tool": "Read", "input": { "file_path": "docs/integrations/opencode.md" } }
+      ]
+    },
+    {
+      "id": "add-embeddings",
+      "must": ["1349225a"],
+      "orbit": ["0775e2e0"],
+      "probes": [
+        { "prompt": "Add embedding-based semantic search to memory retrieval." },
+        { "prompt": "Agregá búsqueda semántica con embeddings al retrieval de memorias." },
+        { "tool": "Read", "input": { "file_path": "src/engine/retrieve.js" } }
+      ]
+    },
+    {
+      "id": "negative-readme-typo",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        { "prompt": "Fix the typo in the README introduction paragraph." },
+        { "tool": "Edit", "input": { "file_path": "README.md", "old_string": "coding agnets", "new_string": "coding agents" } }
+      ]
+    },
+    {
+      "id": "negative-brand-asset",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        { "prompt": "Make the logo in brand/ a bit darker." },
+        { "tool": "Read", "input": { "file_path": "brand/logo.svg" } }
+      ]
+    },
+    {
+      "id": "negative-eval-case-text",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        { "prompt": "Reword the payment eval case descriptions so they read more naturally." },
+        { "tool": "Edit", "input": { "file_path": "src/eval/cases.js", "old_string": "resubmit a timed out charge", "new_string": "resubmit a charge that timed out" } }
+      ]
+    },
+    {
+      "id": "negative-offtopic",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        { "prompt": "Explain the difference between a mutex and a semaphore." },
+        { "prompt": "¿Cuál es la diferencia entre un mutex y un semáforo?" }
+      ]
+    }
+  ]
+}

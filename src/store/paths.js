@@ -76,7 +76,7 @@ export const DEFAULT_CONFIG = {
     decision: 'candidate',
     claim: 'candidate',
   },
-  auto_accept: { enabled: false, confidence_threshold: 0.8 },
+  auto_accept: { enabled: true, confidence_threshold: 0.765 },
   health: DEFAULT_HEALTH_THRESHOLDS,
   capture: { retention_days: 14, max_observations: 200 },
   telemetry: { retention_days: 90, max_events: 2000 },

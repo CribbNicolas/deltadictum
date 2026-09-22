@@ -10,6 +10,9 @@ import { startUiServer } from '../../src/ui/server.js';
 import { writeUiUrl } from '../../src/hooks/banner.js';
 import { estimateTokens } from '../../src/engine/budget.js';
 
+// Hook processes spawned here must not start a resident DD process (src/resident.js).
+process.env.DD_RESIDENT = '0';
+
 const hookPath = fileURLToPath(new URL('../../src/hooks/run.js', import.meta.url));
 function invoke(root, session) {
   return new Promise((resolve, reject) => {

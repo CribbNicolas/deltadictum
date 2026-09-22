@@ -3,6 +3,8 @@ import { join, basename, dirname, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { access } from 'node:fs/promises';
 import { createMemoryStore } from './store/create-store.js';
+import { sqlitePath } from './store/paths.js';
+import { adoptHistory, legacyDataDirs } from './store/adopt.js';
 
 async function exists(path) {
   try {
@@ -62,6 +64,7 @@ export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cw
   const identity = createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12);
   const dataBase = resolveDataBase();
   const dataDir = process.env.DD_DATA || join(dataBase, `${slug}-${identity}`);
+  const freshIndex = !await exists(sqlitePath(dataDir));
   const store = await createMemoryStore({ ddDir, dataDir, repoRoot });
   const config = await store.withWriteLock(async () => {
     const current = await store.loadConfig();
@@ -71,7 +74,11 @@ export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cw
     }
     return current;
   });
-  return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id };
+  // A new index is where a moved data directory would lose history (gap 6).
+  const adopted = freshIndex ? await adoptHistory(store.index.db, { projectId: config.project_id, dataDir,
+    candidates: legacyDataDirs({ repoRoot, slug, identity }) }).catch(() => []) : [];
+  if (adopted.length) store.index.setMeta('adopted_history', JSON.stringify({ at: new Date().toISOString(), adopted }));
+  return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id, adopted };
 }
 
 export async function readJsonStdin() {

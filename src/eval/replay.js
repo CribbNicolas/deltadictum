@@ -144,12 +144,14 @@ export async function runReplay({ budget = 600, retrieve = retrieveMemories } = 
       const ids = result.memories.map(m => m.topic_key);
       const hits = ids.filter(id => scenario.expected.includes(id)).length;
       const reviewCorrect = !scenario.review || result.memories.some(m => m.lifecycle_state === 'review_required');
+      // Returning the right id with its advice cut away is not a correct recall.
+      const contentCorrect = !scenario.contains || result.memories.some(m => String(m.content ?? '').includes(scenario.contains));
       relevant += hits; returned += ids.length; expected += scenario.expected.length;
       const shouldAbstain = scenario.expected.length === 0, abstained = ids.length === 0;
       if (abstained && shouldAbstain) abstain.tp += 1;
       else if (abstained) abstain.fp += 1;
       else if (shouldAbstain) abstain.fn += 1;
-      const correct = hits === scenario.expected.length && ids.length === hits && reviewCorrect;
+      const correct = hits === scenario.expected.length && ids.length === hits && reviewCorrect && contentCorrect;
       exact += Number(correct); tokens += estimateTokens(result);
       rows.push({ id: scenario.id, correct, expected: scenario.expected, returned: ids, review_correct: reviewCorrect,
         should_abstain: shouldAbstain, abstained,

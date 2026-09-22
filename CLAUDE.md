@@ -11,15 +11,15 @@ fails one of them is rejected on that basis alone, however good the idea is:
 | | Limit |
 |---|---|
 | L1 | Hooks are ephemeral Node processes; `PreToolUse` runs on every tool call |
-| L2 | No guaranteed persistent process; the audit UI and the MCP server are both optional |
-| L3 | Two dependencies (`@modelcontextprotocol/sdk`, `zod`) on Node ≥ 22 — **no embeddings, no ML libraries** |
+| L2 | A resident process may be relied on for better answers, never for correct ones; hooks fall back without it |
+| L3 | Two required dependencies (`@modelcontextprotocol/sdk`, `zod`) on Node ≥ 22; local embeddings only as an optional dependency in the resident process, never on the hot path |
 | L4 | The hook contract differs per harness; a veto is not portable |
 | L5 | A hook failure must never block the host |
 | L6 | Single-developer data volumes (90 days or 2000 telemetry rows) — no online learning |
 | L7 | Local-first: git plus a derived SQLite index, nothing leaves the machine |
 
-Do not propose PostgreSQL, Qdrant, a vector store, an inference server, background workers, federation,
-multi-tenancy or RBAC. Documents describing those belonged to an earlier system and were removed.
+Do not propose PostgreSQL, Qdrant, an external vector store, an inference server, a hosted model,
+federation, multi-tenancy or RBAC. Vectors live in the SQLite index. Documents describing those belonged to an earlier system and were removed.
 
 ## Where the truth is
 

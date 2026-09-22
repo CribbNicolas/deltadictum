@@ -1,3 +1,4 @@
+import { authoredProse, looksNonEnglish } from '../language.js';
 import { MEMORY_TYPES, MEMORY_SCOPES } from './constants.js';
 import { hasUnsafeMemoryContent } from './sanitizer.js';
 import { reliabilityCeiling } from '../reliability.js';
@@ -46,12 +47,14 @@ export function decideAdmission(payload = {}) {
   if (!hasEvidenceRefs(payload.evidence_refs)) reasons.push('missing_evidence_refs');
   if (!hasMinimumForms(payload.retrieval_forms)) reasons.push('missing_retrieval_forms');
   if (containsUnsafePayload(payload)) reasons.push('unsafe_memory_content');
+  if (looksNonEnglish(authoredProse(payload))) reasons.push('memory_must_be_english');
 
   if (payload.memory_type === 'anti_memory' && !PREVENTIVE.test(payload.behavior_delta ?? '')) {
     reasons.push('anti_memory_requires_preventive_delta');
   }
 
-  if (reasons.includes('missing_project_id') || reasons.includes('invalid_memory_type') || reasons.includes('invalid_scope') || reasons.includes('unsafe_memory_content') || reasons.includes('anti_memory_requires_preventive_delta')) {
+  if (reasons.includes('missing_project_id') || reasons.includes('invalid_memory_type') || reasons.includes('invalid_scope') || reasons.includes('unsafe_memory_content') || reasons.includes('anti_memory_requires_preventive_delta')
+      || reasons.includes('memory_must_be_english')) {
     return { decision: 'block', reasons, score: 0, reliability };
   }
 

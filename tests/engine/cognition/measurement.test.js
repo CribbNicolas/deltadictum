@@ -6,9 +6,9 @@ import { CASES } from '../../../src/eval/cases.js';
 test('abstention is scored over the scenarios that expect nothing', async () => {
   const report = await runReplay();
   assert.equal(report.abstention.expected, CASES.filter(c => c.expected.length === 0).length);
-  assert.equal(report.abstention.expected, 9);
+  assert.equal(report.abstention.expected, 10);
   assert.equal(report.abstention.f1, 1);
-  assert.equal(report.rows.filter(r => r.should_abstain && r.abstained).length, 9);
+  assert.equal(report.rows.filter(r => r.should_abstain && r.abstained).length, 10);
 });
 
 test('a retrieval that injects on every scenario drives abstention recall to zero', async () => {

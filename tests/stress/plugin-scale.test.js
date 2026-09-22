@@ -7,6 +7,7 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { createToolHandlers } from '../../src/mcp/tools.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { estimateTokens as payloadEstimate } from '../../src/engine/budget.js';
+import { DEFAULT_CONFIG } from '../../src/store/paths.js';
 
 const CORPUS = Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
 const ROUNDS = Math.max(10, Number(process.env.DD_STRESS_ROUNDS ?? 40));
@@ -117,13 +118,12 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
 
     const payload = JSON.stringify(retrieved);
     const payloadTokens = estimateTokens(payload);
-    const contentTokens = retrieved.memories.reduce((sum, hit) => sum + Number(hit.token_estimate ?? estimateTokens(hit.content)), 0);
+    const contentTokens = retrieved.memories.reduce((sum, hit) => sum + estimateTokens(hit.content), 0);
     assert.ok(payloadTokens < contentTokens * 12 + 120, `payload ${payloadTokens} tokens vs content ${contentTokens}`);
-    assert.ok(retrieved.budget.used > 0);
-    assert.ok(retrieved.budget.used >= payloadEstimate(retrieved));
-    assert.ok(payloadEstimate(retrieved) <= retrieved.budget.requested);
+    // The model-facing view is a subset of the payload the engine budgeted.
+    assert.ok(payloadEstimate(retrieved) <= DEFAULT_CONFIG.budget_tokens);
 
-    console.log(`[stress] retrieve_ms=${elapsed} hits=${retrieved.memories.length} payload_tokens=${payloadTokens} content_tokens=${contentTokens} budget_used=${retrieved.budget.used}`);
+    console.log(`[stress] retrieve_ms=${elapsed} hits=${retrieved.memories.length} payload_tokens=${payloadTokens} content_tokens=${contentTokens}`);
   });
 
   test('repeated MCP retrieve stays in the same latency class', async () => {
@@ -163,7 +163,7 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
     const retrieved = parseTool(await tools.retrieve({ action: 'unrelated cooking recipe' }));
     assert.equal(retrieved.abstained, true);
     assert.equal(retrieved.memories.length, 0);
-    assert.ok(retrieved.budget.used >= payloadEstimate(retrieved));
+    assert.ok(payloadEstimate(retrieved) <= DEFAULT_CONFIG.budget_tokens);
   });
 
   test('shared stopwords cannot flood the injection cap', async () => {

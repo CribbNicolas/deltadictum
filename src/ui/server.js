@@ -14,7 +14,10 @@ import { recordPromptObservation } from '../hooks/observe.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
 import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
+import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
+import { BUILD_ID, codeFingerprint, normalizePath } from '../hooks/build.js';
+import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 function send(res, status, body, type = 'application/json') {
@@ -29,31 +32,72 @@ async function readBody(req) {
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
 }
 
-export async function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1' }) {
+export async function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1', fingerprint = codeFingerprint, staleCheckMs = 2000, semantic = false, onShutdown }) {
   if (!['127.0.0.1', '::1', 'localhost'].includes(host)) throw new Error('audit_requires_loopback');
+  // A long-lived UI keeps running the code it started with. Once that tree is
+  // edited it stops answering hooks, which then run the current code locally
+  // (roadmap gap 7). Stale is permanent: only a restart loads the new code.
+  const startedCode = await fingerprint();
+  // The resident process is where embeddings can live (L2/L3). Hooks it answers
+  // get semantic retrieval once the model has loaded, lexical until then.
+  const retrieve = semantic ? createSemanticRetrieve({ blocking: false }) : retrieveMemories;
+  let retrieval = semantic ? 'loading' : 'lexical';
+  const semanticReady = semantic ? retrieve.warm({ store, projectId }).catch(() => false) : Promise.resolve(false);
+  semanticReady.then(ready => { if (semantic) retrieval = ready ? 'semantic' : 'lexical'; });
+  let lastActivity = Date.now();
+  let codeCheckedAt = Date.now();
+  let codeStale = false;
+  async function staleCode() {
+    if (!codeStale && Date.now() - codeCheckedAt >= staleCheckMs) {
+      codeCheckedAt = Date.now();
+      codeStale = await fingerprint() !== startedCode;
+    }
+    return codeStale;
+  }
   await sweepAutoAccept({ store, projectId });
   const token = randomBytes(32).toString('hex');
   const hookToken = randomBytes(32).toString('hex');
+  // The audit UI is the one place in the plugin that is already a persistent
+  // local process whenever it runs (L2), with a person actually watching the
+  // page — so it can push instead of making the tab poll or the person reload.
+  // Nothing else in the plugin gets this: hooks are ephemeral (L1) and the MCP
+  // server has no screen to push to.
+  const sseClients = new Set();
+  function broadcastChanged() {
+    const message = 'event: changed\ndata: {}\n\n';
+    for (const client of sseClients) { try { client.write(message); } catch { sseClients.delete(client); } }
+  }
+  const unsubscribeChanges = store.onChange?.(broadcastChanged);
   const server = createServer(async (req, res) => {
     try {
       const actualPort = server.address().port;
       const expectedHost = `${host}:${actualPort}`;
       if (req.headers.host !== expectedHost) return send(res, 403, { error: 'invalid_host' });
       const url = new URL(req.url, `http://${expectedHost}`);
+      // A resident from a newer build asks this one to step aside.
+      if (req.method === 'POST' && url.pathname === '/api/shutdown') {
+        if (req.headers['x-dd-hook-token'] !== hookToken || !onShutdown) return send(res, 403, { error: 'hook_auth_required' });
+        send(res, 200, { ok: true });
+        return void setImmediate(onShutdown);
+      }
       if (req.method === 'POST' && url.pathname.startsWith('/api/hooks/')) {
         if (req.headers['x-dd-hook-token'] !== hookToken) return send(res, 403, { error: 'hook_auth_required' });
+        if (await staleCode()) return send(res, 409, { error: 'build_stale' });
+        lastActivity = Date.now();
+        res.setHeader('x-dd-build', BUILD_ID);
         const body = await readBody(req);
-        if (resolvePath(body.repo_root ?? '') !== resolvePath(store.repoRoot)) return send(res, 403, { error: 'project_mismatch' });
+        if (normalizePath(body.repo_root ?? '') !== normalizePath(store.repoRoot)) return send(res, 403, { error: 'project_mismatch' });
         await store.refreshIfChanged();
         const payload = body.payload ?? {};
-        if (url.pathname.endsWith('/pre-tool')) return send(res, 200, await buildPreToolContext(payload, { store, projectId }));
+        if (url.pathname.endsWith('/pre-tool')) return send(res, 200, await buildPreToolContext(payload, { store, projectId, retrieve }));
         if (url.pathname.endsWith('/session-start')) return send(res, 200, await buildSessionStartContext({ store, projectId, uiUrl: `http://${expectedHost}`,
           // This request is being served by the audit UI, so it is live by construction.
-          uiLive: true, sessionId: payload.session_id ?? payload.sessionId, source: payload.source }));
+          uiLive: true, sessionId: payload.session_id ?? payload.sessionId, source: payload.source,
+          resident: { state: 'live', retrieval: retrieval === 'loading' ? 'semantic' : retrieval } }));
         if (url.pathname.endsWith('/prompt')) {
           await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
           await recordPromptObservation(payload, { store, projectId });
-          const result = await retrieveMemories({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
+          const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
             session_id: payload.session_id ?? payload.sessionId, budget_tokens: payload.budget_tokens }, { store });
           return send(res, 200, contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
         }
@@ -65,9 +109,22 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token);
         return send(res, 200, html, 'text/html');
       }
+      if (req.method === 'GET' && url.pathname === '/api/events') {
+        res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store',
+          connection: 'keep-alive', 'x-content-type-options': 'nosniff',
+          'content-security-policy': "default-src 'self'; frame-ancestors 'none'" });
+        res.write(':ok\n\n');
+        sseClients.add(res);
+        // A pure keep-alive so an idle intermediary (or the browser) never
+        // times the connection out; it carries no event name, so the page's
+        // 'changed' listener never fires on it.
+        const heartbeat = setInterval(() => { try { res.write(':hb\n\n'); } catch { /* handled by close below */ } }, 25000);
+        req.on('close', () => { clearInterval(heartbeat); sseClients.delete(res); });
+        return;
+      }
       await store.refreshIfChanged();
       if (req.method === 'GET' && url.pathname === '/api/status') {
-        return send(res, 200, { project_id: projectId, ...await store.countByLifecycle(projectId) });
+        return send(res, 200, { project_id: projectId, build: BUILD_ID, stale: await staleCode(), retrieval, ...await store.countByLifecycle(projectId) });
       }
       if (req.method === 'GET' && url.pathname === '/api/project') return send(res, 200, await projectContext(store));
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, await store.assessDeterioration(projectId));
@@ -81,7 +138,7 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
       }
       if (req.method === 'GET' && url.pathname === '/api/config') {
         const config = await store.loadConfig();
-        return send(res, 200, { auto_accept: config.auto_accept });
+        return send(res, 200, { auto_accept: config.auto_accept, auto_accept_threshold_levels: autoAcceptThresholdLevels() });
       }
       if (req.method === 'POST' && url.pathname === '/api/config/auto-accept') {
         const body = await readBody(req);
@@ -101,9 +158,13 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         const memoryType = url.searchParams.get('memory_type');
         const atoms = await store.listAtoms({ projectId, lifecycleStates: lifecycle ? [lifecycle] : undefined });
         const seen = await readSeen();
-        return send(res, 200, atoms.filter(atom => !origin || atom.capture_origin === origin)
+        return send(res, 200, await Promise.all(atoms.filter(atom => !origin || atom.capture_origin === origin)
           .filter(atom => !memoryType || atom.memory_type === memoryType)
-          .map(atom => ({ ...atom, seen: isSeen(atom.id, seen) })));
+          // Lifecycle stays 'active' when cited evidence changes; retrieval flags
+          // it. Surfaced here so the list does not look healthier than it is.
+          .map(async atom => ({ ...atom, seen: isSeen(atom.id, seen),
+            ...(['active', 'contested'].includes(atom.lifecycle_state) && (await checkEvidenceFreshness(atom, store)).length
+              ? { evidence_changed: true } : {}) }))));
       }
       if (req.method === 'POST' && url.pathname === '/api/resolve') {
         const body = await readBody(req);
@@ -148,10 +209,15 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
   });
   return new Promise((resolve, reject) => {
     server.on('error', err => {
-      if (err.code === 'EADDRINUSE' && port > 0 && port < 7743) return resolve(startUiServer({ store, projectId, port: port + 1, host }));
+      if (err.code === 'EADDRINUSE' && port > 0 && port < 7743) return resolve(startUiServer({ store, projectId, port: port + 1, host, fingerprint, staleCheckMs, semantic, onShutdown }));
       reject(err);
     });
-    server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken,
-      close: () => new Promise(done => server.close(done)) }));
+    server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken, semanticReady, idleFor: () => Date.now() - lastActivity,
+      close: () => new Promise(done => {
+        for (const client of sseClients) { try { client.end(); } catch { /* already gone */ } }
+        sseClients.clear();
+        unsubscribeChanges?.();
+        server.close(done);
+      }) }));
   });
 }
