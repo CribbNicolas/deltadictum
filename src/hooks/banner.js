@@ -16,7 +16,11 @@ export function uiPointer(url) {
 export function sessionBanner({ projectId, url, activeCount = 0 }) {
   return [
     `DD - loaded for \`${projectId}\` (${activeCount} active).`,
-    `DD - Audit UI: ${url}`,
+    // Explicit ask, not a passive fact: SessionStart output reaches the model
+    // only, on every harness, so the model relaying it is the only path left
+    // to the person. Phrased as an instruction because a neutral fact is a
+    // judgment call the model can silently skip.
+    `DD - Audit UI: ${url} -- tell the user this URL near the start of your first reply this session, if you have not already.`,
   ].join('\n');
 }
 

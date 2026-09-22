@@ -46,13 +46,32 @@ export async function verifyReferences(refs, { store, repoRoot = store.repoRoot,
     support: 'unreviewed' };
 }
 
+// A stat()-gated fast path in front of the real read+hash: reused only when a
+// cached row's mtime AND size both still match the file on disk. Known gap,
+// deliberately accepted rather than hidden: a file rewritten with identical
+// size inside the same filesystem mtime-resolution tick would not be caught
+// until its mtime actually advances. The cache is store-derived only (never
+// written into the atom's own evidence_state/git file, per the anti_memory
+// against git-authoritative telemetry) and a cache-layer failure always falls
+// back to the unconditional read+hash rather than skipping the check.
+async function hashWithCache(path, atomId, sourceRef, store) {
+  const stats = await stat(path);
+  let cached = null;
+  try { cached = store?.index?.getEvidenceFreshness?.(atomId, sourceRef) ?? null; } catch { cached = null; }
+  if (cached && cached.mtimeMs === stats.mtimeMs && cached.size === stats.size) return cached.hash;
+  const hash = createHash('sha256').update(await readFile(path)).digest('hex');
+  try { store?.index?.setEvidenceFreshness?.(atomId, sourceRef, { mtimeMs: stats.mtimeMs, size: stats.size, hash }); }
+  catch { /* best-effort cache write; the next check just re-hashes */ }
+  return hash;
+}
+
 export async function checkEvidenceFreshness(atom, store) {
   const reasons = [];
   for (const artifact of atom.evidence_state?.artifacts ?? []) {
     if (artifact.provenance !== 'filesystem' || !artifact.hash) continue;
     try {
       const path = await projectFile(store.repoRoot, artifact.source_ref);
-      const hash = createHash('sha256').update(await readFile(path)).digest('hex');
+      const hash = await hashWithCache(path, atom.id, artifact.source_ref, store);
       if (hash !== artifact.hash) reasons.push(`evidence_changed:${artifact.source_ref}`);
     } catch { reasons.push(`evidence_unavailable:${artifact.source_ref}`); }
   }
@@ -60,7 +79,7 @@ export async function checkEvidenceFreshness(atom, store) {
     if (rule.kind !== 'file_changed') continue;
     try {
       const path = await projectFile(store.repoRoot, rule.path);
-      const hash = createHash('sha256').update(await readFile(path)).digest('hex');
+      const hash = await hashWithCache(path, atom.id, rule.path, store);
       if (!rule.hash || hash !== rule.hash) reasons.push(`revision_file_changed:${rule.path}`);
     } catch { reasons.push(`revision_file_unavailable:${rule.path}`); }
   }

@@ -36,6 +36,18 @@ describe('audit UI form fields', () => {
       'review_authority must not be an input or textarea, or formValues would resubmit it');
   });
 
+  test('an empty review rationale is not blocked, it falls back to a recorded default', async () => {
+    const html = await readFile(htmlPath, 'utf8');
+    // The server still requires a non-empty rationale (INV-04's audit trail), but
+    // the reviewer should never be forced to type one for a plain approve-as-is:
+    // a blank field still records an explicit, on-the-record decision.
+    assert.match(html, /const DEFAULT_REVIEW_RATIONALE = 'Reviewed as proposed\.'/);
+    assert.match(html, /admit[\s\S]{0,400}rationale: detailEl\.querySelector\('\[name="review_rationale"\]'\)\.value\.trim\(\) \|\| DEFAULT_REVIEW_RATIONALE/,
+      'admit must fall back to the default rationale when the field is left blank');
+    assert.match(html, /resolve[\s\S]{0,400}rationale: detailEl\.querySelector\('\[name="review_rationale"\]'\)\.value\.trim\(\) \|\| DEFAULT_REVIEW_RATIONALE/,
+      'resolve must fall back to the default rationale when the field is left blank');
+  });
+
   test('a retired memory can be seen and brought back from the page', async () => {
     const html = await readFile(htmlPath, 'utf8');
     // Archiving is reversible only if the reversal is reachable. Without the

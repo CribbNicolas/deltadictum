@@ -20,7 +20,16 @@ export async function projectContext(store) {
   }));
   const entries = (await readdir(root, { withFileTypes: true })).filter(e => !OMIT.has(e.name) && !e.name.startsWith('.'));
   const key = stamps.join('|') + entries.map(e => e.name).sort().join('|');
-  if (store.projectContextCache?.key === key) return store.projectContextCache.value;
+  // Persisted in the derived SQLite index (index_meta), not kept as a property on
+  // `store`: PreToolUse spawns a fresh process per tool call, so an in-memory cache
+  // here never hits outside the long-lived MCP/UI process. A read/parse failure is
+  // treated as a miss, never as a reason to fail the hook.
+  let cached = null;
+  try {
+    const raw = store.index?.getMeta?.('project_context');
+    if (raw) cached = JSON.parse(raw);
+  } catch { /* corrupt or unreadable cache row: fall through as a miss */ }
+  if (cached?.key === key) return cached.value;
   const sources = [];
   const facts = {};
   const commands = {};
@@ -51,7 +60,7 @@ export async function projectContext(store) {
   const structure = entries.filter(e => e.isDirectory()).map(e => `${e.name}/`).sort().slice(0, 12);
   const pointers = entries.filter(e => e.isFile() && /^(README|AGENTS|CONTRIBUTING|ARCHITECTURE)/i.test(e.name)).map(e => e.name);
   const value = { name, purpose: String(purpose).slice(0, 300), facts, commands, structure, sources, pointers };
-  store.projectContextCache = { key, value };
+  try { store.index?.setMeta?.('project_context', JSON.stringify({ key, value })); } catch { /* best-effort cache write */ }
   return value;
 }
 

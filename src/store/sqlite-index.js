@@ -430,6 +430,18 @@ export function createSqliteIndex(dbPath) {
     `).run(key, value);
   }
 
+  function getEvidenceFreshness(atomId, sourceRef) {
+    const row = db.prepare('SELECT mtime_ms, size, hash FROM evidence_freshness_cache WHERE atom_id = ? AND source_ref = ?').get(atomId, sourceRef);
+    return row ? { mtimeMs: row.mtime_ms, size: row.size, hash: row.hash } : null;
+  }
+
+  function setEvidenceFreshness(atomId, sourceRef, { mtimeMs, size, hash }) {
+    db.prepare(`
+      INSERT INTO evidence_freshness_cache (atom_id, source_ref, mtime_ms, size, hash, checked_at) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(atom_id, source_ref) DO UPDATE SET mtime_ms = excluded.mtime_ms, size = excluded.size, hash = excluded.hash, checked_at = excluded.checked_at
+    `).run(atomId, sourceRef, mtimeMs, size, hash, new Date().toISOString());
+  }
+
   function close() {
     db.close();
   }
@@ -458,6 +470,8 @@ export function createSqliteIndex(dbPath) {
     incrementActivation,
     getMeta,
     setMeta,
+    getEvidenceFreshness,
+    setEvidenceFreshness,
     rebuild: (atoms, registry, relations) => transaction(() => rebuild(atoms, registry, relations)),
     transaction,
     close,

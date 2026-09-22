@@ -53,9 +53,15 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
   let dirty = false;
   let refreshedAt = Date.now();
   let watcher;
+  // Local-only observer set (INV: nothing here mutates state, it only tells an
+  // already-persistent caller — the audit UI's own HTTP server — that something
+  // did). Never required: a hook or the MCP server never subscribes, since both
+  // are ephemeral or headless and have nobody to push to.
+  const changeListeners = new Set();
+  function notifyChange() { for (const fn of changeListeners) { try { fn(); } catch { /* a bad listener must not break the write path */ } } }
   try {
     watcher = watch(ddDir, { recursive: true }, (_event, file) => {
-      if (/^(atoms|archive|candidates|registry)([\\/]|$)|^relations\.json$/.test(String(file))) dirty = true;
+      if (/^(atoms|archive|candidates|registry)([\\/]|$)|^relations\.json$/.test(String(file))) { dirty = true; notifyChange(); }
     });
     watcher.on('error', () => { dirty = true; });
   } catch { /* Periodic freshness checks cover platforms without recursive watch. */ }
@@ -66,7 +72,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
   }
 
   async function withWriteLock(work) {
-    return git.withWriteLock(async () => { await refresh(); return work(); });
+    return git.withWriteLock(async () => { await refresh(); const result = await work(); notifyChange(); return result; });
   }
 
   async function commitAtoms(atoms, newRelations = [], deleteAtoms = []) {
@@ -352,7 +358,8 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     renameRegistryEntry,
     listRelations,
     putRelation,
-    close: () => { watcher?.close(); index.close(); },
+    onChange: fn => { changeListeners.add(fn); return () => changeListeners.delete(fn); },
+    close: () => { watcher?.close(); changeListeners.clear(); index.close(); },
     ...telemetry,
   };
 }
