@@ -58,3 +58,17 @@ si falta el runtime opcional (`@huggingface/transformers`).
 ## 8. Fase 6 y pendientes del retrieval semántico
 
 Ver `docs/plans/2026-09-22-semantic-retrieval-plan.md`, sección "Still open".
+
+## 9. Probar en una Mac real
+
+Linux está verificado (WSL Ubuntu, Node 22: suite 328/328, stress, eval, benchmark semántico y residente de
+punta a punta a través de un symlink). macOS no se ejecutó: se cubrió por código (`src/paths.js` pliega
+mayúsculas en darwin y resuelve symlinks como `/tmp` → `/private/tmp`) y `onnxruntime-node` trae binarios
+darwin. Falta correr `npm test`, `npm run bench:semantic` y una sesión real en una Mac, idealmente también en
+un volumen APFS case-sensitive.
+
+## 10. Memoria desactualizada: la UI ya no vive dentro del proceso MCP
+
+`ui/server-routes-need-restart/shared-process-with-mcp` (8b7195a9) dice que matar la UI mata las herramientas
+MCP. Desde 2026-09-22 la UI es el proceso residente (`src/resident.js`), separado del MCP de cada sesión.
+Revisarla o reemplazarla en la UI.
