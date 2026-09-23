@@ -105,8 +105,8 @@ Its memories are terse; `semantic.floor: 0.025` in Patriark's `.dd/config.json` 
 0.46 to 0.68 at precision 0.70, with one of three unrelated tasks no longer quiet (plan, "Project-wide
 scopes and per-project calibration"). A choice for Patriark's owner; after #12 the default may suffice.
 
-## 15. Before any publish: sync the plugin copy
+## 15. Before any publish: check the package
 
-Run `npm run sync:plugin` so the packaged plugin carries the updated skills (`dd-save` gained the capture
-criterion and the English requirement on 2026-09-23), then `npm pack --dry-run` to check the optional
-`@huggingface/transformers` dependency is declared and not bundled.
+Run `npm pack --dry-run` and confirm the optional `@huggingface/transformers` dependency is declared, not
+bundled, and that `skills/` is included (skills are served from there; there is no plugin copy to sync —
+`sync:plugin` was removed on 2026-09-19 and the README no longer mentions it).
