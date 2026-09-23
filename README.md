@@ -18,7 +18,7 @@ The default retrieval budget is **600 estimated tokens for the JSON result**, in
 
 `propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal remains a candidate until local review, including anti-memories.
 
-Each memory records `capture_origin`: `model_initiated` or `user_explicit` (the user asked to save that knowledge). Missing origins default to `user_explicit`, including older memories. Agents and capture hooks explicitly mark autonomous discoveries as `model_initiated`. `capture_source` records the engine's entry point: `agent` or `local_ui`; an absent historical channel remains `unknown`. Capture origin is not proof of human approval. Audit lists and the UI can filter by origin.
+Each memory records `capture_origin`: `model_initiated` or `user_explicit` (the user asked to save that knowledge). A proposal that states no origin is recorded as `user_explicit`. Agents and capture hooks explicitly mark autonomous discoveries as `model_initiated`. `capture_source` records the engine's entry point: `agent`, `local_ui`, or `unknown` for knowledge captured before the entry point was recorded. Capture origin is not proof of human approval. Audit lists and the UI can filter by origin.
 
 An existing active decision remains effective while a replacement is pending. Approval publishes the new decision and archives the old version together. Git writes use a recoverable journal and a project lock. Deleting an old version checks its identity before touching any current file.
 
@@ -147,7 +147,7 @@ SQLite, observations, feedback and session deliveries live under a per-user cach
 
 The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a project, and when the per-user cache shared that name the home directory resolved as a project root, merging unrelated work into one store.
 
-Knowledge written with schema version 6 stays readable; a schema-6 candidate is relocated on its next lifecycle transition, and it cannot replace effective knowledge merely by being proposed. SQLite is rebuilt when its format or source fingerprint changes.
+DD reads only knowledge files in its current schema (version 7) with a valid `capture_origin` and `capture_source`. A file that is not — an older schema, missing provenance, or invalid JSON — is never indexed or recalled, cannot be overwritten, and is listed with its reason by `health` and in the audit UI, so a person can fix or delete it. SQLite is rebuilt when its format or source fingerprint changes.
 
 Models write only through `propose({proposals:[...]})`; `admit`, `resolve`, `reject`, `delete` and `update` are not advertised to them. Submit revisions through `propose` and use local review for lifecycle changes.
 

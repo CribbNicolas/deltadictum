@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 describe('SessionStart context', () => {
   test('announces DD loaded and audit URL even with no memories', async () => {
@@ -40,13 +41,13 @@ describe('SessionStart context', () => {
       trigger: 'before writing durable memory',
       behavior_delta: 'validate trigger first',
       what: 'Durable memory needs a trigger.',
-      why: 'Stops V1 dumps.',
+      why: 'Stops unstructured dumps.',
       authority: 'inferred',
       confidence: 0.8,
       valid_from: '2026-09-09T00:00:00.000Z',
       topic_key: 'memory/admission/required-fields',
       tags: ['memory'],
-      lifecycle_state: 'active',
+      ...PROVENANCE, lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
     const payload = await buildSessionStartContext({

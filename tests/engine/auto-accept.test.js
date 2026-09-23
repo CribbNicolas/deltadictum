@@ -20,7 +20,7 @@ function proposal(overrides = {}) {
   return {
     project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
     title: 'Require trigger', trigger: 'before writing durable memory',
-    behavior_delta: 'validate trigger first', what: 'Durable memory needs a trigger.', why: 'Stops V1 dumps.',
+    behavior_delta: 'validate trigger first', what: 'Durable memory needs a trigger.', why: 'Stops unstructured dumps.',
     topic_key: 'memory/admission/required-fields',
     evidence_refs: [{ source_type: 'file', source_ref: 'evidence.txt', summary: 'gate' }],
     retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },

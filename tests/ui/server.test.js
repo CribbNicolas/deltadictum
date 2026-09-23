@@ -40,7 +40,7 @@ describe('audit UI HTTP', () => {
       trigger: 'before writing durable memory',
       behavior_delta: 'validate trigger first',
       what: 'Durable memory needs a trigger.',
-      why: 'Stops V1 dumps.',
+      why: 'Stops unstructured dumps.',
       topic_key: 'memory/admission/required-fields',
       evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
@@ -289,7 +289,7 @@ describe('seen tracking', () => {
     const written = await proposeMemory({
       project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
       title: 'Require trigger', trigger: 'before writing durable memory', behavior_delta: 'validate trigger first',
-      what: 'Durable memory needs a trigger.', why: 'Stops V1 dumps.', topic_key: 'memory/admission/required-fields',
+      what: 'Durable memory needs a trigger.', why: 'Stops unstructured dumps.', topic_key: 'memory/admission/required-fields',
       evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     }, { store });
@@ -343,7 +343,7 @@ describe('audit UI live updates', () => {
     await proposeMemory({
       project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
       title: 'Require trigger', trigger: 'before writing durable memory', behavior_delta: 'validate trigger first',
-      what: 'Durable memory needs a trigger.', why: 'Stops V1 dumps.', topic_key: 'memory/admission/required-fields',
+      what: 'Durable memory needs a trigger.', why: 'Stops unstructured dumps.', topic_key: 'memory/admission/required-fields',
       evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     }, { store });

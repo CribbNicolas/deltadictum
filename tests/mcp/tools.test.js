@@ -17,7 +17,7 @@ function proposal() {
     trigger: 'before writing durable memory',
     behavior_delta: 'validate trigger first',
     what: 'Durable memory needs a trigger.',
-    why: 'Stops V1 dumps.',
+    why: 'Stops unstructured dumps.',
     topic_key: 'memory/admission/required-fields',
     evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
     retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
@@ -56,7 +56,7 @@ describe('MCP tool handlers', () => {
 
     const expanded = JSON.parse((await tools.get({ id: proposed.id })).content[0].text);
     assert.equal(expanded.behavior_delta, 'validate trigger first');
-    assert.equal(expanded.why, 'Stops V1 dumps.');
+    assert.equal(expanded.why, 'Stops unstructured dumps.');
     assert.equal(expanded.trigger, 'before writing durable memory');
     // Duplicates of authored text and verification internals stay out of the default view.
     for (const field of ['retrieval_forms', 'what', 'evidence_state', 'project_id', 'registry_key_id', 'schema_version'])

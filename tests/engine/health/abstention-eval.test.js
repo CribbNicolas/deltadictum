@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../../src/store/create-store.js';
 import { retrieveMemories } from '../../../src/engine/retrieve.js';
+import { PROVENANCE } from '../../helpers/atom.js';
 
 const NOW = '2026-09-10T00:00:00.000Z';
 
@@ -18,7 +19,7 @@ function lesson(overrides) {
     valid_from: NOW,
     created_at: NOW,
     updated_at: NOW,
-    lifecycle_state: 'active',
+    ...PROVENANCE, lifecycle_state: 'active',
     tags: [],
     evidence_refs: [{ source_type: 'file', source_ref: 'tests/engine/health/abstention-eval.test.js', summary: 'eval fixture' }],
     retrieval_forms: {
@@ -37,7 +38,7 @@ const FIXTURES = [
     trigger: 'before writing durable memory',
     behavior_delta: 'validate trigger first',
     what: 'Durable memory needs a trigger.',
-    why: 'Stops V1 dumps.',
+    why: 'Stops unstructured dumps.',
   }),
   lesson({
     id: 'inj-2',

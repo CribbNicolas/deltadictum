@@ -23,7 +23,7 @@ export const MEMORIES = [
   { key: 'build/export/sequential', memory_type: 'procedure', trigger: 'when exporting release builds for windows and android',
     behavior_delta: 'Export one platform at a time with the export scripts and the main executable, holding the shared lock; after the Android export restore the editor target in locked mode, because project.assets.json becomes Android-specific and the next Windows build would otherwise fail to restore.',
     why: 'Parallel exports corrupted the shared restore state twice.', action: 'sequential_export' },
-  { key: 'legacy/cache/retired', trigger: 'when caching product data', behavior_delta: 'Cache forever.', why: 'Historical behavior.', lifecycle_state: 'superseded', action: 'cache_forever' },
+  { key: 'retired/cache/forever', trigger: 'when caching product data', behavior_delta: 'Cache forever.', why: 'Historical behavior.', lifecycle_state: 'superseded', action: 'cache_forever' },
 ];
 
 export const CASES = [

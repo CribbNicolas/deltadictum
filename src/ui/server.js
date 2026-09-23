@@ -188,7 +188,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
       await store.refreshIfChanged();
       if (req.method === 'GET' && url.pathname === '/api/status') {
         return send(res, 200, { project_id: projectId, project_key: project.key, build: BUILD_ID, stale: await staleCode(), retrieval,
-          ...await store.countByLifecycle(projectId) });
+          ...await store.countByLifecycle(projectId), unsupported: await store.listUnsupported() });
       }
       if (req.method === 'GET' && url.pathname === '/api/project') return send(res, 200, await projectContext(store));
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, await store.assessDeterioration(projectId));

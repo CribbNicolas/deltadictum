@@ -6,20 +6,20 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { reverifyStoredEvidence } from '../../src/engine/reverify.js';
 import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
-// Knowledge written before the reliability ladder carries a confidence the
-// ladder can never produce, and often no evidence_state at all: verification
-// did not exist when it was stored. These atoms reproduce that shape.
-function legacy(overrides = {}) {
-  return { id: overrides.id ?? 'legacy-1', project_id: 'demo', schema_version: 6,
-    memory_type: 'lesson', scope: 'project', title: 'Legacy lesson',
-    topic_key: overrides.topic_key ?? 'legacy/one', trigger: 'when doing the thing',
+// Stored knowledge can carry a confidence the reliability ladder never produced
+// and no evidence_state at all. These atoms reproduce that shape.
+function storedAtom(overrides = {}) {
+  return { id: overrides.id ?? 'stored-1', project_id: 'demo',
+    memory_type: 'lesson', scope: 'project', title: 'Stored lesson',
+    topic_key: overrides.topic_key ?? 'stored/one', trigger: 'when doing the thing',
     behavior_delta: 'Do the thing.', what: 'Do the thing.', why: 'It works.',
     tags: [], trigger_variants: [], applies_to: { files: [], components: [], operations: [] },
     assumptions: [], revisit_when: [], alternatives: [],
     evidence_refs: [{ source_type: 'file', source_ref: 'decision.md', summary: 'Contract' }],
     retrieval_forms: { micro: 'Do the thing.', short: 'Do the thing. Why: It works.' },
-    authority: 'inferred', confidence: 0.7, lifecycle_state: 'active',
+    authority: 'inferred', confidence: 0.7, ...PROVENANCE, lifecycle_state: 'active',
     valid_from: '2026-01-01T00:00:00.000Z', valid_until: null, ...overrides };
 }
 
@@ -32,14 +32,14 @@ async function setup(atoms) {
 }
 
 describe('reverifying stored evidence', () => {
-  test('a resolvable reference verifies and lifts the legacy confidence to what it earns', async () => {
-    const f = await setup([legacy()]);
+  test('a resolvable reference verifies and lifts the stored confidence to what it earns', async () => {
+    const f = await setup([storedAtom()]);
     const report = await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
     assert.equal(report.changed.length, 1);
     assert.equal(report.changed[0].provenance, 'filesystem');
     assert.equal(report.changed[0].from, 0.7);
     assert.equal(report.changed[0].to, RELIABILITY_CAP.filesystem);
-    const stored = await f.store.getAtom('legacy-1', 'demo');
+    const stored = await f.store.getAtom('stored-1', 'demo');
     assert.equal(stored.confidence, RELIABILITY_CAP.filesystem);
     assert.equal(stored.evidence_state.artifacts[0].status, 'verified');
     assert.ok(stored.evidence_state.artifacts[0].hash);
@@ -47,20 +47,20 @@ describe('reverifying stored evidence', () => {
   });
 
   test('an unresolvable reference is an agent claim and is demoted to the bottom rung', async () => {
-    const f = await setup([legacy({ id: 'legacy-2', topic_key: 'legacy/two',
+    const f = await setup([storedAtom({ id: 'stored-2', topic_key: 'stored/two',
       evidence_refs: [{ source_type: 'file', source_ref: 'deleted.md', summary: 'Gone' }] })]);
     await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
-    const stored = await f.store.getAtom('legacy-2', 'demo');
+    const stored = await f.store.getAtom('stored-2', 'demo');
     assert.equal(stored.confidence, RELIABILITY_CAP.agent_claim);
     assert.equal(stored.evidence_state.artifacts[0].status, 'unavailable');
     f.store.close();
   });
 
   test('it derives confidence and evidence only, and promotes nothing', async () => {
-    const f = await setup([legacy()]);
-    const before = await f.store.getAtom('legacy-1', 'demo');
+    const f = await setup([storedAtom()]);
+    const before = await f.store.getAtom('stored-1', 'demo');
     await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
-    const after = await f.store.getAtom('legacy-1', 'demo');
+    const after = await f.store.getAtom('stored-1', 'demo');
     // Authority and lifecycle are review decisions. Re-deriving a number from
     // stored evidence is not a review, so it must move neither.
     assert.equal(after.authority, before.authority);
@@ -73,17 +73,17 @@ describe('reverifying stored evidence', () => {
   });
 
   test('a reviewed memory keeps its reviewed support', async () => {
-    const f = await setup([legacy({ id: 'legacy-3', topic_key: 'legacy/three', authority: 'validated',
+    const f = await setup([storedAtom({ id: 'stored-3', topic_key: 'stored/three', authority: 'validated',
       review: { source: 'local_ui', reviewed_at: '2026-02-02T00:00:00.000Z', rationale: 'Checked.' } })]);
     await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
-    const stored = await f.store.getAtom('legacy-3', 'demo');
+    const stored = await f.store.getAtom('stored-3', 'demo');
     assert.equal(stored.evidence_state.support, 'human_reviewed');
     assert.equal(stored.confidence, RELIABILITY_CAP.filesystem);
     f.store.close();
   });
 
   test('a canonical grant gains a verification record without its confidence moving', async () => {
-    const f = await setup([legacy({ id: 'legacy-4', topic_key: 'legacy/four', authority: 'canonical',
+    const f = await setup([storedAtom({ id: 'stored-4', topic_key: 'stored/four', authority: 'canonical',
       confidence: 1, evidence_refs: [{ source_type: 'user_statement', source_ref: 'said so', summary: 'Claim' }] })]);
     const report = await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
     assert.equal(report.changed.length, 1);
@@ -91,39 +91,39 @@ describe('reverifying stored evidence', () => {
     assert.equal(report.changed[0].provenance, 'agent_claim');
     assert.equal(report.changed[0].from, 1);
     assert.equal(report.changed[0].to, 1);
-    const stored = await f.store.getAtom('legacy-4', 'demo');
+    const stored = await f.store.getAtom('stored-4', 'demo');
     assert.equal(stored.confidence, 1);
     assert.equal(stored.evidence_state.verified_count, 0);
     f.store.close();
   });
 
   test('a reference that escapes the repository is reported and never written', async () => {
-    const f = await setup([legacy({ id: 'legacy-5', topic_key: 'legacy/five',
+    const f = await setup([storedAtom({ id: 'stored-5', topic_key: 'stored/five',
       evidence_refs: [{ source_type: 'file', source_ref: '../outside.md', summary: 'Escapes' }] })]);
     const report = await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
     assert.deepEqual(report.changed, []);
     assert.equal(report.skipped.length, 1);
     assert.equal(report.skipped[0].reason, 'evidence_scope_violation');
     // Untouched: admission refuses an out-of-scope reference, so this does too.
-    const stored = await f.store.getAtom('legacy-5', 'demo');
+    const stored = await f.store.getAtom('stored-5', 'demo');
     assert.equal(stored.confidence, 0.7);
     assert.equal(stored.evidence_state, undefined);
     f.store.close();
   });
 
   test('without apply it reports the change and writes nothing', async () => {
-    const f = await setup([legacy()]);
+    const f = await setup([storedAtom()]);
     const report = await reverifyStoredEvidence({ store: f.store, projectId: 'demo' });
     assert.equal(report.changed.length, 1);
     assert.equal(report.applied, false);
-    const stored = await f.store.getAtom('legacy-1', 'demo');
+    const stored = await f.store.getAtom('stored-1', 'demo');
     assert.equal(stored.confidence, 0.7);
     assert.equal(stored.evidence_state, undefined);
     f.store.close();
   });
 
   test('running it twice changes nothing the second time', async () => {
-    const f = await setup([legacy()]);
+    const f = await setup([storedAtom()]);
     await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
     const second = await reverifyStoredEvidence({ store: f.store, projectId: 'demo', apply: true });
     assert.deepEqual(second.changed, []);

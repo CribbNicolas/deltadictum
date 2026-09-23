@@ -13,6 +13,11 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+// Bumped whenever what the index may hold changes, so an index built by an
+// earlier build is rebuilt from git. 7.2: atoms outside the stored contract
+// (src/engine/contract.js) are no longer indexed.
+const INDEX_FORMAT = '7.2';
+
 export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddDir) }) {
   await mkdir(dataDir, { recursive: true });
   await mkdir(ddDir, { recursive: true });
@@ -34,7 +39,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     ]);
     index.rebuild(atoms, registry, relations);
     index.setMeta('source_fingerprint', await sourceFingerprint(ddDir));
-    index.setMeta('index_format', '7.1');
+    index.setMeta('index_format', INDEX_FORMAT);
     return { atoms: atoms.length };
   }
 
@@ -44,7 +49,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
 
   async function refresh() {
     await git.recover();
-    if (index.getMeta('index_format') !== '7.1' || index.getMeta('source_fingerprint') !== await sourceFingerprint(ddDir)) await reindex();
+    if (index.getMeta('index_format') !== INDEX_FORMAT || index.getMeta('source_fingerprint') !== await sourceFingerprint(ddDir)) await reindex();
   }
 
   await git.withWriteLock(refresh);
@@ -332,10 +337,11 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     countByLifecycle: projectId => Promise.resolve(index.countByLifecycle(projectId)),
     loadHealthSnapshot: projectId => Promise.resolve(index.loadHealthSnapshot(projectId)),
     assessDeterioration: async (projectId, { now } = {}) => {
-      const snapshot = index.loadHealthSnapshot(projectId);
+      const snapshot = { ...index.loadHealthSnapshot(projectId), unsupported: await git.listUnsupported() };
       const config = await git.loadConfig();
       return assessDeterioration(snapshot, now ?? nowIso(), healthThresholdsFromConfig(config));
     },
+    listUnsupported: () => git.listUnsupported(),
     putAtom,
     deleteAtom,
     logAdmission,

@@ -10,6 +10,7 @@ import { createToolHandlers } from '../../src/mcp/tools.js';
 import { startUiServer } from '../../src/ui/server.js';
 import { observationFromPrompt, recordPromptObservation } from '../../src/hooks/observe.js';
 import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
@@ -125,7 +126,7 @@ test('the resident prompt handler still returns its context when the observation
   t.after(() => store.close());
   await store.putAtom({ id: 'fixture', project_id: 'demo', topic_key: 'hooks/prompt/context', memory_type: 'lesson', scope: 'project',
     title: 'Prompt context survives', trigger: 'revert the durable memory change', behavior_delta: 'Keep returning retrieval context.',
-    what: 'Keep returning retrieval context.', why: 'A hook failure must not damage the turn.', lifecycle_state: 'active',
+    what: 'Keep returning retrieval context.', why: 'A hook failure must not damage the turn.', ...PROVENANCE, lifecycle_state: 'active',
     authority: 'validated', confidence: 0.85, valid_from: '2026-01-01T00:00:00Z',
     retrieval_forms: { micro: 'Keep returning retrieval context.' } });
   const failing = { ...store, putObservation: async () => { throw new Error('observation_write_failed'); } };
@@ -147,7 +148,7 @@ test('the standalone prompt hook records the correction and still returns contex
   const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, '.dd/local') });
   await store.putAtom({ id: 'fixture', project_id: 'demo', topic_key: 'hooks/prompt/standalone', memory_type: 'lesson', scope: 'project',
     title: 'Standalone prompt context', trigger: 'revert the ranking change', behavior_delta: 'Return retrieval context on every prompt.',
-    what: 'Return retrieval context.', why: 'The prompt hook owes the turn its context.', lifecycle_state: 'active',
+    what: 'Return retrieval context.', why: 'The prompt hook owes the turn its context.', ...PROVENANCE, lifecycle_state: 'active',
     authority: 'validated', confidence: 0.85, valid_from: '2026-01-01T00:00:00Z',
     retrieval_forms: { micro: 'Return retrieval context on every prompt.' } });
   store.close();
@@ -169,7 +170,7 @@ test('the Codex path leaves UserPromptSubmit alone', async () => {
   const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, '.dd/local') });
   await store.putAtom({ id: 'fixture', project_id: 'demo', topic_key: 'hooks/prompt/codex', memory_type: 'lesson', scope: 'project',
     title: 'Codex prompt context', trigger: 'revert the codex change', behavior_delta: 'Return retrieval context under Codex too.',
-    what: 'Return retrieval context.', why: 'Only Stop is rewritten.', lifecycle_state: 'active',
+    what: 'Return retrieval context.', why: 'Only Stop is rewritten.', ...PROVENANCE, lifecycle_state: 'active',
     authority: 'validated', confidence: 0.85, valid_from: '2026-01-01T00:00:00Z',
     retrieval_forms: { micro: 'Return retrieval context under Codex too.' } });
   store.close();

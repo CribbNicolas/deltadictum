@@ -5,10 +5,18 @@ import { cappedConfidence } from './reliability.js';
 
 export const SCHEMA_VERSION = 7;
 export const CAPTURE_ORIGINS = ['model_initiated', 'user_explicit'];
+// `unknown` marks knowledge captured before the entry point was recorded.
+export const CAPTURE_SOURCES = ['agent', 'local_ui', 'unknown'];
 
-// Missing origins follow the user-explicit compatibility default; no source channel is invented.
-export function withCaptureProvenance(atom) {
-  return { ...atom, capture_origin: atom.capture_origin ?? 'user_explicit', capture_source: atom.capture_source ?? 'unknown' };
+// Why a stored atom is not one this build reads, or null when it is. Nothing is
+// defaulted or guessed: an atom this rejects is never indexed or recalled, and
+// the health report names it so a person can fix or delete the file.
+export function unsupportedReason(atom) {
+  if (!atom?.id) return 'missing_id';
+  if (atom.schema_version !== SCHEMA_VERSION) return 'unsupported_schema_version';
+  if (!CAPTURE_ORIGINS.includes(atom.capture_origin)) return 'invalid_capture_origin';
+  if (!CAPTURE_SOURCES.includes(atom.capture_source)) return 'invalid_capture_source';
+  return null;
 }
 const text = value => sanitizeText(value ?? '').trim();
 const strings = value => [...new Set((Array.isArray(value) ? value : []).map(text).filter(Boolean))];

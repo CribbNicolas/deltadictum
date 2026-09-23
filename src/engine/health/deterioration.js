@@ -291,6 +291,11 @@ export function assessDeterioration(snapshot, nowIso, thresholds = DEFAULT_HEALT
     ));
   }
 
+  // Knowledge files this build refuses to read (src/engine/contract.js). One is
+  // already deteriorated: whatever it says is silently missing from recall.
+  const unsupported = snapshot.unsupported ?? [];
+  indicators.push(makeIndicator('unsupported_atoms', 'store', unsupported.length, 1, 1, unsupported));
+
   return {
     project_id: snapshot.project_id,
     generated_at: nowIso,

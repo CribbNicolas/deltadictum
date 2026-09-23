@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { access } from 'node:fs/promises';
 import { createMemoryStore } from './store/create-store.js';
 import { sqlitePath } from './store/paths.js';
-import { adoptHistory, legacyDataDirs } from './store/adopt.js';
+import { adoptHistory, previousDataDirs } from './store/adopt.js';
 import { normalizePath, physicalPath, samePath } from './paths.js';
 
 async function exists(path) {
@@ -93,7 +93,7 @@ export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cw
   });
   // A new index is where a moved data directory would lose history (gap 6).
   const adopted = freshIndex ? await adoptHistory(store.index.db, { projectId: config.project_id, dataDir,
-    candidates: legacyDataDirs({ repoRoot, names: [`${slug}-${identity}`, spelledName] }) }).catch(() => []) : [];
+    candidates: previousDataDirs({ repoRoot, names: [`${slug}-${identity}`, spelledName] }) }).catch(() => []) : [];
   if (adopted.length) store.index.setMeta('adopted_history', JSON.stringify({ at: new Date().toISOString(), adopted }));
   return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id, adopted };
 }
