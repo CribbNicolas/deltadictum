@@ -38,3 +38,11 @@ test('Claude Code Stop stays quiet on a turn with no recorded evidence', async (
   assert.match(stop.hookSpecificOutput.additionalContext, /Available recorded evidence/);
   assert.match(stop.hookSpecificOutput.additionalContext, /most turns warrant no proposal/);
 });
+
+// Phase 6 (docs/plans/2026-09-22-semantic-retrieval-plan.md): memories paid off
+// only where they held what reading the code would not reveal.
+test('the capture prompt asks whether an agent reading the code would miss it', async () => {
+  const { STOP_CAPTURE_PROMPT } = await import('../../src/hooks/capture.js');
+  assert.match(STOP_CAPTURE_PROMPT, /reading the code/i);
+  assert.match(STOP_CAPTURE_PROMPT, /why not|trap|pitfall/i);
+});
