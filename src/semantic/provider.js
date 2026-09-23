@@ -49,7 +49,11 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     const vectors = await syncVectors({ store: deps.store, projectId: request.project_id, embedder: active });
     const [query] = await active.embed([queryText(request.action)], 'query');
     const sims = new Map([...vectors].map(([id, vector]) => [id, cosine(query, vector)]));
-    return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, calibration) });
+    // semantic.floor in .dd/config.json trades silence for recall per project:
+    // terse memories need a lower floor to be reached at all.
+    const floor = Number((await deps.store.loadConfig()).semantic?.floor);
+    const tuned = Number.isFinite(floor) && floor >= 0 && floor < 1 ? { ...calibration, floor, full: floor + (calibration.full - calibration.floor) } : calibration;
+    return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned) });
   }
   // Load the model and embed the store ahead of the first hook, so the first
   // bridged call does not pay for either.

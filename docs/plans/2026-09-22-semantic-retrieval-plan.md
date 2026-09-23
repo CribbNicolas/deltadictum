@@ -81,6 +81,26 @@ Tried and reverted: weighting a file-scope match by glob specificity (a broad `s
 admits a memory). It raised Patriark precision (0.51 to 0.61) but lowered supermem semantic precision
 (0.86 to 0.79) and Patriark recall; a weak activation for broad globs (0.45) was worse everywhere.
 
+## Project-wide scopes and per-project calibration (2026-09-22, later)
+
+After the day's own memories were auto-accepted, one of them (a tooling lesson scoped to `src/**`) was
+injected into every supermem task. A file scope that fixes at most one directory now admits a memory
+without activating it (`projectWideScope` in `src/engine/activation.js`); two-segment scopes such as
+`src/domain/**` still activate.
+
+| | must | orbit | precision | quiet |
+|---|---|---|---|---|
+| supermem lexical | 0.80 | 0.18 | 0.84 | 4/4 |
+| **supermem semantic** | **0.92** | 0.18 | **0.84** | 4/4 |
+| Patriark lexical | 0.33 | 0.27 | 0.64 | 3/3 |
+| **Patriark semantic** | **0.46** | 0.30 | **0.72** | 3/3 |
+
+The semantic floor is now per project (`semantic.floor` in `.dd/config.json`, default 0.04). Patriark at
+0.025 reaches must 0.68 with precision 0.70, at the cost of one of three negatives; supermem keeps must
+0.92 from 0.015 to 0.04 and needs 0.04 to stay fully quiet. Translating Patriark's missed memories to
+English moved semantic must recall from 0.49 to 0.54 only; lexical did not move, because prompts rarely
+share 35% of a trigger's words.
+
 ## Still open
 
 - Phase 6: the same task with and without DD, comparing outcome and tokens (`src/eval/model-runner.js`).

@@ -74,3 +74,13 @@ test('only memories standing clearly above the query mean activate', () => {
 test('tool-call JSON is reduced to its content before embedding', () => {
   assert.equal(queryText('Edit {"file_path":"src/ui/server.js","old_string":"a"}'), 'Edit src/ui/server.js a');
 });
+
+test('the calibration floor can be set per project in config', async t => {
+  const { store } = await fixture(t);
+  const config = await store.loadConfig();
+  // A floor no memory can clear: nothing is activated semantically.
+  await store.saveConfig({ ...config, semantic: { floor: 0.99 } });
+  const retrieve = createSemanticRetrieve({ embedder: fakeEmbedder() });
+  const result = await retrieve({ project_id: 'demo', action: 'agregar un filtro nuevo en la barra', telemetry: false }, { store });
+  assert.equal(result.memories.length, 0);
+});

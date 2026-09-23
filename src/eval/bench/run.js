@@ -16,6 +16,8 @@ import { preToolRequest } from '../../hooks/pre-tool.js';
 import { microPack } from '../../hooks/session-start.js';
 import { estimateTokens } from '../../engine/budget.js';
 import { looksNonEnglish } from '../../engine/language.js';
+import { samePath } from '../../paths.js';
+import { fileURLToPath } from 'node:url';
 
 export async function openBenchStore(projectRoot) {
   // A copy of the project's knowledge, so the run never writes to it. The repo
@@ -40,7 +42,15 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   const opened = given ? { ...given, close: async () => {} } : await openBenchStore(projectRoot);
   const { store, projectId } = opened;
   const atoms = await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] });
-  const full = prefix => atoms.find(atom => atom.id.startsWith(prefix))?.id ?? `missing:${prefix}`;
+  const history = await store.listAtoms({ projectId, lifecycleStates: ['superseded', 'archived', 'rejected'] }).catch(() => []);
+  // Labels name the memory that was live when the scenario was written. A revised
+  // memory keeps its topic_key, so a label follows its topic to the live version.
+  const full = prefix => {
+    const live = atoms.find(atom => atom.id.startsWith(prefix));
+    if (live) return live.id;
+    const topic = history.find(atom => atom.id.startsWith(prefix))?.topic_key;
+    return atoms.find(atom => topic && atom.topic_key === topic)?.id ?? `missing:${prefix}`;
+  };
   const tasks = [];
   const probeRows = [];
   try {
@@ -89,7 +99,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   };
 }
 
-if (import.meta.url === `file:///${process.argv[1].replaceAll('\\', '/').replace(/^\//, '')}`) {
+if (process.argv[1] && samePath(fileURLToPath(import.meta.url), process.argv[1])) {
   const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
   const projectRoot = args.project ?? process.cwd();
   const scenarios = JSON.parse(await readFile(args.scenarios ?? new URL('./supermem.scenarios.json', import.meta.url), 'utf8'));
