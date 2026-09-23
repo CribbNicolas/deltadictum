@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "bin": {
-    "deltadictum": "./src/cli.js"
+    "deltadictum": "src/cli.js"
   },
   "exports": {
     ".": "./adapters/opencode/index.js"
