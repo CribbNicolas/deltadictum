@@ -374,3 +374,23 @@ describe('audit UI live updates', () => {
     assert.equal(done, true);
   });
 });
+
+test('retrying a busy port loads the embedding model once, not once per attempt', async t => {
+  const { createServer } = await import('node:net');
+  const { mkdtemp } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { createMemoryStore } = await import('../../src/store/create-store.js');
+  const { startUiServer } = await import('../../src/ui/server.js');
+  const busy = createServer();
+  await new Promise(resolve => busy.listen(0, '127.0.0.1', resolve));
+  const port = busy.address().port;
+  const root = await mkdtemp(join(tmpdir(), 'dd-port-'));
+  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+  let created = 0;
+  const createRetrieve = () => { created += 1; const retrieve = async () => ({ memories: [] }); retrieve.warm = async () => false; return retrieve; };
+  const ui = await startUiServer({ store, projectId: 'demo', port, semantic: true, createRetrieve });
+  t.after(async () => { await ui.close(); busy.close(); store.close(); });
+  assert.notEqual(ui.port, port);
+  assert.equal(created, 1);
+});

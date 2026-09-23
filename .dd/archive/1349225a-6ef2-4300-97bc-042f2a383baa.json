@@ -1,0 +1,50 @@
+{
+  "id": "1349225a-6ef2-4300-97bc-042f2a383baa",
+  "schema_version": 6,
+  "authority": "inferred",
+  "confidence": 0.85,
+  "scope": "project",
+  "valid_from": "2026-09-10T05:52:06.202Z",
+  "memory_type": "anti_memory",
+  "title": "Do not add embeddings-first or session dumps",
+  "trigger": "when adding embeddings or session-summary capture",
+  "behavior_delta": "Do not copy Mem0 embeddings-first retrieval or claude-mem session dumps. Keep trigger activation, abstention, and expensive writes.",
+  "what": "The 2026 memory market already covers session dumps, vector facts, and always-on markdown.",
+  "why": "Copying those erases SuperMem. The differentiator is behavioral memory activated by the next action.",
+  "topic_key": "memory/product/not-embeddings",
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "docs/specs/2026-09-09-retrieval-hot-path-and-scale.md",
+      "summary": "What not to copy"
+    }
+  ],
+  "retrieval_forms": {
+    "micro": "Do not add embeddings-first or session dumps.",
+    "short": "Do not add embeddings-first RAG or auto session summaries. Trigger plus abstain is the product."
+  },
+  "project_id": "supermem",
+  "registry_key_id": "0fae826c-2be6-4430-ae4e-27f06a7b78ba",
+  "lifecycle_state": "superseded",
+  "created_at": "2026-09-10T05:52:06.259Z",
+  "updated_at": "2026-09-22T23:54:50.057Z",
+  "capture_origin": "user_explicit",
+  "capture_source": "unknown",
+  "evidence_state": {
+    "checked_at": "2026-09-18T09:08:10.066Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "docs/specs/2026-09-09-retrieval-hot-path-and-scale.md",
+        "summary": "What not to copy",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "d8063fd19579e7c0b014eb4542ba1451bf2ef26f66b529040e6eb2c1ac5e5835"
+      }
+    ],
+    "verified_count": 1,
+    "support": "unreviewed"
+  },
+  "activation_count": 0,
+  "superseded_by": "1092b8d9-9a8e-4941-9144-a54e81a996cd"
+}
