@@ -92,7 +92,7 @@ Required authored fields: `topic_key`, `trigger`, `behavior_delta`, `why`, `evid
 
 Hooks retain small failure diagnostics and explicit validation results. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
 
-Automatic capture reminders are separate from writes: the Stop hook reminds only after a turn that recorded a host failure, a validation or a user correction, and avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point. Old `capture.max_proposals` settings and exhausted session counters no longer restrict writes.
+Automatic capture reminders are separate from writes: the Stop hook reminds only after a turn that recorded a host failure, a validation or a user correction, and avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point.
 
 ## Resident process
 
@@ -166,3 +166,11 @@ The replay covers 24 authored scenarios: exact matches, paraphrases, Spanish, in
 A provider-neutral [model evaluation runner](docs/evaluation/model-evaluation.md) compares no memory, static instructions and DD while preserving actual usage supplied by an adapter. Real model runs and repository task trials are required before claiming equal effectiveness across models or improved development outcomes.
 
 The current authority is [docs/DD.md](docs/DD.md).
+
+## License
+
+DD is source-available under the [PolyForm Shield License 1.0.0](LICENSE), not an open-source license.
+You may install and use it for any purpose, including in paid work and inside a company, and you may
+change it and share copies with the license attached. You may not sell it, offer it as a hosted or
+managed service, or use it to provide any product that competes with DD. For other terms, contact the
+author through the [repository](https://github.com/CribbNicolas/deltadictum).
