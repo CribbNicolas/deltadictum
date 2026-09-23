@@ -123,9 +123,33 @@ By task:
 Two runs per cell: this is a direction, not a measurement. DD saves the most where a memory records
 something the code does not show, and nothing where reading the code is as fast as reading the memory.
 
+## Phase 6, expanded (2026-09-23): 6 tasks, 3 runs per cell, 36 runs
+
+Adds three tasks whose memory holds what the code does not show (activation-reindex, error-code-hint,
+data-dir-rename), each check validated to fail when the task is not done.
+
+| | correct | input / run | cost / run | turns / run | seconds / run |
+|---|---|---|---|---|---|
+| without DD | 15/18 | 921 k | $0.390 | 19.4 | 241 |
+| **with DD** | **18/18** | 884 k (-4%) | $0.396 (+2%) | 19.2 | 124 |
+| without DD, excluding retrieve-title | 14/15 | 957 k | $0.414 | 20.1 | 139 |
+| **with DD, excluding retrieve-title** | **15/15** | 856 k (-11%) | $0.390 (-6%) | 18.6 | 126 |
+
+By task, cost per run without -> with DD: auto-accept-threshold $0.35 -> $0.25 (-29%, 3/3 both);
+activation-reindex $0.51 -> $0.44 (-14%); error-code-hint $0.41 -> $0.41, but without DD one run added the
+code and forgot its UI hint, which is exactly what the memory says; retirement-test equal; data-dir-rename
+$0.60 -> $0.66 (+10%, both 3/3); retrieve-title 1/3 -> 3/3 at +58% cost (the failures without DD were a
+20-minute timeout and an agent waiting on a background command despite the instruction).
+
+What this measures: DD's clear effect is correctness, 18/18 against 15/18. Token and cost savings are
+real where a memory answers the task directly (-14% to -29%) and absent or slightly negative elsewhere;
+over all tasks, cost is even. The -28% of the first 12-run trial came from one task and did not hold at
+scale. Time per run halves overall, but most of that is one timed-out run without DD.
+
 ## Still open
 
-- Phase 6, next: more tasks where knowledge is not visible in the code, and more runs per cell.
+- Phase 6, next: memories written for the agent's blind spots (why-not, traps) are where DD pays; measure
+  whether steering capture toward those raises the savings.
 - Patriark as a second, Spanish, benchmark corpus; then translate its memories (new ones are refused).
 - ~~The MCP `retrieve` tool runs lexically in the session's process~~: it now asks the resident first.
 - ~~Session dedup re-delivers after 1 hour~~: the window is one day (`since(1)` counts days). Repeats seen
