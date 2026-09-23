@@ -38,17 +38,25 @@
     "docs/integrations",
     "docs/evaluation",
     "docs/memory",
-    "docs/decisions",
     "skills",
     "hooks",
     "mcp.js",
     ".mcp.json",
-    "scripts"
+    "scripts",
+    "LICENSE"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.6.0",
     "@huggingface/transformers": "^4.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CribbNicolas/deltadictum.git"
+  },
+  "homepage": "https://github.com/CribbNicolas/deltadictum#readme",
+  "bugs": {
+    "url": "https://github.com/CribbNicolas/deltadictum/issues"
   }
 }
