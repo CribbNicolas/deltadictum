@@ -39,11 +39,19 @@ detail in `docs/integrations/opencode.md`.
 
 ## 5. Test a real install from another project (Claude Code, Grok Build)
 
+Claude Code, 2026-09-23: loading this checkout as a plugin into a fresh project (`claude -p --plugin-dir`)
+showed every hook failing with MODULE_NOT_FOUND. Claude Code reads plugin hooks from `hooks/hooks.json`
+and runs them from the user's project, and that file used relative commands; the anchored copy in
+`.claude-plugin/hooks/hooks.json` was never read. Fixed (`hooks/hooks.json` now uses
+`${CLAUDE_PLUGIN_ROOT}`, the dead copy is gone, `tests/hooks/plugin-manifest.test.js` guards it) and
+verified: the fresh project receives the banner, the resident notice and the project context, and the MCP
+tools and skills load. Still untested: the marketplace path itself, which changes the user's global config:
+
 - **Claude Code**: `/plugin marketplace add <your-org>/deltadictum` → `/plugin install deltadictum@deltadictum`
 - **Grok Build**: the equivalent with `grok plugin marketplace` / `grok plugin install`
 
 Codex is tested end to end (package built with `npm pack`, installed in another project, installer run,
-`check-codex.mjs` confirmed a real connection). The other two are not.
+`check-codex.mjs` confirmed a real connection).
 
 ## 6. ~~Gaps 6 and 7~~ — closed 2026-09-22
 

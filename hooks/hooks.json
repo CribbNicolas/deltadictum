@@ -1,12 +1,12 @@
 {
-  "description": "DD capture and budgeted recall. Commands are relative to this JSON file. Failures must not block the host.",
+  "description": "DD capture and budgeted recall. Claude Code reads plugin hooks from this file and runs them from the user project, so every command is anchored at ${CLAUDE_PLUGIN_ROOT}. Failures must not block the host.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node run.cjs session-start",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" session-start",
             "timeout": 15
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node run.cjs pre-tool",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool",
             "timeout": 10
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node run.cjs prompt",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" prompt",
             "timeout": 15
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node run.cjs observe",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" observe",
             "timeout": 15,
             "async": true
           }
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node run.cjs stop",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" stop",
             "timeout": 10
           }
         ]
