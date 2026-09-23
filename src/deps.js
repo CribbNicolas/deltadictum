@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Some hosts copy a plugin without installing its packages: Grok Build states
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 // cannot load its model, so the first session to find them missing installs
 // them into the plugin directory, in the background (L5), and DD stays inactive
 // until they are there.
-export const ROOT = fileURLToPath(new URL('..', import.meta.url));
+export const ROOT = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 export const INSTALL_LOCK = '.dd-install.lock';
 export const INSTALL_FAILED = '.dd-install.failed';
 export const INSTALL_LOG = '.dd-install.log';
