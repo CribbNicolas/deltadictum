@@ -1,18 +1,14 @@
 # To do — DD (DeltaDictum)
 
-Updated 2026-09-23 (before merging feat/semantic-retrieval). Each item carries its references and needs no context from a past session.
+Updated 2026-09-23. Only open items; each carries its references and needs no context from a past session.
+Finished work is recorded in the commit history and in `docs/plans/2026-09-22-semantic-retrieval-plan.md`.
 
-## 1. ~~Decide the auto_accept policy~~ — decided 2026-09-22
-
-Default `auto_accept: { enabled: true, confidence_threshold: 0.765 }` in `src/store/paths.js`
-(filesystem × model_initiated): a model proposal with verified file evidence is auto-accepted. The user's
-explicit decision.
-
-## 2. Publish to npm
+## 1. Publish to npm
 
 There is no `npm login` on this machine. The unscoped name `deltadictum` was free on the registry
 (checked 2026-09-19). Until it is published, the OpenCode install (`"plugin": ["deltadictum"]`) does not
-work. Deferred until DD is ready to publish.
+work. Deferred until DD is ready to publish; the package contents were checked on 2026-09-23
+(`npm pack --dry-run`).
 
 ```bash
 npm login
@@ -21,114 +17,70 @@ npm publish --dry-run   # review what would be uploaded
 npm publish
 ```
 
-## 3. Verify Grok Build live — blocked: Grok is not signed in (2026-09-23)
+## 2. Verify Grok Build live — blocked: Grok is not signed in
 
 Run `grok login --device-code` (or set `XAI_API_KEY`), then from this checkout:
 `grok -p "Read README.md and report every 'DD -' line you received" --output-format json`.
 
-
 `grok plugin validate .` passed (valid schema, hooks and MCP servers detected). That does not confirm the
-real `PreToolUse` contract (payload and response) works in a live session. Open a project with the plugin
-installed and check whether `PreToolUse` errors.
+real `PreToolUse` contract (payload and response) works in a live session. If it fails: remove
+`PreToolUse`, `UserPromptSubmit`, `PostToolUse` and `Stop` from `.grok-plugin/plugin.json` and keep only
+`SessionStart` (the fallback documented in `docs/integrations/grok-build.md`).
 
-If it fails: remove `PreToolUse`, `UserPromptSubmit`, `PostToolUse` and `Stop` from
-`.grok-plugin/plugin.json` and keep only `SessionStart` (the fallback documented in
-`docs/integrations/grok-build.md`).
+## 3. Verify OpenCode live — blocked: no working model credential
 
-## 4. Verify OpenCode live — blocked: no working model credential (2026-09-23)
-
-Tried with the adapter loaded by local path (`"plugin": ["file:///<dd>/adapters/opencode/index.js"]`,
-no npm publish needed): the Anthropic key has no credit, the OpenAI OAuth token fails to refresh (401),
-and MiniMax does not answer even without DD. Refresh one (`opencode auth login`), then run
+The Anthropic key has no credit, the OpenAI OAuth token fails to refresh (401), and MiniMax does not answer
+even without DD. Refresh one (`opencode auth login`), then run
 `opencode run "Report every 'DD -' line in your system prompt" -m <provider/model>` in a project whose
-`opencode.json` loads the adapter and the MCP server by absolute path.
+`opencode.json` loads the adapter (`"plugin": ["file:///<dd>/adapters/opencode/index.js"]`, no npm publish
+needed) and the MCP server by absolute path. What to confirm: that
+`experimental.chat.system.transform` injects DD context in a real conversation
+(`docs/integrations/opencode.md`).
 
+## 4. Install through a marketplace (Claude Code, Grok Build)
 
-`opencode debug startup` ran clean (the adapter imports without error). That does not confirm that
-`experimental.chat.system.transform` injects DD context in the middle of a real conversation. Technical
-detail in `docs/integrations/opencode.md`.
-
-## 5. Test a real install from another project (Claude Code, Grok Build)
-
-Claude Code, 2026-09-23: loading this checkout as a plugin into a fresh project (`claude -p --plugin-dir`)
-showed every hook failing with MODULE_NOT_FOUND. Claude Code reads plugin hooks from `hooks/hooks.json`
-and runs them from the user's project, and that file used relative commands; the anchored copy in
-`.claude-plugin/hooks/hooks.json` was never read. Fixed (`hooks/hooks.json` now uses
-`${CLAUDE_PLUGIN_ROOT}`, the dead copy is gone, `tests/hooks/plugin-manifest.test.js` guards it) and
-verified: the fresh project receives the banner, the resident notice and the project context, and the MCP
-tools and skills load. Still untested: the marketplace path itself, which changes the user's global config:
+Loading this checkout as a Claude Code plugin works (`claude -p --plugin-dir`, verified 2026-09-23). Still
+untested is the marketplace path itself, which changes the user's global configuration:
 
 - **Claude Code**: `/plugin marketplace add <your-org>/deltadictum` → `/plugin install deltadictum@deltadictum`
 - **Grok Build**: the equivalent with `grok plugin marketplace` / `grok plugin install`
 
-Codex is tested end to end (package built with `npm pack`, installed in another project, installer run,
-`check-codex.mjs` confirmed a real connection).
-
-## 6. ~~Gaps 6 and 7~~ — closed 2026-09-22
-
-See `docs/memory/roadmap.md`: `src/store/adopt.js` (gap 6) and `src/hooks/build.js` (gap 7).
-
-## 7. ~~README section "Resident process"~~ — written 2026-09-22
-
-The SessionStart notice points to it when retrieval is lexical.
-
-## 8. Semantic retrieval and agent-level evaluation
-
-See `docs/plans/2026-09-22-semantic-retrieval-plan.md`, sections "Phase 6" and "Still open".
-
-## 9. Test on a real Mac — blocked: no Mac available (2026-09-22)
-
-Kept here until one is available.
+## 5. Test on a real Mac — blocked: no Mac available
 
 Linux is verified (WSL Ubuntu, Node 22: full suite, stress, eval, semantic benchmark and the resident
-process end to end through a symlink). macOS was not run: it is covered in code (`src/paths.js` folds case on
-darwin and resolves symlinks such as `/tmp` → `/private/tmp`) and `onnxruntime-node` ships darwin
-binaries. Still to run on a Mac: `npm test`, `npm run bench:semantic` and a real session, ideally also on a
-case-sensitive APFS volume.
+process end to end through a symlink). macOS is covered in code only (`src/paths.js` folds case on darwin
+and resolves symlinks such as `/tmp` → `/private/tmp`; `onnxruntime-node` ships darwin binaries). To run on
+a Mac: `npm test`, `npm run bench:semantic` and a real session, ideally also on a case-sensitive APFS volume.
 
-## 10. Stale memories — replacements proposed 2026-09-22
+## 6. Review the replacement memories
 
-`ui/server-routes-need-restart/shared-process-with-mcp` (8b7195a9) says killing the UI kills the MCP
-tools; since 2026-09-22 the UI is the resident process (`src/resident.js`). Replacement candidate
-`ca2e2d89`. Also pending: `297bd600` (replaces `compact-fts`), `ad3fdaa9` (path comparisons),
-`6abc175a` (scripted edits, without the project-wide scope). Review them in the audit UI.
+Pending candidates in the audit UI: `ca2e2d89` (the UI is now the resident process, replaces 8b7195a9),
+`297bd600` (replaces `compact-fts`), `ad3fdaa9` (path comparisons), `6abc175a` (scripted edits, without the
+project-wide scope).
 
-## 11. Archive memories that the code already states (review 2026-09-23)
+## 7. Archive memories that the code already states
 
 Reviewed against "would an agent reading the code, tests and docs work this out on its own?". Archive in
 the audit UI: `22291eb8`, `8724c2f2`, `bfacc975`, `b06e473d`, `292df784`, `9a955d61`, `c61d7902`,
-`78f72b36`, `d0776c3c`. Keep `c2984ddd`: pruning it with the others made the auto-accept task cost $0.42
-instead of $0.25 per run (plan, "Pruned store"); it is not a duplicate of `d3d5bf57`. Update with what changed on 2026-09-22: `e57a21a9` (adoption now in
+`78f72b36`, `d0776c3c`. Keep `c2984ddd`: removing it made the auto-accept task cost $0.42 instead of $0.25
+per run (plan, "Pruned store"). Update with what changed on 2026-09-22: `e57a21a9` (adoption now in
 `adopt.js`), `e96a63b1` (`--test-force-exit` crashes the resident tests on Windows), `cf1ad3c5` (a stale
 resident is now replaced at session start).
 
-## 12. ~~Translate Project-Patriark's memories to English~~ — done 2026-09-23
+## 8. Measure the capture criterion (agent-level evaluation)
 
-All 48 were rewritten as full English sentences of behaviour (the "supported application detail" that
-sat in `why` moved into `behavior_delta`), with titles, triggers, evidence summaries and revision
-conditions translated, proposed under the same topic keys and auto-accepted by Patriark's policy. The
-Spanish originals are archived and can be restored from Patriark's audit UI. Patriark benchmark, before ->
-after: semantic must recall 0.46 -> 0.61, precision 0.72 -> 0.77; lexical 0.33 -> 0.45; orbit recall fell
-(0.30 -> 0.14) because longer memories leave room for fewer extras in the 600-token pack. Found on the way:
-the anti-memory preventive check accepted Spanish "nunca" but not English "never"; fixed.
+Capture memories under the new capture prompt during real work, then rerun
+`node src/eval/agent/run.js --repeat=3` and compare with `output/eval/agent-results-full.json` (about $7 of
+model usage per run). Three runs per cell leave a 2/18 difference within noise; five would settle the
+pruning question.
 
-## 13. Agent-level evaluation: harness and follow-up
+## 9. Project-Patriark: semantic floor (optional)
 
-- ~~Rephrase `error-code-hint`; keep `retrieve-title` within the foreground wait~~: done 2026-09-23 (task
-  phrased as a code change, test file named, test runs allowed up to 10 minutes).
-- Measure the capture criterion (TODO #11 context): capture memories under the new prompt during real work,
-  then rerun `node src/eval/agent/run.js --repeat=3` and compare with `output/eval/agent-results-full.json`.
-- Three runs per cell leave a 2/18 difference within noise; five would settle the pruning question.
+After the translation the default floor reaches must recall 0.61 at precision 0.77 on Patriark's
+benchmark. `semantic.floor: 0.025` in Patriark's `.dd/config.json` raised must recall further before the
+translation, at the cost of one unrelated task no longer staying quiet. A choice for Patriark's owner.
 
-## 14. Project-Patriark: semantic floor
+## 10. Commit Patriark's translated memories
 
-Its memories are terse; `semantic.floor: 0.025` in Patriark's `.dd/config.json` raised must recall from
-0.46 to 0.68 at precision 0.70, with one of three unrelated tasks no longer quiet (plan, "Project-wide
-scopes and per-project calibration"). Measured before #12; after the translation the default floor reaches
-must recall 0.61 at precision 0.77, so a lower floor is now optional. A choice for Patriark's owner.
-
-## 15. ~~Check the package before publishing~~ — checked 2026-09-23
-
-`npm pack --dry-run`: 135 files, 274 KB. `@huggingface/transformers` is declared optional and not bundled,
-`skills/` is included, `.dd/` is not. `files` now ships only the docs users read (DD.md, architecture, integrations,
-evaluation, memory, decisions), not the historical plans and specs.
+The 48 English memories and the archived Spanish originals are in `C:/dev/Project-Patriark/.dd/`,
+uncommitted: that repository has no commits yet.

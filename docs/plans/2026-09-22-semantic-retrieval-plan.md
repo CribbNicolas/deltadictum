@@ -170,11 +170,11 @@ raises savings needs memories captured under it, which this run could not test.
 
 - Phase 6, next: memories written for the agent's blind spots (why-not, traps) are where DD pays; measure
   whether steering capture toward those raises the savings.
-- ~~Patriark as a second benchmark corpus~~: done ("Second corpus"). Translating its memories: TODO.md #12.
+- ~~Patriark as a second benchmark corpus~~: done ("Second corpus"). Its memories were translated on 2026-09-23 (semantic must recall 0.46 to 0.61).
 - ~~The MCP `retrieve` tool runs lexically in the session's process~~: it now asks the resident first.
 - ~~Session dedup re-delivers after 1 hour~~: the window is one day (`since(1)` counts days). Repeats seen
   during the session came from two builds answering hooks with different revision formulas, which gap 7
   now prevents. Parallel hook processes did race (two of six delivered under load); delivery is now claimed
   in one SQLite statement (`claimDelivery`), covered by `tests/hooks/parallel-delivery.test.js`.
 - ~~README section "Resident process"~~: written.
-- ~~`not-embeddings`~~ replaced (1092b8d9); `compact-fts` has a pending replacement: TODO.md #10.
+- ~~`not-embeddings`~~ replaced (1092b8d9); `compact-fts` has a pending replacement: TODO.md #6.
