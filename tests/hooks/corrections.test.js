@@ -13,6 +13,8 @@ import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
+// No resident here: these tests exercise the hooks in the explicit lexical mode.
+process.env.DD_RETRIEVAL = 'lexical';
 
 const hookPath = fileURLToPath(new URL('../../src/hooks/run.js', import.meta.url));
 function hook(root, command, payload, extra = []) {

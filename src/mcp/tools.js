@@ -5,6 +5,7 @@ import { recordOutcome } from '../engine/feedback.js';
 import { declareContradiction } from '../engine/lifecycle.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { callRunningStore } from '../hooks/bridge.js';
+import { lexicalMode, residentNotice } from '../hooks/session-start.js';
 
 const jsonResult = data => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 const errorResult = message => ({ isError: true, content: [{ type: 'text', text: message }] });
@@ -40,12 +41,22 @@ function atomView(atom) {
 
 export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, uiUrl = async () => `http://127.0.0.1:${uiPort}` }) {
   const handlers = {
-    async orient(request = {}) { return orientProject(request, { store, projectId }); },
+    // Project facts need no embeddings; recalled memories do, so without a
+    // resident (and outside lexical mode) orient answers without them.
+    async orient(request = {}) {
+      if (lexicalMode()) return orientProject(request, { store, projectId });
+      const { action, ...rest } = request;
+      const recalled = action ? await callRunningStore('retrieve', request, repoRoot ?? store.repoRoot) : null;
+      const map = await orientProject(rest, { store, projectId });
+      if (recalled && !recalled.error) return { ...map, memories: retrieveView(recalled).memories };
+      return action ? { ...map, dd: recalled?.error?.message ?? residentNotice({ state: 'unreachable' }) } : map;
+    },
     async retrieve(request) {
-      // The resident process answers with semantic retrieval when it runs this
-      // build; otherwise this session's store answers lexically (L2).
-      const bridged = repoRoot ? await callRunningStore('retrieve', request, repoRoot) : null;
+      // The resident process answers with semantic retrieval. Embeddings are
+      // required, so without it DD is inactive (lexical only as an explicit mode).
+      const bridged = await callRunningStore('retrieve', request, repoRoot ?? store.repoRoot);
       if (bridged && !bridged.error) return retrieveView(bridged);
+      if (!lexicalMode()) return { error: { code: 503, message: bridged?.error?.message ?? residentNotice({ state: 'unreachable' }) } };
       const map = await projectContext(store);
       const result = await retrieveMemories({ ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
       return result.error ? result : retrieveView(result);

@@ -1,0 +1,79 @@
+{
+  "id": "8b7195a9-3196-467b-8a5d-308fc31f9424",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "The audit UI server is the same OS process as the dd MCP server -- restarting one kills the other",
+  "topic_key": "ui/server-routes-need-restart/shared-process-with-mcp",
+  "trigger": "Before restarting the audit UI (e.g. after editing src/ui/server.js) to pick up a server-side route/logic change",
+  "behavior_delta": "Check the actual process before killing it: on this setup the audit UI's listening port (e.g. 7733) is served by the same process running `node mcp.js`, not a separate UI-only process. Confirm via `Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>' | select CommandLine` (Windows) or `ps -p <pid> -o command` before assuming a UI restart is low-blast-radius. Killing it also drops every mcp__dd__* tool for the current session until the harness respawns the MCP connection -- surface this tradeoff to the user before restarting, don't just restart silently.",
+  "what": "Check the actual process before killing it: on this setup the audit UI's listening port (e.g. 7733) is served by the same process running `node mcp.js`, not a separate UI-only process. Confirm via `Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>' | select CommandLine` (Windows) or `ps -p <pid> -o command` before assuming a UI restart is low-blast-radius. Killing it also drops every mcp__dd__* tool for the current session until the harness respawns the MCP connection -- surface this tradeoff to the user before restarting, don't just restart silently.",
+  "why": "Verified live on 2026-09-19 while trying to restart the UI after editing src/ui/server.js to add auto_accept_threshold_levels to GET /api/config: netstat showed PID 28244 listening on 127.0.0.1:7733, and Get-CimInstance showed that PID's command line was `node mcp.js`, i.e. the same process the dd MCP tools run through in this session. User declined the restart specifically because of this shared-process tradeoff.",
+  "tags": [
+    "ui",
+    "mcp",
+    "process-lifecycle"
+  ],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/ui/server.js",
+      "mcp.js"
+    ],
+    "components": [
+      "ui",
+      "mcp"
+    ],
+    "operations": [
+      "restart-ui",
+      "apply-server-change"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "netstat -ano | grep :7733 -> PID 28244 LISTENING; Get-CimInstance Win32_Process -Filter 'ProcessId=28244' -> CommandLine: node mcp.js",
+      "summary": "Confirmed the audit UI's listening PID is the same process as the dd MCP server (node mcp.js), not a standalone UI server"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-19T15:48:23.108Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Check the actual process before killing it: on this setup the audit UI's listening port (e.g. 7733) is served by the same process running `node mcp.js`, not a separate UI-only process. Confirm via `Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>' | select CommandLine` (Windows) or `ps -p <pid> -o command` before assuming a UI restart is low-blast-radius. Killing it also drops every mcp__dd__* tool for the current session until the harness respawns the MCP connection -- surface this tradeoff to the user before restarting, don't just restart silently.",
+    "short": "Check the actual process before killing it: on this setup the audit UI's listening port (e.g. 7733) is served by the same process running `node mcp.js`, not a separate UI-only process. Confirm via `Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>' | select CommandLine` (Windows) or `ps -p <pid> -o command` before assuming a UI restart is low-blast-radius. Killing it also drops every mcp__dd__* tool for the current session until the harness respawns the MCP connection -- surface this tradeoff to the user before restarting, don't just restart silently. Why: Verified live on 2026-09-19 while trying to restart the UI after editing src/ui/server.js to add auto_accept_threshold_levels to GET /api/config: netstat showed PID 28244 listening on 127.0.0.1:7733, and Get-CimInstance showed that PID's command line was `node mcp.js`, i.e. the same process the dd MCP tools run through in this session. User declined the restart specifically because of this shared-process tradeoff.",
+    "full": "Check the actual process before killing it: on this setup the audit UI's listening port (e.g. 7733) is served by the same process running `node mcp.js`, not a separate UI-only process. Confirm via `Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>' | select CommandLine` (Windows) or `ps -p <pid> -o command` before assuming a UI restart is low-blast-radius. Killing it also drops every mcp__dd__* tool for the current session until the harness respawns the MCP connection -- surface this tradeoff to the user before restarting, don't just restart silently. Why: Verified live on 2026-09-19 while trying to restart the UI after editing src/ui/server.js to add auto_accept_threshold_levels to GET /api/config: netstat showed PID 28244 listening on 127.0.0.1:7733, and Get-CimInstance showed that PID's command line was `node mcp.js`, i.e. the same process the dd MCP tools run through in this session. User declined the restart specifically because of this shared-process tradeoff."
+  },
+  "confidence": 0.45,
+  "registry_key_id": "25331968-eb4c-4aa1-9c8b-6b6ddfbeb1e5",
+  "evidence_state": {
+    "checked_at": "2026-09-19T16:22:34.741Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "netstat -ano | grep :7733 -> PID 28244 LISTENING; Get-CimInstance Win32_Process -Filter 'ProcessId=28244' -> CommandLine: node mcp.js",
+        "summary": "Confirmed the audit UI's listening PID is the same process as the dd MCP server (node mcp.js), not a standalone UI server",
+        "status": "unverified",
+        "provenance": "agent_claim"
+      }
+    ],
+    "verified_count": 0,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T15:48:23.175Z",
+  "updated_at": "2026-09-23T16:46:46.936Z",
+  "activation_count": 1,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T16:22:34.741Z",
+    "rationale": "Reviewed as proposed."
+  },
+  "superseded_by": "ca2e2d89-413f-4263-8b1f-3b2b4c42fcfb"
+}

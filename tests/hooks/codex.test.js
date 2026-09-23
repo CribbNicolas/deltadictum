@@ -10,10 +10,12 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { buildPreToolContext } from '../../src/hooks/pre-tool.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { startUiServer } from '../../src/ui/server.js';
-import { writeUiUrl } from '../../src/hooks/banner.js';
+import { registerResident } from '../helpers/resident.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
+// No resident here: these tests exercise the hooks in the explicit lexical mode.
+process.env.DD_RETRIEVAL = 'lexical';
 
 async function fixture() {
   const root = join(await mkdtemp(join(tmpdir(), 'dd-codex-')), 'Project with spaces');
@@ -91,7 +93,7 @@ test('Codex hook capture can recur in later turns, without loops or repeated evi
   const projectId = (await store.loadConfig()).project_id;
   const ui = await startUiServer({ store, projectId, port: 0 });
   t.after(async () => { await ui.close(); store.close(); });
-  await writeUiUrl(ddDir, ui);
+  await registerResident(t, ui);
   await hook(root, 'prompt', { prompt: 'Start another task in this long conversation.' });
   assert.equal(store.index.db.prepare('SELECT stopped FROM capture_prompts WHERE project_id=? AND session_id=?').get(projectId, 'codex-fixture').stopped, 0);
   await hook(root, 'observe', { tool_name: 'Bash', tool_input: { command: 'dotnet test' }, tool_response: { exit_code: 0, output: 'A later task passed.' } });

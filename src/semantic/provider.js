@@ -55,6 +55,8 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     const tuned = Number.isFinite(floor) && floor >= 0 && floor < 1 ? { ...calibration, floor, full: floor + (calibration.full - calibration.floor) } : calibration;
     return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned) });
   }
+  // Load the model before any project asks, so a fresh resident is ready sooner.
+  semanticRetrieve.preload = async () => Boolean(await start());
   // Load the model and embed the store ahead of the first hook, so the first
   // bridged call does not pay for either.
   semanticRetrieve.warm = async ({ store, projectId }) => {

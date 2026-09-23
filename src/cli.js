@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 import { openStore } from './project.js';
-import { startUiServer } from './ui/server.js';
+import { startResidentServer } from './ui/server.js';
 import { orientProject } from './engine/project-context.js';
-import { writeUiUrl, recordedUiUrl } from './hooks/banner.js';
-import { residentStatus, retireResident } from './resident.js';
+import { readRegistry, residentStatus, retireResident, writeRegistry } from './resident.js';
 import { BUILD_ID } from './hooks/build.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
 
@@ -31,7 +30,8 @@ async function runInstall(args) {
 async function main() {
   if (command === 'install') return runInstall(rest);
   if (command === 'mcp') { await import('./mcp/server.js'); return; }
-  const { store, projectId, ddDir, dataDir, repoRoot } = await openStore();
+  if (!command || command === 'ui' || command === 'resident') return runResident();
+  const { store, projectId } = await openStore();
   if (command === 'orient') {
     console.log(JSON.stringify(await orientProject({ action: rest.join(' ') || undefined }, { store, projectId })));
     store.close(); return;
@@ -65,30 +65,36 @@ async function main() {
     store.close();
     return;
   }
-  await runResident({ store, projectId, ddDir, repoRoot });
+  store.close();
+  throw new Error(`Unknown command: ${command}`);
 }
 
-// The resident process (L2): one per project, shared by every session. It steps
-// aside for a live one of the same build, replaces one from another build, and
-// exits after a long idle period so a forgotten project does not keep it alive.
+// The resident process (L2): one per machine, shared by every project and
+// session. It opens each project's store the first time a hook or the audit UI
+// asks for it, and loads the embedding model once. It steps aside for a live
+// one of the same build, replaces one from another build, and exits after a
+// long idle period.
 const IDLE_EXIT_MS = 12 * 60 * 60 * 1000;
-async function runResident({ store, projectId, ddDir, repoRoot }) {
-  const existing = await residentStatus(repoRoot);
+async function runResident() {
+  const existing = await residentStatus();
   if (existing?.build === BUILD_ID && !existing.stale) {
-    console.log(`DD - UI ${existing.url} (already running)`);
-    store.close();
+    console.log(`DD - resident ${existing.url} (already running)`);
     return;
   }
   if (existing) await retireResident(existing);
-  let ui;
-  const stop = async () => { await ui?.close(); store.close(); process.exit(0); };
-  ui = await startUiServer({ store, projectId, semantic: true, onShutdown: stop });
-  await writeUiUrl(ddDir, ui);
-  console.log(`DD - UI ${ui.url}`);
+  let server;
+  const stop = async () => { await server?.close(); process.exit(0); };
+  const openProject = async (repoRoot, dataDir) => {
+    const { store, projectId } = await openStore({ cwd: repoRoot, dataDir });
+    return { store, projectId };
+  };
+  server = await startResidentServer({ openProject, semantic: true, onShutdown: stop });
+  await writeRegistry(server);
+  console.log(`DD - resident ${server.url}`);
   // Two sessions can start a resident at the same moment; the one whose URL did
-  // not stay in ui.json leaves.
-  setTimeout(async () => { if (await recordedUiUrl(ddDir) !== ui.url) await stop(); }, 500).unref();
-  setInterval(() => { if (ui.idleFor() > IDLE_EXIT_MS) void stop(); }, 60 * 1000).unref();
+  // not stay in the registry leaves.
+  setTimeout(async () => { if ((await readRegistry())?.url !== server.url) await stop(); }, 500).unref();
+  setInterval(() => { if (server.idleFor() > IDLE_EXIT_MS) void stop(); }, 60 * 1000).unref();
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
 }

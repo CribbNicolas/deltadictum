@@ -325,8 +325,11 @@
       return tokenHint(raw) || raw;
     }
 
+    // One resident serves every project; this page shows the one named in ?project=.
+    const PROJECT = new URLSearchParams(location.search).get('project');
+    const scoped = path => PROJECT ? `${path}${path.includes('?') ? '&' : '?'}project=${encodeURIComponent(PROJECT)}` : path;
     async function api(path, opts) {
-      const res = await fetch(path, { ...opts, headers: { 'x-dd-review-token': document.querySelector('meta[name="dd-review-token"]').content, ...opts?.headers } });
+      const res = await fetch(scoped(path), { ...opts, headers: { 'x-dd-review-token': document.querySelector('meta[name="dd-review-token"]').content, ...opts?.headers } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
       return data;
@@ -663,7 +666,7 @@
     }
     function connectLive() {
       try { liveSource?.close(); } catch { /* already closed */ }
-      liveSource = new EventSource('/api/events');
+      liveSource = new EventSource(scoped('/api/events'));
       liveSource.addEventListener('open', () => setLive(true));
       liveSource.addEventListener('error', () => setLive(false));
       liveSource.addEventListener('changed', () => load().catch(() => {}));
@@ -671,8 +674,17 @@
     livePillEl.addEventListener('click', connectLive);
     if (typeof EventSource !== 'undefined') connectLive(); else setLive(false);
 
-    load();
-    loadAutoAcceptConfig();
+    // Without ?project= and with more than one project open, list them to choose from.
+    async function start() {
+      try { await load(); loadAutoAcceptConfig(); }
+      catch (err) {
+        if (err.message !== 'project_required') throw err;
+        const projects = await (await fetch('/api/projects')).json();
+        document.getElementById('project').innerHTML = 'Choose a project: ' + projects.map(p =>
+          `<a href="/?project=${encodeURIComponent(p.key)}">${escapeHtml(p.project_id)}</a> <small>${escapeHtml(p.repo_root)}</small>`).join(' · ');
+      }
+    }
+    start();
   </script>
 </body>
 </html>

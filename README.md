@@ -96,32 +96,38 @@ Automatic capture reminders are separate from writes: the Stop hook reminds only
 
 ## Resident process
 
-DD runs one background process per project: the local audit UI, which also answers the hooks. It holds a
-multilingual embedding model (`Xenova/multilingual-e5-small`, through the optional dependency
-`@huggingface/transformers`) and gives every hook and the MCP `retrieve` tool semantic retrieval. Without it
-DD still works: each hook falls back to lexical retrieval in its own process.
+DD requires one background process per machine, shared by every project and session: the resident. It
+holds a multilingual embedding model (`Xenova/multilingual-e5-small`, through `@huggingface/transformers`)
+and answers the hooks, the MCP `retrieve` tool and the audit UI for each project from that project's own
+store and data directory. **Until it is running with its model loaded, DD is inactive**: nothing is
+recalled, and the session's first message says why.
 
-- **Who starts it.** The first session that finds none (the SessionStart hook or the MCP server) starts it
-  in the background. It is shared by every session on the project and outlives them.
+- **Who starts it.** The first session or MCP server that finds none starts it in the background. It is
+  recorded in `~/.dd-data/resident.json` and outlives the sessions that use it.
+- **Several projects.** Each project is opened the first time one of its hooks asks, with its own SQLite
+  store; the model is loaded once for all of them. The audit UI is per project:
+  `http://127.0.0.1:<port>/?project=<key>` (the session banner prints it). Without `?project=` the page
+  lists the open projects.
 - **When it steps aside.** A process from another DD install, or one whose code changed since it started,
   is replaced at the next session start. It exits after 12 hours without hook traffic.
-- **Cost.** About 640 MB of RAM once the model is loaded, about 480 MB on disk for the runtime, and 130 MB
-  for the model, downloaded once to `~/.dd-data/models` on first start. A query takes a few milliseconds.
+- **Cost.** About 640 MB of RAM with the model loaded, plus little per open project (two projects measured
+  724 MB); about 480 MB on disk for the runtime and 130 MB for the model, downloaded once to
+  `~/.dd-data/models`. A query takes a few milliseconds.
 
-When the session's first message says retrieval is lexical, check in this order:
+When the first message says DD is inactive, check in this order:
 
-1. **Is it running?** Open the URL in `<project>/.dd/ui.json` and request `/api/status`. `retrieval` is
-   `semantic` when the model is loaded, `loading` during the first start, `lexical` without the runtime.
-   `stale: true` means its code changed; the next session replaces it.
-2. **Start it by hand:** `node <dd>/src/cli.js ui` from the project directory. It says so and exits if a
-   current one is already running.
-3. **`retrieval: lexical` while running:** the optional runtime is missing. Reinstall DD's dependencies
-   without `--no-optional`/`--omit=optional`. Platforms without prebuilt ONNX binaries (for example Alpine/musl)
-   stay lexical.
-4. **It never stays up:** run `node <dd>/src/cli.js ui` in a terminal and read the error; a blocked port
-   range 7733-7742 or a read-only `~/.dd-data` are the usual causes.
+1. **Is it running?** Open the `url` in `~/.dd-data/resident.json` and request `/api/resident`.
+   `retrieval` is `semantic` when ready, `loading` while the model loads (the first run downloads it), and
+   `unavailable` when the model could not be loaded. `stale: true` means its code changed; the next session
+   replaces it.
+2. **Start it by hand:** `node <dd>/src/cli.js resident`. It says so and exits if a current one is running.
+3. **`retrieval: unavailable`:** the embedding runtime is missing or cannot run here. Reinstall DD's
+   dependencies; platforms without prebuilt ONNX binaries (for example Alpine/musl) cannot run DD.
+4. **It never stays up:** run `node <dd>/src/cli.js resident` in a terminal and read the error; a blocked
+   port range 7733-7742 or a read-only `~/.dd-data` are the usual causes.
 
-Set `DD_RESIDENT=0` to never start one (CI, tests, or by choice); retrieval is then lexical.
+`DD_RESIDENT=0` never starts one, which leaves DD inactive. `DD_RETRIEVAL=lexical` runs retrieval without
+the model and exists only for tests and evaluation.
 
 ## Storage and migration
 

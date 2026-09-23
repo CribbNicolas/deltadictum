@@ -58,17 +58,29 @@ export function resolveDataBase() {
   return process.env.GROK_PLUGIN_DATA || process.env.CLAUDE_PLUGIN_DATA || join(homedir(), '.dd-data');
 }
 
-export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cwd() } = {}) {
-  const repoRoot = await findRepoRoot(cwd);
-  const ddDir = join(repoRoot, '.dd');
-  // Named and hashed from the physical, normalized path, so the physical path (process.cwd() in the
-  // MCP server) and a symlinked or differently cased spelling (a harness's cwd)
-  // name one data directory. Before 2026-09-22 it hashed the path as spelled.
+// A project's stable key: named and hashed from the physical, normalized path, so
+// the physical path (process.cwd() in the MCP server) and a symlinked or
+// differently cased spelling (a harness's cwd) are one project. It names the
+// project's data directory and identifies it to the shared resident process.
+// Before 2026-09-22 it hashed the path as spelled.
+export function projectKey(repoRoot) {
   const slug = projectSlug(physicalPath(repoRoot));
   const identity = createHash('sha256').update(normalizePath(repoRoot)).digest('hex').slice(0, 12);
+  return { slug, identity, key: `${slug}-${identity}` };
+}
+
+// Where this process keeps the project's derived data. DD_DATA overrides it
+// (the Codex install uses <project>/.dd/local).
+export function projectDataDir(repoRoot) {
+  return process.env.DD_DATA || join(resolveDataBase(), projectKey(repoRoot).key);
+}
+
+export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cwd(), dataDir: givenDataDir } = {}) {
+  const repoRoot = await findRepoRoot(cwd);
+  const ddDir = join(repoRoot, '.dd');
+  const { slug, identity } = projectKey(repoRoot);
   const spelledName = `${projectSlug(repoRoot)}-${createHash('sha256').update(resolve(repoRoot)).digest('hex').slice(0, 12)}`;
-  const dataBase = resolveDataBase();
-  const dataDir = process.env.DD_DATA || join(dataBase, `${slug}-${identity}`);
+  const dataDir = givenDataDir || projectDataDir(repoRoot);
   const freshIndex = !await exists(sqlitePath(dataDir));
   const store = await createMemoryStore({ ddDir, dataDir, repoRoot });
   const config = await store.withWriteLock(async () => {
