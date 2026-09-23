@@ -108,5 +108,5 @@ scopes and per-project calibration"). A choice for Patriark's owner; after #12 t
 ## 15. ~~Check the package before publishing~~ — checked 2026-09-23
 
 `npm pack --dry-run`: 135 files, 274 KB. `@huggingface/transformers` is declared optional and not bundled,
-`skills/` is included, `.dd/` is not. Optional cleanup: the package also ships `docs/plans` and
-`docs/specs` (historical records users do not need); narrow `files` in package.json to the docs users read.
+`skills/` is included, `.dd/` is not. `files` now ships only the docs users read (DD.md, architecture, integrations,
+evaluation, memory, decisions), not the historical plans and specs.
