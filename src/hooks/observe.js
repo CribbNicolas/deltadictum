@@ -1,11 +1,10 @@
-import { sanitizeText } from '../engine/v2/sanitizer.js';
+import { redactSecrets, sanitizeText } from '../engine/v2/sanitizer.js';
 
 // One redaction treatment for every observation. A user prompt is more likely to
 // carry a pasted credential than a tool's stderr, so the prompt path reuses this
 // rather than relaxing it.
 function redact(raw, limit) {
-  return sanitizeText(String(raw)).replace(/\b(?:sk-[\w-]{12,}|gh[pousr]_[\w]{12,})\b/g, '[redacted]')
-    .replace(/\b(password|secret|token|api[_-]?key)\s*[=:]\s*\S+/gi, '$1=[redacted]').slice(0, limit);
+  return redactSecrets(sanitizeText(String(raw))).slice(0, limit);
 }
 
 export function observationFromTool(payload) {

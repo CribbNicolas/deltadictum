@@ -277,6 +277,7 @@
       missing_evidence_refs: 'At least one complete evidence reference (source_type, source_ref, summary) is required.',
       missing_retrieval_forms: 'retrieval_forms.micro and retrieval_forms.short are both required.',
       unsafe_memory_content: 'This content was flagged as unsafe -- it reads like an attempt to inject instructions rather than describe a lesson.',
+      contains_secret: 'This content contains what looks like a credential (an API key, token or private key). Knowledge is committed to git and shared: remove it and describe the lesson without it.',
       anti_memory_requires_preventive_delta: 'An anti_memory needs a preventive behavior_delta (e.g. containing "do not", "avoid", "block", "prevent").',
       invalid_capture_origin: 'capture_origin is not a recognized value.',
       invalid_capture_source: 'capture_source is not a recognized value.',
@@ -611,7 +612,7 @@
     });
 
     function escapeHtml(s) {
-      return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
     // Settings modal

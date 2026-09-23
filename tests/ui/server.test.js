@@ -4,11 +4,27 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
-import { startUiServer } from '../../src/ui/server.js';
+import { startUiServer as startServer } from '../../src/ui/server.js';
+import { uiCookie } from '../helpers/resident.js';
 import { proposeMemory } from '../../src/engine/write.js';
 import { archiveMemory } from '../../src/engine/lifecycle.js';
 import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
 import { Script } from 'node:vm';
+
+// These tests act as a browser that opened the UI through its printed address:
+// every request to a server they started carries its cookie. The key itself is
+// tested on its own below.
+const cookies = new Map();
+const plainFetch = globalThis.fetch;
+globalThis.fetch = (url, opts = {}) => {
+  const cookie = cookies.get(new URL(url).port);
+  return plainFetch(url, cookie && !opts.headers?.cookie ? { ...opts, headers: { ...opts.headers, ...cookie } } : opts);
+};
+async function startUiServer(options) {
+  const ui = await startServer(options);
+  cookies.set(String(ui.port), uiCookie(ui));
+  return ui;
+}
 
 async function json(url, opts) {
   const res = await fetch(url, opts);
@@ -393,4 +409,34 @@ test('retrying a busy port loads the embedding model once, not once per attempt'
   t.after(async () => { await ui.close(); busy.close(); store.close(); });
   assert.notEqual(ui.port, port);
   assert.equal(created, 1);
+});
+
+// Any account on the machine can reach a loopback port. Without the key the UI
+// serves neither the page (which carries the review token) nor any data.
+test('the audit UI answers only a browser holding its key', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'dd-ui-key-'));
+  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+  const ui = await startServer({ store, projectId: 'demo', port: 0 });
+  t.after(async () => { await ui.close(); store.close(); });
+  for (const path of ['/', '/api/atoms', '/api/observations', '/api/projects', '/api/events', '/api/status']) {
+    const res = await plainFetch(ui.url + path);
+    assert.equal(res.status, 403, path);
+    assert.doesNotMatch(await res.text(), /dd-review-token/);
+  }
+  assert.equal((await plainFetch(ui.url + '/?key=' + 'f'.repeat(64), { redirect: 'manual' })).status, 403);
+  assert.equal((await plainFetch(ui.url + '/', { headers: { cookie: `dd_ui_${ui.port}=${'f'.repeat(64)}` } })).status, 403);
+
+  // The printed address trades its key for a cookie and reloads without it.
+  const opened = await plainFetch(ui.projectUrl(root), { redirect: 'manual' });
+  assert.equal(opened.status, 303);
+  assert.doesNotMatch(opened.headers.get('location'), /key=/);
+  const cookie = opened.headers.get('set-cookie');
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /SameSite=Strict/);
+  const page = await plainFetch(ui.url + opened.headers.get('location'), { headers: { cookie: cookie.split(';')[0] } });
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /dd-review-token/);
+  // Hooks and the resident probe keep their own authentication.
+  assert.equal((await plainFetch(ui.url + '/api/resident')).status, 200);
+  assert.equal((await plainFetch(ui.url + '/api/hooks/prompt', { method: 'POST', body: '{}' })).status, 403);
 });

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { sanitizeText, hasUnsafeMemoryContent } from './v2/sanitizer.js';
+import { sanitizeText, hasUnsafeMemoryContent, containsSecret } from './v2/sanitizer.js';
 import { MEMORY_TYPES, MEMORY_SCOPES } from './v2/constants.js';
 import { cappedConfidence } from './reliability.js';
 
@@ -16,6 +16,11 @@ export function unsupportedReason(atom) {
   if (atom.schema_version !== SCHEMA_VERSION) return 'unsupported_schema_version';
   if (!CAPTURE_ORIGINS.includes(atom.capture_origin)) return 'invalid_capture_origin';
   if (!CAPTURE_SOURCES.includes(atom.capture_source)) return 'invalid_capture_source';
+  // A knowledge file can arrive by any commit, not only through proposal
+  // validation, and what it says is injected into the agent's context. It is held
+  // to the same content limits a proposal is.
+  if (JSON.stringify(atom).length > 16000) return 'memory_too_large';
+  if (hasUnsafeMemoryContent(JSON.stringify(atom))) return 'unsafe_memory_content';
   return null;
 }
 const text = value => sanitizeText(value ?? '').trim();
@@ -85,6 +90,7 @@ export function validateContract(atom) {
   }
   if (JSON.stringify(atom).length > 16000) reasons.push('memory_too_large');
   if (hasUnsafeMemoryContent(JSON.stringify(atom))) reasons.push('unsafe_memory_content');
+  if (containsSecret(JSON.stringify(atom))) reasons.push('contains_secret');
   for (const a of atom.assumptions) {
     if (!a.description || (a.key && !['string', 'boolean', 'number'].includes(typeof a.equals))) reasons.push('invalid_assumption');
   }

@@ -147,6 +147,28 @@ When the first message says DD is inactive, check in this order:
 `DD_RESIDENT=0` never starts one, which leaves DD inactive. `DD_RETRIEVAL=lexical` runs retrieval without
 the model and exists only for tests and evaluation.
 
+## Security boundary
+
+DD protects its knowledge and review from other accounts on the machine, from web pages, and from text
+that did not pass review. It does not protect them from the agent itself: an agent running as you can read
+your files and write `.dd/` directly, so review is a check on what the agent proposes, not a lock against it.
+
+- **Audit UI.** It listens on `127.0.0.1` only and refuses requests for any other `Host` (DNS rebinding).
+  The page and every API route require a key from the address DD prints; the first visit trades it for an
+  `HttpOnly`, `SameSite=Strict` cookie. Changes also need the review token in the page and a same-origin
+  request. The key and the hook token live in `~/.dd-data/resident.json`, readable only by you, like the
+  local data directories (POSIX modes; a Windows profile is already private).
+- **Committed knowledge.** A file in `.dd/` can arrive by any commit. On read it is held to the same
+  content limits as a proposal (size, injection-like text), and the text injected into the agent is derived
+  from the fields the audit UI shows, never taken from the file. Evidence paths must stay inside the
+  repository. On OpenCode, where it lands in the system prompt, it is framed as advisory data that never
+  overrides the user or the host.
+- **Credentials.** A proposal carrying a credential in a recognizable shape (cloud, Git host, npm, Slack
+  or Stripe keys, JWTs, bearer tokens, private keys) is refused, since knowledge is committed and shared.
+  Observations and feedback are redacted before they are stored.
+- **Packages.** The published package ships `npm-shrinkwrap.json`, so npm installs the exact reviewed
+  dependency tree; the first-run installer runs `npm ci --ignore-scripts`.
+
 ## Storage and migration
 
 ```text

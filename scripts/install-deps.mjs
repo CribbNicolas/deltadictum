@@ -25,7 +25,8 @@ function acquire() {
 if (!missingDependencies(root).length || !acquire()) process.exit(0);
 rmSync(join(root, INSTALL_FAILED), { force: true });
 const log = openSync(join(root, INSTALL_LOG), 'a');
-const args = [existsSync(join(root, 'package-lock.json')) ? 'ci' : 'install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'];
+const locked = ['npm-shrinkwrap.json', 'package-lock.json'].some(file => existsSync(join(root, file)));
+const args = [locked ? 'ci' : 'install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'];
 // npm is a .cmd shim on Windows, which only a shell can start. The arguments are
 // fixed; the directory is passed as cwd, never through the shell.
 const code = await new Promise(done => {

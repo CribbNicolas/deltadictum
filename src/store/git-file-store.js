@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { ARCHIVE_STATES, archiveFilePath, atomFilePath, candidateFilePath, configPath,
   DEFAULT_CONFIG, registryPath, relationsPath } from './paths.js';
 import { commitTransaction, createWriteLock, readJson, recoverTransaction, writeJson } from './transactions.js';
-import { SCHEMA_VERSION, unsupportedReason } from '../engine/contract.js';
+import { SCHEMA_VERSION, deriveForms, unsupportedReason } from '../engine/contract.js';
 
 async function walk(dir) {
   let entries;
@@ -37,7 +37,11 @@ export function createGitFileStore(ddDir) {
     return Promise.all(files.map(async file => {
       try {
         const atom = await readJson(file, null);
-        return { file, atom, reason: atom ? unsupportedReason(atom) : null };
+        const reason = atom ? unsupportedReason(atom) : null;
+        // The injected forms are derived from the fields a reviewer reads, never
+        // taken from the file: an edited file cannot inject text nobody reviewed.
+        if (atom && !reason) atom.retrieval_forms = deriveForms({ ...atom, alternatives: atom.alternatives ?? [] });
+        return { file, atom, reason };
       } catch { return { file, atom: null, reason: 'invalid_json' }; }
     }));
   }

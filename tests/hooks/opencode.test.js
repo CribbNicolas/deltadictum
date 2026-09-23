@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import DeltaDictum from '../../adapters/opencode/index.js';
+import DeltaDictum, { ADVISORY_FRAME } from '../../adapters/opencode/index.js';
 import { useTempRegistry } from '../helpers/resident.js';
 
 // The adapter must not start a resident DD process here (src/resident.js).
@@ -48,6 +48,8 @@ test('OpenCode adapter injects session context in the explicit lexical mode', as
   const [context] = await turn(hooks, 's1');
   assert.ok(context);
   assert.doesNotMatch(context, /Inactive/);
+  // It lands in the system prompt, so it says it is advisory and ranks below the user and the host.
+  assert.ok(context.startsWith(ADVISORY_FRAME));
 });
 
 test('OpenCode adapter ignores turns without a session id', async t => {

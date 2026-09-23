@@ -1,5 +1,5 @@
 import { verifyReferences } from './evidence.js';
-import { sanitizeText } from './v2/sanitizer.js';
+import { redactSecrets, sanitizeText } from './v2/sanitizer.js';
 
 export const OUTCOMES = ['helped', 'failed', 'refuted', 'not_applicable'];
 export async function recordOutcome(request, { store, projectId }) {
@@ -12,6 +12,6 @@ export async function recordOutcome(request, { store, projectId }) {
   // A reported success is telemetry. It never raises authority, confidence or
   // promotion status. Independent reviewed evidence is required for those changes.
   return store.putFeedback({ project_id: projectId, atom_id: atom.id, task_id: request.task_id,
-    outcome: request.outcome, summary: sanitizeText(request.summary), evidence,
+    outcome: request.outcome, summary: redactSecrets(sanitizeText(request.summary)), evidence,
     verification: evidence.verified_count > 0 ? 'artifact_verified' : 'agent_reported' });
 }
