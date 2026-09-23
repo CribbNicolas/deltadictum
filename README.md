@@ -2,9 +2,9 @@
 
 DD supplies project context and conditional engineering knowledge to coding agents. It preserves decisions, rationale, assumptions and evidence, then recalls the applicable knowledge before an action.
 
-**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** It runs from hooks and a local MCP server, stores knowledge as git-tracked files in the project it describes, and requires no database engine, no vector store, no inference server and no cloud account. The seven constraints that follow from being a plugin are stated in [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md).
+**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** It runs from hooks and a local MCP server, stores knowledge as git-tracked files in the project it describes, and requires no database engine, no external vector store, no inference server and no cloud account. The seven constraints that follow from being a plugin are stated in [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md).
 
-Version **0.3.0** implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). The engine is local and provider independent: no model call, embeddings service or cloud account is required.
+Version **0.3.0** implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). The engine is local and provider independent: no model call, embeddings service or cloud account is required. An optional local embedding model improves recall when the [resident process](#resident-process) runs.
 
 ## What the agent receives
 
@@ -50,7 +50,7 @@ Run the standalone audit UI from the target project:
 node <absolute-plugin-path>/src/cli.js
 ```
 
-The MCP process also starts the audit UI. Read-only hooks reuse that resident process when available and fall back to opening the local store. Neither path blocks the host on plugin failure.
+The MCP server and the SessionStart hook start this UI as the [resident process](#resident-process) when none is running. Hooks reuse it when it runs the same, unchanged build and fall back to opening the local store. Neither path blocks the host on plugin failure.
 
 ## Propose a decision
 
@@ -94,6 +94,35 @@ Hooks retain small failure diagnostics and explicit validation results. Ordinary
 
 Automatic capture reminders are separate from writes: the Stop hook reminds only after a turn that recorded a host failure, a validation or a user correction, and avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point. Old `capture.max_proposals` settings and exhausted session counters no longer restrict writes.
 
+## Resident process
+
+DD runs one background process per project: the local audit UI, which also answers the hooks. It holds a
+multilingual embedding model (`Xenova/multilingual-e5-small`, through the optional dependency
+`@huggingface/transformers`) and gives every hook and the MCP `retrieve` tool semantic retrieval. Without it
+DD still works: each hook falls back to lexical retrieval in its own process.
+
+- **Who starts it.** The first session that finds none (the SessionStart hook or the MCP server) starts it
+  in the background. It is shared by every session on the project and outlives them.
+- **When it steps aside.** A process from another DD install, or one whose code changed since it started,
+  is replaced at the next session start. It exits after 12 hours without hook traffic.
+- **Cost.** About 640 MB of RAM once the model is loaded, about 480 MB on disk for the runtime, and 130 MB
+  for the model, downloaded once to `~/.dd-data/models` on first start. A query takes a few milliseconds.
+
+When the session's first message says retrieval is lexical, check in this order:
+
+1. **Is it running?** Open the URL in `<project>/.dd/ui.json` and request `/api/status`. `retrieval` is
+   `semantic` when the model is loaded, `loading` during the first start, `lexical` without the runtime.
+   `stale: true` means its code changed; the next session replaces it.
+2. **Start it by hand:** `node <dd>/src/cli.js ui` from the project directory. It says so and exits if a
+   current one is already running.
+3. **`retrieval: lexical` while running:** the optional runtime is missing. Reinstall DD's dependencies
+   without `--no-optional`/`--omit=optional`. Platforms without prebuilt ONNX binaries (for example Alpine/musl)
+   stay lexical.
+4. **It never stays up:** run `node <dd>/src/cli.js ui` in a terminal and read the error; a blocked port
+   range 7733-7742 or a read-only `~/.dd-data` are the usual causes.
+
+Set `DD_RESIDENT=0` to never start one (CI, tests, or by choice); retrieval is then lexical.
+
 ## Storage and migration
 
 ```text
@@ -108,7 +137,7 @@ Automatic capture reminders are separate from writes: the Stop hook reminds only
 
 Commit these knowledge files to share them with a team. Ignore runtime files `ui.json`, `.write-lock`, `.pending-write.json` and `*.tmp`. DD creates a local ignore file automatically.
 
-SQLite, observations, feedback and session deliveries live under a per-user cache at `~/.dd-data`, in one directory per project identified by the resolved project path. `DD_DATA` explicitly overrides that directory; use a separate directory for each project. The cache is rebuildable from git, so deleting it costs local telemetry and no knowledge.
+SQLite, observations, feedback and session deliveries live under a per-user cache at `~/.dd-data`, in one directory per project identified by its physical path (symlinks resolved; case folded on Windows and macOS), so every process that opens the project reaches the same directory. When a new directory is created, history from earlier locations of the same project is copied into it. `DD_DATA` explicitly overrides that directory; use a separate directory for each project. The cache is rebuildable from git, so deleting it costs local telemetry and no knowledge.
 
 The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a project, and when the per-user cache shared that name the home directory resolved as a project root, merging unrelated work into one store. If you used an earlier version, `node scripts/check-home-artifacts.mjs` reports what `~/.dd` still holds and removes it only when asked, and only when it holds no knowledge.
 
@@ -122,6 +151,8 @@ The MCP write API changed from a single payload to `propose({proposals:[...]})`.
 npm test
 npm run test:stress
 npm run eval
+npm run bench             # task benchmark, lexical retrieval
+npm run bench:semantic    # the same tasks with embeddings
 npm run sync:plugin
 ```
 
