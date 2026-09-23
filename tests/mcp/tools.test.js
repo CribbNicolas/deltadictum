@@ -101,3 +101,26 @@ describe('MCP tool handlers', () => {
     store.close();
   });
 });
+
+test('the retrieve tool asks the resident process first and falls back to lexical', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'dd-mcp-resident-'));
+  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data'), repoRoot: root });
+  t.after(() => store.close());
+  const { startUiServer } = await import('../../src/ui/server.js');
+  const { writeUiUrl } = await import('../../src/hooks/banner.js');
+  const seen = [];
+  // A stand-in semantic retriever in the resident, recording what it served.
+  const createRetrieve = () => { const r = async request => { seen.push(request.action); return { memories: [], abstained: true }; };
+    r.warm = async () => true; return r; };
+  const ui = await startUiServer({ store, projectId: 'demo', port: 0, semantic: true, createRetrieve });
+  t.after(() => ui.close());
+  await writeUiUrl(join(root, '.dd'), ui);
+  const tools = createToolHandlers({ store, projectId: 'demo', repoRoot: root });
+  const bridged = JSON.parse((await tools.retrieve({ action: 'before writing durable memory' })).content[0].text);
+  assert.deepEqual(seen, ['before writing durable memory']);
+  assert.deepEqual(Object.keys(bridged).sort(), ['abstained', 'memories']);
+  await ui.close();
+  const local = JSON.parse((await tools.retrieve({ action: 'before writing durable memory' })).content[0].text);
+  assert.equal(local.abstained, true);
+  assert.equal(seen.length, 1);
+});

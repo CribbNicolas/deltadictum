@@ -68,9 +68,10 @@ otherwise hooks fall back to lexical retrieval and SessionStart replaces it.
 
 - Phase 6: the same task with and without DD, comparing outcome and tokens (`src/eval/model-runner.js`).
 - Patriark as a second, Spanish, benchmark corpus; then translate its memories (new ones are refused).
-- The MCP `retrieve` tool still runs lexically in the session's own process; route it to the resident.
-- Session dedup re-delivers after 1 hour (`since(1)` in `src/store/telemetry.js`), and two parallel
-  tool calls can both deliver the same memory before either marks it.
+- ~~The MCP `retrieve` tool runs lexically in the session's process~~: it now asks the resident first.
+- ~~Session dedup re-delivers after 1 hour~~: the window is one day (`since(1)` counts days). Repeats seen
+  during the session came from two builds answering hooks with different revision formulas, which gap 7
+  now prevents. Six parallel hook processes deliver a memory once (`tests/hooks/parallel-delivery.test.js`).
 - README section "Resident process": how to tell whether it runs and how to fix it (the SessionStart notice
   already points there).
 - `memory/product/not-embeddings` and `memory/retrieval/compact-fts` describe the old design; revise in review.
