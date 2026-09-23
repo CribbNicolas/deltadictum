@@ -1,0 +1,285 @@
+{
+  "project": "Project-Patriark",
+  "note": "Tasks written from Project-Patriark's store (2026-09-22). Its memories are in Spanish, so every English probe is cross-language. must: needed to do the task right. orbit: useful while doing it. Ids are 8-character prefixes. The architecture memory (01cd4358) is orbit for every code task: the user wants it considered almost always.",
+  "tasks": [
+    {
+      "id": "refuge-recruit-button",
+      "must": [
+        "2e803b44",
+        "37ff8ecd",
+        "8bee1dfc"
+      ],
+      "orbit": [
+        "bf33c648",
+        "4824a944",
+        "22bc7680",
+        "08cfbb15",
+        "01cd4358"
+      ],
+      "probes": [
+        {
+          "prompt": "Add a button to the refuge screen to recruit a new companion."
+        },
+        {
+          "prompt": "Agregá un botón en la pantalla del refugio para reclutar un compañero nuevo."
+        },
+        {
+          "tool": "Read",
+          "input": {
+            "file_path": "src/client/shell/GameShell.Actions.cs"
+          }
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "src/application/views/ActionMenus.cs",
+            "old_string": "RefugeActions()",
+            "new_string": "RefugeActions(recruit: true)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "strength-dice-bonus",
+      "must": [
+        "5d580d0f",
+        "8fa0d9f4",
+        "8819b169"
+      ],
+      "orbit": [
+        "51bfd971",
+        "2ffbcf10",
+        "6a1eaf56",
+        "01cd4358"
+      ],
+      "probes": [
+        {
+          "prompt": "Change the d20 check so Strength adds a flat +2 to lifting rolls."
+        },
+        {
+          "prompt": "Cambiá la tirada d20 para que Fuerza sume +2 fijo al levantar cosas."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "src/domain/decisions/GameRules.cs",
+            "old_string": "var bonus = 0;",
+            "new_string": "var bonus = strength >= 3 ? 2 : 0;"
+          }
+        }
+      ]
+    },
+    {
+      "id": "android-release",
+      "must": [
+        "86f97cc6",
+        "cd23aa39",
+        "b6315170"
+      ],
+      "orbit": [
+        "d25f493a"
+      ],
+      "probes": [
+        {
+          "prompt": "Build the Android APK and tell me the release is ready."
+        },
+        {
+          "prompt": "Generá el APK de Android y avisame que la entrega está lista."
+        },
+        {
+          "tool": "Bash",
+          "input": {
+            "command": "pwsh tools/android.ps1 -Release"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bridge-repair-event",
+      "must": [
+        "19903d59",
+        "d995de63",
+        "5fb04f99",
+        "c137f298"
+      ],
+      "orbit": [
+        "2ab913f4",
+        "deee4269",
+        "01cd4358"
+      ],
+      "probes": [
+        {
+          "prompt": "Add a new event where the player can repair a collapsed bridge, with a skill check and a reward."
+        },
+        {
+          "prompt": "Agregá un evento nuevo donde el jugador puede reparar un puente caído, con una tirada y una recompensa."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "content/prototype-3/events/bridge.json",
+            "old_string": "\"events\": [",
+            "new_string": "\"events\": [{ \"id\": \"bridge-repair\" },"
+          }
+        }
+      ]
+    },
+    {
+      "id": "save-refuge-inventory",
+      "must": [
+        "d3872368",
+        "cab8524e",
+        "d995de63"
+      ],
+      "orbit": [
+        "51bfd971",
+        "adaca291",
+        "01cd4358"
+      ],
+      "probes": [
+        {
+          "prompt": "Persist the refuge storage inventory in saved games."
+        },
+        {
+          "prompt": "Guardá el inventario del depósito del refugio en las partidas guardadas."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "src/infrastructure/persistence/SaveSerializer.cs",
+            "old_string": "WriteWorld(state);",
+            "new_string": "WriteWorld(state);\nWriteRefugeStorage(state);"
+          }
+        }
+      ]
+    },
+    {
+      "id": "double-tap-travel",
+      "must": [
+        "adaca291"
+      ],
+      "orbit": [
+        "665baaba",
+        "4039935d",
+        "01cd4358"
+      ],
+      "probes": [
+        {
+          "prompt": "Tapping travel twice quickly moves the party two nodes. Fix it."
+        },
+        {
+          "prompt": "Si tocás viajar dos veces rápido el grupo avanza dos nodos. Arreglalo."
+        },
+        {
+          "tool": "Read",
+          "input": {
+            "file_path": "src/application/session/GameSession.cs"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hunger-rule",
+      "must": [
+        "01cd4358"
+      ],
+      "orbit": [
+        "4039935d",
+        "6a577f18"
+      ],
+      "probes": [
+        {
+          "prompt": "Add a hunger rule: each day of travel without food lowers endurance."
+        },
+        {
+          "prompt": "Agregá una regla de hambre: cada día de viaje sin comida baja la resistencia."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "src/domain/world/WorldState.cs",
+            "old_string": "public int Day",
+            "new_string": "public int DaysWithoutFood { get; set; }\npublic int Day"
+          }
+        }
+      ]
+    },
+    {
+      "id": "exodus-chronicle",
+      "must": [
+        "3b468b93",
+        "a5ce06d4",
+        "2e71cd42"
+      ],
+      "orbit": [
+        "2ab913f4",
+        "deee4269"
+      ],
+      "probes": [
+        {
+          "prompt": "Write the chronicle text that tells how the Ark's exodus happened."
+        },
+        {
+          "prompt": "Escribí el texto de la crónica que cuenta cómo fue el éxodo del Arca."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "doc/NARR-03-Cronica.md",
+            "old_string": "## Exodo",
+            "new_string": "## Exodo\nHace siglos el Arca partio."
+          }
+        }
+      ]
+    },
+    {
+      "id": "negative-editorconfig",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "Set the editorconfig indentation to four spaces for C# files."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": ".editorconfig",
+            "old_string": "indent_size = 2",
+            "new_string": "indent_size = 4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "negative-csharp-question",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "What is the difference between a C# record and a class?"
+        },
+        {
+          "prompt": "¿Cuál es la diferencia entre un record y una clase en C#?"
+        }
+      ]
+    },
+    {
+      "id": "negative-icon",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "Make the app icon slightly rounder."
+        },
+        {
+          "tool": "Edit",
+          "input": {
+            "file_path": "icon.svg",
+            "old_string": "rx=\"8\"",
+            "new_string": "rx=\"12\""
+          }
+        }
+      ]
+    }
+  ]
+}

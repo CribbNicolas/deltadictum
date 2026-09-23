@@ -64,6 +64,23 @@ End to end: a real `UserPromptSubmit` hook, bridged to the resident process, ret
 ~36 ms. The resident answers only when it runs this build and its code is unchanged since it started;
 otherwise hooks fall back to lexical retrieval and SessionStart replaces it.
 
+## Second corpus: Project-Patriark (Spanish memories)
+
+11 tasks, 34 probes, English and Spanish prompts against Spanish memories:
+
+| | must recall | orbit recall | precision | quiet negatives |
+|---|---|---|---|---|
+| prod-a lexical | 0.36 | 0.39 | 0.60 | 3/3 |
+| **prod-b semantic** | **0.49** | **0.43** | **0.64** | **3/3** |
+
+prod-b wins again, but both are far below supermem. The misses are memories of about 60 characters of
+terse Spanish ("Enumerar probabilidades y verificar..."): there is little text for either retriever to
+match. The fix is in the memories, not the retriever: English and a full sentence of behaviour.
+
+Tried and reverted: weighting a file-scope match by glob specificity (a broad `src/domain/**` only
+admits a memory). It raised Patriark precision (0.51 to 0.61) but lowered supermem semantic precision
+(0.86 to 0.79) and Patriark recall; a weak activation for broad globs (0.45) was worse everywhere.
+
 ## Still open
 
 - Phase 6: the same task with and without DD, comparing outcome and tokens (`src/eval/model-runner.js`).
