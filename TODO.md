@@ -21,7 +21,11 @@ npm publish --dry-run   # review what would be uploaded
 npm publish
 ```
 
-## 3. Verify Grok Build live
+## 3. Verify Grok Build live — blocked: Grok is not signed in (2026-09-23)
+
+Run `grok login --device-code` (or set `XAI_API_KEY`), then from this checkout:
+`grok -p "Read README.md and report every 'DD -' line you received" --output-format json`.
+
 
 `grok plugin validate .` passed (valid schema, hooks and MCP servers detected). That does not confirm the
 real `PreToolUse` contract (payload and response) works in a live session. Open a project with the plugin
@@ -31,7 +35,14 @@ If it fails: remove `PreToolUse`, `UserPromptSubmit`, `PostToolUse` and `Stop` f
 `.grok-plugin/plugin.json` and keep only `SessionStart` (the fallback documented in
 `docs/integrations/grok-build.md`).
 
-## 4. Verify OpenCode live
+## 4. Verify OpenCode live — blocked: no working model credential (2026-09-23)
+
+Tried with the adapter loaded by local path (`"plugin": ["file:///<dd>/adapters/opencode/index.js"]`,
+no npm publish needed): the Anthropic key has no credit, the OpenAI OAuth token fails to refresh (401),
+and MiniMax does not answer even without DD. Refresh one (`opencode auth login`), then run
+`opencode run "Report every 'DD -' line in your system prompt" -m <provider/model>` in a project whose
+`opencode.json` loads the adapter and the MCP server by absolute path.
+
 
 `opencode debug startup` ran clean (the adapter imports without error). That does not confirm that
 `experimental.chat.system.transform` injects DD context in the middle of a real conversation. Technical
