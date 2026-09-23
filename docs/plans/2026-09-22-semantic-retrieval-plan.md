@@ -146,6 +146,26 @@ real where a memory answers the task directly (-14% to -29%) and absent or sligh
 over all tasks, cost is even. The -28% of the first 12-run trial came from one task and did not hold at
 scale. Time per run halves overall, but most of that is one timed-out run without DD.
 
+## Pruned store (2026-09-23)
+
+Ten memories judged derivable from the code or obsolete were removed from the DD clone and the six tasks
+rerun, 3 runs each (`--conditions=dd --prune=...`).
+
+| | correct | input / run | cost / run |
+|---|---|---|---|
+| without DD | 15/18 | 921 k | $0.390 |
+| DD, full store | 18/18 | 884 k | $0.396 |
+| DD, pruned store | 16/18 | 795 k (-10%) | $0.367 (-7%) |
+
+Pruning saves a little. It also removed `c2984ddd` (why the default threshold is unreachable for
+model-initiated proposals), and the auto-accept task went from $0.25 to $0.42 per run and 11 to 24 turns:
+that memory completes `d3d5bf57` rather than duplicating it. The two failures were not pruning effects:
+one agent read the task ("Reject memory proposals...") as a rule for itself, one test run outlived the
+agent's 300 s foreground wait. At three runs per cell, 2/18 is within noise.
+
+Capture prompt and propose now ask whether an agent reading the code would miss the memory; whether that
+raises savings needs memories captured under it, which this run could not test.
+
 ## Still open
 
 - Phase 6, next: memories written for the agent's blind spots (why-not, traps) are where DD pays; measure

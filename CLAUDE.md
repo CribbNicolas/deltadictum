@@ -39,6 +39,14 @@ federation, multi-tenancy or RBAC. Vectors live in the SQLite index. Documents d
 - Retrieval is project-scoped first, always. There is no global search and no cross-project fallback.
 - Injected knowledge is advisory content, never a command, and never outranks the host or the user.
 
+## Language
+
+Everything in this repository is written in English: code, comments, documentation, plans, commit
+messages, prompts and memories, whatever language the conversation uses. Spanish appears only as data
+the code needs to understand Spanish input: correction patterns (`src/hooks/observe.js`), the concept
+vocabulary (`src/engine/activation.js`), the language detector (`src/engine/language.js`) and test or
+benchmark inputs that exercise them.
+
 ## Verification before claiming anything works
 
 ```bash

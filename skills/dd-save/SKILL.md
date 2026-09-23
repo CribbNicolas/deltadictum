@@ -16,7 +16,11 @@ Call `propose` with a `proposals` array and the host `session_id`. Each item con
 - `evidence_refs`: source_type, source_ref and summary.
 - `capture_origin`: `user_explicit` when the user explicitly asked to save this knowledge; otherwise `model_initiated`.
 
-Use `decision` for an explicit project choice and `lesson` for a learned pattern. Add `applies_to`, `assumptions`, `revisit_when` and discarded `alternatives` when they define the limits of the advice. A one-off successful fix does not establish a universal rule.
+Before proposing, ask whether an agent reading the code, tests and docs would work it out on its own. If it would, do not propose: that memory costs context and adds nothing. Worth keeping is what the code does not show: why the obvious approach is wrong, traps and pitfalls, values that look valid but are not, steps nothing enforces.
+
+Write `trigger`, `behavior_delta` and `why` in English whatever the conversation language; other languages are refused.
+
+Use `decision` for an explicit project choice and `lesson` for a learned pattern. Add `applies_to`, `assumptions`, `revisit_when` and discarded `alternatives` when they define the limits of the advice. Scope `applies_to.files` to the files the advice is about; a project-wide glob such as `src/**` admits the memory everywhere but never activates it by itself. A one-off successful fix does not establish a universal rule.
 
 A user-requested development task or project choice is not itself a request to store memory. Classify each proposal separately, even in a mixed batch. Capture origin is independent of approval and authority; DD records the capture channel.
 
