@@ -104,6 +104,10 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
             session_id: payload.session_id ?? payload.sessionId, budget_tokens: payload.budget_tokens }, { store });
           return send(res, 200, contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
         }
+        if (url.pathname.endsWith('/retrieve')) {
+          const context = await projectContext(store);
+          return send(res, 200, await retrieve({ ...payload, project_id: projectId, facts: { ...payload.facts, ...context.facts } }, { store }));
+        }
         return send(res, 404, { error: 'unknown_hook' });
       }
       if (req.method !== 'GET' && (req.headers['x-dd-review-token'] !== token

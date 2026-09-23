@@ -4,6 +4,7 @@ import { orientProject, projectContext } from '../engine/project-context.js';
 import { recordOutcome } from '../engine/feedback.js';
 import { declareContradiction } from '../engine/lifecycle.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
+import { callRunningStore } from '../hooks/bridge.js';
 
 const jsonResult = data => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 const errorResult = message => ({ isError: true, content: [{ type: 'text', text: message }] });
@@ -37,10 +38,14 @@ function atomView(atom) {
   return view;
 }
 
-export function createToolHandlers({ store, projectId, uiPort = 7733, uiUrl = async () => `http://127.0.0.1:${uiPort}` }) {
+export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, uiUrl = async () => `http://127.0.0.1:${uiPort}` }) {
   const handlers = {
     async orient(request = {}) { return orientProject(request, { store, projectId }); },
     async retrieve(request) {
+      // The resident process answers with semantic retrieval when it runs this
+      // build; otherwise this session's store answers lexically (L2).
+      const bridged = repoRoot ? await callRunningStore('retrieve', request, repoRoot) : null;
+      if (bridged && !bridged.error) return retrieveView(bridged);
       const map = await projectContext(store);
       const result = await retrieveMemories({ ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
       return result.error ? result : retrieveView(result);

@@ -9,7 +9,7 @@ const { store, projectId, ddDir, repoRoot } = await openStore();
 // The audit UI is the resident process, shared by every session, not a part of
 // this one: a session's MCP server exits with the session (L2).
 await ensureResident(repoRoot).catch(() => null);
-const server = createMcpServer({ store, projectId, uiUrl: () => readUiUrl(ddDir) });
+const server = createMcpServer({ store, projectId, repoRoot, uiUrl: () => readUiUrl(ddDir) });
 const transport = new StdioServerTransport();
 await server.connect(transport);
 let closing = false;

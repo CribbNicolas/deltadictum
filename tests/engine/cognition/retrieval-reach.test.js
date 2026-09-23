@@ -93,3 +93,10 @@ test('when full forms do not fit, the remaining applicable memories still arrive
   assert.match(headline.content, /^(Keep domain, application, infrastructure and client separate\.|Route every player action through a command handler\.) \(get /);
   assert.ok(estimateTokens(recalled) <= 600);
 });
+
+test('two tool calls in parallel deliver a memory once in a session', async t => {
+  const f = await fixture(t);
+  const request = { action: 'when adding game logic, commands or presentation', session_id: 'parallel' };
+  const results = await Promise.all([f.retrieve(request), f.retrieve(request), f.retrieve(request)]);
+  assert.equal(results.reduce((n, r) => n + r.memories.length, 0), 1);
+});
