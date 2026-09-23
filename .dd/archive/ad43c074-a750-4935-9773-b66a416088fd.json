@@ -1,0 +1,72 @@
+{
+  "id": "ad43c074-a750-4935-9773-b66a416088fd",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Normalize Windows path case before hashing or comparing paths across processes",
+  "topic_key": "hooks/build-id-windows-path-case",
+  "trigger": "when hashing or comparing a filesystem path that different processes compute, such as a build id, repo root or data directory",
+  "behavior_delta": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects.",
+  "what": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects.",
+  "why": "On 2026-09-22 the resident started via a file:///c:/ import got a different BUILD_ID from hooks started by Claude Code with C:\\, so every bridged reply was rejected and hooks silently fell back to lexical retrieval.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/hooks/build.js",
+      "src/hooks/bridge.js",
+      "src/ui/server.js",
+      "src/resident.js"
+    ],
+    "components": [],
+    "operations": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/build.js",
+      "summary": "normalizePath and BUILD_ROOT"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-22T21:44:43.578Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects.",
+    "short": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects. Why: On 2026-09-22 the resident started via a file:///c:/ import got a different BUILD_ID from hooks started by Claude Code with C:\\, so every bridged reply was rejected and hooks silently fell back to lexical retrieval.",
+    "full": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects. Why: On 2026-09-22 the resident started via a file:///c:/ import got a different BUILD_ID from hooks started by Claude Code with C:\\, so every bridged reply was rejected and hooks silently fell back to lexical retrieval."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "190b0807-19f4-400b-aba9-d20cb1bb021d",
+  "evidence_state": {
+    "checked_at": "2026-09-22T23:54:49.970Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/build.js",
+        "summary": "normalizePath and BUILD_ROOT",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6822004280a0ba7f5e4b280707aa51e69f5529a28c627d261f53ba4ddaa0ae4a"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-22T21:44:43.620Z",
+  "updated_at": "2026-09-23T16:46:46.888Z",
+  "activation_count": 1,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-22T23:54:49.970Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  },
+  "superseded_by": "ad3fdaa9-6571-4812-a5d1-9f1714723442"
+}

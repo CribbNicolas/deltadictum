@@ -8,7 +8,6 @@ import { admitMemory, rejectMemory, resolveMemories, restoreMemory, HUMAN_REVIEW
 import { projectContext } from '../engine/project-context.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { recommendResolution } from '../engine/v6/predominance.js';
-import { resolve as resolvePath } from 'node:path';
 import { buildPreToolContext } from '../hooks/pre-tool.js';
 import { recordPromptObservation } from '../hooks/observe.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
@@ -16,7 +15,8 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
 import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
-import { BUILD_ID, codeFingerprint, samePath } from '../hooks/build.js';
+import { BUILD_ID, codeFingerprint } from '../hooks/build.js';
+import { projectKey } from '../project.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -32,21 +32,28 @@ async function readBody(req) {
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
 }
 
-export async function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1', fingerprint = codeFingerprint, staleCheckMs = 2000, semantic = false, onShutdown,
-  createRetrieve = () => createSemanticRetrieve({ blocking: false }), sharedRetrieve, attempt = 0 }) {
+export function inactiveMessage(retrieval) {
+  return retrieval === 'loading'
+    ? 'DD is starting: its embedding model is loading, and DD stays inactive until it is ready.'
+    : 'DD is inactive: the resident process could not load its embedding model. See README > "Resident process".';
+}
+
+// The resident server: one process serves every project it is asked about, each
+// from its own store, with one embedding model shared by all of them (L2/L3).
+// With `semantic`, DD is inactive until that model is ready: hooks inject
+// nothing and SessionStart says why (embeddings are required). Without it
+// (tests, evaluation) retrieval is lexical.
+export async function startResidentServer({ projects: initial = [], openProject, port = 7733, host = '127.0.0.1', fingerprint = codeFingerprint,
+  staleCheckMs = 2000, semantic = false, onShutdown, createRetrieve = () => createSemanticRetrieve({ blocking: false }), sharedRetrieve, attempt = 0 }) {
   if (!['127.0.0.1', '::1', 'localhost'].includes(host)) throw new Error('audit_requires_loopback');
-  // A long-lived UI keeps running the code it started with. Once that tree is
-  // edited it stops answering hooks, which then run the current code locally
-  // (roadmap gap 7). Stale is permanent: only a restart loads the new code.
+  // A long-lived resident keeps running the code it started with. Once that tree
+  // is edited it stops answering hooks, and a current one replaces it at the
+  // next session start (roadmap gap 7). Stale is permanent.
   const startedCode = await fingerprint();
-  // The resident process is where embeddings can live (L2/L3). Hooks it answers
-  // get semantic retrieval once the model has loaded, lexical until then.
   // Created once and handed to a retry on a busy port: each instance holds its
   // own model (~500 MB), so one per attempt multiplied the process's memory.
   const retrieve = sharedRetrieve ?? (semantic ? createRetrieve() : retrieveMemories);
   let retrieval = semantic ? 'loading' : 'lexical';
-  const semanticReady = semantic ? retrieve.warm({ store, projectId }).catch(() => false) : Promise.resolve(false);
-  semanticReady.then(ready => { if (semantic) retrieval = ready ? 'semantic' : 'lexical'; });
   let lastActivity = Date.now();
   let codeCheckedAt = Date.now();
   let codeStale = false;
@@ -57,20 +64,51 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
     }
     return codeStale;
   }
-  await sweepAutoAccept({ store, projectId });
   const token = randomBytes(32).toString('hex');
   const hookToken = randomBytes(32).toString('hex');
-  // The audit UI is the one place in the plugin that is already a persistent
-  // local process whenever it runs (L2), with a person actually watching the
-  // page — so it can push instead of making the tab poll or the person reload.
-  // Nothing else in the plugin gets this: hooks are ephemeral (L1) and the MCP
-  // server has no screen to push to.
-  const sseClients = new Set();
-  function broadcastChanged() {
-    const message = 'event: changed\ndata: {}\n\n';
-    for (const client of sseClients) { try { client.write(message); } catch { sseClients.delete(client); } }
+
+  // Projects by key (src/project.js projectKey). The audit UI is the one place in
+  // the plugin that is a persistent process with a person watching (L2), so it
+  // pushes changes to each project's open pages instead of making them poll.
+  const projects = new Map();
+  let semanticReady = Promise.resolve(false);
+  async function addProject({ store, projectId, owned = false }) {
+    const key = projectKey(store.repoRoot).key;
+    if (projects.has(key)) return projects.get(key);
+    const entry = { key, store, projectId, owned, sse: new Set() };
+    entry.unsubscribe = store.onChange?.(() => {
+      for (const client of entry.sse) { try { client.write('event: changed\ndata: {}\n\n'); } catch { entry.sse.delete(client); } }
+    });
+    projects.set(key, entry);
+    await sweepAutoAccept({ store, projectId });
+    if (semantic) {
+      // The model loads once; each project only embeds its own memories.
+      const warmed = retrieve.warm({ store, projectId }).catch(() => false);
+      semanticReady = warmed;
+      warmed.then(ready => { if (retrieval !== 'semantic') retrieval = ready ? 'semantic' : 'unavailable'; });
+    }
+    return entry;
   }
-  const unsubscribeChanges = store.onChange?.(broadcastChanged);
+  if (semantic && retrieve.preload) {
+    semanticReady = retrieve.preload().catch(() => false);
+    semanticReady.then(ready => { if (retrieval !== 'semantic') retrieval = ready ? 'semantic' : 'unavailable'; });
+  }
+  for (const project of initial) await addProject(project);
+
+  async function hookProject(body) {
+    const repoRoot = body.repo_root ?? '';
+    if (!repoRoot) return null;
+    const known = projects.get(projectKey(repoRoot).key);
+    if (known) return known;
+    if (!openProject) return null;
+    return addProject({ ...await openProject(repoRoot, body.data_dir), owned: true });
+  }
+  function uiProject(url) {
+    const key = url.searchParams.get('project');
+    if (key) return projects.get(key) ?? null;
+    return projects.size === 1 ? [...projects.values()][0] : null;
+  }
+
   const server = createServer(async (req, res) => {
     try {
       const actualPort = server.address().port;
@@ -83,28 +121,37 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         send(res, 200, { ok: true });
         return void setImmediate(onShutdown);
       }
+      if (req.method === 'GET' && url.pathname === '/api/resident') {
+        return send(res, 200, { build: BUILD_ID, stale: await staleCode(), retrieval, projects: projects.size });
+      }
       if (req.method === 'POST' && url.pathname.startsWith('/api/hooks/')) {
         if (req.headers['x-dd-hook-token'] !== hookToken) return send(res, 403, { error: 'hook_auth_required' });
         if (await staleCode()) return send(res, 409, { error: 'build_stale' });
         lastActivity = Date.now();
         res.setHeader('x-dd-build', BUILD_ID);
         const body = await readBody(req);
-        if (!samePath(body.repo_root ?? '', store.repoRoot)) return send(res, 403, { error: 'project_mismatch' });
+        const project = await hookProject(body);
+        if (!project) return send(res, 403, { error: 'project_mismatch' });
+        const { store, projectId, key } = project;
         await store.refreshIfChanged();
         const payload = body.payload ?? {};
-        if (url.pathname.endsWith('/pre-tool')) return send(res, 200, await buildPreToolContext(payload, { store, projectId, retrieve }));
-        if (url.pathname.endsWith('/session-start')) return send(res, 200, await buildSessionStartContext({ store, projectId, uiUrl: `http://${expectedHost}`,
-          // This request is being served by the audit UI, so it is live by construction.
+        const uiUrl = `http://${expectedHost}/?project=${encodeURIComponent(key)}`;
+        const active = retrieval !== 'loading' && retrieval !== 'unavailable';
+        if (url.pathname.endsWith('/session-start')) return send(res, 200, await buildSessionStartContext({ store, projectId, uiUrl,
+          // This request is being served by the resident, so it is live by construction.
           uiLive: true, sessionId: payload.session_id ?? payload.sessionId, source: payload.source,
-          resident: { state: 'live', retrieval: retrieval === 'loading' ? 'semantic' : retrieval } }));
+          resident: { state: 'live', retrieval } }));
         if (url.pathname.endsWith('/prompt')) {
           await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
           await recordPromptObservation(payload, { store, projectId });
+          if (!active) return send(res, 200, {});
           const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
             session_id: payload.session_id ?? payload.sessionId, budget_tokens: payload.budget_tokens }, { store });
           return send(res, 200, contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
         }
+        if (url.pathname.endsWith('/pre-tool')) return send(res, 200, active ? await buildPreToolContext(payload, { store, projectId, retrieve }) : {});
         if (url.pathname.endsWith('/retrieve')) {
+          if (!active) return send(res, 200, { error: { code: 503, message: inactiveMessage(retrieval) } });
           const context = await projectContext(store);
           return send(res, 200, await retrieve({ ...payload, project_id: projectId, facts: { ...payload.facts, ...context.facts } }, { store }));
         }
@@ -116,22 +163,32 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
         const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token);
         return send(res, 200, html, 'text/html');
       }
+      if (req.method === 'GET' && url.pathname === '/api/projects') {
+        return send(res, 200, [...projects.values()].map(p => ({ key: p.key, project_id: p.projectId, repo_root: p.store.repoRoot })));
+      }
+      const project = uiProject(url);
+      if (!project) {
+        const named = url.searchParams.get('project');
+        return send(res, named ? 404 : 400, { error: named ? 'unknown_project' : 'project_required' });
+      }
+      const { store, projectId } = project;
       if (req.method === 'GET' && url.pathname === '/api/events') {
         res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store',
           connection: 'keep-alive', 'x-content-type-options': 'nosniff',
           'content-security-policy': "default-src 'self'; frame-ancestors 'none'" });
         res.write(':ok\n\n');
-        sseClients.add(res);
+        project.sse.add(res);
         // A pure keep-alive so an idle intermediary (or the browser) never
         // times the connection out; it carries no event name, so the page's
         // 'changed' listener never fires on it.
         const heartbeat = setInterval(() => { try { res.write(':hb\n\n'); } catch { /* handled by close below */ } }, 25000);
-        req.on('close', () => { clearInterval(heartbeat); sseClients.delete(res); });
+        req.on('close', () => { clearInterval(heartbeat); project.sse.delete(res); });
         return;
       }
       await store.refreshIfChanged();
       if (req.method === 'GET' && url.pathname === '/api/status') {
-        return send(res, 200, { project_id: projectId, build: BUILD_ID, stale: await staleCode(), retrieval, ...await store.countByLifecycle(projectId) });
+        return send(res, 200, { project_id: projectId, project_key: project.key, build: BUILD_ID, stale: await staleCode(), retrieval,
+          ...await store.countByLifecycle(projectId) });
       }
       if (req.method === 'GET' && url.pathname === '/api/project') return send(res, 200, await projectContext(store));
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, await store.assessDeterioration(projectId));
@@ -214,19 +271,33 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
       send(res, 404, { error: 'not_found' });
     } catch (err) { send(res, 409, { error: err.message }); }
   });
+  function closeAll() {
+    for (const project of projects.values()) {
+      for (const client of project.sse) { try { client.end(); } catch { /* already gone */ } }
+      project.sse.clear();
+      project.unsubscribe?.();
+      if (project.owned) project.store.close();
+    }
+  }
   return new Promise((resolve, reject) => {
     server.on('error', err => {
       // A busy port moves to the next one, ten times at most. Port 0 asks the OS.
-      if (err.code === 'EADDRINUSE' && port > 0 && attempt < 9) unsubscribeChanges?.();
-      if (err.code === 'EADDRINUSE' && port > 0 && attempt < 9) return resolve(startUiServer({ store, projectId, port: port + 1, host, fingerprint, staleCheckMs, semantic, onShutdown, createRetrieve, sharedRetrieve: retrieve, attempt: attempt + 1 }));
+      if (err.code === 'EADDRINUSE' && port > 0 && attempt < 9) {
+        for (const project of projects.values()) project.unsubscribe?.();
+        return resolve(startResidentServer({ projects: initial, openProject, port: port + 1, host, fingerprint, staleCheckMs, semantic,
+          onShutdown, createRetrieve, sharedRetrieve: retrieve, attempt: attempt + 1 }));
+      }
       reject(err);
     });
-    server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken, semanticReady, idleFor: () => Date.now() - lastActivity,
-      close: () => new Promise(done => {
-        for (const client of sseClients) { try { client.end(); } catch { /* already gone */ } }
-        sseClients.clear();
-        unsubscribeChanges?.();
-        server.close(done);
-      }) }));
+    server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken,
+      get semanticReady() { return semanticReady; }, idleFor: () => Date.now() - lastActivity, projects,
+      projectUrl: repoRoot => `http://${host}:${server.address().port}/?project=${encodeURIComponent(projectKey(repoRoot).key)}`,
+      close: () => new Promise(done => { closeAll(); server.close(done); }) }));
   });
+}
+
+// One project, in-process: the audit UI for the store it is given. Kept for
+// single-project use and for tests.
+export function startUiServer({ store, projectId, ...options }) {
+  return startResidentServer({ ...options, projects: [{ store, projectId }] });
 }

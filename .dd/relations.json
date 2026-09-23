@@ -46,5 +46,37 @@
     "source_atom_id": "1092b8d9-9a8e-4941-9144-a54e81a996cd",
     "relation_type": "supersedes",
     "target_atom_id": "1349225a-6ef2-4300-97bc-042f2a383baa"
+  },
+  {
+    "id": "81b4739f-d77f-4580-b3dc-672a99f3187d",
+    "confidence": 0.5,
+    "created_at": "2026-09-23T16:46:46.832Z",
+    "source_atom_id": "6abc175a-4533-4aba-81f1-b372af7ef21c",
+    "relation_type": "supersedes",
+    "target_atom_id": "7fd28959-7e91-4bea-acd6-872f5f2380e5"
+  },
+  {
+    "id": "7753ddf2-4907-4097-9eb4-7c868074f484",
+    "confidence": 0.5,
+    "created_at": "2026-09-23T16:46:46.888Z",
+    "source_atom_id": "ad3fdaa9-6571-4812-a5d1-9f1714723442",
+    "relation_type": "supersedes",
+    "target_atom_id": "ad43c074-a750-4935-9773-b66a416088fd"
+  },
+  {
+    "id": "9e366505-e6ac-4c25-aefe-8c837b311109",
+    "confidence": 0.5,
+    "created_at": "2026-09-23T16:46:46.936Z",
+    "source_atom_id": "ca2e2d89-413f-4263-8b1f-3b2b4c42fcfb",
+    "relation_type": "supersedes",
+    "target_atom_id": "8b7195a9-3196-467b-8a5d-308fc31f9424"
+  },
+  {
+    "id": "9772fca1-5906-4322-8033-c7e338ce94f0",
+    "confidence": 0.5,
+    "created_at": "2026-09-23T16:46:46.986Z",
+    "source_atom_id": "297bd600-5cd3-4ba2-a067-3636e5145ea3",
+    "relation_type": "supersedes",
+    "target_atom_id": "0775e2e0-a142-443d-9615-a90c9e05bd9c"
   }
 ]

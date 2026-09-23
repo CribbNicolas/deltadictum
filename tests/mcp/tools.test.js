@@ -7,6 +7,9 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { createToolHandlers } from '../../src/mcp/tools.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 
+// No resident here: these handlers are exercised in the explicit lexical mode.
+process.env.DD_RETRIEVAL = 'lexical';
+
 function proposal() {
   return {
     memory_type: 'lesson',
@@ -107,14 +110,14 @@ test('the retrieve tool asks the resident process first and falls back to lexica
   const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data'), repoRoot: root });
   t.after(() => store.close());
   const { startUiServer } = await import('../../src/ui/server.js');
-  const { writeUiUrl } = await import('../../src/hooks/banner.js');
+  const { registerResident } = await import('../helpers/resident.js');
   const seen = [];
   // A stand-in semantic retriever in the resident, recording what it served.
   const createRetrieve = () => { const r = async request => { seen.push(request.action); return { memories: [], abstained: true }; };
     r.warm = async () => true; return r; };
   const ui = await startUiServer({ store, projectId: 'demo', port: 0, semantic: true, createRetrieve });
   t.after(() => ui.close());
-  await writeUiUrl(join(root, '.dd'), ui);
+  await registerResident(t, ui);
   const tools = createToolHandlers({ store, projectId: 'demo', repoRoot: root });
   const bridged = JSON.parse((await tools.retrieve({ action: 'before writing durable memory' })).content[0].text);
   assert.deepEqual(seen, ['before writing durable memory']);
@@ -123,4 +126,10 @@ test('the retrieve tool asks the resident process first and falls back to lexica
   const local = JSON.parse((await tools.retrieve({ action: 'before writing durable memory' })).content[0].text);
   assert.equal(local.abstained, true);
   assert.equal(seen.length, 1);
+  // Outside the explicit lexical mode, no resident means DD is inactive, and the tool says so.
+  delete process.env.DD_RETRIEVAL;
+  t.after(() => { process.env.DD_RETRIEVAL = 'lexical'; });
+  const inactive = await tools.retrieve({ action: 'before writing durable memory' });
+  assert.equal(inactive.isError, true);
+  assert.match(inactive.content[0].text, /DD - Inactive/);
 });

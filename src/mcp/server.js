@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { openStore } from '../project.js';
-import { readUiUrl } from '../hooks/banner.js';
-import { ensureResident } from '../resident.js';
+import { DEFAULT_UI_URL } from '../hooks/banner.js';
+import { ensureResident, projectUiUrl } from '../resident.js';
 import { createMcpServer } from './definition.js';
 
-const { store, projectId, ddDir, repoRoot } = await openStore();
-// The audit UI is the resident process, shared by every session, not a part of
-// this one: a session's MCP server exits with the session (L2).
+const { store, projectId, repoRoot } = await openStore();
+// The audit UI is the machine's resident process, shared by every project and
+// session, not a part of this one: a session's MCP server exits with it (L2).
 await ensureResident(repoRoot).catch(() => null);
-const server = createMcpServer({ store, projectId, repoRoot, uiUrl: () => readUiUrl(ddDir) });
+const server = createMcpServer({ store, projectId, repoRoot, uiUrl: async () => (await projectUiUrl(repoRoot)) ?? DEFAULT_UI_URL });
 const transport = new StdioServerTransport();
 await server.connect(transport);
 let closing = false;

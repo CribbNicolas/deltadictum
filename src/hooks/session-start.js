@@ -58,18 +58,40 @@ export function contextPayload(eventName, text) {
 
 // What the person should know about the resident process (L2), relayed by the
 // model: whether this session has semantic retrieval, and how to fix it if not.
-export function residentNotice({ state, retrieval } = {}) {
-  const fix = 'If this repeats every session, see README > "Resident process".';
-  if (state === 'started') return `DD - Retrieval is lexical for now: no resident DD process was serving this project, so one was started in the background. Semantic retrieval takes over once its model loads (the first run downloads about 130 MB). ${fix} Tell the user this once.`;
-  if (state === 'unavailable') return `DD - Retrieval is lexical: the resident DD process could not be started. ${fix} Tell the user this once.`;
-  if (retrieval === 'lexical') return `DD - Retrieval is lexical: the resident DD process runs without the optional embedding runtime (@huggingface/transformers). Reinstall DD with optional dependencies to enable semantic retrieval. ${fix} Tell the user this once.`;
-  return null;
+// Embeddings are required (2026-09-23): without a ready resident process DD is
+// inactive, and the person is told why and how to fix it. DD_RETRIEVAL=lexical
+// is the explicit opt-in for tests and evaluation.
+export const lexicalMode = () => process.env.DD_RETRIEVAL === 'lexical';
+export function isInactive(resident) {
+  // Every hook path states the resident; a caller that states nothing (tests,
+  // single-project tools) is not asserting that DD is inactive.
+  if (lexicalMode() || !resident) return false;
+  const { state, retrieval } = resident;
+  return state !== 'live' || retrieval === 'loading' || retrieval === 'unavailable';
+}
+export function residentNotice(resident = {}) {
+  if (!isInactive(resident)) return null;
+  const { state, retrieval } = resident;
+  const fix = 'If this repeats, see README > "Resident process".';
+  const tell = 'Tell the user this once.';
+  if (state === 'live' && retrieval === 'loading') return `DD - Inactive for now: the resident DD process is loading its embedding model (the first run downloads about 130 MB). DD activates by itself once it is ready. ${tell}`;
+  if (state === 'live') return `DD - Inactive: the resident DD process could not load its embedding model, which DD requires. ${fix} ${tell}`;
+  if (state === 'started') return `DD - Inactive for now: no resident DD process was running, so one was started in the background. DD activates once its embedding model is ready. ${fix} ${tell}`;
+  if (state === 'unreachable') return `DD - Inactive: the resident DD process is not answering, so nothing is recalled. The next session start replaces it. ${fix} ${tell}`;
+  if (state === 'disabled') return `DD - Inactive: the resident DD process is disabled (DD_RESIDENT=0), and DD requires it. ${tell}`;
+  return `DD - Inactive: the resident DD process could not be started, and DD requires it. ${fix} ${tell}`;
 }
 
 export async function buildSessionStartContext({ store, projectId, uiUrl, uiLive = false, sessionId, source, resident }) {
   if (sessionId && ['compact', 'clear'].includes(source)) await store.clearSessionDeliveries(projectId, sessionId);
   const activeCount = await store.countAtoms({ projectId, lifecycleStates: ['active'] });
   const banner = sessionBanner({ projectId, url: uiUrl, activeCount });
+
+  // Inactive: the banner and the reason only. No project context or knowledge.
+  if (isInactive(resident)) return {
+    ...(uiLive && uiUrl ? { systemMessage: uiPointer(uiUrl) } : {}),
+    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: [banner, residentNotice(resident)].join('\n\n') },
+  };
 
   const context = await orientProject({ budget_tokens: 400 }, { store, projectId });
   const revision = createHash('sha256').update(JSON.stringify(context)).digest('hex').slice(0, 16);

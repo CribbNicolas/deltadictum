@@ -10,7 +10,7 @@ import { proposeMemory } from '../../src/engine/write.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
 import { startUiServer } from '../../src/ui/server.js';
-import { writeUiUrl } from '../../src/hooks/banner.js';
+import { registerResident } from '../helpers/resident.js';
 import { callRunningStore } from '../../src/hooks/bridge.js';
 
 // One project reached by two spellings: through a symlink (macOS /tmp and /var
@@ -68,6 +68,6 @@ test('a hook sending one spelling is answered by a resident started with the oth
   const store = await createMemoryStore({ ddDir: join(target, '.dd'), dataDir: join(target, 'data'), repoRoot: target });
   const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
   t.after(async () => { await ui.close(); store.close(); });
-  await writeUiUrl(join(target, '.dd'), ui);
+  await registerResident(t, ui);
   assert.notEqual(await callRunningStore('session-start', { session_id: 's' }, link), null);
 });

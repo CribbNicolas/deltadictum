@@ -10,6 +10,8 @@ import { proposeMemory } from '../../src/engine/write.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 
 process.env.DD_RESIDENT = '0';
+// No resident here: these tests exercise the hooks in the explicit lexical mode.
+process.env.DD_RETRIEVAL = 'lexical';
 
 function preTool(root, input) {
   return new Promise((resolve, reject) => {

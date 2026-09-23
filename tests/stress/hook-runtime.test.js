@@ -7,11 +7,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { startUiServer } from '../../src/ui/server.js';
-import { writeUiUrl } from '../../src/hooks/banner.js';
+import { registerResident } from '../helpers/resident.js';
 import { estimateTokens } from '../../src/engine/budget.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
+// No resident here: these tests exercise the hooks in the explicit lexical mode.
+process.env.DD_RETRIEVAL = 'lexical';
 
 const hookPath = fileURLToPath(new URL('../../src/hooks/run.js', import.meta.url));
 function invoke(root, session) {
@@ -52,7 +54,7 @@ test('full hook process uses a real Git corpus, supports resident service and av
   const store = await createMemoryStore({ ddDir, dataDir: join(root, 'data') });
   const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
   t.after(async () => { await ui.close(); store.close(); });
-  await writeUiUrl(ddDir, ui);
+  await registerResident(t, ui);
   const start = performance.now();
   const resident = await invoke(root, 'resident');
   const residentMs = performance.now() - start;

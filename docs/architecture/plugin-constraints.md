@@ -33,31 +33,31 @@ start-up, not by the work.
 Forbidden: loading a model, an index or any warm state on the hot path. Amortising a cost "after the
 first call" does not work, because there is no second call in the same process.
 
-### L2 — A resident process is relied on for better answers, never for correct ones
+### L2 — DD requires its resident process; without it DD is inactive, never blocking
 
-A resident local process may be started by the first session and kept alive, and DD may rely on it for
-work a hook cannot do (holding an embedding model, see L3). It is still not guaranteed to be running,
-so every hook degrades to lexical retrieval without it. Revised 2026-09-22
-(`docs/plans/2026-09-22-semantic-retrieval-plan.md`); the earlier wording forbade relying on it at all.
+One resident process per machine, shared by every project and session, holds the embedding model and
+answers hooks and the audit UI for each project from that project's own store (`src/resident.js`,
+`src/ui/server.js`). The first session or MCP server that finds none starts it; it is found through
+`~/.dd-data/resident.json`. Revised 2026-09-23: embeddings are required, so until the resident answers
+with its model loaded, DD is inactive — hooks inject nothing and SessionStart tells the person why and how
+to fix it. The earlier wording (2026-09-22) fell back to lexical retrieval.
 
-The hosts that can hold deferred work:
+Hooks reach it over HTTP on `127.0.0.1` with a 250 ms timeout for `pre-tool` and 1500 ms otherwise
+(`src/hooks/bridge.js`), and accept an answer only from a resident running the same source tree whose code
+has not changed since it started.
 
-- the local audit UI, reached over HTTP on `127.0.0.1` with a 250 ms timeout for `pre-tool` and 1500 ms otherwise (`src/hooks/bridge.js`), accepted only from a UI running the same source tree whose code has not changed since it started;
-- the per-session MCP server (`src/mcp/server.js`).
+Forbidden: a hook that blocks, errors or answers wrongly because the resident is missing (L5). Missing
+means inactive and said so, nothing more. `DD_RETRIEVAL=lexical` exists only for tests and evaluation.
 
-Forbidden: requiring the resident process for a correct answer. Anything that uses it must degrade to a
-correct, quieter behaviour when it is not running — never to an error and never to a wrong answer.
+### L3 — Three required dependencies, one of them a local model runtime
 
-### L3 — Two required dependencies; a local model runtime is optional
+`@modelcontextprotocol/sdk`, `zod` and `@huggingface/transformers` (ONNX, `Xenova/multilingual-e5-small`),
+on Node ≥ 22 (`package.json`). The model is loaded only by the resident process (L2), once per machine,
+never on the hot path (L1): a cached model takes about 0.5 s to load.
 
-`@modelcontextprotocol/sdk` and `zod` are required, on Node ≥ 22 (`package.json`). A local embedding
-runtime (ONNX via `@huggingface/transformers`) is an optional dependency, loaded only by the resident
-process (L2), never on the hot path (L1): a cached model takes about 0.5 s to load.
-
-Revised 2026-09-22. The earlier text forbade local embeddings outright. That came from removing the
-Orquesta system, whose embeddings were a separate service; an in-process runtime is a package, not a
-service. Still forbidden: a hosted or remote model, an inference server, a GPU requirement. Lexical and
-structural signals remain the fallback and must keep working on their own.
+Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings outright, because the
+Orquesta system's embeddings were a separate service; an in-process runtime is a package, not a service.
+Still forbidden: a hosted or remote model, an inference server, a GPU requirement.
 
 ### L4 — The hook contract differs per harness
 
