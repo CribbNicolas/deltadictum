@@ -19,7 +19,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
   // Knowledge is shareable; process capabilities and telemetry are local.
   // Exclusive creation preserves an existing project's ignore policy.
   try {
-    await writeFile(join(ddDir, '.gitignore'), 'ui.json\n.write-lock\n.pending-write.json\n*.tmp\n*.sqlite\n*.sqlite-*\nobservations/\n', { flag: 'wx' });
+    await writeFile(join(ddDir, '.gitignore'), '.write-lock\n.pending-write.json\n*.tmp\n*.sqlite\n*.sqlite-*\nobservations/\n', { flag: 'wx' });
   } catch (err) { if (err.code !== 'EEXIST') throw err; }
 
   const git = createGitFileStore(ddDir);

@@ -1,4 +1,4 @@
--- SQLite translation of Orquesta memory-api migrations 012–016.
+-- DD local index schema.
 -- Source of truth is git files; this database is a local index.
 
 PRAGMA foreign_keys = ON;
@@ -172,15 +172,8 @@ CREATE TABLE IF NOT EXISTS session_deliveries (
   delivered_at TEXT NOT NULL,
   PRIMARY KEY(project_id, session_id, atom_id)
 );
--- Legacy quota state is retained for compatibility/retention, but never gates writes.
-CREATE TABLE IF NOT EXISTS capture_sessions (
-  project_id TEXT NOT NULL,
-  session_id TEXT NOT NULL,
-  proposals INTEGER NOT NULL DEFAULT 0,
-  stopped INTEGER NOT NULL DEFAULT 0,
-  updated_at TEXT NOT NULL,
-  PRIMARY KEY(project_id, session_id)
-);
+-- Capture once kept a per-session proposal quota; nothing reads it any more.
+DROP TABLE IF EXISTS capture_sessions;
 
 -- Automatic reminders have independent turn state; explicit proposals do not touch it.
 CREATE TABLE IF NOT EXISTS capture_prompts (

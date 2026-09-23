@@ -1,7 +1,7 @@
 # To do — DD (DeltaDictum)
 
 Updated 2026-09-23. Only open items; each carries its references and needs no context from a past session.
-Finished work is recorded in the commit history and in `docs/plans/2026-09-22-semantic-retrieval-plan.md`.
+Finished work is recorded in the commit history.
 
 ## 1. Publish to npm
 

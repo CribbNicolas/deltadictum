@@ -44,7 +44,7 @@ test('parallel first open assigns one project identity and preserves existing ig
   opened.push(...await Promise.all([openStore({ cwd: root }), openStore({ cwd: root })]));
   assert.equal(opened[0].projectId, opened[1].projectId);
   const ignore = join(root, '.dd', '.gitignore');
-  assert.match(await readFile(ignore, 'utf8'), /ui\.json/);
+  assert.match(await readFile(ignore, 'utf8'), /\.write-lock/);
   await writeFile(ignore, 'my-runtime.log\n');
   opened.push(await openStore({ cwd: root }));
   assert.equal(await readFile(ignore, 'utf8'), 'my-runtime.log\n');

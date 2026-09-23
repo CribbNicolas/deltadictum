@@ -7,13 +7,11 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { createToolHandlers } from '../../src/mcp/tools.js';
 import { observationFromTool } from '../../src/hooks/observe.js';
 
-test('capture has no batch or session quota, including revisions after restart and legacy exhausted quotas', async t => {
+test('capture has no batch or session quota, including revisions after restart', async t => {
   const root = await mkdtemp(join(tmpdir(), 'dd-capture-'));
   const options = { ddDir: join(root, '.dd'), dataDir: join(root, 'data') };
   let store = await createMemoryStore(options);
   t.after(() => store.close());
-  await store.saveConfig({ capture: { max_proposals: 3 } });
-  store.index.db.prepare('INSERT INTO capture_sessions VALUES (?,?,?,?,?)').run('demo', 's', 3, 1, new Date().toISOString());
   let handlers = createToolHandlers({ store, projectId: 'demo' });
   const proposal = i => ({ topic_key: `capture/test/item-${i}`, trigger: `when testing component ${i}`, behavior_delta: `Check component ${i}.`, why: 'Regression protection.', evidence_refs: [{ source_type: 'file', source_ref: 'test.js', summary: 'Test evidence' }] });
   const batch = JSON.parse((await handlers.propose({ proposals: Array.from({ length: 8 }, (_, i) => proposal(i)), session_id: 's' })).content[0].text);

@@ -141,15 +141,15 @@ the model and exists only for tests and evaluation.
   config.json
 ```
 
-Commit these knowledge files to share them with a team. Ignore runtime files `ui.json`, `.write-lock`, `.pending-write.json` and `*.tmp`. DD creates a local ignore file automatically.
+Commit these knowledge files to share them with a team. Ignore runtime files `.write-lock`, `.pending-write.json` and `*.tmp`. DD creates a local ignore file automatically.
 
 SQLite, observations, feedback and session deliveries live under a per-user cache at `~/.dd-data`, in one directory per project identified by its physical path (symlinks resolved; case folded on Windows and macOS), so every process that opens the project reaches the same directory. When a new directory is created, history from earlier locations of the same project is copied into it. `DD_DATA` explicitly overrides that directory; use a separate directory for each project. The cache is rebuildable from git, so deleting it costs local telemetry and no knowledge.
 
-The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a project, and when the per-user cache shared that name the home directory resolved as a project root, merging unrelated work into one store. If you used an earlier version, `node scripts/check-home-artifacts.mjs` reports what `~/.dd` still holds and removes it only when asked, and only when it holds no knowledge.
+The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a project, and when the per-user cache shared that name the home directory resolved as a project root, merging unrelated work into one store.
 
-Existing V6 knowledge stays readable. A legacy candidate is relocated on its next lifecycle transition; it cannot replace effective knowledge merely by being proposed. SQLite is rebuilt when its format or source fingerprint changes. The previous v1 observation JSONL is no longer appended; legacy files remain available for manual audit. Version 0.2 uses a separate default cache identity, so v1 local telemetry is not automatically imported.
+Knowledge written with schema version 6 stays readable; a schema-6 candidate is relocated on its next lifecycle transition, and it cannot replace effective knowledge merely by being proposed. SQLite is rebuilt when its format or source fingerprint changes.
 
-The MCP write API changed from a single payload to `propose({proposals:[...]})`. `admit`, `resolve`, `reject`, `delete` and `update` are no longer advertised to models. Submit revisions through `propose` and use local review for lifecycle changes.
+Models write only through `propose({proposals:[...]})`; `admit`, `resolve`, `reject`, `delete` and `update` are not advertised to them. Submit revisions through `propose` and use local review for lifecycle changes.
 
 ## Validation
 
@@ -165,4 +165,4 @@ The replay covers 24 authored scenarios: exact matches, paraphrases, Spanish, in
 
 A provider-neutral [model evaluation runner](docs/evaluation/model-evaluation.md) compares no memory, static instructions and DD while preserving actual usage supplied by an adapter. Real model runs and repository task trials are required before claiming equal effectiveness across models or improved development outcomes.
 
-Imported Orquesta V2–V10 documents are historical design references. The current authority is [docs/DD.md](docs/DD.md); the [implementation plan](docs/plans/2026-09-10-project-cognition.md) maps delivery and validation.
+The current authority is [docs/DD.md](docs/DD.md).

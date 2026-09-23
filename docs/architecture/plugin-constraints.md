@@ -55,8 +55,8 @@ means inactive and said so, nothing more. `DD_RETRIEVAL=lexical` exists only for
 on Node ≥ 22 (`package.json`). The model is loaded only by the resident process (L2), once per machine,
 never on the hot path (L1): a cached model takes about 0.5 s to load.
 
-Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings outright, because the
-Orquesta system's embeddings were a separate service; an in-process runtime is a package, not a service.
+Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings outright, because
+embeddings were assumed to be a separate service; an in-process runtime is a package, not a service.
 Still forbidden: a hosted or remote model, an inference server, a GPU requirement.
 
 ### L4 — The hook contract differs per harness
@@ -97,8 +97,7 @@ Forbidden: any mechanism that needs aggregation across users, a shared model, or
 - Background conservation workers and scheduled jobs. (A resident process for retrieval is allowed, L2.)
 - Importance scores or rankings learned online from user traffic.
 
-Documents describing these belonged to the earlier Orquesta system. They have been removed rather than
-left as aspiration, because an unreachable roadmap misleads every reader and every agent that loads it.
+Documents describing these have been removed rather than left as aspiration, because an unreachable roadmap misleads every reader and every agent that loads it.
 
 ## What to change so DD works better as a plugin
 

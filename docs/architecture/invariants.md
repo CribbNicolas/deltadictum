@@ -105,7 +105,6 @@ When artifacts define overlapping constraints, resolve in this order:
 1. **Plugin constraints** (`plugin-constraints.md`) — the boundary everything operates inside
 2. **Invariants** (this file) — non-negotiable
 3. **Current contract** (`../DD.md`) — the behaviour DD guarantees today
-4. **Decisions** (`../decisions/`) — accepted architectural choices
-5. **Reference and specs** — design records, historical unless marked implemented
+4. **Reference** — the remaining documents under `docs/`
 
 Conflicts are resolved in favour of the higher authority.

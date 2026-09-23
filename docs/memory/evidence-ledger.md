@@ -5,7 +5,7 @@ artifact_type: reference
 stability: draft
 last_validated: 2026-05-30
 depends_on:
-  - memory/behavioral-memory-schema.md
+  - memory/memory-admission-control.md
 used_by:
   - memory/evaluation-harness.md
 do_not_co_load_with: []
@@ -72,10 +72,6 @@ carries succession and dispute and nothing else. The other four are not equal in
   `CREATE TABLE IF NOT EXISTS`, and the index rebuild repopulates rows without recreating tables.
   Enforcing a constraint on some installs and not others is worse than leaving an unused value. Earlier versions of this document named
 `supported_by`, `refuted_by`, `caused_by` and `effective_during`; none of those exist under any name.
-
-## V2 and V3 Boundary
-
-V2 requires `evidence_refs` as stable references. V3 introduces first-class evidence capsules and stronger validation that referenced evidence exists and is in scope.
 
 ## Bitemporal Detail
 

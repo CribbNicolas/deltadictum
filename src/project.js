@@ -93,7 +93,7 @@ export async function openStore({ cwd = process.env.DD_PROJECT_DIR || process.cw
   });
   // A new index is where a moved data directory would lose history (gap 6).
   const adopted = freshIndex ? await adoptHistory(store.index.db, { projectId: config.project_id, dataDir,
-    candidates: legacyDataDirs({ repoRoot, slug, names: [`${slug}-${identity}`, spelledName] }) }).catch(() => []) : [];
+    candidates: legacyDataDirs({ repoRoot, names: [`${slug}-${identity}`, spelledName] }) }).catch(() => []) : [];
   if (adopted.length) store.index.setMeta('adopted_history', JSON.stringify({ at: new Date().toISOString(), adopted }));
   return { store, repoRoot, ddDir, dataDir, config, projectId: config.project_id, adopted };
 }

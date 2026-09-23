@@ -54,13 +54,10 @@ Returning nothing is a correct answer.
 
 ## Cross-project knowledge
 
-Cross-project cognition requires an explicit decision artifact; it is never an automatic fallback.
-See `../decisions/DECISION-003-shared-vs-project-cognition.md` for the rule that project knowledge
-overrides shared knowledge, and `../decisions/DECISION-001-memory-namespaces.md` for the isolation
-decision itself.
+There is none. Knowledge from another project is never an automatic fallback.
 
 ## Failure this prevents
 
-See `../failures/memory-contamination.md`. The contamination failure is not primarily a privacy
+Memory contamination: knowledge from one project applied in another. It is not primarily a privacy
 problem; it is a correctness problem, and secondarily a retrieval-quality one — irrelevant knowledge
 competing for a small number of injection slots.

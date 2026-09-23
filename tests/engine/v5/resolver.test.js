@@ -17,7 +17,7 @@ function buildRepository({ byKey = null, aliasRow = null } = {}) {
 describe('V5 resolver', () => {
   test('resolves canonical key directly', async () => {
     const repository = buildRepository({ byKey: entry });
-    const result = await resolveKey('orquesta', 'Memory/Compaction', { repository });
+    const result = await resolveKey('demo', 'Memory/Compaction', { repository });
     assert.strictEqual(result.found, true);
     assert.strictEqual(result.registry_id, 'reg-1');
     assert.strictEqual(result.canonical_key, 'memory/compaction');
@@ -27,7 +27,7 @@ describe('V5 resolver', () => {
 
   test('resolves alias (accent-insensitive) to canonical entry', async () => {
     const repository = buildRepository({ aliasRow: { alias: 'memoria/compactacion', registry_id: 'reg-1' } });
-    const result = await resolveKey('orquesta', 'Memoria/Compactación', { repository });
+    const result = await resolveKey('demo', 'Memoria/Compactación', { repository });
     assert.strictEqual(result.found, true);
     assert.strictEqual(result.canonical_key, 'memory/compaction');
     assert.strictEqual(result.via, 'alias');
@@ -35,8 +35,8 @@ describe('V5 resolver', () => {
 
   test('returns found:false for unknown key or missing inputs', async () => {
     const repository = buildRepository();
-    assert.deepStrictEqual(await resolveKey('orquesta', 'nope/nope', { repository }), { found: false });
+    assert.deepStrictEqual(await resolveKey('demo', 'nope/nope', { repository }), { found: false });
     assert.deepStrictEqual(await resolveKey('', 'memory/compaction', { repository }), { found: false });
-    assert.deepStrictEqual(await resolveKey('orquesta', '', { repository }), { found: false });
+    assert.deepStrictEqual(await resolveKey('demo', '', { repository }), { found: false });
   });
 });

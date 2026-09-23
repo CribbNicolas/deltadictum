@@ -56,4 +56,4 @@ The evaluation harness (`evaluation-harness.md`) must include:
 
 ## Boundary to Other Docs
 
-Admission rules live in `memory-admission-control.md`. Provenance and temporal validity live in `evidence-ledger.md`. Retrieval abstention and ranking live in `../specs/2026-09-09-retrieval-hot-path-and-scale.md`. This document owns only the threat model and the security tests that span them.
+Admission rules live in `memory-admission-control.md`. Provenance and temporal validity live in `evidence-ledger.md`. Retrieval abstention and ranking live in `src/engine/retrieve.js`. This document owns only the threat model and the security tests that span them.

@@ -6,8 +6,7 @@ stability: draft
 last_validated: 2026-09-18
 depends_on:
   - memory/evidence-ledger.md
-used_by:
-  - specs/2026-09-10-memory-quality-and-performance-tests.md
+used_by: []
 do_not_co_load_with: []
 ---
 
@@ -36,9 +35,9 @@ Memory tests for a promoted phase must reach 100% success rate before the phase 
 | Poisoning resistance | Untrusted memory cannot inject higher-priority instructions. |
 | Lifecycle correctness | Candidate, active, contested, superseded, archived, and rejected states transition correctly. |
 
-## V2 Minimum Tests
+## Minimum Tests
 
-V2 requires tests proving required behavioral fields, evidence references, typed memory boundaries, admission decisions, trigger retrieval, and anti-memory blocking.
+The suite proves required behavioral fields, evidence references, typed memory boundaries, admission decisions, trigger retrieval, and anti-memory blocking.
 
 ## Benchmark Direction
 
@@ -116,6 +115,3 @@ Abstention has its own threshold rather than being folded into the existing one.
 
 External benchmarks are signals, not substitutes for DD regression tests: LoCoMo and LongMemEval (extraction, multi-session, temporal, knowledge-update, abstention) are the closest, and neither is representative of plugin use. The deterministic replay harness in `src/eval/` remains the primary regression signal. Fix the metric before measuring: strict token-F1 and LLM-as-judge disagree by tens of points on the same system.
 
-## DeltaDictum concrete catalog
-
-The row-level checklist (what already runs, what the deterioration cut must add, what stays later) lives in `docs/specs/2026-09-10-memory-quality-and-performance-tests.md`. That file is the executable list; this document stays the category/metrics theory.

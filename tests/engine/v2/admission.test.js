@@ -4,7 +4,7 @@ import { decideAdmission } from '../../../src/engine/v2/admission.js';
 
 function validPayload(overrides = {}) {
   return {
-    project_id: 'orquesta',
+    project_id: 'demo',
     memory_type: 'lesson',
     scope: 'project',
     title: 'Use V2 gate',

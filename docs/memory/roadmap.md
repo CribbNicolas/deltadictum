@@ -159,8 +159,7 @@ The program succeeds when it meets all five:
 2. **Measured improvement** — gains on the replay harness and on internal task replay, not just final
    answer quality. Baseline of 2026-09-18 (`npm run eval`): retrieval F1 1.0 over 24 scenarios,
    abstention F1 1.0 over the 9 that expect nothing, 0 duplicates per 1000 write attempts,
-   evidence coverage 1.0, 81% fewer tokens than static instructions. Recorded in
-   [`plans/2026-09-18-stage-3-measurement.md`](../plans/2026-09-18-stage-3-measurement.md).
+   evidence coverage 1.0, 81% fewer tokens than static instructions.
 3. **Operational efficiency** — fewer injected tokens, lower hot-path latency, higher signal per query.
 4. **Security** — resistance to poisoning and to cross-project leakage.
 5. **Human governance** — auditable, editable, understood by the team; never an uncontestable black box.

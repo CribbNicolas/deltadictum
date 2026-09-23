@@ -89,7 +89,7 @@ export const TASKS = [
       delete process.env.CLAUDE_PLUGIN_DATA; delete process.env.GROK_PLUGIN_DATA;
       try {
         const renamed = /\.deltadictum$/.test(resolveDataBase());
-        const legacy = legacyDataDirs({ repoRoot: dir, slug: 'p', names: ['p-0'], identities: ['0'] });
+        const legacy = legacyDataDirs({ repoRoot: dir, names: ['p-0'] });
         const adoptsOld = legacy.some(path => /[\\/]\.dd-data[\\/]/.test(path));
         return { passed: renamed && adoptsOld, detail: `renamed ${renamed}, old ~/.dd-data still adopted ${adoptsOld}` };
       } finally { process.env = saved; }

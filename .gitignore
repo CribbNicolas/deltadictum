@@ -2,9 +2,6 @@ node_modules/
 .env
 .env.*
 !.env.example
-.dd/observations.jsonl
-.dd/index.sqlite
-.dd/ui.json
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

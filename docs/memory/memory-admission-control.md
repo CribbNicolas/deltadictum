@@ -8,7 +8,6 @@ depends_on:
   - memory/behavioral-memory-architecture.md
   - architecture/plugin-constraints.md
 used_by:
-  - memory/behavioral-memory-schema.md
   - memory/evidence-ledger.md
 do_not_co_load_with: []
 ---

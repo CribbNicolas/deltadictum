@@ -18,7 +18,7 @@ describe('V5 topic expander', () => {
       },
     };
 
-    const result = await expandTopicTerms('orquesta', 'Revisar Memoria/Compactación en cola', { repository });
+    const result = await expandTopicTerms('demo', 'Revisar Memoria/Compactación en cola', { repository });
     assert.deepStrictEqual(result.matched, ['memoria/compactacion']);
     assert.deepStrictEqual(result.canonical, ['memory/compaction']);
     assert.deepStrictEqual(
@@ -29,8 +29,8 @@ describe('V5 topic expander', () => {
 
   test('returns empty result when nothing matches or inputs missing', async () => {
     const repository = { findAliasOccurrences: async () => [], getAliasesForRegistryIds: async () => [] };
-    assert.deepStrictEqual(await expandTopicTerms('orquesta', 'deploy frontend', { repository }), { matched: [], canonical: [], terms: [] });
+    assert.deepStrictEqual(await expandTopicTerms('demo', 'deploy frontend', { repository }), { matched: [], canonical: [], terms: [] });
     assert.deepStrictEqual(await expandTopicTerms('', 'anything', { repository }), { matched: [], canonical: [], terms: [] });
-    assert.deepStrictEqual(await expandTopicTerms('orquesta', '', { repository }), { matched: [], canonical: [], terms: [] });
+    assert.deepStrictEqual(await expandTopicTerms('demo', '', { repository }), { matched: [], canonical: [], terms: [] });
   });
 });
