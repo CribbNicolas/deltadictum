@@ -22,6 +22,10 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, 
 const MODEL = args.model ?? 'claude-sonnet-5';
 const REPEAT = Number(args.repeat ?? 2);
 const ONLY = args.tasks ? args.tasks.split(',') : null;
+// --prune=a,b removes those memories (id prefixes) from the DD clone, to measure
+// a store without them; --conditions=dd runs the DD condition only.
+const PRUNE = args.prune ? args.prune.split(',') : [];
+const CONDITIONS = args.conditions === 'dd' ? [true] : args.conditions === 'none' ? [false] : [false, true];
 const TIMEOUT_MS = 20 * 60 * 1000;
 const ALLOWED = ['Read', 'Edit', 'Write', 'Grep', 'Glob', 'Bash(node:*)', 'Bash(npm:*)', 'Bash(git:*)', 'mcp__dd'];
 
@@ -59,6 +63,16 @@ async function startResident(dir, env) {
   return child;
 }
 
+async function pruneMemories(dir, prefixes) {
+  const { readdir } = await import('node:fs/promises');
+  const walk = async d => (await readdir(d, { withFileTypes: true })).flatMap(e => e.isDirectory() ? [] : [join(d, e.name)])
+    .concat(...await Promise.all((await readdir(d, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => walk(join(d, e.name)))));
+  for (const file of await walk(join(dir, '.dd', 'atoms'))) {
+    const atom = JSON.parse(await readFile(file, 'utf8'));
+    if (prefixes.some(prefix => atom.id.startsWith(prefix))) await rm(file);
+  }
+}
+
 function ddSettings(dir) {
   const hook = event => [{ hooks: [{ type: 'command', command: `node "${join(dir, 'hooks', 'run.cjs')}" ${event}`, timeout: 15 }] }];
   return { hooks: { SessionStart: hook('session-start'), UserPromptSubmit: hook('prompt'),
@@ -81,6 +95,7 @@ Run every command in the foreground and wait for it to finish before your final 
   // Without DD there is no DD knowledge either: an agent that greps .dd/ is
   // using DD by hand (seen in the first trial run). Git history still holds it.
   if (!withDd) await rm(join(dir, '.dd'), { recursive: true, force: true });
+  if (withDd && PRUNE.length) await pruneMemories(dir, PRUNE);
   if (withDd) {
     resident = await startResident(dir, env);
     const settings = join(dir, '..', 'dd-settings.json');
@@ -110,7 +125,7 @@ Run every command in the foreground and wait for it to finish before your final 
 
 const rows = [];
 for (const task of TASKS.filter(t => !ONLY || ONLY.includes(t.id))) {
-  for (let i = 0; i < REPEAT; i += 1) for (const withDd of [false, true]) {
+  for (let i = 0; i < REPEAT; i += 1) for (const withDd of CONDITIONS) {
     const row = await runOnce(task, withDd);
     rows.push(row);
     console.log(JSON.stringify(row));
@@ -124,7 +139,7 @@ for (const withDd of [false, true]) {
     input_tokens: sum('input_tokens'), output_tokens: sum('output_tokens'), cost_usd: Number(sum('cost_usd').toFixed(4)),
     turns: sum('turns'), minutes: Number((sum('duration_ms') / 60000).toFixed(1)) };
 }
-const out = join(REPO, 'output', 'eval', 'agent-results.json');
+const out = join(REPO, 'output', 'eval', args.out ?? 'agent-results.json');
 await mkdir(join(REPO, 'output', 'eval'), { recursive: true });
-await writeFile(out, JSON.stringify({ model: MODEL, repeat: REPEAT, summary, rows }, null, 2));
+await writeFile(out, JSON.stringify({ model: MODEL, repeat: REPEAT, pruned: PRUNE, summary, rows }, null, 2));
 console.log(JSON.stringify({ model: MODEL, summary, report: out }, null, 2));

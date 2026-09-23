@@ -43,7 +43,7 @@ export function createMcpServer(options) {
     retrieve: ['Recall applicable decisions and lessons within a total estimated payload budget.', retrieval],
     get: ['Expand a memory with current evidence freshness, or inspect a host evidence ID supplied at capture. verbose=true returns the raw stored atom.',
       { id: z.string(), verbose: z.boolean().optional() }],
-    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Same topic_key proposes a replacement; never implies approval.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
+    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Keep only what an agent reading the code would miss: why not the obvious approach, traps, values that look valid but are not, steps nothing enforces. Same topic_key proposes a replacement; never implies approval.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
     feedback: ['Record task outcome and supporting references; frequency and claimed success do not raise authority.', {
       id: z.string(), task_id: z.string().min(1).max(200), outcome: z.enum(['helped', 'failed', 'refuted', 'not_applicable']),
       summary: z.string().min(1).max(800), evidence_refs: z.array(evidence).max(12).optional(),
