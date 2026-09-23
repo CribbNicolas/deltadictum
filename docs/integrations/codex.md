@@ -36,7 +36,7 @@ Until hooks are trusted, the MCP tools and project skills remain usable in a tru
 
 Suggested first prompt:
 
-> Usa DD para orientarte en este proyecto. Revisa README.md y los documentos de arquitectura pertinentes. Propón las decisiones reutilizables que encuentres con evidencia y condiciones de validez. Déjalas pendientes de revisión y dame el enlace de auditoría.
+> Use DD to orient yourself in this project. Read README.md and the relevant architecture documents. Propose the reusable decisions you find, with evidence and validity conditions. Leave them pending review and give me the audit link.
 
 Open the URL returned by `dd.ui` to review evidence and approve useful proposals. An empty installation has no approved project decisions; orientation can still derive a small map from repository sources.
 
