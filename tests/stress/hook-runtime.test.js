@@ -7,12 +7,14 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { startUiServer } from '../../src/ui/server.js';
-import { registerResident } from '../helpers/resident.js';
+import { registerResident, useTempRegistry } from '../helpers/resident.js';
 import { estimateTokens } from '../../src/engine/budget.js';
 import { PROVENANCE } from '../helpers/atom.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
+// Nor reach the machine's own resident through its registry.
+await useTempRegistry();
 // No resident here: these tests exercise the hooks in the explicit lexical mode.
 process.env.DD_RETRIEVAL = 'lexical';
 

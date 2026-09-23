@@ -8,8 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { proposeMemory } from '../../src/engine/write.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
+import { useTempRegistry } from '../helpers/resident.js';
 
 process.env.DD_RESIDENT = '0';
+// Nor reach the machine's own resident through its registry.
+await useTempRegistry();
 // No resident here: these tests exercise the hooks in the explicit lexical mode.
 process.env.DD_RETRIEVAL = 'lexical';
 
