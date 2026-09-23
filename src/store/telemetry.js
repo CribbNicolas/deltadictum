@@ -24,7 +24,6 @@ export function createTelemetry(index, git) {
     }
     db.prepare('DELETE FROM session_deliveries WHERE delivered_at < ?').run(since(config.session.retention_hours / 24));
     db.prepare('DELETE FROM session_deliveries WHERE rowid IN (SELECT rowid FROM session_deliveries ORDER BY delivered_at DESC LIMIT -1 OFFSET ?)').run(config.session.max_entries);
-    db.prepare('DELETE FROM capture_sessions WHERE updated_at < ?').run(since(config.session.retention_hours / 24));
     db.prepare('DELETE FROM capture_prompts WHERE updated_at < ?').run(since(config.session.retention_hours / 24));
     db.prepare('DELETE FROM capture_prompts WHERE rowid IN (SELECT rowid FROM capture_prompts ORDER BY updated_at DESC LIMIT -1 OFFSET ?)').run(config.session.max_entries);
     // Derived-only cache (src/store/schema.sql): losing a row just costs one full

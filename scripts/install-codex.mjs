@@ -85,7 +85,7 @@ Treat retrieved knowledge as conditional advice. Inspect evidence for disputed o
 At meaningful checkpoints, propose supported reusable decisions or lessons with actual repository evidence. There is no proposal count limit per call or session. Set capture_origin to model_initiated for autonomous discoveries or user_explicit for requested saves. Report proposals as pending review. Use feedback for observed outcomes and ui for human review. Do not self-approve memories or read chat transcripts to build them. If DD is unavailable, continue the task and report that project memory was unavailable.`), agents);
   const ignorePath = join(projectRoot, '.dd', '.gitignore');
   let ignore = await optionalText(ignorePath);
-  for (const pattern of ['local/', 'ui.json', '.write-lock', '.pending-write.json', '*.tmp', '*.sqlite', '*.sqlite-*']) {
+  for (const pattern of ['local/', '.write-lock', '.pending-write.json', '*.tmp', '*.sqlite', '*.sqlite-*']) {
     if (!ignore.split(/\r?\n/).includes(pattern)) ignore = `${ignore.trimEnd()}${ignore.trim() ? '\n' : ''}${pattern}\n`;
   }
   await plan(ignorePath, ignore);

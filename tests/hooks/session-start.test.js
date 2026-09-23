@@ -58,8 +58,7 @@ describe('SessionStart context', () => {
     store.close();
   });
 
-  // `ui.json` outlives the process that wrote it, so a recorded URL is a claim
-  // about the past. The person is only handed a link once something answered.
+  // A recorded URL is a claim about the past. The person is only handed a link once something answered.
   test('the audit URL reaches the person only when the UI is live', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
     const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
