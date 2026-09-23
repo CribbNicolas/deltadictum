@@ -6,7 +6,15 @@ export async function sweepAutoAccept({ store, projectId }) {
   const config = await store.loadConfig();
   if (!config.auto_accept?.enabled) return { admitted: [] };
   const threshold = config.auto_accept.confidence_threshold;
-  const candidates = await store.listAtoms({ projectId, lifecycleStates: ['candidate'] });
+  // One candidate per topic: the newest draft. Admitting several in list order
+  // let an older draft supersede a newer one on the same topic_key; the older
+  // drafts stay candidates for a person to reject.
+  const newest = new Map();
+  for (const atom of await store.listAtoms({ projectId, lifecycleStates: ['candidate'] })) {
+    const current = newest.get(atom.topic_key);
+    if (!current || String(atom.created_at) > String(current.created_at)) newest.set(atom.topic_key, atom);
+  }
+  const candidates = [...newest.values()];
   const admitted = [];
   for (const candidate of candidates) {
     // candidate.confidence (stamped at proposal time) is not usable here -- it's

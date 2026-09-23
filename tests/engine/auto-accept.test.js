@@ -89,3 +89,17 @@ describe('sweepAutoAccept', () => {
     assert.equal(admitted.review.rationale, 'Auto-accepted: confidence 0.765 >= threshold 0.');
   });
 });
+
+// Two drafts of one topic, both clearing the threshold: accepting both in list
+// order let the older draft supersede the newer one (seen 2026-09-22).
+test('with several candidates on one topic, only the newest is auto-accepted', async t => {
+  const store = await fixtureStore();
+  t.after(() => store.close());
+  const older = await proposeMemory(proposal({ behavior_delta: 'validate trigger first' }), { store });
+  await new Promise(resolve => setTimeout(resolve, 5));
+  const newer = await proposeMemory(proposal({ behavior_delta: 'validate trigger, evidence and forms before any write' }), { store });
+  const result = await sweepAutoAccept({ store, projectId: 'demo' });
+  assert.deepEqual(result.admitted, [newer.atom.id]);
+  assert.equal((await store.getAtom(newer.atom.id, 'demo')).lifecycle_state, 'active');
+  assert.equal((await store.getAtom(older.atom.id, 'demo')).lifecycle_state, 'candidate');
+});
