@@ -1,13 +1,5 @@
 [
   {
-    "id": "bf48665b-75c8-4fb3-be09-0bb6ccc405b6",
-    "confidence": 0.5,
-    "created_at": "2026-09-19T10:36:32.427Z",
-    "source_atom_id": "0775e2e0-a142-443d-9615-a90c9e05bd9c",
-    "relation_type": "supersedes",
-    "target_atom_id": "b8f17c0c-5752-4c83-9f14-3ee9977d2812"
-  },
-  {
     "id": "66700340-6472-47f2-9ce6-4d4f7540d267",
     "confidence": 0.5,
     "created_at": "2026-09-19T14:59:10.233Z",
@@ -38,14 +30,6 @@
     "source_atom_id": "ad43c074-a750-4935-9773-b66a416088fd",
     "relation_type": "supersedes",
     "target_atom_id": "c143cf05-878f-4605-b4fd-93357cffd502"
-  },
-  {
-    "id": "b394b3ee-32b7-4d17-9867-03db8f73a567",
-    "confidence": 0.5,
-    "created_at": "2026-09-22T23:54:50.057Z",
-    "source_atom_id": "1092b8d9-9a8e-4941-9144-a54e81a996cd",
-    "relation_type": "supersedes",
-    "target_atom_id": "1349225a-6ef2-4300-97bc-042f2a383baa"
   },
   {
     "id": "81b4739f-d77f-4580-b3dc-672a99f3187d",
