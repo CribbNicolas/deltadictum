@@ -9,7 +9,10 @@ import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { estimateTokens as payloadEstimate } from '../../src/engine/budget.js';
 import { DEFAULT_CONFIG } from '../../src/store/paths.js';
 
-const CORPUS = Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
+// No resident here: these tests measure retrieval in the explicit lexical mode.
+process.env.DD_RETRIEVAL = 'lexical';
+
+const CORPUS =Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
 const ROUNDS = Math.max(10, Number(process.env.DD_STRESS_ROUNDS ?? 40));
 const CONCURRENCY = Math.max(4, Number(process.env.DD_STRESS_CONCURRENCY ?? 16));
 
