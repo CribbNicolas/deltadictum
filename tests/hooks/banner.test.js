@@ -17,6 +17,16 @@ describe('session banner', () => {
     assert.doesNotMatch(text, /DeltaDictum/);
   });
 
+  test('names no URL while no resident is known to serve one', () => {
+    // A resident that was just started has not recorded its address yet; the
+    // registry still names the one it replaced.
+    const text = sessionBanner({ projectId: 'demo', url: null, activeCount: 0 });
+    assert.match(text, /DD - loaded for `demo`/);
+    assert.doesNotMatch(text, /http:\/\//);
+    assert.doesNotMatch(text, /tell the user this URL/);
+    assert.match(text, /`ui` tool/);
+  });
+
   test('persists and reads the live audit URL', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dd-ui-url-'));
     const ddDir = join(root, '.dd');

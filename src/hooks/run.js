@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 import { retrieveMemories } from '../engine/retrieve.js';
 import { openStore, readJsonStdin, findRepoRoot } from '../project.js';
-import { uiPointer, DEFAULT_UI_URL } from './banner.js';
+import { uiPointer } from './banner.js';
 import { buildSessionStartContext, contextPayload, lexicalMode, residentNotice } from './session-start.js';
 import { STOP_CAPTURE_PROMPT } from './capture.js';
 import { buildPreToolContext } from './pre-tool.js';
 import { observationFromTool, recordPromptObservation } from './observe.js';
 import { microPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
-import { ensureResident, projectUiUrl } from '../resident.js';
+import { ensureResident, projectUiUrl, sessionUiUrl } from '../resident.js';
 
 function ok(payload) {
   if (payload.decision === 'allow') delete payload.decision;
@@ -62,7 +62,7 @@ try {
       resident: lexical ? { state: 'live', retrieval: 'lexical' } : resident,
       store,
       projectId,
-      uiUrl: await projectUiUrl(repoRoot) ?? DEFAULT_UI_URL,
+      uiUrl: await sessionUiUrl(repoRoot, started),
       uiLive: false,
       sessionId,
       source: payload.source,

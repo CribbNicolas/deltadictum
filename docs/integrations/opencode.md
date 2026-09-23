@@ -34,7 +34,9 @@ lifecycle hook (`event`) returns `void`. The only hook that accepts injectable t
 once per tool call — **there is no OpenCode hook shaped like Claude Code's `PreToolUse`.**
 
 The adapter is scoped to what's real: it injects DD's session-start advisory pack once per session via
-`experimental.chat.system.transform`. It does not do per-tool retrieval, and does not record tool
+`experimental.chat.system.transform`, through the machine's resident process like the other hosts'
+SessionStart hook: when no resident answers, it starts one and the injected text says DD is inactive
+and why. It does not do per-tool retrieval, and does not record tool
 execution as telemetry — `tool.execute.after`'s output carries no structured exit/error signal, and
 guessing at one risks misclassifying results rather than skipping them (the same policy
 `src/hooks/observe.js` already applies to any host with an unconfirmed response shape).

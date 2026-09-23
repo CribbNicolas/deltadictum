@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ensureResident, projectUiUrl } from '../../src/resident.js';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { ensureResident, projectUiUrl, writeRegistry } from '../../src/resident.js';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { startResidentServer, startUiServer } from '../../src/ui/server.js';
 import { residentNotice, isInactive, buildSessionStartContext } from '../../src/hooks/session-start.js';
@@ -87,6 +89,32 @@ test('DD is inactive, and says so, until a resident with its model is serving', 
 
   process.env.DD_RETRIEVAL = 'lexical';
   assert.equal(isInactive({ state: 'started' }), false);
+});
+
+// The registry is rewritten only once a new resident is listening, so at the
+// session start that replaces (or fails to start) one it still names the old,
+// dead address. SessionStart must not hand that address to the person.
+test('SessionStart names no audit URL for a resident that is not live', async t => {
+  realMode(t);
+  const registry = await useTempRegistry(t);
+  const { root, store } = await project('d');
+  store.close();
+  await writeRegistry({ url: 'http://127.0.0.1:1', port: 1, hookToken: 'a'.repeat(64) });
+  const output = await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [fileURLToPath(new URL('../../src/hooks/run.js', import.meta.url)), 'session-start'],
+      { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'],
+        env: { ...process.env, DD_RESIDENT: '0', DD_RESIDENT_REGISTRY: registry, DD_DATA: join(root, 'data') } });
+    let text = '';
+    child.stdout.on('data', chunk => { text += chunk; });
+    child.on('error', reject);
+    child.on('close', () => resolve(JSON.parse(text)));
+    child.stdin.end(JSON.stringify({ cwd: root, session_id: 's' }));
+  });
+  const text = output.hookSpecificOutput.additionalContext;
+  assert.match(text, /DD - Inactive: the resident DD process is disabled/);
+  assert.doesNotMatch(text, /127\.0\.0\.1:1\b/);
+  assert.doesNotMatch(text, /tell the user this URL/);
+  assert.equal(output.systemMessage, undefined);
 });
 
 // One resident, many projects, each from its own store; the model loads once.
