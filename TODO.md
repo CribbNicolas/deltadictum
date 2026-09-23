@@ -91,10 +91,8 @@ them as full English sentences of behaviour, and review them in Patriark's audit
 
 ## 13. Agent-level evaluation: harness and follow-up
 
-- Rephrase the `error-code-hint` task: one agent read "Reject memory proposals whose trigger..." as a rule
-  for itself and implemented nothing. Phrase every task as a change to the code.
-- Tasks that run the full suite outlive the agent's 300 s foreground wait (`retrieve-title`): point the
-  prompt at the relevant test file, or allow a longer command timeout.
+- ~~Rephrase `error-code-hint`; keep `retrieve-title` within the foreground wait~~: done 2026-09-23 (task
+  phrased as a code change, test file named, test runs allowed up to 10 minutes).
 - Measure the capture criterion (TODO #11 context): capture memories under the new prompt during real work,
   then rerun `node src/eval/agent/run.js --repeat=3` and compare with `output/eval/agent-results-full.json`.
 - Three runs per cell leave a 2/18 difference within noise; five would settle the pruning question.
