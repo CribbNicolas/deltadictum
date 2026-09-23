@@ -9,7 +9,16 @@ import { startUiServer } from '../../src/ui/server.js';
 import { writeUiUrl } from '../../src/hooks/banner.js';
 import { residentNotice } from '../../src/hooks/session-start.js';
 
+// These tests decide DD_RESIDENT themselves: an inherited DD_RESIDENT=0 (CI, or
+// the agent evaluation harness) would otherwise disable what they exercise.
+function residentEnabled(t) {
+  const previous = process.env.DD_RESIDENT;
+  delete process.env.DD_RESIDENT;
+  t.after(() => { if (previous === undefined) delete process.env.DD_RESIDENT; else process.env.DD_RESIDENT = previous; });
+}
+
 test('a project with no live resident gets one started; a live one of this build is reused', async t => {
+  residentEnabled(t);
   const root = await mkdtemp(join(tmpdir(), 'dd-resident-'));
   await mkdir(join(root, '.dd'));
   const started = [];
@@ -45,6 +54,7 @@ test('the first message says when retrieval is lexical and where the fix is', ()
 });
 
 test('a resident whose code changed since it started is replaced, not reused', async t => {
+  residentEnabled(t);
   const root = await mkdtemp(join(tmpdir(), 'dd-resident-stale-'));
   await mkdir(join(root, '.dd'));
   const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data'), repoRoot: root });
