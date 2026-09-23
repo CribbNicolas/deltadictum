@@ -89,7 +89,7 @@ async function runOnce(task, withDd) {
   // background is never read back (seen in the first full run).
   const prompt = `${task.prompt}
 
-Run every command in the foreground and wait for it to finish before your final answer.`;
+Run every command in the foreground and wait for it to finish before your final answer; give test runs a timeout of up to 10 minutes.`;
   const argv = ['-p', prompt, '--model', MODEL, '--output-format', 'json', '--no-session-persistence',
     '--setting-sources', 'project', '--strict-mcp-config', '--allowedTools', ...ALLOWED];
   // Without DD there is no DD knowledge either: an agent that greps .dd/ is

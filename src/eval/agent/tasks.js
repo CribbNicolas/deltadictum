@@ -62,7 +62,8 @@ export const TASKS = [
   {
     id: 'error-code-hint',
     memory: '0e23ff13 (every engine error code reaching the audit UI needs an ERROR_HINTS entry)',
-    prompt: 'Reject memory proposals whose trigger is shorter than 12 characters, with the reason code trigger_too_short.',
+    // Phrased as a code change: "Reject memory proposals..." was read once as a rule for the agent itself.
+    prompt: 'Change the DD admission code so that a memory proposal whose trigger is shorter than 12 characters is rejected with the reason code trigger_too_short.',
     async check(dir) {
       const [{ proposeMemory }] = await importFrom(dir, 'engine/write.js');
       const { store } = await scratchStore(dir);
@@ -124,7 +125,8 @@ export const TASKS = [
   {
     id: 'retrieve-title',
     memory: '61bc43e7 (model-facing fields are added to HIT_FIELDS deliberately)',
-    prompt: 'Add the memory title to what the MCP retrieve tool returns to the agent, and keep the tests passing.',
+    // Names the test file: the full suite outlived the agent's 300 s foreground wait.
+    prompt: 'Add the memory title to what the MCP retrieve tool returns to the agent, and keep tests/mcp/tools.test.js passing.',
     async check(dir) {
       // Behaviour, not shape: a reviewed memory retrieved through the tool carries its title.
       const src = name => pathToFileURL(join(dir, 'src', ...name.split('/'))).href;
