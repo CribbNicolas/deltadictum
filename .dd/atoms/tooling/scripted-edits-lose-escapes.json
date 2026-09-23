@@ -31,8 +31,8 @@
       "summary": "headline() regexes that were corrupted and then fixed"
     }
   ],
-  "authority": "inferred",
-  "lifecycle_state": "candidate",
+  "authority": "validated",
+  "lifecycle_state": "active",
   "valid_from": "2026-09-22T21:44:43.638Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -40,10 +40,10 @@
     "short": "Use the Edit tool for any replacement whose new text contains backslashes (regex classes like \\s, \\n literals, Windows paths). String-replacement scripts written in heredocs and template literals drop one level of escaping silently, and CRLF files make exact-match replacements fail. Why: On 2026-09-22 a heredoc-generated edit turned /\\s+/ into /s+/ in src/engine/retrieve.js, so injected headlines lost every letter s, and several scripted edits failed on '\\n\\n' and CRLF mismatches.",
     "full": "Use the Edit tool for any replacement whose new text contains backslashes (regex classes like \\s, \\n literals, Windows paths). String-replacement scripts written in heredocs and template literals drop one level of escaping silently, and CRLF files make exact-match replacements fail. Why: On 2026-09-22 a heredoc-generated edit turned /\\s+/ into /s+/ in src/engine/retrieve.js, so injected headlines lost every letter s, and several scripted edits failed on '\\n\\n' and CRLF mismatches."
   },
-  "confidence": 0.45,
+  "confidence": 0.765,
   "registry_key_id": "a411a2da-9649-4b01-9627-e1754afcea08",
   "evidence_state": {
-    "checked_at": "2026-09-22T21:44:43.670Z",
+    "checked_at": "2026-09-22T23:54:49.912Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -51,12 +51,18 @@
         "summary": "headline() regexes that were corrupted and then fixed",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "1e67e25ae52f74387db320f09d55bb1d4bf6400ab47646d43366e3eef0436010"
+        "hash": "0443e6ae060537ebdbd75084b41707ef9fd59bdbc32907f319d1233ffd7e9dc0"
       }
     ],
     "verified_count": 1,
-    "support": "unreviewed"
+    "support": "human_reviewed"
   },
   "created_at": "2026-09-22T21:44:43.676Z",
-  "updated_at": "2026-09-22T21:44:43.676Z"
+  "updated_at": "2026-09-22T23:54:49.916Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-22T23:54:49.912Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
 }

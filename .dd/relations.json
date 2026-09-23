@@ -30,5 +30,21 @@
     "source_atom_id": "61bc43e7-196f-4f2b-a11c-3f3cf2ddf9c9",
     "relation_type": "supersedes",
     "target_atom_id": "9ecd7282-056a-4612-b8b7-5cf7129488c6"
+  },
+  {
+    "id": "47d5b18e-524d-4071-9683-3b24c40b95fe",
+    "confidence": 0.5,
+    "created_at": "2026-09-22T23:54:49.974Z",
+    "source_atom_id": "ad43c074-a750-4935-9773-b66a416088fd",
+    "relation_type": "supersedes",
+    "target_atom_id": "c143cf05-878f-4605-b4fd-93357cffd502"
+  },
+  {
+    "id": "b394b3ee-32b7-4d17-9867-03db8f73a567",
+    "confidence": 0.5,
+    "created_at": "2026-09-22T23:54:50.057Z",
+    "source_atom_id": "1092b8d9-9a8e-4941-9144-a54e81a996cd",
+    "relation_type": "supersedes",
+    "target_atom_id": "1349225a-6ef2-4300-97bc-042f2a383baa"
   }
 ]

@@ -32,7 +32,8 @@ async function readBody(req) {
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
 }
 
-export async function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1', fingerprint = codeFingerprint, staleCheckMs = 2000, semantic = false, onShutdown }) {
+export async function startUiServer({ store, projectId, port = 7733, host = '127.0.0.1', fingerprint = codeFingerprint, staleCheckMs = 2000, semantic = false, onShutdown,
+  createRetrieve = () => createSemanticRetrieve({ blocking: false }), sharedRetrieve, attempt = 0 }) {
   if (!['127.0.0.1', '::1', 'localhost'].includes(host)) throw new Error('audit_requires_loopback');
   // A long-lived UI keeps running the code it started with. Once that tree is
   // edited it stops answering hooks, which then run the current code locally
@@ -40,7 +41,9 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
   const startedCode = await fingerprint();
   // The resident process is where embeddings can live (L2/L3). Hooks it answers
   // get semantic retrieval once the model has loaded, lexical until then.
-  const retrieve = semantic ? createSemanticRetrieve({ blocking: false }) : retrieveMemories;
+  // Created once and handed to a retry on a busy port: each instance holds its
+  // own model (~500 MB), so one per attempt multiplied the process's memory.
+  const retrieve = sharedRetrieve ?? (semantic ? createRetrieve() : retrieveMemories);
   let retrieval = semantic ? 'loading' : 'lexical';
   const semanticReady = semantic ? retrieve.warm({ store, projectId }).catch(() => false) : Promise.resolve(false);
   semanticReady.then(ready => { if (semantic) retrieval = ready ? 'semantic' : 'lexical'; });
@@ -209,7 +212,9 @@ export async function startUiServer({ store, projectId, port = 7733, host = '127
   });
   return new Promise((resolve, reject) => {
     server.on('error', err => {
-      if (err.code === 'EADDRINUSE' && port > 0 && port < 7743) return resolve(startUiServer({ store, projectId, port: port + 1, host, fingerprint, staleCheckMs, semantic, onShutdown }));
+      // A busy port moves to the next one, ten times at most. Port 0 asks the OS.
+      if (err.code === 'EADDRINUSE' && port > 0 && attempt < 9) unsubscribeChanges?.();
+      if (err.code === 'EADDRINUSE' && port > 0 && attempt < 9) return resolve(startUiServer({ store, projectId, port: port + 1, host, fingerprint, staleCheckMs, semantic, onShutdown, createRetrieve, sharedRetrieve: retrieve, attempt: attempt + 1 }));
       reject(err);
     });
     server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken, semanticReady, idleFor: () => Date.now() - lastActivity,

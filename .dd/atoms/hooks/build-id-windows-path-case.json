@@ -34,8 +34,8 @@
       "summary": "normalizePath and BUILD_ROOT"
     }
   ],
-  "authority": "inferred",
-  "lifecycle_state": "candidate",
+  "authority": "validated",
+  "lifecycle_state": "active",
   "valid_from": "2026-09-22T21:44:43.578Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -43,10 +43,10 @@
     "short": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects. Why: On 2026-09-22 the resident started via a file:///c:/ import got a different BUILD_ID from hooks started by Claude Code with C:\\, so every bridged reply was rejected and hooks silently fell back to lexical retrieval.",
     "full": "Normalize the path before hashing or comparing it: resolve it, and on win32 lowercase it (normalizePath in src/hooks/build.js). Processes started different ways spell the same Windows path as c:\\dev or C:\\dev, and an unnormalized hash makes them look like different builds or projects. Why: On 2026-09-22 the resident started via a file:///c:/ import got a different BUILD_ID from hooks started by Claude Code with C:\\, so every bridged reply was rejected and hooks silently fell back to lexical retrieval."
   },
-  "confidence": 0.45,
+  "confidence": 0.765,
   "registry_key_id": "190b0807-19f4-400b-aba9-d20cb1bb021d",
   "evidence_state": {
-    "checked_at": "2026-09-22T21:44:43.614Z",
+    "checked_at": "2026-09-22T23:54:49.970Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -54,12 +54,18 @@
         "summary": "normalizePath and BUILD_ROOT",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "2a0c2fbf877abd85887066485b6a8e7da0476eb6e2d6f5bcbfb61c9d14dfc841"
+        "hash": "6822004280a0ba7f5e4b280707aa51e69f5529a28c627d261f53ba4ddaa0ae4a"
       }
     ],
     "verified_count": 1,
-    "support": "unreviewed"
+    "support": "human_reviewed"
   },
   "created_at": "2026-09-22T21:44:43.620Z",
-  "updated_at": "2026-09-22T21:44:43.620Z"
+  "updated_at": "2026-09-22T23:54:49.974Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-22T23:54:49.970Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
 }
