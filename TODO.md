@@ -1,6 +1,6 @@
 # To do — DD (DeltaDictum)
 
-Updated 2026-09-23. Each item carries its references and needs no context from a past session.
+Updated 2026-09-23 (before merging feat/semantic-retrieval). Each item carries its references and needs no context from a past session.
 
 ## 1. ~~Decide the auto_accept policy~~ — decided 2026-09-22
 
@@ -88,3 +88,25 @@ resident is now replaced at session start).
 All 48 predate the English-only rule; new proposals in another language are refused. The measured gain
 from translating alone was small (semantic must recall 0.49 to 0.54 on the missed memories), so rewrite
 them as full English sentences of behaviour, and review them in Patriark's audit UI.
+
+## 13. Agent-level evaluation: harness and follow-up
+
+- Rephrase the `error-code-hint` task: one agent read "Reject memory proposals whose trigger..." as a rule
+  for itself and implemented nothing. Phrase every task as a change to the code.
+- Tasks that run the full suite outlive the agent's 300 s foreground wait (`retrieve-title`): point the
+  prompt at the relevant test file, or allow a longer command timeout.
+- Measure the capture criterion (TODO #11 context): capture memories under the new prompt during real work,
+  then rerun `node src/eval/agent/run.js --repeat=3` and compare with `output/eval/agent-results-full.json`.
+- Three runs per cell leave a 2/18 difference within noise; five would settle the pruning question.
+
+## 14. Project-Patriark: semantic floor
+
+Its memories are terse; `semantic.floor: 0.025` in Patriark's `.dd/config.json` raised must recall from
+0.46 to 0.68 at precision 0.70, with one of three unrelated tasks no longer quiet (plan, "Project-wide
+scopes and per-project calibration"). A choice for Patriark's owner; after #12 the default may suffice.
+
+## 15. Before any publish: sync the plugin copy
+
+Run `npm run sync:plugin` so the packaged plugin carries the updated skills (`dd-save` gained the capture
+criterion and the English requirement on 2026-09-23), then `npm pack --dry-run` to check the optional
+`@huggingface/transformers` dependency is declared and not bundled.
