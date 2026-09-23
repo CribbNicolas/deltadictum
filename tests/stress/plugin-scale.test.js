@@ -8,11 +8,12 @@ import { createToolHandlers } from '../../src/mcp/tools.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { estimateTokens as payloadEstimate } from '../../src/engine/budget.js';
 import { DEFAULT_CONFIG } from '../../src/store/paths.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 // No resident here: these tests measure retrieval in the explicit lexical mode.
 process.env.DD_RETRIEVAL = 'lexical';
 
-const CORPUS =Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
+const CORPUS = Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
 const ROUNDS = Math.max(10, Number(process.env.DD_STRESS_ROUNDS ?? 40));
 const CONCURRENCY = Math.max(4, Number(process.env.DD_STRESS_CONCURRENCY ?? 16));
 
@@ -47,7 +48,7 @@ function fillerAtom(i, projectId, updatedAt) {
     valid_from: '2026-09-09T00:00:00.000Z',
     topic_key: `synth/${projectId}/item-${i}`,
     tags: ['synth'],
-    lifecycle_state: 'active',
+    ...PROVENANCE, lifecycle_state: 'active',
     retrieval_forms: { micro: `Synth ${i}.`, short: `Run tests in module ${i}.` },
     created_at: '2026-09-09T00:00:00.000Z',
     updated_at: updatedAt,
@@ -64,13 +65,13 @@ function needleAtom(projectId) {
     trigger: 'before writing durable memory',
     behavior_delta: 'validate trigger first',
     what: 'Durable memory needs a trigger.',
-    why: 'Stops V1 dumps.',
+    why: 'Stops unstructured dumps.',
     authority: 'inferred',
     confidence: 0.8,
     valid_from: '2026-09-09T00:00:00.000Z',
     topic_key: `memory/${projectId}/required-fields`,
     tags: ['memory'],
-    lifecycle_state: 'active',
+    ...PROVENANCE, lifecycle_state: 'active',
     retrieval_forms: {
       micro: 'Require trigger.',
       short: 'Validate trigger before active memory.',

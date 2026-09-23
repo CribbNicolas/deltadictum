@@ -11,6 +11,7 @@ import { buildPreToolContext } from '../../src/hooks/pre-tool.js';
 import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { startUiServer } from '../../src/ui/server.js';
 import { registerResident } from '../helpers/resident.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
@@ -107,7 +108,7 @@ test('Codex patch paths activate file scopes and compaction makes advice availab
   t.after(() => store.close());
   await store.putAtom({ id: 'fixture', project_id: 'demo', topic_key: 'domain/tests/isolation', memory_type: 'lesson', scope: 'project',
     title: 'Keep domain pure', trigger: 'when editing domain tests', behavior_delta: 'Keep domain independent of Godot.', what: 'Keep domain independent of Godot.', why: 'Headless testing.',
-    lifecycle_state: 'active', authority: 'validated', confidence: 0.85, valid_from: '2026-01-01T00:00:00Z',
+    ...PROVENANCE, lifecycle_state: 'active', authority: 'validated', confidence: 0.85, valid_from: '2026-01-01T00:00:00Z',
     applies_to: { files: ['domain/**'] }, retrieval_forms: { micro: 'Keep domain independent of Godot.' } });
   const payload = { session_id: 'codex', tool_name: 'apply_patch', tool_input: { command: '*** Begin Patch\n*** Update File: domain/Inventory.cs\n@@\n-old\n+new\n*** End Patch' } };
   assert.match((await buildPreToolContext(payload, { store, projectId: 'demo' })).hookSpecificOutput.additionalContext, /Keep domain independent/);

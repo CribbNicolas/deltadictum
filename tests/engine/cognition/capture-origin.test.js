@@ -50,7 +50,7 @@ test('capture origin survives review, replacement history, reindex and restart',
   assert.equal(current.capture_source, 'agent');
 });
 
-test('agent origin claims cannot forge the transport, approve knowledge or use legacy-only origins', async t => {
+test('agent origin claims cannot forge the transport, approve knowledge or claim an origin outside the contract', async t => {
   const f = await setup(t);
   for (const origin of ['unknown', 'automatic', '', 1]) {
     const result = await proposeMemory({ ...f.payload, capture_origin: origin }, f);
@@ -105,24 +105,23 @@ test('a new proposal with no capture field defaults to user_explicit in the pers
   assert.equal(disk.capture_origin, 'user_explicit');
 });
 
-for (const schemaVersion of [6, 7]) test(`legacy schema ${schemaVersion} defaults to user_explicit without rewriting source or guessing the channel`, async t => {
+// Provenance is part of the stored contract: an atom without it is refused and
+// reported, never read with an origin DD would have to invent.
+test('an atom stored without its capture origin is refused, not defaulted', async t => {
   const f = await setup(t);
   const first = (await proposeMemory(f.payload, f)).atom;
-  const { capture_origin, capture_source, ...legacy } = first;
-  await f.store.putAtom({ ...legacy, schema_version: schemaVersion, authority: 'canonical' });
+  const { capture_origin, capture_source, ...bare } = first;
   const path = candidateFilePath(f.options.ddDir, first.id);
+  await writeFile(path, `${JSON.stringify(bare, null, 2)}\n`);
   const before = await readFile(path, 'utf8');
   await f.store.reindex();
   await f.restart();
-  const reads = [await f.store.getAtom(first.id, 'demo'),
-    (await f.store.listAtoms({ projectId: 'demo' }))[0],
-    (await f.store.search({ projectId: 'demo', query: 'payments' }))[0]];
-  for (const atom of reads) {
-    assert.equal(atom.capture_origin, 'user_explicit');
-    assert.equal(atom.capture_source, 'unknown');
-  }
+  assert.equal(await f.store.getAtom(first.id, 'demo'), null);
+  assert.deepEqual(await f.store.listAtoms({ projectId: 'demo' }), []);
+  assert.deepEqual(await f.store.search({ projectId: 'demo', query: 'payments' }), []);
+  const health = await f.store.assessDeterioration('demo');
+  const indicator = health.indicators.find(i => i.id === 'unsupported_atoms');
+  assert.equal(indicator.status, 'deteriorated');
+  assert.deepEqual(indicator.offenders.map(o => [o.id, o.reason]), [[first.id, 'invalid_capture_origin']]);
   assert.equal(await readFile(path, 'utf8'), before);
-  const approved = await admitMemory(first.id, f.review());
-  assert.equal(approved.capture_origin, 'user_explicit');
-  assert.equal((await f.store.listByTopicLive('demo', first.topic_key))[0].capture_origin, 'user_explicit');
 });

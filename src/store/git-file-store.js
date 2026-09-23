@@ -3,6 +3,7 @@ import { join, relative } from 'node:path';
 import { ARCHIVE_STATES, archiveFilePath, atomFilePath, candidateFilePath, configPath,
   DEFAULT_CONFIG, registryPath, relationsPath } from './paths.js';
 import { commitTransaction, createWriteLock, readJson, recoverTransaction, writeJson } from './transactions.js';
+import { SCHEMA_VERSION, unsupportedReason } from '../engine/contract.js';
 
 async function walk(dir) {
   let entries;
@@ -28,30 +29,31 @@ export function createGitFileStore(ddDir) {
     return atomFilePath(ddDir, atom.topic_key);
   }
 
-  async function listAtoms({ projectId, lifecycleStates, memoryTypes } = {}) {
+  // Every knowledge file with the reason it cannot be read, or null when it can.
+  // A file that is not valid JSON is reported like any other unsupported atom
+  // rather than failing the whole read (L5).
+  async function readStored() {
     const files = (await Promise.all(['atoms', 'candidates', 'archive'].map(dir => walk(join(ddDir, dir))))).flat();
-    const atoms = await Promise.all(files.map(file => readJson(file, null)));
-    return atoms.filter(atom => atom && (!projectId || atom.project_id === projectId)
-      && (!lifecycleStates || lifecycleStates.includes(atom.lifecycle_state))
-      && (!memoryTypes || memoryTypes.includes(atom.memory_type)));
+    return Promise.all(files.map(async file => {
+      try {
+        const atom = await readJson(file, null);
+        return { file, atom, reason: atom ? unsupportedReason(atom) : null };
+      } catch { return { file, atom: null, reason: 'invalid_json' }; }
+    }));
   }
 
-  async function getAtom(idOrKey, projectId) {
-    const key = String(idOrKey ?? '');
-    const paths = key.includes('/') ? [atomFilePath(ddDir, key)]
-      : [candidateFilePath(ddDir, key), archiveFilePath(ddDir, key)];
-    for (const path of paths) {
-      const atom = await readJson(path, null);
-      if (atom && (!projectId || atom.project_id === projectId)) return atom;
-    }
-    const atoms = await listAtoms({ projectId });
-    return atoms.find(atom => atom.id === key)
-      ?? atoms.filter(atom => atom.topic_key === key).sort((a, b) => Number(effective(b)) - Number(effective(a)))[0] ?? null;
+  async function listAtoms({ projectId, lifecycleStates, memoryTypes } = {}) {
+    return (await readStored()).filter(({ atom, reason }) => atom && !reason).map(({ atom }) => atom)
+      .filter(atom => (!projectId || atom.project_id === projectId)
+        && (!lifecycleStates || lifecycleStates.includes(atom.lifecycle_state))
+        && (!memoryTypes || memoryTypes.includes(atom.memory_type)));
   }
 
-  async function listByTopicLive(projectId, topicKey) {
-    const atom = await readJson(atomFilePath(ddDir, topicKey), null);
-    return atom && atom.project_id === projectId && effective(atom) ? [atom] : [];
+  // Files this build refuses to read. They are never indexed or recalled; the
+  // health report names them so a person can fix or delete them.
+  async function listUnsupported() {
+    return (await readStored()).filter(({ reason }) => reason)
+      .map(({ file, atom, reason }) => ({ path: rel(file), id: atom?.id ?? null, topic_key: atom?.topic_key ?? null, reason }));
   }
 
   async function commit({ atoms = [], deleteAtoms = [], relations } = {}) {
@@ -63,7 +65,10 @@ export function createGitFileStore(ddDir) {
         if (!atom?.id || !atom.project_id || !atom.topic_key) throw new Error('atom_missing_identity');
         atomFilePath(ddDir, atom.topic_key);
         archiveFilePath(ddDir, atom.id);
-        return { ...atom, created_at: atom.created_at ?? now, updated_at: now, schema_version: atom.schema_version ?? 6 };
+        const next = { ...atom, created_at: atom.created_at ?? now, updated_at: now, schema_version: SCHEMA_VERSION };
+        const reason = unsupportedReason(next);
+        if (reason) throw new Error(`atom_unsupported:${reason}`);
+        return next;
       });
       const destinations = new Set();
       for (const atom of stored) {
@@ -72,12 +77,14 @@ export function createGitFileStore(ddDir) {
         destinations.add(target);
         if (effective(atom)) {
           const current = await readJson(atomFilePath(ddDir, atom.topic_key), null);
+          // An unreadable file holds the topic until a person fixes or deletes it.
+          if (current && unsupportedReason(current)) throw new Error('live_topic_unsupported');
           const replaced = stored.find(next => next.id === current?.id && !effective(next));
           if (current && current.id !== atom.id && effective(current) && !replaced
               && !deleteAtoms.some(old => old.id === current.id)) throw new Error('live_topic_conflict');
         }
       }
-      // Remove only files that belong to this identity, including legacy candidates.
+      // Remove only files that belong to this identity, wherever its state placed them.
       for (const atom of [...stored, ...deleteAtoms]) {
         for (const path of [atomFilePath(ddDir, atom.topic_key), candidateFilePath(ddDir, atom.id), archiveFilePath(ddDir, atom.id)]) {
           const previous = await readJson(path, null);
@@ -99,7 +106,7 @@ export function createGitFileStore(ddDir) {
   }
 
   return {
-    ddDir, withWriteLock, commit, getAtom, listAtoms, listByTopicLive, loadConfig,
+    ddDir, withWriteLock, commit, listAtoms, listUnsupported, loadConfig,
     // An out-of-band edit to config.json (another process, a person editing it by
     // hand) must still be picked up here, same as it would be for any other file
     // under ddDir, so recover() clears the memo along with everything else it recovers.

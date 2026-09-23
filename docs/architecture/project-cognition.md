@@ -88,7 +88,7 @@ First open assigns one persisted project identity under the lock. Cache paths in
 
 ## Capture, feedback and runtime cost
 
-Capture has no proposal count limit per call or session. `propose` accepts nonempty batches and continues to apply the content contract, evidence checks, deduplication and candidate review lifecycle to each item. Long sessions and explicit transfers can submit new knowledge or revisions as needed. Legacy `capture.max_proposals` settings and `capture_sessions` quota rows are ignored by writes; old rows expire under telemetry retention.
+Capture has no proposal count limit per call or session. `propose` accepts nonempty batches and continues to apply the content contract, evidence checks, deduplication and candidate review lifecycle to each item. Long sessions and explicit transfers can submit new knowledge or revisions as needed.
 
 Automatic Stop reminders use separate `capture_prompts` telemetry. A UserPromptSubmit event rearms the reminder for that session; an atomic claim allows at most one automatic continuation per turn. The host's `stop_hook_active` flag also prevents recursive capture. Recently offered observation IDs are remembered across turns and process restarts, so the same evidence alone cannot trigger another continuation. A new turn with changed evidence can prompt again. Both the resident hook service and standalone hook process rearm the guard. Explicit proposals never consult or consume this guard. Without a session ID, the host's stop flag provides loop protection.
 
@@ -96,12 +96,12 @@ Only failures, commands with explicit successful validation exit signals, and us
 
 Feedback is idempotent per project, memory and task. Agent-reported success remains distinct from an artifact reference or human acceptance. Supported refutations trigger review; a reviewer can dismiss a misleading report. Retention bounds observations, telemetry and session data. Read frequency is diagnostic only.
 
-Read-only hooks reuse the resident local process through a separate loopback capability. They verify the consuming repository and fall back to opening its store if the process is unavailable. Runtime capabilities are not approval capabilities. Hook failures do not block the host.
+Read-only hooks reuse the resident local process through a separate loopback capability. They verify the consuming repository; when the process is unavailable DD is inactive and recalls nothing. Runtime capabilities are not approval capabilities. Hook failures do not block the host.
 
 ## Compatibility and limits
 
-V6 knowledge remains readable and a legacy candidate moves to the new location on its next transition. Active V6 memories retain their existing authority; upgrading does not invent verified evidence or retroactively claim human review. SQLite format 7.1 rebuilds its knowledge index while preserving local telemetry when reusing the same data directory. The new default cache identity does not import old v1 JSONL logs.
+Only schema 7 knowledge with complete capture provenance is read. Anything else is refused, never defaulted: it is not indexed or recalled, and the health report names each file and its reason. SQLite format 7.2 rebuilds its knowledge index while preserving local telemetry when reusing the same data directory.
 
-The MCP write API is now a batch `propose({proposals:[...]})`. Old model-facing lifecycle mutations are removed. Host installation and native event contracts require host-specific smoke tests. The engine requires no remote model, embeddings provider or graph service.
+The MCP write API is a batch `propose({proposals:[...]})`; models have no lifecycle mutations. Host installation and native event contracts require host-specific smoke tests. The engine requires no remote model, embeddings provider or graph service.
 
 See [evaluation](../evaluation/model-evaluation.md) for the distinction between engine tests, retrieval replay and real model or repository task outcomes.

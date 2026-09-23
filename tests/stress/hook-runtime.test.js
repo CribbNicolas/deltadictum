@@ -9,6 +9,7 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { startUiServer } from '../../src/ui/server.js';
 import { registerResident } from '../helpers/resident.js';
 import { estimateTokens } from '../../src/engine/budget.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 // Hook processes spawned here must not start a resident DD process (src/resident.js).
 process.env.DD_RESIDENT = '0';
@@ -41,7 +42,7 @@ test('full hook process uses a real Git corpus, supports resident service and av
     const atom = { id: `disk-${i}`, project_id: 'demo', topic_key: `load/test/item-${i}`, memory_type: 'lesson', scope: 'project',
       title: `Item ${i}`, trigger: i === 0 ? 'before writing durable memory' : `prepare isolated fixture ${i}`,
       behavior_delta: 'Validate the behavioral contract.', what: 'Validate.', why: 'Keep project knowledge reliable.',
-      authority: 'validated', confidence: 0.85, lifecycle_state: 'active', valid_from: '2026-01-01T00:00:00Z',
+      authority: 'validated', confidence: 0.85, ...PROVENANCE, lifecycle_state: 'active', valid_from: '2026-01-01T00:00:00Z',
       created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
       retrieval_forms: { micro: 'Validate the contract.', short: 'Validate the behavioral contract.' } };
     await writeFile(join(dir, `item-${i}.json`), JSON.stringify(atom));

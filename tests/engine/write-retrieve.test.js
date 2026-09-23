@@ -8,6 +8,7 @@ import { proposeMemory } from '../../src/engine/write.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 import { cappedConfidence } from '../../src/engine/reliability.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 function proposal(overrides = {}) {
   return {
@@ -40,7 +41,7 @@ function proposal(overrides = {}) {
 // own authority and confidence is a state the write path cannot produce, and it
 // ranks differently, so these tests seed what admission actually writes.
 async function activate(db, atom) {
-  return db.putAtom({ ...atom, lifecycle_state: 'active', authority: 'validated',
+  return db.putAtom({ ...atom, ...PROVENANCE, lifecycle_state: 'active', authority: 'validated',
     confidence: cappedConfidence(atom, { authority: 'validated' }) });
 }
 
@@ -80,7 +81,7 @@ describe('propose + retrieve', () => {
       trigger: 'writing durable memory tests',
       topic_key: 'eval/collide/one',
     }), { store: db });
-    await db.putAtom({ ...first.atom, lifecycle_state: 'active' });
+    await db.putAtom({ ...first.atom, ...PROVENANCE, lifecycle_state: 'active' });
     const second = await proposeMemory(proposal({
       id: 'atom-2',
       title: 'Sister lesson',
@@ -113,7 +114,7 @@ describe('propose + retrieve', () => {
     const db = await store();
     await proposeMemory(proposal(), { store: db });
     const atom = (await db.listAtoms({ projectId: 'demo' }))[0];
-    await db.putAtom({ ...atom, lifecycle_state: 'active' });
+    await db.putAtom({ ...atom, ...PROVENANCE, lifecycle_state: 'active' });
     const retrieved = await retrieveMemories({
       project_id: 'demo',
       action: 'unrelated cooking recipe',
@@ -127,7 +128,7 @@ describe('propose + retrieve', () => {
   test('keeps the active topic until its replacement is reviewed', async () => {
     const db = await store();
     const first = await proposeMemory(proposal(), { store: db });
-    await db.putAtom({ ...first.atom, lifecycle_state: 'active' });
+    await db.putAtom({ ...first.atom, ...PROVENANCE, lifecycle_state: 'active' });
     const second = await proposeMemory(proposal({
       id: 'atom-2',
       behavior_delta: 'always validate trigger, evidence, and forms before write',
@@ -181,7 +182,7 @@ describe('propose + retrieve', () => {
         authority: 'inferred',
         confidence: 0.7,
         valid_from: '2026-09-09T00:00:00.000Z',
-        lifecycle_state: 'active',
+        ...PROVENANCE, lifecycle_state: 'active',
         created_at: '2026-09-09T00:00:00.000Z',
         updated_at: '2099-01-01T00:00:00.000Z',
       });

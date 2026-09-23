@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 function atom(overrides = {}) {
   return {
@@ -16,13 +17,13 @@ function atom(overrides = {}) {
     trigger: 'before writing durable memory',
     behavior_delta: 'validate trigger first',
     what: 'Durable memory needs a trigger.',
-    why: 'Stops V1 dumps.',
+    why: 'Stops unstructured dumps.',
     authority: 'inferred',
     confidence: 0.8,
     valid_from: '2026-09-09T00:00:00.000Z',
     topic_key: overrides.topic_key ?? 'memory/admission/required-fields',
     tags: ['memory'],
-    lifecycle_state: 'active',
+    ...PROVENANCE, lifecycle_state: 'active',
     retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'Admission gate' }],
     ...overrides,
@@ -125,7 +126,7 @@ describe('MemoryStore sqlite index', () => {
     await store.putAtom(atom({
       id: 'atom-2',
       topic_key: 'memory/admission/other-fields',
-      lifecycle_state: 'contested',
+      ...PROVENANCE, lifecycle_state: 'contested',
     }));
     await store.putRelation({
       source_atom_id: 'atom-1',

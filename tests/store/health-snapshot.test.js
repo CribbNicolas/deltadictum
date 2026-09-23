@@ -4,6 +4,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 describe('health snapshot', () => {
   test('loads compact atom columns and retrieval events without payload', async () => {
@@ -21,13 +22,13 @@ describe('health snapshot', () => {
       trigger: 'before writing durable memory',
       behavior_delta: 'validate trigger first',
       what: 'Durable memory needs a trigger.',
-      why: 'Stops V1 dumps.',
+      why: 'Stops unstructured dumps.',
       authority: 'inferred',
       confidence: 0.8,
       valid_from: '2026-09-09T00:00:00.000Z',
       topic_key: 'memory/admission/required-fields',
       tags: ['memory'],
-      lifecycle_state: 'active',
+      ...PROVENANCE, lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
       evidence_refs: [{ source_type: 'file', source_ref: 'secret-path.js', summary: 'gate' }],
     });
@@ -73,13 +74,13 @@ describe('health snapshot', () => {
       trigger: 'before writing durable memory',
       behavior_delta: 'validate trigger first',
       what: 'Durable memory needs a trigger.',
-      why: 'Stops V1 dumps.',
+      why: 'Stops unstructured dumps.',
       authority: 'inferred',
       confidence: 0.8,
       valid_from: '2026-09-09T00:00:00.000Z',
       topic_key: 'memory/admission/required-fields',
       tags: ['memory'],
-      lifecycle_state: 'active',
+      ...PROVENANCE, lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
     const gitPath = join(root, '.dd', 'atoms', 'memory', 'admission', 'required-fields.json');
@@ -116,7 +117,7 @@ describe('health snapshot', () => {
         valid_from: '2026-09-09T00:00:00.000Z',
         topic_key: `synth/load/item-${i}`,
         tags: ['synth'],
-        lifecycle_state: 'active',
+        ...PROVENANCE, lifecycle_state: 'active',
         retrieval_forms: { micro: `Synth ${i}.`, short: `Module ${i}.` },
       });
     }
@@ -142,13 +143,13 @@ describe('health snapshot', () => {
       trigger: 'before writing durable memory',
       behavior_delta: 'validate trigger first',
       what: 'Durable memory needs a trigger.',
-      why: 'Stops V1 dumps.',
+      why: 'Stops unstructured dumps.',
       authority: 'inferred',
       confidence: 0.8,
       valid_from: '2026-09-09T00:00:00.000Z',
       topic_key: 'memory/admission/required-fields',
       tags: ['memory'],
-      lifecycle_state: 'active',
+      ...PROVENANCE, lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
     for (let i = 0; i < 50; i += 1) {

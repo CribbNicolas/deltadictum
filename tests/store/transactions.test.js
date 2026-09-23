@@ -5,10 +5,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { openStore } from '../../src/project.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 function atom(id) { return { id, project_id: 'demo', topic_key: `test/topic/${id}`, memory_type: 'lesson', scope: 'project',
   title: id, trigger: 'writing tests', behavior_delta: 'Check the result.', what: 'Check the result.', why: 'Regression.',
-  lifecycle_state: 'active', valid_from: new Date().toISOString(), retrieval_forms: { micro: 'Check.' } }; }
+  ...PROVENANCE, lifecycle_state: 'active', valid_from: new Date().toISOString(), retrieval_forms: { micro: 'Check.' } }; }
 
 test('interrupted committed Git transaction is recovered before readers open the index', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-recovery-'));

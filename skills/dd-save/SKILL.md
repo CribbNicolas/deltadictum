@@ -24,7 +24,7 @@ Use `decision` for an explicit project choice and `lesson` for a learned pattern
 
 A user-requested development task or project choice is not itself a request to store memory. Classify each proposal separately, even in a mixed batch. Capture origin is independent of approval and authority; DD records the capture channel.
 
-DD defaults missing origins to `user_explicit` for compatibility. Always send `capture_origin` explicitly so autonomous captures are classified correctly.
+A proposal without `capture_origin` is recorded as `user_explicit`. Always send it explicitly so autonomous captures are classified correctly.
 
 Reference actual project files or host observation IDs. Describe user statements accurately; never label an inferred conclusion as user approval. Do not submit chat transcripts, full logs, code dumps or hand-authored compact forms.
 

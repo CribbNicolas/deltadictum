@@ -4,10 +4,9 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { searchableTrigger } from '../engine/activation.js';
-import { withCaptureProvenance } from '../engine/contract.js';
 
 const SCHEMA_PATH = join(dirname(fileURLToPath(import.meta.url)), 'schema.sql');
-const parseAtom = payload => withCaptureProvenance(JSON.parse(payload));
+const parseAtom = payload => JSON.parse(payload);
 
 function inParams(prefix, values) {
   const params = {};
@@ -44,7 +43,7 @@ function atomColumns(atom) {
     topic_key: atom.topic_key,
     tags: JSON.stringify(atom.tags ?? []),
     lifecycle_state: atom.lifecycle_state,
-    schema_version: atom.schema_version ?? 6,
+    schema_version: atom.schema_version,
     activation_count: atom.activation_count ?? 0,
     predominance: atom.predominance ?? 0,
     contested_at: atom.contested_at ?? null,

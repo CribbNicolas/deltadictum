@@ -54,10 +54,10 @@ describe('bridging only to the same build', () => {
 
   test('a reply without this build id is ignored, so the hook runs locally', async t => {
     const other = await fakeUi({ 'x-dd-build': 'f'.repeat(16) });
-    const legacy = await fakeUi({});
+    const unversioned = await fakeUi({});
     const same = await fakeUi({ 'x-dd-build': BUILD_ID });
-    t.after(() => { other.close(); legacy.close(); same.close(); });
-    for (const [server, expected] of [[other, null], [legacy, null], [same, { ok: true }]]) {
+    t.after(() => { other.close(); unversioned.close(); same.close(); });
+    for (const [server, expected] of [[other, null], [unversioned, null], [same, { ok: true }]]) {
       const repoRoot = await mkdtemp(join(tmpdir(), 'dd-build-'));
       await uiJson(t, server.address().port);
       assert.deepEqual(await callRunningStore('session-start', {}, repoRoot), expected);

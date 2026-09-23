@@ -84,13 +84,13 @@ export const TASKS = [
     memory: 'e57a21a9 (a data directory rename is a migration; history stays under the old path)',
     prompt: 'Rename the per-user data directory from ~/.dd-data to ~/.deltadictum.',
     async check(dir) {
-      const [{ resolveDataBase }, { legacyDataDirs }] = await importFrom(dir, 'project.js', 'store/adopt.js');
+      const [{ resolveDataBase }, { previousDataDirs }] = await importFrom(dir, 'project.js', 'store/adopt.js');
       const saved = { ...process.env };
       delete process.env.CLAUDE_PLUGIN_DATA; delete process.env.GROK_PLUGIN_DATA;
       try {
         const renamed = /\.deltadictum$/.test(resolveDataBase());
-        const legacy = legacyDataDirs({ repoRoot: dir, names: ['p-0'] });
-        const adoptsOld = legacy.some(path => /[\\/]\.dd-data[\\/]/.test(path));
+        const previous = previousDataDirs({ repoRoot: dir, names: ['p-0'] });
+        const adoptsOld = previous.some(path => /[\\/]\.dd-data[\\/]/.test(path));
         return { passed: renamed && adoptsOld, detail: `renamed ${renamed}, old ~/.dd-data still adopted ${adoptsOld}` };
       } finally { process.env = saved; }
     },

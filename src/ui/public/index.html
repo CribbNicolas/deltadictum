@@ -182,6 +182,7 @@
   </div>
 
   <div id="project"></div>
+  <div id="unsupported"></div>
   <details id="evidence">
     <summary>Recorded evidence <span id="evidence-count"></span></summary>
     <div id="evidence-list"></div>
@@ -342,6 +343,9 @@
     async function load() {
       const status = await api('/api/status');
       statusEl.textContent = `${status.project_id} · ${status.total} memories`;
+      document.getElementById('unsupported').innerHTML = status.unsupported?.length
+        ? `<p class="notice warning">${status.unsupported.length} knowledge file(s) cannot be read by this version of DD and are never recalled. Fix or delete them:\n${status.unsupported.map(u => `${escapeHtml(u.path)} (${escapeHtml(u.reason)})`).join('\n')}</p>`
+        : '';
       const project = await api('/api/project');
       document.getElementById('project').textContent = `${project.purpose || project.name} · Sources: ${project.sources.join(', ') || 'repository structure'}`;
       const q = new URLSearchParams();
@@ -449,7 +453,7 @@
     }
 
     function captureLabel(atom) {
-      const origin = { model_initiated: 'Model initiative', user_explicit: 'Explicit user request' }[atom.capture_origin ?? 'user_explicit'] || 'Unknown origin';
+      const origin = { model_initiated: 'Model initiative', user_explicit: 'Explicit user request' }[atom.capture_origin] || 'Unknown origin';
       const source = { agent: 'agent reported', local_ui: 'local UI' }[atom.capture_source];
       return source ? `${origin} · ${source}` : origin;
     }

@@ -4,6 +4,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
+import { PROVENANCE } from '../helpers/atom.js';
 
 const CORPUS = 2000;
 const NOW = '2026-09-10T00:00:00.000Z';
@@ -28,13 +29,13 @@ describe('health stress (2000 atoms)', { timeout: 120000 }, () => {
       trigger: 'before writing durable memory',
       behavior_delta: 'validate trigger first',
       what: 'Durable memory needs a trigger.',
-      why: 'Stops V1 dumps.',
+      why: 'Stops unstructured dumps.',
       authority: 'inferred',
       confidence: 0.8,
       valid_from: '2026-09-09T00:00:00.000Z',
       topic_key: 'memory/demo/required-fields',
       tags: ['memory'],
-      lifecycle_state: 'active',
+      ...PROVENANCE, lifecycle_state: 'active',
       retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
     });
     gitPath = join(root, '.dd', 'atoms', 'memory', 'demo', 'required-fields.json');
@@ -55,7 +56,7 @@ describe('health stress (2000 atoms)', { timeout: 120000 }, () => {
         valid_from: '2026-09-09T00:00:00.000Z',
         topic_key: `synth/demo/item-${i}`,
         tags: ['synth'],
-        lifecycle_state: 'active',
+        ...PROVENANCE, lifecycle_state: 'active',
         retrieval_forms: { micro: `Synth ${i}.`, short: `Run tests in module ${i}.` },
         created_at: '2026-09-09T00:00:00.000Z',
         updated_at: '2099-01-01T00:00:00.000Z',
