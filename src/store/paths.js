@@ -69,6 +69,9 @@ export const DEFAULT_CONFIG = {
   project_id: null,
   budget_tokens: 600,
   vpt_threshold: 0.02,
+  // Semantic retrieval in the resident process: how far above the query's mean
+  // similarity a memory must stand. Lower reaches terser memories, less quietly.
+  semantic: { floor: 0.04 },
   auto_admit: {
     lesson: 'candidate',
     anti_memory: 'candidate',

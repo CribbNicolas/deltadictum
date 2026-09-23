@@ -100,3 +100,16 @@ test('two tool calls in parallel deliver a memory once in a session', async t =>
   const results = await Promise.all([f.retrieve(request), f.retrieve(request), f.retrieve(request)]);
   assert.equal(results.reduce((n, r) => n + r.memories.length, 0), 1);
 });
+
+test('a project-wide file scope admits a memory but does not activate it on every edit', async t => {
+  const { projectWideScope } = await import('../../../src/engine/activation.js');
+  for (const glob of ['src/**', '**/*.js', 'docs/*', './src/**']) assert.equal(projectWideScope(glob), true, glob);
+  for (const glob of ['src/domain/**', 'src/ui/server.js', 'README.md']) assert.equal(projectWideScope(glob), false, glob);
+  const f = await fixture(t, { trigger: 'when editing code that contains regular expressions', applies_to: { files: ['src/**'] } });
+  const unrelated = { action: 'Edit {"file_path":"src/ui/server.js","old_string":"const port"}', files: ['src/ui/server.js'], operation: 'edit' };
+  assert.equal((await f.retrieve(unrelated)).memories.length, 0);
+  const related = { ...unrelated, action: 'Edit src/ui/server.js: change code that contains regular expressions' };
+  assert.equal((await f.retrieve(related)).memories.length, 1);
+  // Outside the scope it is still excluded.
+  assert.equal((await f.retrieve({ ...related, files: ['tests/a.test.js'] })).memories.length, 0);
+});

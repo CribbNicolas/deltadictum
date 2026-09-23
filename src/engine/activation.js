@@ -33,6 +33,16 @@ export function matchesGlob(file, glob) {
   return new RegExp(`^${escaped}$`, 'i').test(normalized);
 }
 
+// A file scope that fixes at most one directory (src/**, **/*.js, docs/*) covers
+// most of a project: matching it says nothing about the task, so it admits the
+// memory without activating it. Deeper scopes activate as before. Measured on two
+// corpora 2026-09-22; treating two-segment scopes the same was worse.
+export function projectWideScope(glob) {
+  const segments = String(glob).replace(/^\.\//, '').split('/');
+  const wildcard = segments.findIndex(segment => /[*?[]/.test(segment));
+  return wildcard !== -1 && wildcard <= 1;
+}
+
 export function assessApplicability(atom, request, now = Date.now()) {
   if (Date.parse(atom.valid_from) > now || (atom.valid_until && Date.parse(atom.valid_until) <= now)) return { applies: false };
   const warnings = [];
@@ -51,7 +61,9 @@ export function assessApplicability(atom, request, now = Date.now()) {
     // A matching file or component places the request inside the memory's scope.
     // A matching operation does not: "test" or "edit" names most of a session,
     // so it would activate the memory on every such call.
-    if (matches && kind !== 'operations') contextScore = Math.max(contextScore, 0.8);
+    if (matches && kind === 'components') contextScore = Math.max(contextScore, 0.8);
+    if (matches && kind === 'files' && scope.files.some(glob => !projectWideScope(glob) && incoming.some(file => matchesGlob(file, glob))))
+      contextScore = Math.max(contextScore, 0.8);
     // A scope the request already verified needs no restating in the advice.
     if (!matches) constraints.push(`${kind}: ${scope[kind].join(', ')}`);
   }
