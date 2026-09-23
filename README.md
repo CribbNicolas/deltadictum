@@ -153,7 +153,6 @@ npm run test:stress
 npm run eval
 npm run bench             # task benchmark, lexical retrieval
 npm run bench:semantic    # the same tasks with embeddings
-npm run sync:plugin
 ```
 
 The replay covers 24 authored scenarios: exact matches, paraphrases, Spanish, incompatible scope, changed facts, retired advice and unrelated actions. It measures retrieval correctness and estimated context cost; it is not evidence of improved code quality across model families.
