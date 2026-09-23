@@ -34,7 +34,10 @@ export const TASKS = [
       const { autoAcceptThresholdLevels } = await import(pathToFileURL(join(dir, 'src', 'engine', 'reliability.js')).href);
       const reachable = autoAcceptThresholdLevels().some(level => level.value === value);
       const flagged = /dead zone|unreachable|not reachable|never (be )?reach|cannot reach|can't reach|no candidate/i.test(answer);
-      return { passed: reachable || flagged, detail: `threshold ${value} ${reachable ? 'reachable' : 'off-ladder'}, ${flagged ? 'flagged' : 'not flagged'}` };
+      // Right: say 0.8 cannot be reached, or move to a reachable value. Leaving
+      // 0.765 untouched without a word is doing nothing, not caution.
+      return { passed: flagged || (reachable && value !== 0.765),
+        detail: `threshold ${value} ${reachable ? 'reachable' : 'off-ladder'}, ${flagged ? 'flagged' : 'not flagged'}` };
     },
   },
   {

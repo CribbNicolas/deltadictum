@@ -72,6 +72,9 @@ async function runOnce(task, withDd) {
   let resident;
   const argv = ['-p', task.prompt, '--model', MODEL, '--output-format', 'json', '--no-session-persistence',
     '--setting-sources', 'project', '--strict-mcp-config', '--allowedTools', ...ALLOWED];
+  // Without DD there is no DD knowledge either: an agent that greps .dd/ is
+  // using DD by hand (seen in the first trial run). Git history still holds it.
+  if (!withDd) await rm(join(dir, '.dd'), { recursive: true, force: true });
   if (withDd) {
     resident = await startResident(dir, env);
     const settings = join(dir, '..', 'dd-settings.json');
@@ -83,7 +86,8 @@ async function runOnce(task, withDd) {
   const started = Date.now();
   let result;
   try {
-    const out = await run('claude', argv, { cwd: dir, env, shell: process.platform === 'win32' });
+    // No shell: it would join the arguments unquoted and split the prompt.
+    const out = await run('claude', argv, { cwd: dir, env });
     try { result = JSON.parse(out.out); } catch { result = { is_error: true, result: out.out.slice(0, 2000) + out.err }; }
   } catch (err) { result = { is_error: true, result: err.message }; }
   const check = await task.check(dir, result.result ?? '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
@@ -92,7 +96,8 @@ async function runOnce(task, withDd) {
   const row = { task: task.id, dd: withDd, passed: check.passed, detail: check.detail,
     input_tokens: (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0),
     output_tokens: usage.output_tokens ?? 0, cost_usd: result.total_cost_usd ?? null, turns: result.num_turns ?? null,
-    duration_ms: Date.now() - started, error: result.is_error ? String(result.result).slice(0, 300) : null };
+    duration_ms: Date.now() - started, answer: String(result.result ?? '').slice(0, 600),
+    error: result.is_error ? String(result.result).slice(0, 300) : null };
   await rm(join(dir, '..'), { recursive: true, force: true }).catch(() => {});
   return row;
 }
