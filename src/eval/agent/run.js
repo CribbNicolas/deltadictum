@@ -70,7 +70,13 @@ async function runOnce(task, withDd) {
   const dir = await cloneRepo();
   const env = { ...process.env, DD_DATA: join(dir, '..', 'dd-data'), DD_RESIDENT: '0' };
   let resident;
-  const argv = ['-p', task.prompt, '--model', MODEL, '--output-format', 'json', '--no-session-persistence',
+  if (task.setup) await task.setup(dir);
+  // A headless session ends with its answer; a command left running in the
+  // background is never read back (seen in the first full run).
+  const prompt = `${task.prompt}
+
+Run every command in the foreground and wait for it to finish before your final answer.`;
+  const argv = ['-p', prompt, '--model', MODEL, '--output-format', 'json', '--no-session-persistence',
     '--setting-sources', 'project', '--strict-mcp-config', '--allowedTools', ...ALLOWED];
   // Without DD there is no DD knowledge either: an agent that greps .dd/ is
   // using DD by hand (seen in the first trial run). Git history still holds it.
