@@ -1,18 +1,22 @@
 # Codex project installation
 
-DD can run in a local Codex project using a stdio MCP server, project skills and Codex hooks. This development installation points to the source checkout; it does not register a global marketplace plugin.
+DD runs in a Codex project as a stdio MCP server, project skills and Codex hooks, all pointing at the directory DD is installed in. Codex has no plugin marketplace for this; the installer writes the project configuration.
 
 ## Install
 
-Runs without cloning this repository — `npx` fetches the published `deltadictum` package.
-(`scripts/install-codex.mjs`'s `planCodexInstall`/`applyCodexInstall` remain available directly for
-anyone working from a source checkout.)
+Install the published package globally, then run its installer against the project:
 
 ```powershell
-npx deltadictum install --host codex --project "C:/dev/Perfect Brew" --dry-run
-npx deltadictum install --host codex --project "C:/dev/Perfect Brew"
-node scripts/check-codex.mjs --project "C:/dev/Perfect Brew"
+npm install -g deltadictum
+deltadictum install --host codex --project "C:/dev/Perfect Brew" --dry-run
+deltadictum install --host codex --project "C:/dev/Perfect Brew"
+node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project "C:/dev/Perfect Brew"
 ```
+
+The Codex configuration names DD's directory by absolute path, so it must be one that stays. The installer
+refuses to run from the npx cache (`npx deltadictum install ...`), which npm may clear at any time and
+leave Codex pointing at nothing. From a source checkout, `node src/cli.js install --host codex --project
+<path>` works the same way; `npm update -g deltadictum` keeps the same directory.
 
 The installer adds a marked DD block to project configuration and instructions, preserving unrelated content. It merges DD hooks with existing hooks and refuses to overwrite a different DD MCP server or customized skill. Running it again with unchanged sources has no effect.
 

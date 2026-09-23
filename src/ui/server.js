@@ -11,6 +11,7 @@ import { recommendResolution } from '../engine/v6/predominance.js';
 import { buildPreToolContext } from '../hooks/pre-tool.js';
 import { recordPromptObservation } from '../hooks/observe.js';
 import { buildSessionStartContext, contextPayload, microPack } from '../hooks/session-start.js';
+import { uiPointer } from '../hooks/banner.js';
 import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
 import { autoAcceptThresholdLevels } from '../engine/reliability.js';
@@ -30,6 +31,20 @@ async function readBody(req) {
   let bytes = 0;
   for await (const chunk of req) { bytes += chunk.length; if (bytes > 64000) throw new Error('request_too_large'); chunks.push(chunk); }
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
+}
+
+// Lines for the person, each shown at most once per session, on the first
+// prompt this resident answers: the audit UI address, when no session start
+// named it (the session began before this resident listened), and that DD is
+// now active, when its session start said the model was still loading.
+const UI_POINTER = '__dd_ui_pointer__';
+const LOADING_NOTICE = '__dd_loading__';
+async function sessionNotes(store, projectId, sessionId, uiUrl, active) {
+  const notes = [];
+  if (active && await store.wasDelivered(projectId, sessionId, LOADING_NOTICE, 'shown')
+      && await store.claimDelivery(projectId, sessionId, LOADING_NOTICE, 'ready')) notes.push('DD is active: its embedding model is loaded.');
+  if (await store.claimDelivery(projectId, sessionId, UI_POINTER, 'shown')) notes.push(uiPointer(uiUrl));
+  return notes;
 }
 
 export function inactiveMessage(retrieval) {
@@ -137,17 +152,25 @@ export async function startResidentServer({ projects: initial = [], openProject,
         const payload = body.payload ?? {};
         const uiUrl = `http://${expectedHost}/?project=${encodeURIComponent(key)}`;
         const active = retrieval !== 'loading' && retrieval !== 'unavailable';
-        if (url.pathname.endsWith('/session-start')) return send(res, 200, await buildSessionStartContext({ store, projectId, uiUrl,
-          // This request is being served by the resident, so it is live by construction.
-          uiLive: true, sessionId: payload.session_id ?? payload.sessionId, source: payload.source,
-          resident: { state: 'live', retrieval } }));
+        const sessionId = payload.session_id ?? payload.sessionId;
+        if (url.pathname.endsWith('/session-start')) {
+          const context = await buildSessionStartContext({ store, projectId, uiUrl,
+            // This request is being served by the resident, so it is live by construction.
+            uiLive: true, sessionId, source: payload.source, resident: { state: 'live', retrieval } });
+          // The session start names the audit UI; the first prompt need not.
+          if (sessionId) await store.markDelivered(projectId, sessionId, UI_POINTER, 'shown');
+          if (sessionId && !active) await store.markDelivered(projectId, sessionId, LOADING_NOTICE, 'shown');
+          return send(res, 200, context);
+        }
         if (url.pathname.endsWith('/prompt')) {
-          await store.beginCaptureTurn(projectId, payload.session_id ?? payload.sessionId);
+          await store.beginCaptureTurn(projectId, sessionId);
           await recordPromptObservation(payload, { store, projectId });
-          if (!active) return send(res, 200, {});
+          const notes = sessionId ? await sessionNotes(store, projectId, sessionId, uiUrl, active) : [];
+          const shown = notes.length ? { systemMessage: notes.join('\n') } : {};
+          if (!active) return send(res, 200, shown);
           const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
-            session_id: payload.session_id ?? payload.sessionId, budget_tokens: payload.budget_tokens }, { store });
-          return send(res, 200, contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
+            session_id: sessionId, budget_tokens: payload.budget_tokens }, { store });
+          return send(res, 200, { ...shown, ...contextPayload('UserPromptSubmit', microPack(result.memories ?? [])) });
         }
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, active ? await buildPreToolContext(payload, { store, projectId, retrieve }) : {});
         if (url.pathname.endsWith('/retrieve')) {

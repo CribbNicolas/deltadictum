@@ -19,7 +19,7 @@ function run(args) {
   });
 }
 
-test('dd install --host codex writes Codex project files without opening the current-directory store', async () => {
+test('deltadictum install --host codex writes Codex project files without opening the current-directory store', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-cli-install-'));
   const { code, stdout } = await run(['install', '--host', 'codex', '--project', root, '--dry-run']);
   assert.equal(code, 0);

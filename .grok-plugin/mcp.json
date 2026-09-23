@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "dd": { "type": "stdio", "command": "node", "args": ["${GROK_PLUGIN_ROOT}/mcp.js"] }
+  }
+}

@@ -7,7 +7,6 @@
     "node": ">=22"
   },
   "bin": {
-    "dd": "./src/cli.js",
     "deltadictum": "./src/cli.js"
   },
   "exports": {

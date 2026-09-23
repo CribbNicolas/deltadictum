@@ -26,11 +26,23 @@ Local evidence references receive content hashes computed by DD. A verified file
 
 Changes to verified files keep the advice visible, flagged `EVIDENCE CHANGED`; revision conditions or supported counterevidence produce a review notice. Memories tagged `ambient` reach every session once, at session start. Contradictions remain visible in both tool results and hooks.
 
-## Quick start
+## Install
 
-For a local Codex project, use the [Codex installer and verification guide](docs/integrations/codex.md). It configures MCP, skills and hooks for the selected project.
+Node 22 or later. Each host installs DD its own way:
 
-Install dependencies with `npm install`, then register this entrypoint with the host's MCP configuration:
+| Host | Install | Details |
+|---|---|---|
+| Claude Code | `/plugin marketplace add CribbNicolas/deltadictum`, then `/plugin install deltadictum@deltadictum` | Claude Code installs the packages itself (`npm ci --ignore-scripts`). |
+| Grok Build | `grok plugin marketplace add CribbNicolas/deltadictum`, then `grok plugin install deltadictum@deltadictum --trust` | [Grok Build guide](docs/integrations/grok-build.md) |
+| Codex | `npm install -g deltadictum`, then `deltadictum install --host codex --project <path>` | [Codex guide](docs/integrations/codex.md) |
+| OpenCode | `"plugin": ["deltadictum"]` in `opencode.json` | [OpenCode guide](docs/integrations/opencode.md) |
+
+A host that copies the plugin without its packages (Grok Build) gets them on first use: the first session
+installs them into the plugin directory in the background, says DD is inactive until they are in place,
+and starts the [resident process](#resident-process) once they are. A failed attempt is named in the next
+session's message, with its log (`.dd-install.log` in the plugin directory) and the command to run by hand.
+
+For any other MCP host, install the packages with `npm install` and register this entrypoint:
 
 ```json
 {
@@ -103,7 +115,13 @@ store and data directory. **Until it is running with its model loaded, DD is ina
 recalled, and the session's first message says why.
 
 - **Who starts it.** The first session or MCP server that finds none starts it in the background. It is
-  recorded in `~/.dd-data/resident.json` and outlives the sessions that use it.
+  recorded in `~/.dd-data/resident.json` and outlives the sessions that use it. A session start that
+  launches one waits up to 5 seconds for it to listen (about one second in practice), so that session
+  already shows the audit UI address and says the model is loading. The model takes longer; the first
+  prompt after it is ready says DD is active.
+- **Where the address appears.** Every session start that reaches the resident shows the audit UI address
+  to the person and asks the model to relay it. A session that began before the resident listened gets
+  it, once, on its first prompt the resident answers.
 - **Several projects.** Each project is opened the first time one of its hooks asks, with its own SQLite
   store; the model is loaded once for all of them. The audit UI is per project:
   `http://127.0.0.1:<port>/?project=<key>` (the session banner prints it). Without `?project=` the page

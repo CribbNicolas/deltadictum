@@ -17,7 +17,7 @@ async function runInstall(args) {
   if (host !== 'codex') {
     throw new Error(`install --host ${host ?? '<missing>'} is not supported. Only "codex" needs a scripted installer — Claude Code, Grok Build and OpenCode install through their own marketplace/npm mechanisms (see README).`);
   }
-  if (!project) throw new Error('Usage: dd install --host codex --project PROJECT [--dry-run]');
+  if (!project) throw new Error('Usage: deltadictum install --host codex --project PROJECT [--dry-run]');
   const plan = await planCodexInstall(project);
   if (!dryRun) await applyCodexInstall(plan);
   console.log(JSON.stringify({
