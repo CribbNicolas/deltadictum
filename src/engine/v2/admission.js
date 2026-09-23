@@ -19,7 +19,9 @@ function hasMinimumForms(value) {
 
 // The vocabulary that makes an anti_memory preventive. It is also what tells a
 // restatement apart from an opposing instruction in the collision router below.
-const PREVENTIVE = /\b(do not|don't|avoid|block|warn|stop|reject|prevent|no|nunca|evitar|evita|impedir|rechazar)\b/i;
+// English first (memories are English-only); the Spanish words remain for
+// memories written before that rule.
+const PREVENTIVE = /\b(do not|don't|never|must not|mustn't|avoid|block|warn|stop|reject|prevent|no|nunca|evitar|evita|impedir|rechazar)\b/i;
 
 function containsUnsafePayload(payload) {
   const fields = ['title', 'trigger', 'behavior_delta', 'what', 'why'];

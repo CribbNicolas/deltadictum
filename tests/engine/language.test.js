@@ -27,3 +27,15 @@ test('a memory written in another language is refused with a reason the agent ca
   assert.equal(result.decision, 'block');
   assert.ok(result.reasons.includes('memory_must_be_english'));
 });
+
+// Memories are English-only, so the English preventive words must all count:
+// "Never overwrite..." was refused while the Spanish "nunca" was accepted.
+test('an English anti-memory phrased with "never" or "must not" is preventive', async () => {
+  const { decideAdmission } = await import('../../src/engine/v2/admission.js');
+  for (const delta of ['Never overwrite a save with an unknown version.', 'You must not rewrite git atoms.']) {
+    const result = decideAdmission({ project_id: 'demo', memory_type: 'anti_memory', scope: 'project', title: 't', trigger: 'when saving games',
+      behavior_delta: delta, what: delta, why: 'Data loss.', topic_key: 'a/b/c', evidence_refs: [{ source_type: 'file', source_ref: 'README.md', summary: 's' }],
+      retrieval_forms: { micro: delta, short: delta } });
+    assert.ok(!result.reasons.includes('anti_memory_requires_preventive_delta'), delta);
+  }
+});

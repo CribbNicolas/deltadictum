@@ -102,11 +102,15 @@ instead of $0.25 per run (plan, "Pruned store"); it is not a duplicate of `d3d5b
 `adopt.js`), `e96a63b1` (`--test-force-exit` crashes the resident tests on Windows), `cf1ad3c5` (a stale
 resident is now replaced at session start).
 
-## 12. Translate Project-Patriark's memories to English
+## 12. ~~Translate Project-Patriark's memories to English~~ — done 2026-09-23
 
-All 48 predate the English-only rule; new proposals in another language are refused. The measured gain
-from translating alone was small (semantic must recall 0.49 to 0.54 on the missed memories), so rewrite
-them as full English sentences of behaviour, and review them in Patriark's audit UI.
+All 48 were rewritten as full English sentences of behaviour (the "supported application detail" that
+sat in `why` moved into `behavior_delta`), with titles, triggers, evidence summaries and revision
+conditions translated, proposed under the same topic keys and auto-accepted by Patriark's policy. The
+Spanish originals are archived and can be restored from Patriark's audit UI. Patriark benchmark, before ->
+after: semantic must recall 0.46 -> 0.61, precision 0.72 -> 0.77; lexical 0.33 -> 0.45; orbit recall fell
+(0.30 -> 0.14) because longer memories leave room for fewer extras in the 600-token pack. Found on the way:
+the anti-memory preventive check accepted Spanish "nunca" but not English "never"; fixed.
 
 ## 13. Agent-level evaluation: harness and follow-up
 
@@ -120,7 +124,8 @@ them as full English sentences of behaviour, and review them in Patriark's audit
 
 Its memories are terse; `semantic.floor: 0.025` in Patriark's `.dd/config.json` raised must recall from
 0.46 to 0.68 at precision 0.70, with one of three unrelated tasks no longer quiet (plan, "Project-wide
-scopes and per-project calibration"). A choice for Patriark's owner; after #12 the default may suffice.
+scopes and per-project calibration"). Measured before #12; after the translation the default floor reaches
+must recall 0.61 at precision 0.77, so a lower floor is now optional. A choice for Patriark's owner.
 
 ## 15. ~~Check the package before publishing~~ — checked 2026-09-23
 
