@@ -105,8 +105,8 @@ Its memories are terse; `semantic.floor: 0.025` in Patriark's `.dd/config.json` 
 0.46 to 0.68 at precision 0.70, with one of three unrelated tasks no longer quiet (plan, "Project-wide
 scopes and per-project calibration"). A choice for Patriark's owner; after #12 the default may suffice.
 
-## 15. Before any publish: check the package
+## 15. ~~Check the package before publishing~~ — checked 2026-09-23
 
-Run `npm pack --dry-run` and confirm the optional `@huggingface/transformers` dependency is declared, not
-bundled, and that `skills/` is included (skills are served from there; there is no plugin copy to sync —
-`sync:plugin` was removed on 2026-09-19 and the README no longer mentions it).
+`npm pack --dry-run`: 135 files, 274 KB. `@huggingface/transformers` is declared optional and not bundled,
+`skills/` is included, `.dd/` is not. Optional cleanup: the package also ships `docs/plans` and
+`docs/specs` (historical records users do not need); narrow `files` in package.json to the docs users read.
