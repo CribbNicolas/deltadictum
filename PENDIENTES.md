@@ -59,7 +59,10 @@ si falta el runtime opcional (`@huggingface/transformers`).
 
 Ver `docs/plans/2026-09-22-semantic-retrieval-plan.md`, sección "Still open".
 
-## 9. Probar en una Mac real
+## 9. Probar en una Mac real — bloqueado: no hay una Mac disponible (2026-09-22)
+
+Queda anotado hasta tener acceso a una. Lo que falta verificar está abajo.
+
 
 Linux está verificado (WSL Ubuntu, Node 22: suite 328/328, stress, eval, benchmark semántico y residente de
 punta a punta a través de un symlink). macOS no se ejecutó: se cubrió por código (`src/paths.js` pliega

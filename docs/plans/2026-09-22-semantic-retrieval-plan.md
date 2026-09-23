@@ -101,9 +101,31 @@ The semantic floor is now per project (`semantic.floor` in `.dd/config.json`, de
 English moved semantic must recall from 0.49 to 0.54 only; lexical did not move, because prompts rarely
 share 35% of a trigger's words.
 
+## Phase 6: the same task, with and without DD (2026-09-22)
+
+`node src/eval/agent/run.js --repeat=2`: Claude Code headless (Sonnet 5), a fresh clone per run, project
+settings only. With DD: hooks, MCP server and a ready resident process. Without DD: no plugin and no
+`.dd/` (a first trial showed the agent grepping `.dd/` and quoting the memory by hand).
+
+| | passed | input tokens | output tokens | cost (API-equivalent) | turns | minutes |
+|---|---|---|---|---|---|---|
+| without DD | 4/6 | 3.38 M | 21.4 k | $1.53 | 82 | 16.3 |
+| **with DD** | **5/6** | **2.44 M (-28%)** | **17.1 k (-20%)** | **$1.25 (-18%)** | **62** | **12.2** |
+
+By task:
+- **auto-accept-threshold** (the memory holds knowledge the code does not state): with DD 2/2 correct in
+  4 turns, about 113 k input and $0.11 per run; without DD 1/2 correct (one run set the dead-zone 0.8),
+  12-16 turns, about 500 k input and $0.25 per run. This task carries almost all of the difference.
+- **retirement-test**: both 2/2; no difference in cost (the code shows what the memory says).
+- **retrieve-title**: 1/2 each. Both failures ended the headless session while tests ran in the
+  background, before updating the test: a harness limit, not a DD effect.
+
+Two runs per cell: this is a direction, not a measurement. DD saves the most where a memory records
+something the code does not show, and nothing where reading the code is as fast as reading the memory.
+
 ## Still open
 
-- Phase 6: the same task with and without DD, comparing outcome and tokens (`src/eval/model-runner.js`).
+- Phase 6, next: more tasks where knowledge is not visible in the code, and more runs per cell.
 - Patriark as a second, Spanish, benchmark corpus; then translate its memories (new ones are refused).
 - ~~The MCP `retrieve` tool runs lexically in the session's process~~: it now asks the resident first.
 - ~~Session dedup re-delivers after 1 hour~~: the window is one day (`since(1)` counts days). Repeats seen
