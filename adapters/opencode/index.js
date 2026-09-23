@@ -14,15 +14,39 @@
 // host with an unconfirmed response shape.
 //
 // Scope of this adapter: DD's advisory context, injected once per session via the system prompt --
-// the same fallback shape used for a harness whose per-tool hook contract isn't confirmed.
-import { buildSessionStartContext } from '../../src/hooks/session-start.js';
-import { openStore } from '../../src/project.js';
+// the same fallback shape used for a harness whose per-tool hook contract isn't confirmed. It follows
+// the session-start path of src/hooks/run.js: the machine's resident answers, or DD is inactive, one
+// is started, and the context says why (L2). A failure injects nothing and never blocks the host (L5).
+import { callRunningStore } from '../../src/hooks/bridge.js';
+import { buildSessionStartContext, lexicalMode } from '../../src/hooks/session-start.js';
+import { findRepoRoot, openStore } from '../../src/project.js';
+import { ensureResident, sessionUiUrl } from '../../src/resident.js';
+
+async function sessionStartContext(directory, sessionId) {
+  const repoRoot = await findRepoRoot(directory);
+  const bridged = await callRunningStore('session-start', { session_id: sessionId, source: 'startup', cwd: directory }, repoRoot);
+  if (bridged) return bridged.hookSpecificOutput?.additionalContext;
+  const lexical = lexicalMode();
+  const started = await ensureResident(repoRoot).catch(() => ({ state: 'unavailable' }));
+  // A live resident that did not answer this call (timeout, stale build) is not serving it either.
+  const resident = started.state === 'live' ? { state: 'unreachable' } : started;
+  const { store, projectId } = await openStore({ cwd: directory });
+  try {
+    const result = await buildSessionStartContext({
+      resident: lexical ? { state: 'live', retrieval: 'lexical' } : resident,
+      store,
+      projectId,
+      uiUrl: await sessionUiUrl(repoRoot, started),
+      sessionId,
+      source: 'startup',
+    });
+    return result.hookSpecificOutput?.additionalContext;
+  } finally {
+    store.close();
+  }
+}
 
 export default async function DeltaDictum({ directory }) {
-  let stateP;
-  function state() {
-    return stateP ??= openStore({ cwd: directory });
-  }
   const injected = new Set();
 
   return {
@@ -30,10 +54,11 @@ export default async function DeltaDictum({ directory }) {
       const sessionId = input.sessionID;
       if (!sessionId || injected.has(sessionId)) return;
       injected.add(sessionId);
-      const { store, projectId } = await state();
-      const result = await buildSessionStartContext({ store, projectId, source: 'startup', sessionId });
-      if (result.hookSpecificOutput?.additionalContext) {
-        output.system.push(result.hookSpecificOutput.additionalContext);
+      try {
+        const context = await sessionStartContext(directory, sessionId);
+        if (context) output.system.push(context);
+      } catch {
+        // L5: a hook failure never blocks the host.
       }
     },
   };

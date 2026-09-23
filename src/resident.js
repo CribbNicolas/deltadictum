@@ -46,6 +46,14 @@ export async function projectUiUrl(repoRoot) {
   return record?.url ? `${record.url}/?project=${encodeURIComponent(projectKey(repoRoot).key)}` : null;
 }
 
+// The audit UI address a session start may name, given what ensureResident
+// found. Only a live resident has one: a resident just started (or replacing
+// another) writes the registry once it listens, so until then the registry
+// names the process it replaced, or one that is gone.
+export async function sessionUiUrl(repoRoot, resident) {
+  return resident?.state === 'live' ? projectUiUrl(repoRoot) : null;
+}
+
 // Live and running this build: nothing to do. Otherwise start one, detached, and
 // do not wait for it; DD stays inactive for this session until it answers.
 export async function ensureResident(_repoRoot, { start = startDetached } = {}) {

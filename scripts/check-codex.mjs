@@ -31,7 +31,10 @@ try {
   const orientation = await call('orient', { budget_tokens: 600 });
   if (['admit', 'resolve', 'delete'].some(name => tools.some(t => t.name === name))) throw new Error('unsafe_mcp_surface');
   for (const name of ['orient', 'retrieve', 'get', 'propose', 'feedback', 'ui']) if (!tools.some(t => t.name === name)) throw new Error(`missing_tool:${name}`);
-  const audit = await fetch(`${status.ui_url}/api/status`, { signal: AbortSignal.timeout(3000) });
+  // ui_url names the project (/?project=<key>) on the shared resident; keep that query.
+  const statusUrl = new URL(status.ui_url);
+  statusUrl.pathname = '/api/status';
+  const audit = await fetch(statusUrl, { signal: AbortSignal.timeout(3000) });
   if (!audit.ok || (await audit.json()).project_id !== status.project_id) throw new Error('audit_project_mismatch');
   console.log(JSON.stringify({ connected: true, project_root: projectRoot, project_id: status.project_id,
     tools: tools.map(t => t.name), knowledge: status.counts, orientation, audit_http: 'passed',
