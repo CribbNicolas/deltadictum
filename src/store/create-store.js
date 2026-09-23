@@ -19,7 +19,8 @@ function nowIso() {
 const INDEX_FORMAT = '7.2';
 
 export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddDir) }) {
-  await mkdir(dataDir, { recursive: true });
+  // Local telemetry holds prompts and command output: private to its owner (POSIX).
+  await mkdir(dataDir, { recursive: true, mode: 0o700 });
   await mkdir(ddDir, { recursive: true });
   // Knowledge is shareable; process capabilities and telemetry are local.
   // Exclusive creation preserves an existing project's ignore policy.

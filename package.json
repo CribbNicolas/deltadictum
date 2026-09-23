@@ -42,7 +42,8 @@
     "mcp.js",
     ".mcp.json",
     "scripts",
-    "LICENSE"
+    "LICENSE",
+    "npm-shrinkwrap.json"
   ],
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {

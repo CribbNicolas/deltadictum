@@ -19,7 +19,7 @@ export async function markSeen(id) {
   const seen = await readSeen();
   if (seen[id]) return;
   seen[id] = new Date().toISOString();
-  await mkdir(resolveDataBase(), { recursive: true });
+  await mkdir(resolveDataBase(), { recursive: true, mode: 0o700 });
   await writeFile(seenPath(), JSON.stringify(seen), 'utf8');
 }
 

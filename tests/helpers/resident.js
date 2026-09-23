@@ -16,3 +16,9 @@ export async function registerResident(t, ui) {
   if (!process.env.DD_RESIDENT_REGISTRY?.includes('dd-registry-')) await useTempRegistry(t);
   await writeRegistry(ui);
 }
+
+// The cookie a browser holds after opening the audit UI through the address DD
+// prints (src/ui/server.js): every UI and API request needs it.
+export function uiCookie(ui) {
+  return { cookie: `dd_ui_${ui.port}=${ui.uiKey}` };
+}

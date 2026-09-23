@@ -20,11 +20,15 @@ export async function readRegistry() {
   try { return JSON.parse(await readFile(registryPath(), 'utf8')); } catch { return null; }
 }
 
-export async function writeRegistry({ url, port, hookToken }) {
+// The registry holds the secrets that let a process answer hooks and open the
+// audit UI, so only its owner may read it. The modes take effect on POSIX; on
+// Windows the profile directory is already private to its user.
+export async function writeRegistry({ url, port, hookToken, uiKey }) {
   const path = registryPath();
-  await mkdir(dirname(path), { recursive: true });
+  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const temp = `${path}.${process.pid}.tmp`;
-  await writeFile(temp, `${JSON.stringify({ url, port, hook_token: hookToken, pid: process.pid, build: BUILD_ID }, null, 2)}\n`, 'utf8');
+  await writeFile(temp, `${JSON.stringify({ url, port, hook_token: hookToken, ui_key: uiKey, pid: process.pid, build: BUILD_ID }, null, 2)}\n`,
+    { encoding: 'utf8', mode: 0o600 });
   await rename(temp, path);
 }
 
@@ -43,7 +47,9 @@ export async function residentStatus(timeoutMs = 500) {
 // The audit UI address for one project, or null when no resident is recorded.
 export async function projectUiUrl(repoRoot) {
   const record = await readRegistry();
-  return record?.url ? `${record.url}/?project=${encodeURIComponent(projectKey(repoRoot).key)}` : null;
+  if (!record?.url) return null;
+  const address = `${record.url}/?project=${encodeURIComponent(projectKey(repoRoot).key)}`;
+  return record.ui_key ? `${address}&key=${record.ui_key}` : address;
 }
 
 // The audit UI address a session start may name, given what ensureResident

@@ -11,7 +11,7 @@ import { startResidentServer, startUiServer } from '../../src/ui/server.js';
 import { residentNotice, isInactive, buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { callRunningStore } from '../../src/hooks/bridge.js';
 import { projectKey } from '../../src/project.js';
-import { registerResident, useTempRegistry } from '../helpers/resident.js';
+import { registerResident, uiCookie, useTempRegistry } from '../helpers/resident.js';
 
 // These tests decide DD_RESIDENT and DD_RETRIEVAL themselves: an inherited
 // DD_RESIDENT=0 or DD_RETRIEVAL=lexical would change what they exercise.
@@ -143,10 +143,10 @@ test('one resident serves several projects, each from its own store', async t =>
   assert.equal(server.projects.size, 2);
   // The audit UI is addressed per project.
   const url = await projectUiUrl(b.root);
-  assert.ok(url.endsWith(`?project=${projectKey(b.root).key}`));
-  const status = await (await fetch(`${server.url}/api/status?project=${projectKey(b.root).key}`)).json();
+  assert.ok(url.endsWith(`?project=${projectKey(b.root).key}&key=${server.uiKey}`));
+  const status = await (await fetch(`${server.url}/api/status?project=${projectKey(b.root).key}`, { headers: uiCookie(server) })).json();
   assert.equal(status.project_id, 'id-2');
-  assert.equal((await fetch(`${server.url}/api/status`)).status, 400);
+  assert.equal((await fetch(`${server.url}/api/status`, { headers: uiCookie(server) })).status, 400);
 });
 
 // A session that began before its resident listened had no address to show. The
@@ -165,7 +165,7 @@ test('the first prompt a resident answers names the audit UI and says DD became 
   await registerResident(t, server);
 
   const prompt = session => callRunningStore('prompt', { session_id: session, prompt: 'edit the parser' }, a.root);
-  const pointer = `DD audit UI: ${server.url}/?project=${projectKey(a.root).key}`;
+  const pointer = `DD audit UI: ${server.projectUrl(a.root)}`;
   // Began before the resident: the first prompt names the UI, later ones do not.
   assert.equal((await prompt('late')).systemMessage, pointer);
   assert.equal((await prompt('late')).systemMessage, undefined);

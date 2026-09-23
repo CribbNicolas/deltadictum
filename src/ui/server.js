@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +47,21 @@ async function sessionNotes(store, projectId, sessionId, uiUrl, active) {
   return notes;
 }
 
+// Secrets are compared in constant time; a missing or malformed one never matches.
+function sameSecret(given, expected) {
+  const a = Buffer.from(String(given ?? ''));
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+function cookie(req, name) {
+  for (const part of String(req.headers.cookie ?? '').split(';')) {
+    const at = part.indexOf('=');
+    if (at > 0 && part.slice(0, at).trim() === name) return part.slice(at + 1).trim();
+  }
+  return null;
+}
+
 export function inactiveMessage(retrieval) {
   return retrieval === 'loading'
     ? 'DD is starting: its embedding model is loading, and DD stays inactive until it is ready.'
@@ -81,6 +96,12 @@ export async function startResidentServer({ projects: initial = [], openProject,
   }
   const token = randomBytes(32).toString('hex');
   const hookToken = randomBytes(32).toString('hex');
+  // Anyone on the machine can connect to a loopback port, including other
+  // accounts. The audit UI and its API answer only a browser holding this key:
+  // it reaches the person in the address hooks print, read from the owner-only
+  // registry, and is traded for a cookie on the first visit.
+  const uiKey = randomBytes(32).toString('hex');
+  const withKey = address => `${address}&key=${uiKey}`;
 
   // Projects by key (src/project.js projectKey). The audit UI is the one place in
   // the plugin that is a persistent process with a person watching (L2), so it
@@ -132,7 +153,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
       const url = new URL(req.url, `http://${expectedHost}`);
       // A resident from a newer build asks this one to step aside.
       if (req.method === 'POST' && url.pathname === '/api/shutdown') {
-        if (req.headers['x-dd-hook-token'] !== hookToken || !onShutdown) return send(res, 403, { error: 'hook_auth_required' });
+        if (!sameSecret(req.headers['x-dd-hook-token'], hookToken) || !onShutdown) return send(res, 403, { error: 'hook_auth_required' });
         send(res, 200, { ok: true });
         return void setImmediate(onShutdown);
       }
@@ -140,7 +161,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
         return send(res, 200, { build: BUILD_ID, stale: await staleCode(), retrieval, projects: projects.size });
       }
       if (req.method === 'POST' && url.pathname.startsWith('/api/hooks/')) {
-        if (req.headers['x-dd-hook-token'] !== hookToken) return send(res, 403, { error: 'hook_auth_required' });
+        if (!sameSecret(req.headers['x-dd-hook-token'], hookToken)) return send(res, 403, { error: 'hook_auth_required' });
         if (await staleCode()) return send(res, 409, { error: 'build_stale' });
         lastActivity = Date.now();
         res.setHeader('x-dd-build', BUILD_ID);
@@ -150,7 +171,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
         const { store, projectId, key } = project;
         await store.refreshIfChanged();
         const payload = body.payload ?? {};
-        const uiUrl = `http://${expectedHost}/?project=${encodeURIComponent(key)}`;
+        const uiUrl = withKey(`http://${expectedHost}/?project=${encodeURIComponent(key)}`);
         const active = retrieval !== 'loading' && retrieval !== 'unavailable';
         const sessionId = payload.session_id ?? payload.sessionId;
         if (url.pathname.endsWith('/session-start')) {
@@ -180,7 +201,20 @@ export async function startResidentServer({ projects: initial = [], openProject,
         }
         return send(res, 404, { error: 'unknown_hook' });
       }
-      if (req.method !== 'GET' && (req.headers['x-dd-review-token'] !== token
+      // The key in an address becomes a cookie scoped to this port, and the
+      // address is reloaded without it, out of the history and the referrer.
+      const sessionCookie = `dd_ui_${actualPort}`;
+      if (req.method === 'GET' && url.searchParams.has('key')) {
+        if (!sameSecret(url.searchParams.get('key'), uiKey)) return send(res, 403, { error: 'ui_key_required' });
+        url.searchParams.delete('key');
+        res.writeHead(303, { location: url.pathname + url.search, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer',
+          'set-cookie': `${sessionCookie}=${uiKey}; HttpOnly; SameSite=Strict; Path=/` });
+        return res.end();
+      }
+      if (!sameSecret(cookie(req, sessionCookie), uiKey)) {
+        return send(res, 403, { error: 'ui_key_required', message: 'Open the audit UI through the address DD prints at session start, or the dd `ui` tool.' });
+      }
+      if (req.method !== 'GET' && (!sameSecret(req.headers['x-dd-review-token'], token)
           || (req.headers.origin && req.headers.origin !== `http://${expectedHost}`))) return send(res, 403, { error: 'local_review_required' });
       if (req.method === 'GET' && ['/', '/index.html'].includes(url.pathname)) {
         const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token);
@@ -312,9 +346,9 @@ export async function startResidentServer({ projects: initial = [], openProject,
       }
       reject(err);
     });
-    server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken,
+    server.listen(port, host, () => resolve({ port: server.address().port, url: `http://${host}:${server.address().port}`, hookToken, uiKey,
       get semanticReady() { return semanticReady; }, idleFor: () => Date.now() - lastActivity, projects,
-      projectUrl: repoRoot => `http://${host}:${server.address().port}/?project=${encodeURIComponent(projectKey(repoRoot).key)}`,
+      projectUrl: repoRoot => withKey(`http://${host}:${server.address().port}/?project=${encodeURIComponent(projectKey(repoRoot).key)}`),
       close: () => new Promise(done => { closeAll(); server.close(done); }) }));
   });
 }
