@@ -52,13 +52,7 @@ process end to end through a symlink). macOS is covered in code only (`src/paths
 and resolves symlinks such as `/tmp` → `/private/tmp`; `onnxruntime-node` ships darwin binaries). To run on
 a Mac: `npm test`, `npm run bench:semantic` and a real session, ideally also on a case-sensitive APFS volume.
 
-## 6. Review the replacement memories
-
-Pending candidates in the audit UI: `ca2e2d89` (the UI is now the resident process, replaces 8b7195a9),
-`297bd600` (replaces `compact-fts`), `ad3fdaa9` (path comparisons), `6abc175a` (scripted edits, without the
-project-wide scope).
-
-## 7. Archive memories that the code already states
+## 6. Archive memories that the code already states
 
 Reviewed against "would an agent reading the code, tests and docs work this out on its own?". Archive in
 the audit UI: `22291eb8`, `8724c2f2`, `bfacc975`, `b06e473d`, `292df784`, `9a955d61`, `c61d7902`,
@@ -67,20 +61,20 @@ per run (plan, "Pruned store"). Update with what changed on 2026-09-22: `e57a21a
 `adopt.js`), `e96a63b1` (`--test-force-exit` crashes the resident tests on Windows), `cf1ad3c5` (a stale
 resident is now replaced at session start).
 
-## 8. Measure the capture criterion (agent-level evaluation)
+## 7. Measure the capture criterion (agent-level evaluation)
 
 Capture memories under the new capture prompt during real work, then rerun
 `node src/eval/agent/run.js --repeat=3` and compare with `output/eval/agent-results-full.json` (about $7 of
 model usage per run). Three runs per cell leave a 2/18 difference within noise; five would settle the
 pruning question.
 
-## 9. Project-Patriark: semantic floor (optional)
+## 8. Project-Patriark: semantic floor (optional)
 
 After the translation the default floor reaches must recall 0.61 at precision 0.77 on Patriark's
 benchmark. `semantic.floor: 0.025` in Patriark's `.dd/config.json` raised must recall further before the
 translation, at the cost of one unrelated task no longer staying quiet. A choice for Patriark's owner.
 
-## 10. Commit Patriark's translated memories
+## 9. Commit Patriark's translated memories
 
 The 48 English memories and the archived Spanish originals are in `C:/dev/Project-Patriark/.dd/`,
 uncommitted: that repository has no commits yet.
