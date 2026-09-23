@@ -71,7 +71,8 @@ otherwise hooks fall back to lexical retrieval and SessionStart replaces it.
 - ~~The MCP `retrieve` tool runs lexically in the session's process~~: it now asks the resident first.
 - ~~Session dedup re-delivers after 1 hour~~: the window is one day (`since(1)` counts days). Repeats seen
   during the session came from two builds answering hooks with different revision formulas, which gap 7
-  now prevents. Six parallel hook processes deliver a memory once (`tests/hooks/parallel-delivery.test.js`).
+  now prevents. Parallel hook processes did race (two of six delivered under load); delivery is now claimed
+  in one SQLite statement (`claimDelivery`), covered by `tests/hooks/parallel-delivery.test.js`.
 - README section "Resident process": how to tell whether it runs and how to fix it (the SessionStart notice
   already points there).
 - `memory/product/not-embeddings` and `memory/retrieval/compact-fts` describe the old design; revise in review.

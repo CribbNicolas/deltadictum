@@ -145,6 +145,9 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       const trial = { ...result, memories: [...result.memories, hit], injected: true, abstained: false,
         budget: { requested: budget, used: budget } };
       if (estimateTokens(trial) > budget) continue;
+      // Another hook process may have delivered it since the check above.
+      if (request.session_id && !request.repeat && store.claimDelivery
+          && !await store.claimDelivery(request.project_id, request.session_id, atom.id, revision)) break;
       result.memories.push(hit);
       selected.push({ atom, revision });
       for (const id of contradicts) excluded.add(id);
@@ -156,7 +159,8 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   // The empty envelope is a fixed protocol cost, including when the caller asks
   // for less than that cost. No memory content is emitted in that case.
   result.budget.used = estimateTokens({ ...result, budget: { requested: budget, used: budget } });
-  if (request.session_id && store.markDelivered) for (const item of selected) {
+  // Claimed deliveries are already recorded; a repeat request refreshes the mark.
+  if (request.session_id && store.markDelivered && (request.repeat || !store.claimDelivery)) for (const item of selected) {
     await store.markDelivered(request.project_id, request.session_id, item.atom.id, item.revision);
   }
   if (selected.length) await store.incrementActivation(selected.map(s => s.atom.id));
