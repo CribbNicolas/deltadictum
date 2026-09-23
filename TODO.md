@@ -19,13 +19,16 @@ npm publish
 
 ## 2. Verify Grok Build live — blocked: Grok is not signed in
 
-Run `grok login --device-code` (or set `XAI_API_KEY`), then from this checkout:
-`grok -p "Read README.md and report every 'DD -' line you received" --output-format json`.
+Run `grok login --device-code` (or set `XAI_API_KEY`), install the plugin
+(`grok plugin marketplace add CribbNicolas/deltadictum`, `grok plugin install deltadictum@deltadictum --trust`),
+then in another project: `grok -p "Report every 'DD -' line you received" --output-format json`.
 
-`grok plugin validate .` passed (valid schema, hooks and MCP servers detected). That does not confirm the
-real `PreToolUse` contract (payload and response) works in a live session. If it fails: remove
-`PreToolUse`, `UserPromptSubmit`, `PostToolUse` and `Stop` from `.grok-plugin/plugin.json` and keep only
-`SessionStart` (the fallback documented in `docs/integrations/grok-build.md`).
+Verified without a login (2026-09-23): marketplace install, MCP handshake through `grok mcp doctor`, and the
+first-run package install (`docs/integrations/grok-build.md`). Still open: the hook payload and response
+in a live session, and whether the background install and resident a hook starts survive Grok ending the
+hook. Under `grok mcp doctor`, the install the MCP server started did not run. If `PreToolUse` fails:
+remove `PreToolUse`, `UserPromptSubmit`, `PostToolUse` and `Stop` from `.grok-plugin/plugin.json`
+and keep only `SessionStart`.
 
 ## 3. Verify OpenCode live — blocked: no working model credential
 
@@ -37,13 +40,13 @@ needed) and the MCP server by absolute path. What to confirm: that
 `experimental.chat.system.transform` injects DD context in a real conversation
 (`docs/integrations/opencode.md`).
 
-## 4. Install through a marketplace (Claude Code, Grok Build)
+## 4. Two DD installs on one machine replace each other's resident
 
-Loading this checkout as a Claude Code plugin works (`claude -p --plugin-dir`, verified 2026-09-23). Still
-untested is the marketplace path itself, which changes the user's global configuration:
-
-- **Claude Code**: `/plugin marketplace add <your-org>/deltadictum` → `/plugin install deltadictum@deltadictum`
-- **Grok Build**: the equivalent with `grok plugin marketplace` / `grok plugin install`
+There is one resident per machine (L2), and a resident from another install is replaced at the next session
+start (`src/resident.js`). A person with DD in both Claude Code and Grok Build, or a plugin plus a source
+checkout, has each host's session start replace the other's resident and reload the model (seen
+2026-09-23 while testing the Grok install). Decide whether a resident should serve any install of the same
+version instead of only its own directory.
 
 ## 5. Test on a real Mac — blocked: no Mac available
 

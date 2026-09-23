@@ -9,6 +9,7 @@ import { observationFromTool, recordPromptObservation } from './observe.js';
 import { microPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
 import { ensureResident, projectUiUrl, sessionUiUrl } from '../resident.js';
+import { ensureDependencies } from '../deps.js';
 
 function ok(payload) {
   if (payload.decision === 'allow') delete payload.decision;
@@ -21,6 +22,31 @@ function ok(payload) {
 
 function skip() {
   process.exit(0);
+}
+
+// A bridged reply is proof the resident answered, so the pointer needs no
+// probe. It is attached here rather than left to the resident: the response
+// comes from whatever version of DD that process runs.
+async function withUiPointer(reply, repoRoot) {
+  if (!reply.systemMessage) {
+    const url = await projectUiUrl(repoRoot);
+    if (url) reply.systemMessage = uiPointer(url);
+  }
+  return reply;
+}
+
+// Polls a resident this session start has just launched, within the hook's
+// time limit (10 s on Codex, 15 s elsewhere): its registry entry appears once
+// it listens, and the bridge accepts only an answer from this build.
+const RESIDENT_WAIT_MS = 5000;
+async function awaitResident(payload, repoRoot) {
+  const deadline = Date.now() + RESIDENT_WAIT_MS;
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const answered = await callRunningStore('session-start', payload, repoRoot);
+    if (answered) return answered;
+  }
+  return null;
 }
 
 const command = process.argv[2];
@@ -37,14 +63,7 @@ try {
   const repoRoot = await findRepoRoot(cwd);
   const bridged = await callRunningStore(command, payload, repoRoot);
   if (bridged) {
-    // A bridged reply is proof the resident answered, so the pointer needs no
-    // probe. It is attached here rather than left to the resident: the response
-    // comes from whatever version of DD that process runs.
-    if (command === 'session-start' && !bridged.systemMessage) {
-      const url = await projectUiUrl(repoRoot);
-      if (url) bridged.systemMessage = uiPointer(url);
-    }
-    ok(bridged);
+    ok(command === 'session-start' ? await withUiPointer(bridged, repoRoot) : bridged);
   }
   // No resident answered. Embeddings are required, so outside the explicit
   // lexical mode (tests, evaluation) DD is inactive: nothing is recalled here.
@@ -54,8 +73,17 @@ try {
   const sessionId = payload.session_id ?? payload.sessionId;
 
   if (command === 'session-start') {
+    // Without its packages no resident can load the model: install them first.
+    const deps = lexical ? { state: 'present' } : ensureDependencies();
     // Start the machine's resident for this and later sessions; say DD is inactive until it is ready.
-    const started = await ensureResident(repoRoot).catch(() => ({ state: 'unavailable' }));
+    const started = deps.state !== 'present' ? deps : await ensureResident(repoRoot).catch(() => ({ state: 'unavailable' }));
+    if (started.state === 'started') {
+      // A resident listens within about a second, long before its model is
+      // loaded. Waiting for it here lets this session start name the audit UI
+      // and say the model is loading, instead of only that DD is inactive.
+      const answered = await awaitResident(payload, repoRoot);
+      if (answered) { store.close(); ok(await withUiPointer(answered, repoRoot)); }
+    }
     // A live resident that did not answer this call (timeout, stale build) is not serving it either.
     const resident = started.state === 'live' ? { state: 'unreachable' } : started;
     const result = await buildSessionStartContext({
@@ -82,7 +110,8 @@ try {
     await recordPromptObservation(payload, { store, projectId });
     if (!lexical) {
       // Said once per session, so a resident that went away mid-session is noticed.
-      const notice = residentNotice({ state: 'unreachable' });
+      const deps = ensureDependencies();
+      const notice = residentNotice(deps.state === 'present' ? { state: 'unreachable' } : deps);
       const first = sessionId && store.claimDelivery ? await store.claimDelivery(projectId, sessionId, '__dd_inactive__', 'inactive') : true;
       store.close();
       ok(first ? contextPayload('UserPromptSubmit', notice) : {});

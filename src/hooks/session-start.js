@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { join } from 'node:path';
+import { INSTALL_LOG, manualInstallCommand } from '../deps.js';
 import { sessionBanner, uiPointer } from './banner.js';
 import { orientProject } from '../engine/project-context.js';
 import { AMBIENT_TAG, ambientRevision } from '../engine/retrieve.js';
@@ -76,6 +78,9 @@ export function residentNotice(resident = {}) {
   const tell = 'Tell the user this once.';
   if (state === 'live' && retrieval === 'loading') return `DD - Inactive for now: the resident DD process is loading its embedding model (the first run downloads about 130 MB). DD activates by itself once it is ready. ${tell}`;
   if (state === 'live') return `DD - Inactive: the resident DD process could not load its embedding model, which DD requires. ${fix} ${tell}`;
+  if (state === 'installing') return resident.failed
+    ? `DD - Inactive: installing DD's packages failed (${resident.failed}); another attempt is running in the background, logged in ${join(resident.root, INSTALL_LOG)}. To install them by hand: ${manualInstallCommand(resident.root)}. ${tell}`
+    : `DD - Inactive for now: DD is installing its packages in the background (first run after installing or updating the plugin; it can take a few minutes). DD activates at a later session once they are in place. ${tell}`;
   if (state === 'started') return `DD - Inactive for now: no resident DD process was running, so one was started in the background. DD activates once its embedding model is ready. ${fix} ${tell}`;
   if (state === 'unreachable') return `DD - Inactive: the resident DD process is not answering, so nothing is recalled. The next session start replaces it. ${fix} ${tell}`;
   if (state === 'disabled') return `DD - Inactive: the resident DD process is disabled (DD_RESIDENT=0), and DD requires it. ${tell}`;

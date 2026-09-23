@@ -148,3 +148,36 @@ test('one resident serves several projects, each from its own store', async t =>
   assert.equal(status.project_id, 'id-2');
   assert.equal((await fetch(`${server.url}/api/status`)).status, 400);
 });
+
+// A session that began before its resident listened had no address to show. The
+// person gets it, once, on the first prompt the resident answers; and a session
+// told the model was loading hears, once, that DD is now active.
+test('the first prompt a resident answers names the audit UI and says DD became active, once per session', async t => {
+  realMode(t);
+  const a = await project('prompt');
+  a.store.close();
+  const openProject = async (repoRoot, dataDir) => ({ store: await createMemoryStore({ ddDir: join(repoRoot, '.dd'), dataDir, repoRoot }), projectId: 'demo' });
+  let ready;
+  const loaded = new Promise(resolve => { ready = resolve; });
+  const createRetrieve = () => { const r = async () => ({ memories: [] }); r.warm = () => loaded; r.preload = () => loaded; return r; };
+  const server = await startResidentServer({ openProject, port: 0, semantic: true, createRetrieve });
+  t.after(() => server.close());
+  await registerResident(t, server);
+
+  const prompt = session => callRunningStore('prompt', { session_id: session, prompt: 'edit the parser' }, a.root);
+  const pointer = `DD audit UI: ${server.url}/?project=${projectKey(a.root).key}`;
+  // Began before the resident: the first prompt names the UI, later ones do not.
+  assert.equal((await prompt('late')).systemMessage, pointer);
+  assert.equal((await prompt('late')).systemMessage, undefined);
+
+  // Started while the model loads: the session start names the UI and says so.
+  const start = await callRunningStore('session-start', { session_id: 'early' }, a.root);
+  assert.match(start.hookSpecificOutput.additionalContext, /loading its embedding model/);
+  assert.equal((await prompt('early')).systemMessage, undefined);
+  ready(true);
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.equal((await prompt('early')).systemMessage, 'DD is active: its embedding model is loaded.');
+  assert.equal((await prompt('early')).systemMessage, undefined);
+  // A session that never saw DD inactive is not told it became active.
+  assert.equal((await prompt('late')).systemMessage, undefined);
+});

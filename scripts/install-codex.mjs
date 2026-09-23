@@ -24,7 +24,15 @@ function managedBlock(text, start, end, content) {
   return text.slice(0, from) + `${start}\n${content}\n${end}` + text.slice(until + end.length);
 }
 
-export async function planCodexInstall(project) {
+// npx runs a package from a cache npm may clear at any time. The config written
+// here names this directory for every later session, so it must be one that
+// stays: a global install or a source checkout.
+export function ephemeralRoot(root) {
+  return /\/_npx\//.test(slash(root));
+}
+
+export async function planCodexInstall(project, { root = pluginRoot } = {}) {
+  if (ephemeralRoot(root)) throw new Error(`ephemeral_install: DD is running from the npx cache (${slash(root)}), which npm may clear, and Codex would keep pointing at it. Install it globally, then run the installer from there: npm install -g deltadictum && deltadictum install --host codex --project PROJECT`);
   const projectRoot = await realpath(resolve(project));
   const dataDir = join(projectRoot, '.dd', 'local');
   // Node's own resolution, not a direct path check: a hoisted install (e.g. via

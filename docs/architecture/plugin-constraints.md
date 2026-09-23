@@ -44,7 +44,9 @@ to fix it. The earlier wording (2026-09-22) fell back to lexical retrieval.
 
 Hooks reach it over HTTP on `127.0.0.1` with a 250 ms timeout for `pre-tool` and 1500 ms otherwise
 (`src/hooks/bridge.js`), and accept an answer only from a resident running the same source tree whose code
-has not changed since it started.
+has not changed since it started. A session start that launches the resident waits up to 5 s for it to
+listen, within the hook's own time limit and never in `pre-tool`, so that session can already name the
+audit UI (`src/hooks/run.js`).
 
 Forbidden: a hook that blocks, errors or answers wrongly because the resident is missing (L5). Missing
 means inactive and said so, nothing more. `DD_RETRIEVAL=lexical` exists only for tests and evaluation.
@@ -58,6 +60,11 @@ never on the hot path (L1): a cached model takes about 0.5 s to load.
 Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings outright, because
 embeddings were assumed to be a separate service; an in-process runtime is a package, not a service.
 Still forbidden: a hosted or remote model, an inference server, a GPU requirement.
+
+A host may copy the plugin without these packages (Grok Build does). The first session or MCP server to
+find them missing installs them into the plugin directory in a detached process (`src/deps.js`,
+`scripts/install-deps.mjs`, `npm ci --omit=dev --ignore-scripts`); DD is inactive and says so until then
+(L2, L5).
 
 ### L4 — The hook contract differs per harness
 
