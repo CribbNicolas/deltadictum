@@ -95,6 +95,16 @@ export function createTelemetry(index, git) {
     db.prepare(`INSERT INTO session_deliveries VALUES (?,?,?,?,?) ON CONFLICT(project_id,session_id,atom_id)
       DO UPDATE SET revision=excluded.revision,delivered_at=excluded.delivered_at`).run(projectId, sessionId, atomId, revision, now());
   }
+  // Check and mark in one statement. Parallel tool calls run as parallel hook
+  // processes; a separate check then mark let two of them deliver the same
+  // memory. The row is written only if absent, of another revision, or expired,
+  // and only the process whose write took effect delivers.
+  async function claimDelivery(projectId, sessionId, atomId, revision) {
+    return db.prepare(`INSERT INTO session_deliveries VALUES (?,?,?,?,?) ON CONFLICT(project_id,session_id,atom_id)
+      DO UPDATE SET revision=excluded.revision,delivered_at=excluded.delivered_at
+      WHERE session_deliveries.revision != excluded.revision OR session_deliveries.delivered_at < ?`)
+      .run(projectId, sessionId, atomId, revision, now(), since(1)).changes > 0;
+  }
   async function clearSessionDeliveries(projectId, sessionId) {
     db.prepare('DELETE FROM session_deliveries WHERE project_id=? AND session_id=?').run(projectId, sessionId);
   }
@@ -116,5 +126,5 @@ export function createTelemetry(index, git) {
     });
   }
   return { prune, putObservation, getObservation, listObservations, recentObservations, putFeedback, feedbackSummary, listFeedback, reviewFeedback,
-    wasDelivered, markDelivered, clearSessionDeliveries, beginCaptureTurn, claimCapturePrompt };
+    wasDelivered, markDelivered, claimDelivery, clearSessionDeliveries, beginCaptureTurn, claimCapturePrompt };
 }
