@@ -251,7 +251,7 @@ describe('audit UI retirement', () => {
       retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the original idempotency key on retry.' },
     }, { store });
     await store.putAtom({ ...written.atom, lifecycle_state: 'active', authority: 'inferred' });
-    await archiveMemory(written.atom.id, { store, projectId: 'demo' });
+    await archiveMemory(written.atom.id, { store, projectId: 'demo', reason: 'Archived by the test.' });
 
     const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
     t.after(async () => { await ui.close(); store.close(); });
