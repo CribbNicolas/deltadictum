@@ -1,0 +1,73 @@
+{
+  "id": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "npm 11 drops a bin path written with ./",
+  "topic_key": "release/npm/bin-path",
+  "trigger": "Before publishing deltadictum or editing bin in package.json",
+  "behavior_delta": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
+  "what": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
+  "why": "npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "package.json"
+    ],
+    "components": [
+      "release"
+    ],
+    "operations": [
+      "publish",
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "package.json",
+      "summary": "bin now reads {\"deltadictum\": \"src/cli.js\"}"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T02:05:12.277Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
+    "short": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
+    "full": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "f6b8aa47-3168-4536-990a-f504d0c316b4",
+  "evidence_state": {
+    "checked_at": "2026-09-24T11:41:56.037Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "package.json",
+        "summary": "bin now reads {\"deltadictum\": \"src/cli.js\"}",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "0bc15fda0514c0f73ad56c22c368294759303b1badf3c6ae266f1e9db2249b31"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T02:05:12.337Z",
+  "updated_at": "2026-09-24T11:41:56.041Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T11:41:56.037Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}
