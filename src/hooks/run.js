@@ -56,7 +56,9 @@ if (dataArg >= 0 && process.argv[dataArg + 1]) process.env.DD_DATA = process.arg
 
 try {
   const payload = await readJsonStdin();
-  const observation = command === 'observe' ? observationFromTool(payload) : null;
+  // Claude Code sets CLAUDECODE=1 in its hook processes (recorded 2026-09-24).
+  const claudeCode = process.env.CLAUDECODE === '1' && !codexHost;
+  const observation = command === 'observe' ? observationFromTool(payload, { claudeCode }) : null;
   if (command === 'observe' && !observation) skip();
   if (command === 'pre-tool' && /(^|__)(dd|deltadictum)(__|_)/i.test(payload.tool_name || payload.toolName || '')) skip();
   const cwd = payload.cwd || process.env.DD_PROJECT_DIR || process.cwd();
@@ -111,7 +113,12 @@ try {
     if (!lexical) {
       // Said once per session, so a resident that went away mid-session is noticed.
       const deps = ensureDependencies();
-      const notice = residentNotice(deps.state === 'present' ? { state: 'unreachable' } : deps);
+      // A resident edited since it started refuses every hook until replaced, and
+      // one may have exited or be older; replace it here as a session start would,
+      // rather than leave the rest of the session without recall. Never on
+      // pre-tool (L1); a live one that did not answer is only unreachable.
+      const resident = deps.state !== 'present' ? deps : await ensureResident(repoRoot).catch(() => ({ state: 'unavailable' }));
+      const notice = residentNotice(resident.state === 'live' ? { state: 'unreachable' } : resident);
       const first = sessionId && store.claimDelivery ? await store.claimDelivery(projectId, sessionId, '__dd_inactive__', 'inactive') : true;
       store.close();
       ok(first ? contextPayload('UserPromptSubmit', notice) : {});

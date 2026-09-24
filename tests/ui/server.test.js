@@ -69,6 +69,15 @@ describe('audit UI HTTP', () => {
     const home = await fetch(base + '/');
     assert.equal(home.status, 200);
     const html = await home.text();
+    // Only the page's own script runs: any markup an escaping mistake let in
+    // cannot carry a script the browser executes.
+    const csp = home.headers.get('content-security-policy');
+    const nonce = csp.match(/script-src 'nonce-([A-Za-z0-9+/=]+)'/)?.[1];
+    assert.ok(nonce, csp);
+    assert.doesNotMatch(csp.match(/script-src[^;]*/)[0], /unsafe-inline/);
+    assert.ok([...html.matchAll(/<script\b([^>]*)>/gi)].every(tag => tag[1].includes(`nonce="${nonce}"`)));
+    assert.doesNotMatch(html, /\son[a-z]+\s*=\s*["']/i);
+    assert.notEqual((await fetch(base + '/')).headers.get('content-security-policy'), csp);
     assert.match(html, /DeltaDictum audit/);
     assert.match(html, /id="origin-filter"/);
     for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) new Script(script[1]);

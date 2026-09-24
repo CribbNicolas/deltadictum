@@ -76,3 +76,20 @@ describe('bridging only to the same build', () => {
     assert.equal(await callRunningStore('session-start', { session_id: 's' }, root), null);
   });
 });
+
+describe('bridging across installs of one version', () => {
+  test('a reply from another tree of the same version is taken; another version is not', async t => {
+    const { VERSION } = await import('../../src/hooks/build.js');
+    const reply = headers => createServer((req, res) => { res.writeHead(200, { 'content-type': 'application/json', ...headers }); res.end('{"ok":true}'); });
+    const cases = [[{ 'x-dd-build': 'f'.repeat(16), 'x-dd-version': VERSION }, { ok: true }],
+      [{ 'x-dd-build': 'f'.repeat(16), 'x-dd-version': '0.0.1' }, null]];
+    for (const [headers, expected] of cases) {
+      const server = reply(headers);
+      await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+      t.after(() => server.close());
+      const { port } = server.address();
+      await registerResident(t, { url: `http://127.0.0.1:${port}`, port, hookToken: 'a'.repeat(64) });
+      assert.deepEqual(await callRunningStore('session-start', {}, await mkdtemp(join(tmpdir(), 'dd-version-'))), expected);
+    }
+  });
+});

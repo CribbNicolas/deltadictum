@@ -74,8 +74,10 @@ Known gaps, in the order they hurt:
    `cap_saturation` reporting `skipped` for want of data that existed. The rows were merged by hand;
    nothing in the code does this.
 7. ~~**The hook bridge answers with another process's build.**~~ **Closed.** The audit UI stamps hook
-   replies with `x-dd-build`, a hash of its source root, and the hook ignores any reply without its own;
-   the UI returns `409 build_stale` once its source tree has changed since it started (`src/hooks/build.js`).
+   replies with `x-dd-build`, a hash of its source root, and `x-dd-version`; the hook takes a reply only
+   from its own tree or the same package version (installs of one version share a resident since
+   2026-09-24); the UI returns `409 build_stale` once its source tree has changed since it started
+   (`src/hooks/build.js`).
    The original finding: `callRunningStore` forwards
    `session-start`, `prompt` and `pre-tool` to any audit UI recorded in `.dd/ui.json`, and that process
    may have been started from an older DD. Its store receives the telemetry and its code shapes the
