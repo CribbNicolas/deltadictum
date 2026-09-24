@@ -18,6 +18,7 @@ import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
 import { BUILD_ID, VERSION, codeFingerprint } from '../hooks/build.js';
 import { projectKey } from '../project.js';
+import { revisionNotices } from '../engine/revisions.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -192,10 +193,13 @@ export async function startResidentServer({ projects: initial = [], openProject,
           await recordPromptObservation(payload, { store, projectId });
           const notes = sessionId ? await sessionNotes(store, projectId, sessionId, uiUrl, active) : [];
           const shown = notes.length ? { systemMessage: notes.join('\n') } : {};
-          if (!active) return send(res, 200, shown);
+          // A reviewer's revision request needs no embeddings: it is said even while the model loads.
+          const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
+          if (!active) return send(res, 200, { ...shown, ...contextPayload('UserPromptSubmit', revisions) });
           const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
             session_id: sessionId, budget_tokens: payload.budget_tokens }, { store });
-          return send(res, 200, { ...shown, ...contextPayload('UserPromptSubmit', microPack(result.memories ?? [])) });
+          return send(res, 200, { ...shown,
+            ...contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? [])].filter(Boolean).join('\n')) });
         }
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, active ? await buildPreToolContext(payload, { store, projectId, retrieve }) : {});
         if (url.pathname.endsWith('/retrieve')) {

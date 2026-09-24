@@ -91,6 +91,13 @@ export async function fileActions(rawActions, { store, projectId, sessionId, cap
       snapshot: Object.fromEntries(checked.atoms.map(a => [a.id, snapshotOf(a)])), status: 'pending',
       ...(raw.revises ? { revises: String(raw.revises) } : {}) };
     await store.putAction(action);
+    // A corrected action answers a revision request: the one it revises leaves the queue.
+    const revised = action.revises ? await store.getAction(action.revises) : null;
+    if (revised?.project_id === projectId) {
+      await store.commitAtoms([], [], [], [{ id: revised.id, value: null }]);
+      await store.logAction({ project_id: projectId, action_id: revised.id, kind: revised.kind, targets: revised.targets,
+        outcome: 'revised', note: `revised by ${action.id}`, actor_ref: 'agent' });
+    }
     results.push({ id: action.id, kind: action.kind, status: 'pending' });
   }
   return results;
