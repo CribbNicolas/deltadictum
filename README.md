@@ -32,7 +32,7 @@ Node 22 or later. Each host installs DD its own way:
 
 | Host | Install | Details |
 |---|---|---|
-| Claude Code | `/plugin marketplace add CribbNicolas/deltadictum`, then `/plugin install deltadictum@deltadictum` | Claude Code installs the packages itself (`npm ci --ignore-scripts`). |
+| Claude Code | `/plugin marketplace add CribbNicolas/deltadictum`, then `/plugin install dd@deltadictum` | Claude Code installs the packages itself (`npm ci --ignore-scripts`). |
 | Grok Build | `grok plugin marketplace add CribbNicolas/deltadictum`, then `grok plugin install deltadictum@deltadictum --trust` | [Grok Build guide](docs/integrations/grok-build.md) |
 | Codex | `npm install -g deltadictum`, then `deltadictum install --host codex --project <path>` | [Codex guide](docs/integrations/codex.md) |
 | OpenCode | `"plugin": ["deltadictum"]` in `opencode.json` | [OpenCode guide](docs/integrations/opencode.md) |

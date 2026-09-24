@@ -75,9 +75,12 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}`;
     }
   }
   await plan(hookPath, `${JSON.stringify(hooks, null, 2)}\n`, hookText);
-  for (const skill of ['dd', 'dd-save', 'dd-audit']) {
-    const content = await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8');
-    const path = join(projectRoot, '.agents', 'skills', skill, 'SKILL.md');
+  // Codex has no plugin namespace, so the command skills are installed as dd-<name>:
+  // a project's own review or init skill is never overwritten.
+  for (const skill of ['recall', 'audit', 'save', 'review', 'compact', 'clean', 'prospect', 'init']) {
+    const content = (await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8'))
+      .replace(/^(---\r?\nname: )(.+)$/m, `$1dd-${skill}`);
+    const path = join(projectRoot, '.agents', 'skills', `dd-${skill}`, 'SKILL.md');
     const before = await optionalText(path);
     if (before && before !== content) throw new Error(`existing_skill_requires_review:${path}`);
     await plan(path, content, before);
@@ -86,7 +89,7 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}`;
   const agents = await optionalText(agentsPath);
   await plan(agentsPath, managedBlock(agents, agentsStart, agentsEnd, `## DD project knowledge
 
-Use the local DD MCP server and the dd skill when working in this project. Call orient at the start of a task and retrieve before relevant implementation or debugging, supplying affected files and operation. Reuse the session_id supplied by the DD session hook; otherwise generate one per conversation. After compaction, refresh with repeat: true.
+Use the local DD MCP server and the dd-recall skill when working in this project. Call orient at the start of a task and retrieve before relevant implementation or debugging, supplying affected files and operation. Reuse the session_id supplied by the DD session hook; otherwise generate one per conversation. After compaction, refresh with repeat: true.
 
 Treat retrieved knowledge as conditional advice. Inspect evidence for disputed or review-required decisions; current code, project documentation and user instructions take precedence. Read source pointers as needed instead of loading the whole memory store.
 

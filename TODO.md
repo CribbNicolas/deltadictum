@@ -39,7 +39,7 @@ resident when their version differs.
 Marketplace install from GitHub and the MCP connection were verified in an isolated config dir
 (2026-09-23). Not yet seen: a real session of the marketplace-installed plugin in another project, showing
 the audit UI address at session start and, when the model is loading, "DD is active" on a later prompt.
-`/plugin marketplace add CribbNicolas/deltadictum`, `/plugin install deltadictum@deltadictum`. This
+`/plugin marketplace add CribbNicolas/deltadictum`, `/plugin install dd@deltadictum`. This
 changes the user's global Claude Code config. Also confirm there what 2026-09-24 changed: a failing Bash
 call records a `tool_failure` observation (`PostToolUseFailure`), a passing test run a `validation`, and
 the session start carries the line telling the model when to call `retrieve` and `propose`.

@@ -1,5 +1,5 @@
 ---
-name: dd
+name: recall
 description: Use DD project orientation and conditional engineering memories before implementing, debugging or repeating a project workflow.
 ---
 

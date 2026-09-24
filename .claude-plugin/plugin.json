@@ -1,5 +1,5 @@
 {
-  "name": "deltadictum",
+  "name": "dd",
   "version": "0.3.1",
   "description": "DeltaDictum (DD): next-action doctrine. Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit locally. Share via git.",
   "author": {

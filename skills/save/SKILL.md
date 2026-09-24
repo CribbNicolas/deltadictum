@@ -1,5 +1,5 @@
 ---
-name: dd-save
+name: save
 description: Propose reusable project decisions or lessons when the user asks to remember something or a completed task produces evidence-backed learning.
 ---
 
