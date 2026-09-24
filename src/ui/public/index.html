@@ -152,6 +152,7 @@
       <option value="active">active</option>
       <option value="contested">contested</option>
       <option value="rejected">rejected</option>
+      <option value="legacy">legacy</option>
       <option value="superseded">superseded</option>
       <option value="archived">archived</option>
     </select>
@@ -186,6 +187,10 @@
   <details id="evidence">
     <summary>Recorded evidence <span id="evidence-count"></span></summary>
     <div id="evidence-list"></div>
+  </details>
+  <details id="actions" open>
+    <summary>Pending actions <span id="actions-count"></span></summary>
+    <div id="actions-list"></div>
   </details>
   <main>
     <section id="list"></section>
@@ -230,7 +235,7 @@
     const STATE_CHIPS = [
       { value: '', label: 'All' }, { value: 'candidate', label: 'Candidate' }, { value: 'active', label: 'Active' },
       { value: 'contested', label: 'Contested' }, { value: 'rejected', label: 'Rejected' },
-      { value: 'superseded', label: 'Superseded' }, { value: 'archived', label: 'Archived' },
+      { value: 'superseded', label: 'Superseded' }, { value: 'legacy', label: 'Legacy' }, { value: 'archived', label: 'Archived' },
     ];
     let atoms = [];
     let selected = null;
@@ -260,7 +265,13 @@
       replacement_changed_review_again: 'The memory this candidate would replace is not currently active or contested -- it may still be an unreviewed candidate itself, or was superseded/rejected/resolved since this one was proposed. Admit or reject that earlier memory first, then re-review this candidate against the current state.',
       evidence_scope_violation: 'One of the evidence references points outside this project and cannot be verified. Fix or remove that evidence_refs entry.',
       contested_pair_required: 'Both memories must currently be in the contested state and actually conflict with each other to resolve this way. Reload and check their state.',
-      archived_memory_required: 'Only archived memories can be restored.',
+      archived_memory_required: 'Only archived or legacy memories can be restored.',
+      action_stale: 'A memory in this action changed since it was filed. Reject it and ask the agent for a new one.',
+      action_not_found: 'This action is no longer pending. Reload the list.',
+      revision_requested: 'A revision was requested: wait for the corrected version, or reject this one.',
+      revision_reason_required: 'Write the reason for the revision first: the agent receives it.',
+      archive_reason_required: 'An archive needs a reason.',
+      mixed_legacy_merge: 'Legacy and current memories cannot be merged into one.',
       topic_key_taken: 'Another memory now holds this topic key. Restoring would create a duplicate -- resolve or archive the current holder first.',
       active_memory_required: 'Only active memories can be archived.',
       authority_protected: 'A human-reviewed memory (validated or canonical) cannot be auto-archived.',
@@ -354,6 +365,7 @@
       if (originFilterEl.value) q.set('capture_origin', originFilterEl.value);
       if (typeFilterEl.value) q.set('memory_type', typeFilterEl.value);
       await loadEvidence();
+      await loadActions();
       let fetched = await api('/api/atoms?' + q);
       document.getElementById('unseen-count').textContent = fetched.filter(a => !a.seen).length;
       atoms = fetched;
@@ -393,6 +405,47 @@
           <p>${escapeHtml(o.raw_preview)}</p>
         </div>`).join('') || '<p>Nothing observed yet. Failures, validation commands and user corrections appear here.</p>';
     }
+
+    // Store changes the agent filed with the dd act tool. Nothing changes until
+    // Apply; Request revision sends the note back to the agent as the reason.
+    const NEXT_STATE = { archive: () => 'archived', restore: () => 'active', delete: () => 'deleted', legacy: () => 'legacy',
+      merge: s => ['active', 'contested'].includes(s) ? 'superseded' : 'archived', split: () => 'superseded',
+      retopic: () => 'superseded', resolve: () => 'resolved' };
+    async function loadActions() {
+      const actions = await api('/api/actions');
+      // A live update re-renders the panel; a note being written must survive it.
+      const drafts = new Map([...document.querySelectorAll('#actions-list [data-action]')]
+        .map(card => [card.dataset.action, card.querySelector('[name="action_note"]').value]));
+      document.getElementById('actions-count').textContent = actions.length ? `· ${actions.length}` : '· none';
+      document.getElementById('actions-list').innerHTML = actions.map(a => `
+        <div class="observation action" data-action="${escapeHtml(a.id)}" data-kind="${escapeHtml(a.kind)}">
+          <span class="badge">${escapeHtml(a.kind)}</span>${a.status === 'stale' ? ' <span class="badge">stale: review again</span>' : ''}
+          <p class="action-msg">${escapeHtml(a.rationale)}</p>
+          ${a.revision_requested ? `<p class="notice warning">Revision requested: ${escapeHtml(a.revision_requested.reason)}</p>` : ''}
+          <ul>${a.target_atoms.map(t => `<li>${escapeHtml(t.topic_key ?? t.id)} · ${escapeHtml(t.lifecycle_state ?? 'missing')} → ${escapeHtml(NEXT_STATE[a.kind](t.lifecycle_state))}</li>`).join('')}</ul>
+          ${a.fields.result ? `<p>Result: <b>${escapeHtml(a.fields.result.topic_key)}</b> — ${escapeHtml(a.fields.result.behavior_delta)}</p>` : ''}
+          ${(a.fields.results ?? []).map(r => `<p>Result: <b>${escapeHtml(r.topic_key)}</b> — ${escapeHtml(r.behavior_delta)}</p>`).join('')}
+          ${a.fields.topic_key ? `<p>New topic: <b>${escapeHtml(a.fields.topic_key)}</b></p>` : ''}
+          ${a.fields.winner ? `<p>Keep ${escapeHtml(a.fields.winner)}; the other becomes ${escapeHtml(a.fields.loser_state)}.</p>` : ''}
+          ${a.fields.archived_reason ? `<p>Reason: ${escapeHtml(a.fields.archived_reason)}</p>` : ''}
+          ${a.fields.legacy_reason ? `<p>Abandoned because: ${escapeHtml(a.fields.legacy_reason)}</p>` : ''}
+          <textarea name="action_note" placeholder="Note, or the reason for a revision">${escapeHtml(drafts.get(a.id) ?? '')}</textarea>
+          <div class="row"><button class="ok" data-action-act="apply">Apply</button><button data-action-act="revise">Request revision</button><button class="danger" data-action-act="reject">Reject</button></div>
+        </div>`).join('') || '<p>No pending actions. The agent files them with the dd act tool.</p>';
+    }
+    document.getElementById('actions-list').addEventListener('click', async (ev) => {
+      const act = ev.target.dataset.actionAct;
+      const card = ev.target.closest('[data-action]');
+      if (!act || !card) return;
+      const note = card.querySelector('[name="action_note"]').value.trim();
+      try {
+        if (act === 'revise' && !note) throw new Error('revision_reason_required');
+        if (act === 'apply' && card.dataset.kind === 'delete' && !confirm('Delete these memories permanently?')) return;
+        await api(`/api/actions/${encodeURIComponent(card.dataset.action)}/${act}`, { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(act === 'apply' ? { rationale: note || DEFAULT_REVIEW_RATIONALE } : act === 'reject' ? { note } : { reason: note }) });
+        await load();
+      } catch (err) { card.querySelector('.action-msg').textContent = friendlyError(err.message); }
+    });
 
     function renderList() {
       listEl.innerHTML = atoms.map(atom => `
@@ -478,13 +531,17 @@
             ${selected.lifecycle_state === 'candidate' ? '<button class="ok" data-act="admit">Admit</button><button class="danger" data-act="reject">Reject</button>' : ''}
             <button data-act="save">Save</button>
             ${selected.lifecycle_state === 'contested' ? '<button class="ok" data-act="resolve">Keep this decision and supersede the other</button>' : ''}
-            ${selected.lifecycle_state === 'archived' ? '<button class="ok" data-act="restore">Restore</button>' : ''}
+            ${['archived', 'legacy'].includes(selected.lifecycle_state) ? '<button class="ok" data-act="restore">Restore</button>' : ''}
+            ${selected.lifecycle_state === 'candidate' ? '<button data-act="revise" title="Send back to the agent with the review note as the reason">Request revision</button>' : ''}
             <button class="danger" data-act="delete">Delete</button>
           </div>
         </div>
         <p id="msg"></p>
         <div class="detail-body">
         <p>Capture: ${escapeHtml(captureLabel(selected))}. Approval is recorded separately.</p>
+        ${selected.revision_requested ? `<p class="notice warning">Revision requested: ${escapeHtml(selected.revision_requested.reason)} The agent receives this on its next prompt.</p>` : ''}
+        ${selected.lifecycle_state === 'archived' ? `<p class="notice">Archived: ${escapeHtml(selected.archived_reason && !/^[a-z_]+$/.test(selected.archived_reason) ? selected.archived_reason : 'reason not recorded')}</p>` : ''}
+        ${selected.lifecycle_state === 'legacy' ? `<p class="notice warning">Legacy, no longer done: ${escapeHtml(selected.legacy_reason ?? '')}${selected.replaced_by ? ` Now: ${escapeHtml(selected.replaced_by)}.` : ''} Agents receive it as a warning when nothing current covers it.</p>` : ''}
         ${selected.lifecycle_state === 'candidate' && selected.replaces ? `<p class="notice">Pending replacement of ${escapeHtml(selected.replaces)}. The current decision stays effective until approval.</p>` : ''}
         ${selected.lifecycle_state === 'candidate' && selected.suspected_pair?.length ? `<p class="notice warning">Suspected duplicate of ${selected.suspected_pair.map(escapeHtml).join(', ')}. Read both before approving: approving this adds a second memory on the same trigger.</p>` : ''}
         ${selected.freshness.length ? `<p class="notice warning">Evidence changed since review: ${escapeHtml(selected.freshness.join('; '))}. Agents still receive this advice, flagged. Re-propose or re-admit it to clear the flag.</p>` : ''}
@@ -569,6 +626,10 @@
             authority: detailEl.querySelector('[name="review_authority"]').value }) });
         } else if (act === 'reject') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/reject', { method: 'POST' });
+        } else if (act === 'revise') {
+          const reason = detailEl.querySelector('[name="review_rationale"]').value.trim();
+          if (!reason) throw new Error('revision_reason_required');
+          await api('/api/atoms/' + encodeURIComponent(selected.id) + '/revise', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }) });
         } else if (act === 'restore') {
           await api('/api/atoms/' + encodeURIComponent(selected.id) + '/restore', { method: 'POST' });
         } else if (act === 'delete') {
