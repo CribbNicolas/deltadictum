@@ -18,7 +18,8 @@ import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
 import { BUILD_ID, VERSION, codeFingerprint } from '../hooks/build.js';
 import { projectKey } from '../project.js';
-import { revisionNotices } from '../engine/revisions.js';
+import { requestRevision, revisionNotices } from '../engine/revisions.js';
+import { applyAction, rejectAction } from '../engine/actions.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -306,7 +307,23 @@ export async function startResidentServer({ projects: initial = [], openProject,
         return send(res, 200, await resolveMemories(body.winner_id, body.loser_id,
           { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale }));
       }
-      const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject|restore))?$/);
+      // Actions the agent filed (src/engine/actions.js). Only this reviewed
+      // transport applies, rejects or sends one back.
+      if (req.method === 'GET' && url.pathname === '/api/actions') {
+        return send(res, 200, await Promise.all((await store.listActions(projectId)).map(async action => ({ ...action,
+          target_atoms: (await Promise.all(action.targets.map(id => store.getAtom(id, projectId)))).map((a, i) => a
+            ? { id: a.id, title: a.title, topic_key: a.topic_key, lifecycle_state: a.lifecycle_state }
+            : { id: action.targets[i], missing: true }) }))));
+      }
+      const actionMatch = url.pathname.match(/^\/api\/actions\/([^/]+)\/(apply|reject|revise)$/);
+      if (req.method === 'POST' && actionMatch) {
+        const id = decodeURIComponent(actionMatch[1]);
+        const body = await readBody(req);
+        if (actionMatch[2] === 'apply') return send(res, 200, await applyAction(id, { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale }));
+        if (actionMatch[2] === 'reject') return send(res, 200, await rejectAction(id, { store, projectId, actor: HUMAN_REVIEW, note: body.note }));
+        return send(res, 200, await requestRevision({ kind: 'action', id, reason: body.reason }, { store, projectId, actor: HUMAN_REVIEW }));
+      }
+      const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject|restore|revise))?$/);
       if (match) {
         const id = decodeURIComponent(match[1]);
         const action = match[2];
@@ -338,6 +355,8 @@ export async function startResidentServer({ projects: initial = [], openProject,
           { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale, authority: body.authority }));
         if (req.method === 'POST' && action === 'reject') return send(res, 200, await rejectMemory(id, { store, projectId, actor: HUMAN_REVIEW }));
         if (req.method === 'POST' && action === 'restore') return send(res, 200, await restoreMemory(id, { store, projectId, actor: HUMAN_REVIEW }));
+        if (req.method === 'POST' && action === 'revise') return send(res, 200, await requestRevision({ kind: 'memory', id, reason: body.reason },
+          { store, projectId, actor: HUMAN_REVIEW }));
       }
       send(res, 404, { error: 'not_found' });
     } catch (err) { send(res, 409, { error: err.message }); }
