@@ -261,7 +261,7 @@ describe('audit UI retirement', () => {
     const archived = await json(base + '/api/atoms?lifecycle=archived');
     assert.equal(archived.status, 200);
     assert.deepEqual(archived.body.map(a => a.id), [written.atom.id]);
-    assert.equal(archived.body[0].archived_reason, 'never_activated');
+    assert.equal(archived.body[0].archived_reason, 'Archived by the test.');
 
     const anonymous = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST' });
     assert.equal(anonymous.status, 403);
