@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS memory_atoms (
   valid_until TEXT,
   topic_key TEXT NOT NULL CHECK (length(topic_key) > 0),
   tags TEXT NOT NULL DEFAULT '[]',
-  lifecycle_state TEXT NOT NULL DEFAULT 'candidate' CHECK (lifecycle_state IN ('candidate','active','contested','superseded','archived','rejected')),
+  lifecycle_state TEXT NOT NULL DEFAULT 'candidate' CHECK (lifecycle_state IN ('candidate','active','contested','superseded','archived','rejected','legacy')),
   schema_version INTEGER NOT NULL DEFAULT 7,
   activation_count INTEGER NOT NULL DEFAULT 0,
   predominance REAL NOT NULL DEFAULT 0 CHECK (predominance >= 0),
@@ -207,4 +207,17 @@ CREATE TABLE IF NOT EXISTS memory_vectors (
   text_hash TEXT NOT NULL,
   vector BLOB NOT NULL,
   PRIMARY KEY(atom_id, model)
+);
+
+-- Applied, rejected, revised and stale actions (src/engine/actions.js), kept as audit.
+CREATE TABLE IF NOT EXISTS memory_action_log (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  action_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  targets TEXT NOT NULL DEFAULT '[]',
+  outcome TEXT NOT NULL CHECK (outcome IN ('applied','rejected','revised','stale')),
+  note TEXT,
+  actor_ref TEXT,
+  created_at TEXT NOT NULL
 );

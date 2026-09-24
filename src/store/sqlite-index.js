@@ -69,7 +69,20 @@ export function createSqliteIndex(dbPath) {
   }
 
   async function migrate() {
+    // CREATE TABLE IF NOT EXISTS keeps an older CHECK on an existing table. An
+    // index from before `legacy` is rebuilt in place with its rows (activation
+    // counts live only here); its indexes are dropped first so the schema
+    // recreates them on the new table rather than following the renamed one.
+    const existing = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'memory_atoms'").get();
     const sql = await readFile(SCHEMA_PATH, 'utf8');
+    if (existing && !existing.sql.includes("'legacy'")) {
+      db.exec(`DROP INDEX IF EXISTS uq_memory_atoms_project_topic_effective;
+        DROP INDEX IF EXISTS idx_memory_atoms_project_lifecycle;
+        ALTER TABLE memory_atoms RENAME TO memory_atoms_before_legacy;`);
+      db.exec(sql);
+      db.exec('INSERT INTO memory_atoms SELECT * FROM memory_atoms_before_legacy; DROP TABLE memory_atoms_before_legacy;');
+      return;
+    }
     db.exec(sql);
   }
 
