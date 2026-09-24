@@ -3,6 +3,16 @@
 Updated 2026-09-24. Only open items; each carries its references and needs no context from a past session.
 Finished work is recorded in the commit history.
 
+## Start here (next session, 2026-09-25)
+
+1. The owner publishes 0.3.1 (item 1), then check it from npm as item 1 describes.
+2. Review the six DD proposals from 2026-09-24 in the audit UI (item 2b).
+3. Work item 2a, starting with its first cause: it is why DD looks broken on Claude Code.
+
+In a new session the audit UI address (with its key) is printed at session start. After editing `src/`,
+restart the resident with a session-start payload (`echo '{"cwd":"C:/dev/supermem","session_id":"restart",
+"source":"startup"}' | node hooks/run.cjs session-start`) and reconnect the MCP server with `/mcp`.
+
 ## 1. Publish 0.3.1 to npm — needs the owner, in a real terminal
 
 `deltadictum@0.3.0` is on npm but broken in OpenCode (no `./server` export; the adapter imported
@@ -23,7 +33,7 @@ pass; OpenCode loads the plugin without error (`opencode serve --print-logs --lo
 request with `?directory=<project>`; look for `service=plugin path=deltadictum`). Run these with
 `DD_RESIDENT_REGISTRY` pointing at a temporary file, or they replace the machine's resident (item 5).
 
-## 2. The agent never asks DD on its own in Claude Code (seen in the 2026-09-23/24 session)
+## 2a. The agent never asks DD on its own in Claude Code (seen in the 2026-09-23/24 session)
 
 In a long working session on this repository the model never called `orient`, `retrieve`, `propose` or
 `feedback` until the user asked; it only received what hooks pushed (16 deliveries). Causes found:
@@ -47,6 +57,20 @@ In a long working session on this repository the model never called `orient`, `r
   prompt hook (not pre-tool: L1) replace a stale resident, as session start does.
 - **The session's MCP server keeps running the code it started with**: after the UI-key change its `status`
   still returned an address without the key (403). Reconnect with `/mcp` after changing `src/`.
+
+## 2b. Review the six proposals from 2026-09-24
+
+Proposed through MCP with verified file evidence, pending review (`candidate`), all `model_initiated`:
+- `0647b0f0` integrations/opencode/bun-runtime: the adapter imports no DD module, exports only the plugin.
+- `31c07973` integrations/grok/manifest-traps: mcpServers as a file path, no `${VAR:-default}`, url source.
+- `4b675f10` development/resident/stale-after-edit: editing `src/` silences DD until a restart.
+- `54c44c36` development/resident/isolate-test-installs: test copies replace the machine's resident.
+- `942ad1bc` release/npm/bin-path: npm 11 drops a `./` bin path at publish.
+- `a02d4640` hooks/observe/claude-code-outcomes: Claude Code tool outcomes are never recorded (item 2a).
+
+Git state: `.dd/candidates/` is untracked and `.dd/registry/topics.json` has uncommitted provisional
+topics for them; commit `bfb3056` already pushed the first five of those registry
+entries by accident. After review, commit `.dd/` so the registry and the reviewed memories agree.
 
 ## 3. Verify Grok Build live — blocked: Grok is not signed in
 
