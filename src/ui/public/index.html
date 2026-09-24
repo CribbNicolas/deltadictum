@@ -414,6 +414,16 @@
     const NEXT_STATE = { archive: () => 'archived', restore: () => 'active', delete: () => 'deleted', legacy: () => 'legacy',
       merge: s => ['active', 'contested'].includes(s) ? 'superseded' : 'archived', split: () => 'superseded',
       retopic: () => 'superseded', resolve: () => 'resolved' };
+    // A merge or split result is admitted as validated when applied, so the
+    // reviewer sees all of it here, as they would a candidate.
+    function renderResult(r) {
+      const scope = Object.entries(r.applies_to ?? {}).filter(([, v]) => v?.length).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ');
+      return `<div class="notice"><b>Result ${escapeHtml(r.memory_type ?? 'lesson')} · ${escapeHtml(r.topic_key)}</b> — admitted as validated when applied
+        <p>When: ${escapeHtml(r.trigger)}</p><p>Do: ${escapeHtml(r.behavior_delta)}</p><p>Why: ${escapeHtml(r.why)}</p>
+        ${scope ? `<p>Only within: ${escapeHtml(scope)}</p>` : ''}
+        ${(r.tags ?? []).length ? `<p>Tags: ${escapeHtml(r.tags.join(', '))}${r.tags.includes('ambient') ? ' — ambient: sent at every session start' : ''}</p>` : ''}
+        <p>Evidence: ${(r.evidence_refs ?? []).map(e => `${escapeHtml(e.source_type)} ${escapeHtml(e.source_ref)}`).join('; ') || 'none'}</p></div>`;
+    }
     async function loadActions() {
       const actions = await api('/api/actions');
       // A live update re-renders the panel; a note being written must survive it.
@@ -426,8 +436,7 @@
           <p class="action-msg">${escapeHtml(a.rationale)}</p>
           ${a.revision_requested ? `<p class="notice warning">Revision requested: ${escapeHtml(a.revision_requested.reason)}</p>` : ''}
           <ul>${a.target_atoms.map(t => `<li>${escapeHtml(t.topic_key ?? t.id)} · ${escapeHtml(t.lifecycle_state ?? 'missing')} → ${escapeHtml(NEXT_STATE[a.kind](t.lifecycle_state))}</li>`).join('')}</ul>
-          ${a.fields.result ? `<p>Result: <b>${escapeHtml(a.fields.result.topic_key)}</b> — ${escapeHtml(a.fields.result.behavior_delta)}</p>` : ''}
-          ${(a.fields.results ?? []).map(r => `<p>Result: <b>${escapeHtml(r.topic_key)}</b> — ${escapeHtml(r.behavior_delta)}</p>`).join('')}
+          ${[a.fields.result, ...(a.fields.results ?? [])].filter(Boolean).map(renderResult).join('')}
           ${a.fields.topic_key ? `<p>New topic: <b>${escapeHtml(a.fields.topic_key)}</b></p>` : ''}
           ${a.fields.winner ? `<p>Keep ${escapeHtml(a.fields.winner)}; the other becomes ${escapeHtml(a.fields.loser_state)}.</p>` : ''}
           ${a.fields.archived_reason ? `<p>Reason: ${escapeHtml(a.fields.archived_reason)}</p>` : ''}
