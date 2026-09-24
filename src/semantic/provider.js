@@ -65,5 +65,22 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     if (active) await syncVectors({ store, projectId, embedder: active, states: RECALL_STATES });
     return Boolean(active);
   };
+  // The memories nearest to one memory or a text, in any state but rejected:
+  // what /dd:compact and /dd:prospect use to find overlaps. Read-only.
+  semanticRetrieve.similar = async ({ store, projectId, id, text, limit = 8 }) => {
+    const active = await ready();
+    if (!active) return { error: { code: 503, message: 'The embedding model is not ready.' } };
+    const states = ['candidate', 'active', 'contested', 'superseded', 'legacy', 'archived'];
+    const vectors = await syncVectors({ store, projectId, embedder: active, states });
+    const probe = id ? vectors.get(id) : (await active.embed([queryText(text)], 'query'))[0];
+    if (!probe) return { error: { code: 404, message: `not_found:${id}` } };
+    const ranked = [...vectors].filter(([other]) => other !== id).map(([other, vector]) => [other, cosine(probe, vector)])
+      .sort((a, b) => b[1] - a[1]).slice(0, Math.min(20, Math.max(1, Number(limit) || 8)));
+    return { similar: await Promise.all(ranked.map(async ([other, similarity]) => {
+      const atom = await store.getAtom(other, projectId);
+      return { id: other, topic_key: atom.topic_key, title: atom.title, lifecycle_state: atom.lifecycle_state,
+        similarity: Math.round(similarity * 1000) / 1000 };
+    })) };
+  };
   return semanticRetrieve;
 }

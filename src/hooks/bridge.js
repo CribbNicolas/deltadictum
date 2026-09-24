@@ -15,7 +15,7 @@ const DEFAULT_TIMEOUT_MS = 1500;
 // 'retrieve' is the MCP tool, answered here so it gets the same semantic
 // retrieval as the hooks.
 export async function callRunningStore(command, payload, repoRoot) {
-  if (!['pre-tool', 'prompt', 'session-start', 'retrieve'].includes(command)) return null;
+  if (!['pre-tool', 'prompt', 'session-start', 'retrieve', 'similar'].includes(command)) return null;
   try {
     const status = await readRegistry();
     if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(status?.url ?? '') || !/^[a-f0-9]{64}$/.test(status.hook_token ?? '')) return null;
