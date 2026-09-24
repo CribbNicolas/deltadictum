@@ -7,6 +7,7 @@ import { AMBIENT_TAG, ambientRevision } from '../engine/retrieve.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { AUTHORITY_WEIGHT } from '../engine/ranking.js';
 import { estimateTokens } from '../engine/budget.js';
+import { revisionNotices } from '../engine/revisions.js';
 
 // Memories a reviewer tagged `ambient` apply to nearly every task (architecture,
 // project-wide conventions), which no single tool call names. They are sent once
@@ -123,6 +124,7 @@ export async function buildSessionStartContext({ store, projectId, uiUrl, uiLive
     catch { /* best-effort: a missed mark just means the next reconnect resends */ }
   }
   const ambient = await ambientMemories({ store, projectId, sessionId }).catch(() => []);
+  const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
   const knowledge = ambient.length ? `DD - Project-wide knowledge (advisory):
 ${microPack(ambient)}` : null;
   const advisory = alreadyPrimed ? null
@@ -134,7 +136,8 @@ ${microPack(ambient)}` : null;
     ...(uiLive && uiUrl ? { systemMessage: uiPointer(uiUrl) } : {}),
     hookSpecificOutput: {
       hookEventName: 'SessionStart',
-      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, advisory, knowledge].filter(Boolean).join('\n\n'),
+      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, revisions, advisory, knowledge]
+        .filter(Boolean).join('\n\n'),
     },
   };
 }

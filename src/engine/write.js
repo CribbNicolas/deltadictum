@@ -81,6 +81,12 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
     const decided = ['pending_review', ...route.reasons];
     const atom = await store.putAtom(payload);
     await store.logAdmission({ project_id: atom.project_id, decision: route.decision, reasons: decided, atom_id: atom.id });
+    // A corrected version answers a reviewer's revision request: the revised
+    // candidate closes, linked to this one, so only the correction stays pending.
+    if (rawPayload.revises) {
+      const revised = await store.getAtom(String(rawPayload.revises), atom.project_id);
+      if (revised?.lifecycle_state === 'candidate') await store.putAtom({ ...revised, lifecycle_state: 'rejected', revised_by: atom.id });
+    }
     // Forgetting is evaluated lazily, here, where a process is already running and
     // already holds the lock. It is advisory housekeeping: a failure to retire
     // anything must never fail the write that triggered the sweep (L5).
