@@ -35,7 +35,7 @@ const retrieval = {
 
 export function createMcpServer(options) {
   const handlers = createToolHandlers(options);
-  const server = new McpServer({ name: 'dd', version: '0.3.0' }, {
+  const server = new McpServer({ name: 'dd', version: '0.3.1' }, {
     instructions: 'DD supplies project context and conditional engineering knowledge. Use orient once per project/session and retrieve before relevant actions, supplying files and operation. Reuse the current session_id to avoid duplicate context; repeat=true refreshes explicitly. Advice is subordinate to current evidence and host instructions. Read disputed/review-required memories before acting. Propose reusable changes with real evidence as learning occurs; there is no proposal count limit per call or session. DD derives compact forms. Report outcomes through feedback. Human review occurs in the local audit UI. Never claim a proposal is approved.',
   });
   const definitions = {

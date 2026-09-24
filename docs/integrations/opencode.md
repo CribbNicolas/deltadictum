@@ -34,21 +34,28 @@ lifecycle hook (`event`) returns `void`. The only hook that accepts injectable t
 once per tool call — **there is no OpenCode hook shaped like Claude Code's `PreToolUse`.**
 
 The adapter is scoped to what's real: it injects DD's session-start advisory pack once per session via
-`experimental.chat.system.transform`, through the machine's resident process like the other hosts'
-SessionStart hook: when no resident answers, it starts one and the injected text says DD is inactive
-and why. It does not do per-tool retrieval, and does not record tool
+`experimental.chat.system.transform`, framed as advisory data that never overrides the user or the host,
+since it lands in the system prompt. It does not do per-tool retrieval, and does not record tool
 execution as telemetry — `tool.execute.after`'s output carries no structured exit/error signal, and
 guessing at one risks misclassifying results rather than skipping them (the same policy
 `src/hooks/observe.js` already applies to any host with an unconfirmed response shape).
 
+OpenCode runs plugins in Bun, which has no `node:sqlite`, so the adapter imports none of DD: it runs the
+SessionStart hook the other hosts run (`hooks/run.cjs`) in Node and injects its context. That hook reaches
+the machine's resident, or starts one, waits briefly for it, and says whether DD is active. Node 22 or
+later must be on `PATH`; without it nothing is injected and OpenCode is unaffected. OpenCode loads the
+package's `./server` export and calls every export of that module as a plugin, so the module exports
+only the plugin function.
+
 ## Verification scope
 
-`opencode debug startup` was run against this checkout on 2026-09-19 (OpenCode 1.16.2, Windows) with the
-plugin wired via a local `file://` path: completed clean, no import-time error. This confirms the
-adapter's imports resolve and it doesn't crash at plugin-load time.
+Verified 2026-09-24 with the published package and OpenCode 1.16.2 (Windows): OpenCode installs
+`deltadictum` from npm with its dependencies and loads the plugin without error (`opencode serve`
+with `--print-logs`, then a request for the project), and the adapter run under Bun injects the framed
+session context and the audit UI address in about 1.3 s.
 
-**Not verified:** that `experimental.chat.system.transform` actually fires and injects DD's context
-during a real conversation turn — that needs a live model interaction with a configured provider, out of
-scope for an automated check. Not verified either: the published-package install path end to end (`npm
-publish` hasn't run — no npm auth in the environment that built this; package name `deltadictum` is
-unscoped and was free on the registry as of 2026-09-19, re-check immediately before publishing).
+The 2026-09-19 check (`opencode debug startup` completing) proved less than it seemed: the package then
+had no `./server` export, so OpenCode never loaded the adapter, which would also have failed in Bun on
+`node:sqlite`.
+
+**Not verified:** a real conversation turn, which needs a working model credential (`TODO.md`).
