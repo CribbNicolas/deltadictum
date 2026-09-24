@@ -15,10 +15,13 @@ export async function readSeen() {
   }
 }
 
-export async function markSeen(id) {
+// Several ids in one write: one read-modify-write per id would race and drop some.
+export async function markSeen(...ids) {
   const seen = await readSeen();
-  if (seen[id]) return;
-  seen[id] = new Date().toISOString();
+  const fresh = ids.filter(id => typeof id === 'string' && id && !seen[id]);
+  if (!fresh.length) return;
+  const at = new Date().toISOString();
+  for (const id of fresh) seen[id] = at;
   await mkdir(resolveDataBase(), { recursive: true, mode: 0o700 });
   await writeFile(seenPath(), JSON.stringify(seen), 'utf8');
 }
