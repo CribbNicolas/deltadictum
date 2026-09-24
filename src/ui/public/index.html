@@ -358,6 +358,9 @@
       document.getElementById('unsupported').innerHTML = status.unsupported?.length
         ? `<p class="notice warning">${status.unsupported.length} knowledge file(s) cannot be read by this version of DD and are never recalled. Fix or delete them:\n${status.unsupported.map(u => `${escapeHtml(u.path)} (${escapeHtml(u.reason)})`).join('\n')}</p>`
         : '';
+      if (status.archive_review?.due) {
+        document.getElementById('unsupported').innerHTML += `<p class="notice">The archive holds ${escapeHtml(String(status.archive_review.archived))} memories (review at ${escapeHtml(String(status.archive_review.threshold))}). Ask the agent for /dd:clean.</p>`;
+      }
       const project = await api('/api/project');
       document.getElementById('project').textContent = `${project.purpose || project.name} · Sources: ${project.sources.join(', ') || 'repository structure'}`;
       const q = new URLSearchParams();

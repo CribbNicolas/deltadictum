@@ -50,6 +50,7 @@ test('actions are listed, revised, rejected and applied only through the review 
   assert.equal((await store.getAtom('u1', 'demo')).lifecycle_state, 'legacy');
   assert.equal((await call(`/api/actions/${a1.id}/reject`, { note: 'Already legacy.' })).status, 200);
   assert.deepEqual((await call('/api/actions')).body, []);
+  assert.deepEqual((await call('/api/status')).body.archive_review, { archived: 0, threshold: 50, due: false });
 });
 
 test('a candidate memory can be sent back with a reason', async t => {
