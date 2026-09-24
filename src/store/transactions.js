@@ -69,7 +69,7 @@ export function createWriteLock(ddDir) {
 }
 
 function operationPath(ddDir, path) {
-  if (!/^(?:(?:atoms|candidates|archive)\/[a-zA-Z0-9_/-]+\.json|registry\/topics\.json|relations\.json|config\.json)$/.test(path)
+  if (!/^(?:(?:atoms|candidates|archive|legacy|actions)\/[a-zA-Z0-9_/-]+\.json|registry\/topics\.json|relations\.json|config\.json)$/.test(path)
       || path.split('/').includes('..')) throw new Error('invalid_journal_path');
   return join(ddDir, ...path.split('/'));
 }
