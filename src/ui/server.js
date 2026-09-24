@@ -16,14 +16,17 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
 import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
-import { BUILD_ID, codeFingerprint } from '../hooks/build.js';
+import { BUILD_ID, VERSION, codeFingerprint } from '../hooks/build.js';
 import { projectKey } from '../project.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
-function send(res, status, body, type = 'application/json') {
+// Scripts run only with the nonce of the page that carries them, so markup an
+// escaping mistake let into the page cannot execute. Styles stay inline.
+function send(res, status, body, type = 'application/json', scriptNonce = null) {
+  const scripts = scriptNonce ? `'nonce-${scriptNonce}'` : "'none'";
   res.writeHead(status, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-store',
-    'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'" });
+    'x-content-type-options': 'nosniff', 'content-security-policy': `default-src 'self'; script-src ${scripts}; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'` });
   res.end(type === 'application/json' ? JSON.stringify(body) : body);
 }
 async function readBody(req) {
@@ -158,13 +161,14 @@ export async function startResidentServer({ projects: initial = [], openProject,
         return void setImmediate(onShutdown);
       }
       if (req.method === 'GET' && url.pathname === '/api/resident') {
-        return send(res, 200, { build: BUILD_ID, stale: await staleCode(), retrieval, projects: projects.size });
+        return send(res, 200, { build: BUILD_ID, version: VERSION, stale: await staleCode(), retrieval, projects: projects.size });
       }
       if (req.method === 'POST' && url.pathname.startsWith('/api/hooks/')) {
         if (!sameSecret(req.headers['x-dd-hook-token'], hookToken)) return send(res, 403, { error: 'hook_auth_required' });
         if (await staleCode()) return send(res, 409, { error: 'build_stale' });
         lastActivity = Date.now();
         res.setHeader('x-dd-build', BUILD_ID);
+        if (VERSION) res.setHeader('x-dd-version', VERSION);
         const body = await readBody(req);
         const project = await hookProject(body);
         if (!project) return send(res, 403, { error: 'project_mismatch' });
@@ -217,8 +221,10 @@ export async function startResidentServer({ projects: initial = [], openProject,
       if (req.method !== 'GET' && (!sameSecret(req.headers['x-dd-review-token'], token)
           || (req.headers.origin && req.headers.origin !== `http://${expectedHost}`))) return send(res, 403, { error: 'local_review_required' });
       if (req.method === 'GET' && ['/', '/index.html'].includes(url.pathname)) {
-        const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token);
-        return send(res, 200, html, 'text/html');
+        const nonce = randomBytes(16).toString('base64');
+        const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token)
+          .replace(/<script>/g, `<script nonce="${nonce}">`);
+        return send(res, 200, html, 'text/html', nonce);
       }
       if (req.method === 'GET' && url.pathname === '/api/projects') {
         return send(res, 200, [...projects.values()].map(p => ({ key: p.key, project_id: p.projectId, repo_root: p.store.repoRoot })));

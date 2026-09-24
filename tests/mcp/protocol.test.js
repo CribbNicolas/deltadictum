@@ -88,3 +88,21 @@ test('every implemented handler is reachable and every advertised tool is implem
   assert.deepEqual(implemented, advertised,
     'a handler nobody can call, or a tool nobody implements, is the drift this test exists to catch');
 });
+
+// A host keeps a session's MCP server on the code it started with; once that
+// code changes, every answer says to reconnect it.
+test('an MCP server whose code changed says so in every answer', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'dd-protocol-'));
+  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+  let stale = null;
+  const server = createMcpServer({ store, projectId: 'demo', staleNotice: async () => stale });
+  const client = new Client({ name: 'stale-test', version: '1' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  t.after(async () => { await client.close(); await server.close(); store.close(); });
+  assert.equal((await client.callTool({ name: 'status', arguments: {} })).content.length, 1);
+  stale = 'DD - reconnect';
+  const answer = await client.callTool({ name: 'status', arguments: {} });
+  assert.equal(answer.content.at(-1).text, 'DD - reconnect');
+  assert.ok(JSON.parse(answer.content[0].text).project_id);
+});

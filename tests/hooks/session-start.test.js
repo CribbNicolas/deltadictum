@@ -80,9 +80,12 @@ describe('SessionStart context', () => {
     const opts = { store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'sess-1' };
     const first = await buildSessionStartContext(opts);
     assert.match(first.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    // Pushed knowledge made pulling look redundant; the start says when to pull.
+    assert.match(first.hookSpecificOutput.additionalContext, /`retrieve` tool before changing an area.*`propose`.*load them first/s);
 
     const second = await buildSessionStartContext(opts);
     assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /`retrieve` tool/);
     assert.match(second.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
     store.close();
   });

@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BUILD_ID } from './hooks/build.js';
+import { BUILD_ID, VERSION, compareVersions, compatibleBuild } from './hooks/build.js';
 import { projectKey } from './project.js';
 
 // One resident DD process per machine (L2), shared by every project and
@@ -27,7 +27,7 @@ export async function writeRegistry({ url, port, hookToken, uiKey }) {
   const path = registryPath();
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const temp = `${path}.${process.pid}.tmp`;
-  await writeFile(temp, `${JSON.stringify({ url, port, hook_token: hookToken, ui_key: uiKey, pid: process.pid, build: BUILD_ID }, null, 2)}\n`,
+  await writeFile(temp, `${JSON.stringify({ url, port, hook_token: hookToken, ui_key: uiKey, pid: process.pid, build: BUILD_ID, version: VERSION }, null, 2)}\n`,
     { encoding: 'utf8', mode: 0o600 });
   await rename(temp, path);
 }
@@ -39,7 +39,7 @@ export async function residentStatus(timeoutMs = 500) {
     const response = await fetch(`${record.url}/api/resident`, { signal: AbortSignal.timeout(timeoutMs) });
     if (!response.ok) return null;
     const status = await response.json();
-    return { url: record.url, hookToken: record.hook_token, build: status.build ?? null, stale: status.stale !== false,
+    return { url: record.url, hookToken: record.hook_token, build: status.build ?? null, version: status.version ?? null, stale: status.stale !== false,
       retrieval: status.retrieval ?? 'lexical' };
   } catch { return null; }
 }
@@ -60,15 +60,27 @@ export async function sessionUiUrl(repoRoot, resident) {
   return resident?.state === 'live' ? projectUiUrl(repoRoot) : null;
 }
 
-// Live and running this build: nothing to do. Otherwise start one, detached, and
-// do not wait for it; DD stays inactive for this session until it answers.
+// Whether a running resident serves this install: unchanged since it started
+// (an edited one refuses hooks, gap 7), and from this tree or the same version,
+// so installs of one version share it (L2). One of a newer version is left in
+// place: replacing it only starts a fight with the install that started it,
+// which would replace this one's at its next session start.
+export function residentFit(status) {
+  if (!status) return 'none';
+  if (status.stale) return 'replace';
+  if (compatibleBuild(status)) return 'live';
+  return compareVersions(status.version, VERSION) > 0 ? 'superseded' : 'replace';
+}
+
+// Live and serving this install: nothing to do. Otherwise start one, detached,
+// and do not wait for it; DD stays inactive for this session until it answers.
 export async function ensureResident(_repoRoot, { start = startDetached } = {}) {
   // Opt-out for tests, CI and anyone who does not want a background process.
   if (process.env.DD_RESIDENT === '0') return { state: 'disabled' };
   const status = await residentStatus();
-  // Same build but edited since it started: it refuses hooks (gap 7), so it is
-  // replaced like a resident from another build.
-  if (status && status.build === BUILD_ID && !status.stale) return { state: 'live', url: status.url, retrieval: status.retrieval };
+  const fit = residentFit(status);
+  if (fit === 'live') return { state: 'live', url: status.url, retrieval: status.retrieval };
+  if (fit === 'superseded') return { state: 'superseded', version: status.version };
   try { start(); return { state: 'started', replaced: Boolean(status) }; }
   catch { return { state: 'unavailable' }; }
 }
@@ -78,7 +90,7 @@ function startDetached() {
   child.unref();
 }
 
-// Ask a resident from another build to exit so this one can take its place.
+// Ask a stale resident, or one of an older version, to exit so this one can take its place.
 export async function retireResident(status) {
   if (!status?.hookToken) return;
   try {

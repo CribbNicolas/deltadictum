@@ -62,7 +62,7 @@ Run the standalone audit UI from the target project:
 node <absolute-plugin-path>/src/cli.js
 ```
 
-The MCP server and the SessionStart hook start this UI as the [resident process](#resident-process) when none is running. Hooks use it when it runs the same, unchanged build; otherwise they recall nothing, keep recording capture bookkeeping, and SessionStart says DD is inactive. Neither path blocks the host on plugin failure.
+The MCP server and the SessionStart hook start this UI as the [resident process](#resident-process) when none is running. Hooks use it when it runs an unchanged build of the same install or version; otherwise they recall nothing, keep recording capture bookkeeping, and SessionStart says DD is inactive. Neither path blocks the host on plugin failure.
 
 ## Propose a decision
 
@@ -102,7 +102,9 @@ Required authored fields: `topic_key`, `trigger`, `behavior_delta`, `why`, `evid
 
 `feedback` records an outcome for a memory and task: `helped`, `failed`, `refuted` or `not_applicable`. Retrieval frequency and agent-reported success never raise confidence or authority. A task ID prevents repeated submission of the same outcome from inflating counts.
 
-Hooks retain small failure diagnostics and explicit validation results. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
+Hooks retain small failure diagnostics and explicit validation results. On Claude Code the outcome comes
+from the event: `PostToolUseFailure` is a failure, and `PostToolUse` a success, since that host reports
+no exit code; other hosts must report one. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
 
 Automatic capture reminders are separate from writes: the Stop hook reminds only after a turn that recorded a host failure, a validation or a user correction, and avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point.
 
@@ -126,8 +128,10 @@ recalled, and the session's first message says why.
   store; the model is loaded once for all of them. The audit UI is per project:
   `http://127.0.0.1:<port>/?project=<key>` (the session banner prints it). Without `?project=` the page
   lists the open projects.
-- **When it steps aside.** A process from another DD install, or one whose code changed since it started,
-  is replaced at the next session start. It exits after 12 hours without hook traffic.
+- **Several installs.** Installs of one version (a plugin in two hosts, a plugin and an npm install) share
+  one resident. A resident whose code changed since it started, or of an older version, is replaced at the
+  next session start or prompt; one of a newer version is kept, and an older install says it is inactive
+  until updated. It exits after 12 hours without hook traffic.
 - **Cost.** About 640 MB of RAM with the model loaded, plus little per open project (two projects measured
   724 MB); about 480 MB on disk for the runtime and 130 MB for the model, downloaded once to
   `~/.dd-data/models`. A query takes a few milliseconds.
@@ -136,8 +140,8 @@ When the first message says DD is inactive, check in this order:
 
 1. **Is it running?** Open the `url` in `~/.dd-data/resident.json` and request `/api/resident`.
    `retrieval` is `semantic` when ready, `loading` while the model loads (the first run downloads it), and
-   `unavailable` when the model could not be loaded. `stale: true` means its code changed; the next session
-   replaces it.
+   `unavailable` when the model could not be loaded. `stale: true` means its code changed; the next prompt
+   or session start replaces it.
 2. **Start it by hand:** `node <dd>/src/cli.js resident`. It says so and exits if a current one is running.
 3. **`retrieval: unavailable`:** the embedding runtime is missing or cannot run here. Reinstall DD's
    dependencies; platforms without prebuilt ONNX binaries (for example Alpine/musl) cannot run DD.
@@ -156,12 +160,14 @@ your files and write `.dd/` directly, so review is a check on what the agent pro
 - **Audit UI.** It listens on `127.0.0.1` only and refuses requests for any other `Host` (DNS rebinding).
   The page and every API route require a key from the address DD prints; the first visit trades it for an
   `HttpOnly`, `SameSite=Strict` cookie. Changes also need the review token in the page and a same-origin
-  request. The key and the hook token live in `~/.dd-data/resident.json`, readable only by you, like the
+  request. The page's script runs only under a per-response CSP nonce, so markup that an escaping mistake
+  let into the page cannot execute. The key and the hook token live in `~/.dd-data/resident.json`, readable only by you, like the
   local data directories (POSIX modes; a Windows profile is already private).
 - **Committed knowledge.** A file in `.dd/` can arrive by any commit. On read it is held to the same
   content limits as a proposal (size, injection-like text), and the text injected into the agent is derived
   from the fields the audit UI shows, never taken from the file. Evidence paths must stay inside the
-  repository. On OpenCode, where it lands in the system prompt, it is framed as advisory data that never
+  repository. The injection check is a phrase list: it stops obvious instruction text, not a determined
+  rewording, so human review of what enters `.dd/` remains the control. On OpenCode, where it lands in the system prompt, it is framed as advisory data that never
   overrides the user or the host.
 - **Credentials.** A proposal carrying a credential in a recognizable shape (cloud, Git host, npm, Slack
   or Stripe keys, JWTs, bearer tokens, private keys) is refused, since knowledge is committed and shared.
@@ -206,6 +212,19 @@ The replay covers 24 authored scenarios: exact matches, paraphrases, Spanish, in
 A provider-neutral [model evaluation runner](docs/evaluation/model-evaluation.md) compares no memory, static instructions and DD while preserving actual usage supplied by an adapter. Real model runs and repository task trials are required before claiming equal effectiveness across models or improved development outcomes.
 
 The current authority is [docs/DD.md](docs/DD.md).
+
+## Developing DD
+
+Run Claude Code from a checkout as a local plugin, `claude --plugin-dir <checkout>`, so the session gets the
+same hooks, MCP server and skills as a marketplace install. Hooks registered by hand in
+`.claude/settings.local.json` (with the root `.mcp.json`) bring no skills and miss hook events added to
+`hooks/hooks.json` later; do not combine them with `--plugin-dir`, or every hook runs twice.
+
+After editing `src/`, the resident refuses hooks until it is replaced; the next prompt or session start
+does that. The session's MCP server keeps its old code: its answers say so, and `/mcp` reconnects it.
+
+Tests and install checks that start DD must not replace the machine's resident: set
+`DD_RESIDENT_REGISTRY` to a temporary file (or `DD_RESIDENT=0`) and stop what they started.
 
 ## License
 

@@ -1,4 +1,4 @@
-import { BUILD_ID } from './build.js';
+import { compatibleBuild } from './build.js';
 import { readRegistry } from '../resident.js';
 import { projectDataDir } from '../project.js';
 
@@ -23,9 +23,10 @@ export async function callRunningStore(command, payload, repoRoot) {
       headers: { 'content-type': 'application/json', 'x-dd-hook-token': status.hook_token },
       body: JSON.stringify({ payload, repo_root: repoRoot, data_dir: projectDataDir(repoRoot) }),
       signal: AbortSignal.timeout(command === 'pre-tool' ? PRE_TOOL_TIMEOUT_MS : DEFAULT_TIMEOUT_MS) });
-    // A resident from another install, or one that predates this check, answers
-    // without this build's id; its reply would carry its code, not ours (gap 7).
-    if (!response.ok || response.headers.get('x-dd-build') !== BUILD_ID) return null;
+    // A resident from another install answers with its own code (gap 7). Its reply
+    // stands for this install only from the same tree or the same version; one
+    // that predates these headers names neither.
+    if (!response.ok || !compatibleBuild({ build: response.headers.get('x-dd-build'), version: response.headers.get('x-dd-version') })) return null;
     return await response.json();
   } catch { return null; }
 }

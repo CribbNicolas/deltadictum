@@ -181,3 +181,23 @@ test('the first prompt a resident answers names the audit UI and says DD became 
   // A session that never saw DD inactive is not told it became active.
   assert.equal((await prompt('late')).systemMessage, undefined);
 });
+
+// Two installs on one machine (a plugin and a checkout, or two hosts) replaced
+// each other's resident at every session start and reloaded the model. Installs
+// of one version now share it; a newer one is left in place.
+test('a resident serves every install of its version and is kept when newer', async () => {
+  const { residentFit } = await import('../../src/resident.js');
+  const { BUILD_ID, VERSION, compareVersions } = await import('../../src/hooks/build.js');
+  const other = 'f'.repeat(16);
+  const bump = v => v.split('.').map((n, i) => i === 1 ? Number(n) + 1 : n).join('.');
+  assert.equal(residentFit(null), 'none');
+  assert.equal(residentFit({ build: BUILD_ID, version: VERSION, stale: false }), 'live');
+  assert.equal(residentFit({ build: other, version: VERSION, stale: false }), 'live');
+  assert.equal(residentFit({ build: other, version: VERSION, stale: true }), 'replace');
+  assert.equal(residentFit({ build: other, version: '0.0.1', stale: false }), 'replace');
+  assert.equal(residentFit({ build: other, version: null, stale: false }), 'replace');
+  assert.equal(residentFit({ build: other, version: bump(VERSION), stale: false }), 'superseded');
+  assert.ok(compareVersions('0.10.0', '0.9.9') > 0);
+  assert.equal(compareVersions('0.3.1', '0.3.1'), 0);
+  assert.match(residentNotice({ state: 'superseded', version: '9.9.9' }), /version 9\.9\.9, newer than this install/);
+});

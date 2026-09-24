@@ -56,6 +56,14 @@ export function createMcpServer(options) {
     status: ['Get project counts and the audit URL.', {}],
     health: ['Inspect memory crowding and unresolved disputes; this is not a correctness score.', {}],
   };
-  for (const [name, [description, inputSchema]] of Object.entries(definitions)) server.registerTool(name, { description, inputSchema }, args => handlers[name](args));
+  // A host keeps a session's MCP server running the code it started with, so after
+  // an edit its answers can contradict the tree (seen 2026-09-24: a status without
+  // the audit UI key). Each answer then says so.
+  const call = async (name, args) => {
+    const result = await handlers[name](args);
+    const notice = await options.staleNotice?.().catch(() => null);
+    return notice ? { ...result, content: [...(result.content ?? []), { type: 'text', text: notice }] } : result;
+  };
+  for (const [name, [description, inputSchema]] of Object.entries(definitions)) server.registerTool(name, { description, inputSchema }, args => call(name, args));
   return server;
 }
