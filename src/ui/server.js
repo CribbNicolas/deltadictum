@@ -202,6 +202,10 @@ export async function startResidentServer({ projects: initial = [], openProject,
             ...contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? [])].filter(Boolean).join('\n')) });
         }
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, active ? await buildPreToolContext(payload, { store, projectId, retrieve }) : {});
+        if (url.pathname.endsWith('/similar')) {
+          if (!active || !retrieve.similar) return send(res, 200, { error: { code: 503, message: inactiveMessage(retrieval) } });
+          return send(res, 200, await retrieve.similar({ store, projectId, id: payload.id, text: payload.text, limit: payload.limit }));
+        }
         if (url.pathname.endsWith('/retrieve')) {
           if (!active) return send(res, 200, { error: { code: 503, message: inactiveMessage(retrieval) } });
           const context = await projectContext(store);

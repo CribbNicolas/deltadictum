@@ -84,3 +84,16 @@ test('the calibration floor can be set per project in config', async t => {
   const result = await retrieve({ project_id: 'demo', action: 'agregar un filtro nuevo en la barra', telemetry: false }, { store });
   assert.equal(result.memories.length, 0);
 });
+
+// /dd:compact and /dd:prospect look for overlaps by meaning, across states.
+test('similar ranks memories nearest to a memory or a text, excluding the probe', async t => {
+  const { store, toolbar } = await fixture(t);
+  const retrieve = createSemanticRetrieve({ embedder: fakeEmbedder() });
+  const byText = await retrieve.similar({ store, projectId: 'demo', text: 'la barra de herramientas', limit: 3 });
+  assert.equal(byText.similar[0].id, toolbar.id);
+  assert.equal(byText.similar.length, 3);
+  const byId = await retrieve.similar({ store, projectId: 'demo', id: toolbar.id, limit: 20 });
+  assert.ok(byId.similar.every(m => m.id !== toolbar.id));
+  assert.equal(byId.similar.length, 6);
+  assert.equal((await retrieve.similar({ store, projectId: 'demo', id: 'missing' })).error.code, 404);
+});

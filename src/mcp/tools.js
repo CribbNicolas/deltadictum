@@ -3,6 +3,8 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { orientProject, projectContext } from '../engine/project-context.js';
 import { recordOutcome } from '../engine/feedback.js';
 import { declareContradiction } from '../engine/lifecycle.js';
+import { fileActions } from '../engine/actions.js';
+import { openRevisionRequests } from '../engine/revisions.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { callRunningStore } from '../hooks/bridge.js';
 import { lexicalMode, residentNotice } from '../hooks/session-start.js';
@@ -85,10 +87,26 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
         capture_origin: atom.capture_origin, capture_source: atom.capture_source })) };
     },
     async contradict({ id, contradicts }) { return declareContradiction(id, contradicts, { store, projectId }); },
+    async act({ actions, session_id }) {
+      return { actions: await fileActions(actions, { store, projectId, sessionId: session_id }),
+        note: 'Pending until the user applies them in the audit UI.' };
+    },
+    // Nearest memories by embedding, answered by the resident like retrieve.
+    async similar(request = {}) {
+      if (!request.id && !request.text) throw new Error('id_or_text_required');
+      const bridged = await callRunningStore('similar', request, repoRoot ?? store.repoRoot);
+      if (bridged && !bridged.error) return bridged;
+      return { error: { code: 503, message: bridged?.error?.message ?? residentNotice({ state: 'unreachable' }) } };
+    },
     async ui() { return { url: await uiUrl() }; },
     async status() {
       const { counts, total } = await store.countByLifecycle(projectId);
-      return { project_id: projectId, counts, total, ui_url: await uiUrl() };
+      const config = await store.loadConfig();
+      const archived = counts.archived ?? 0;
+      return { project_id: projectId, counts, total, ui_url: await uiUrl(),
+        pending_actions: (await store.listActions(projectId)).length,
+        revision_requests: await openRevisionRequests(store, projectId),
+        archive_review: { archived, threshold: config.archive_review_at, due: archived > config.archive_review_at } };
     },
     async health() { return store.assessDeterioration(projectId); },
   };

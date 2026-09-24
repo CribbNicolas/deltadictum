@@ -18,7 +18,7 @@ test('actual MCP schema has one compact proposal surface and no self-approval op
   await server.connect(serverTransport); await client.connect(clientTransport);
   t.after(async () => { await client.close(); await server.close(); store.close(); });
   const { tools } = await client.listTools();
-  assert.equal(tools.some(t => ['admit', 'resolve', 'delete', 'reject'].includes(t.name)), false);
+  assert.equal(tools.some(t => ['admit', 'resolve', 'delete', 'reject', 'apply'].includes(t.name)), false);
   assert.equal(tools.filter(t => ['propose', 'capture', 'update'].includes(t.name)).length, 1);
   const result = await client.callTool({ name: 'propose', arguments: { session_id: 'test', proposals: [{
     topic_key: 'test/contract/lesson', trigger: 'when writing tests', behavior_delta: 'Check behavior.', why: 'Prevent regressions.',
