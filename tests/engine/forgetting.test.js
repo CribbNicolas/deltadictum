@@ -77,7 +77,7 @@ describe('forgetting by disuse', () => {
 
       assert.deepEqual(await retireByDisuse({ store: db, projectId: PROJECT }), []);
       assert.equal((await db.getAtom(atom.id, PROJECT)).lifecycle_state, 'active');
-      await assert.rejects(archiveMemory(atom.id, { store: db, projectId: PROJECT }), /authority_protected/);
+      await assert.rejects(archiveMemory(atom.id, { store: db, projectId: PROJECT, reason: 'Archived by the test.' }), /authority_protected/);
     } finally { db.close(); }
   });
 
@@ -102,7 +102,7 @@ describe('forgetting by disuse', () => {
       assert.deepEqual(await retireByDisuse({ store: db, projectId: PROJECT }), [atom.id]);
       const retired = await db.getAtom(atom.id, PROJECT);
       assert.equal(retired.lifecycle_state, 'archived');
-      assert.equal(retired.archived_reason, 'never_activated');
+      assert.match(retired.archived_reason, /^Never activated in \d+ retrievals since \d{4}-\d{2}-\d{2}\.$/);
       assert.ok(retired.archived_at);
     } finally { db.close(); }
   });
@@ -148,7 +148,7 @@ describe('forgetting by disuse', () => {
     const db = await store();
     try {
       const atom = await seedEffective(db);
-      await archiveMemory(atom.id, { store: db, projectId: PROJECT });
+      await archiveMemory(atom.id, { store: db, projectId: PROJECT, reason: 'Archived by the test.' });
 
       const file = await stat(archiveFilePath(db.ddDir, atom.id));
       assert.ok(file.isFile());
@@ -164,7 +164,7 @@ describe('forgetting by disuse', () => {
     const db = await store();
     try {
       const atom = await seedEffective(db);
-      await archiveMemory(atom.id, { store: db, projectId: PROJECT });
+      await archiveMemory(atom.id, { store: db, projectId: PROJECT, reason: 'Archived by the test.' });
       await assert.rejects(restoreMemory(atom.id, { store: db, projectId: PROJECT }), /human_review_required/);
     } finally { db.close(); }
   });
@@ -177,7 +177,7 @@ describe('forgetting by disuse', () => {
       assert.equal(before.abstained, false);
       assert.equal(before.memories[0].topic_key, 'payments/retry/idempotency');
 
-      await archiveMemory(atom.id, { store: db, projectId: PROJECT });
+      await archiveMemory(atom.id, { store: db, projectId: PROJECT, reason: 'Archived by the test.' });
       const during = await retrieveMemories({ project_id: PROJECT, action: 'when retrying payment requests', telemetry: false }, { store: db });
       assert.equal(during.abstained, true);
       assert.deepEqual(during.memories, []);
@@ -193,7 +193,7 @@ describe('forgetting by disuse', () => {
     const db = await store();
     try {
       const first = await seedEffective(db);
-      await archiveMemory(first.id, { store: db, projectId: PROJECT });
+      await archiveMemory(first.id, { store: db, projectId: PROJECT, reason: 'Archived by the test.' });
       await seedEffective(db, { title: 'Send the same idempotency key', behavior_delta: 'Send the stored key again.' });
 
       await assert.rejects(restoreMemory(first.id, { store: db, projectId: PROJECT, actor: HUMAN_REVIEW }), /topic_key_taken/);
@@ -211,7 +211,7 @@ describe('forgetting by disuse', () => {
       }), { store: db });
       assert.equal(revision.atom.replaces, original.id);
 
-      await archiveMemory(original.id, { store: db, projectId: PROJECT });
+      await archiveMemory(original.id, { store: db, projectId: PROJECT, reason: 'Archived by the test.' });
       await assert.rejects(admitMemory(revision.atom.id, { store: db, projectId: PROJECT,
         actor: HUMAN_REVIEW, rationale: 'Reads better.' }), /replacement_changed_review_again/);
     } finally { db.close(); }
