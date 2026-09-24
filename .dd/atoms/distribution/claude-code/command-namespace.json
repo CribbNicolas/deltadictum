@@ -1,0 +1,89 @@
+{
+  "id": "27c7fd7f-027b-4a2c-ac4f-507496faf3d0",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Claude Code plugin commands are prefixed with the plugin name",
+  "topic_key": "distribution/claude-code/command-namespace",
+  "trigger": "When naming, documenting or renaming a Claude Code plugin skill or the plugin itself",
+  "behavior_delta": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate.",
+  "what": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate.",
+  "why": "The prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it. The previous version of this memory predated the rename and said the plugin was named deltadictum.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      ".claude-plugin/plugin.json",
+      ".claude-plugin/marketplace.json",
+      "skills/"
+    ],
+    "components": [
+      "distribution",
+      "skills"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": ".claude-plugin/plugin.json",
+      "summary": "\"name\": \"dd\""
+    },
+    {
+      "source_type": "file",
+      "source_ref": "README.md",
+      "summary": "Install section: /plugin install dd@deltadictum; command table lists /dd:* commands."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T21:53:18.760Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate.",
+    "short": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate. Why: The prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it. The previous version of this memory predated the rename and said the plugin was named deltadictum.",
+    "full": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate. Why: The prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it. The previous version of this memory predated the rename and said the plugin was named deltadictum."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "9c988cec-340e-49d4-b86d-34e19ea28f00",
+  "evidence_state": {
+    "checked_at": "2026-09-24T22:02:38.153Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": ".claude-plugin/plugin.json",
+        "summary": "\"name\": \"dd\"",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "8dad84bcb3fb40f728c81c6e0da15f670481c1be9bee214db01b0348542f221a"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "README.md",
+        "summary": "Install section: /plugin install dd@deltadictum; command table lists /dd:* commands.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "783f669d27196921e765e1fb60521588109a4e44140148f3bddf190a766c14d6"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "replaces": "2c2463f5-f570-49b7-a333-4ead198b5aad",
+  "created_at": "2026-09-24T21:53:18.770Z",
+  "updated_at": "2026-09-24T22:02:38.160Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T22:02:38.153Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

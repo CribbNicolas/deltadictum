@@ -1,0 +1,89 @@
+{
+  "id": "2c2463f5-f570-49b7-a333-4ead198b5aad",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Claude Code plugin commands are prefixed with the plugin name",
+  "topic_key": "distribution/claude-code/command-namespace",
+  "trigger": "when naming DD slash commands or skills, or changing the name in .claude-plugin/plugin.json",
+  "behavior_delta": "Expect every plugin skill to appear as /<plugin name>:<skill name>. The plugin is named deltadictum, so a skill named review appears as /deltadictum:review, not /dd:review. Getting /dd:* requires plugin.json name dd, which changes the marketplace install id (dd@deltadictum) and needs reinstalling for existing users; the npm package name is separate.",
+  "what": "Expect every plugin skill to appear as /<plugin name>:<skill name>. The plugin is named deltadictum, so a skill named review appears as /deltadictum:review, not /dd:review. Getting /dd:* requires plugin.json name dd, which changes the marketplace install id (dd@deltadictum) and needs reinstalling for existing users; the npm package name is separate.",
+  "why": "The user asked for /dd:* commands on 2026-09-24; the prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      ".claude-plugin/plugin.json",
+      ".claude-plugin/marketplace.json",
+      "skills/"
+    ],
+    "components": [
+      "distribution",
+      "skills"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": ".claude-plugin/plugin.json",
+      "summary": "The plugin name is deltadictum; the MCP server inside it is dd."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "docs/superpowers/specs/2026-09-24-actions-and-legacy-design.md",
+      "summary": "The Commands section records the rename decision."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-24T15:40:21.093Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Expect every plugin skill to appear as /<plugin name>:<skill name>. The plugin is named deltadictum, so a skill named review appears as /deltadictum:review, not /dd:review. Getting /dd:* requires plugin.json name dd, which changes the marketplace install id (dd@deltadictum) and needs reinstalling for existing users; the npm package name is separate.",
+    "short": "Expect every plugin skill to appear as /<plugin name>:<skill name>. The plugin is named deltadictum, so a skill named review appears as /deltadictum:review, not /dd:review. Getting /dd:* requires plugin.json name dd, which changes the marketplace install id (dd@deltadictum) and needs reinstalling for existing users; the npm package name is separate. Why: The user asked for /dd:* commands on 2026-09-24; the prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it.",
+    "full": "Expect every plugin skill to appear as /<plugin name>:<skill name>. The plugin is named deltadictum, so a skill named review appears as /deltadictum:review, not /dd:review. Getting /dd:* requires plugin.json name dd, which changes the marketplace install id (dd@deltadictum) and needs reinstalling for existing users; the npm package name is separate. Why: The user asked for /dd:* commands on 2026-09-24; the prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "9c988cec-340e-49d4-b86d-34e19ea28f00",
+  "evidence_state": {
+    "checked_at": "2026-09-24T16:49:24.406Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": ".claude-plugin/plugin.json",
+        "summary": "The plugin name is deltadictum; the MCP server inside it is dd.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "f25638a95235984458bf3fab86fd1ec62b0c3df71dbfe333ff7fed82a11735ab"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "docs/superpowers/specs/2026-09-24-actions-and-legacy-design.md",
+        "summary": "The Commands section records the rename decision.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "cf9c6b0c7ed7d144aceb2aeb4d0773b14b2bcdaa670b555c68b9ff20a9e53c8a"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T15:40:21.141Z",
+  "updated_at": "2026-09-24T22:02:38.160Z",
+  "activation_count": 1,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T16:49:24.406Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  },
+  "superseded_by": "27c7fd7f-027b-4a2c-ac4f-507496faf3d0"
+}

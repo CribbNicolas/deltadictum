@@ -40,7 +40,7 @@
     }
   ],
   "authority": "validated",
-  "lifecycle_state": "active",
+  "lifecycle_state": "superseded",
   "valid_from": "2026-09-23T00:08:35.897Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -75,11 +75,13 @@
   },
   "replaces": "8b7195a9-3196-467b-8a5d-308fc31f9424",
   "created_at": "2026-09-23T00:08:35.907Z",
-  "updated_at": "2026-09-23T16:46:46.936Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-24T21:38:22.606Z",
+  "activation_count": 3,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-23T16:46:46.933Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
-  }
+  },
+  "superseded_by": "a723154d-3652-46ff-8fcb-6c6f3b510dd3",
+  "contested_at": null
 }
