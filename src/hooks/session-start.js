@@ -127,6 +127,12 @@ export async function buildSessionStartContext({ store, projectId, uiUrl, uiLive
   const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
   const knowledge = ambient.length ? `DD - Project-wide knowledge (advisory):
 ${microPack(ambient)}` : null;
+  // Past the threshold, the archive is worth a person's cleanup; said once per session.
+  const archiveAt = (await store.loadConfig()).archive_review_at;
+  const archivedCount = alreadyPrimed ? 0 : await store.countAtoms({ projectId, lifecycleStates: ['archived'] });
+  const archiveNote = archivedCount > archiveAt
+    ? `DD - The archive holds ${archivedCount} memories (review at ${archiveAt}). Offer the user /dd:clean to restore what is still useful and delete the rest.`
+    : null;
   const advisory = alreadyPrimed ? null
     : `DD - Project context (advisory): ${JSON.stringify({ ...context, ...(sessionId ? { session_id: sessionId } : {}) })}`;
   return {
@@ -136,7 +142,7 @@ ${microPack(ambient)}` : null;
     ...(uiLive && uiUrl ? { systemMessage: uiPointer(uiUrl) } : {}),
     hookSpecificOutput: {
       hookEventName: 'SessionStart',
-      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, revisions, advisory, knowledge]
+      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, revisions, archiveNote, advisory, knowledge]
         .filter(Boolean).join('\n\n'),
     },
   };
