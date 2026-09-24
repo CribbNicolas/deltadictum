@@ -6,9 +6,13 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { createToolHandlers } from '../../src/mcp/tools.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
+import { useTempRegistry } from '../helpers/resident.js';
 
-// No resident here: these handlers are exercised in the explicit lexical mode.
+// No resident here: these handlers are exercised in the explicit lexical mode,
+// and never reach the machine's own resident, which would answer for them when
+// it runs this build.
 process.env.DD_RETRIEVAL = 'lexical';
+await useTempRegistry();
 
 function proposal() {
   return {
