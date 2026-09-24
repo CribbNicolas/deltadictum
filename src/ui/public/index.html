@@ -39,11 +39,23 @@
     .icon-btn:hover { background: var(--bg-hover); }
 
     /* Toolbar */
-    .toolbar { flex: 0 0 auto; height: 48px; padding: 0 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); overflow-x: auto; }
-    .search-box { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 30px; border-radius: 8px; background: var(--bg-elevated); border: 1px solid var(--border); width: 200px; flex: 0 0 auto; }
+    /* Tabs */
+    .tabs { flex: 0 0 auto; display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--border); background: #0e0e13; }
+    .tab { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; }
+    .tab:hover { color: var(--fg); }
+    .tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+    .tab-count { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .view[hidden] { display: none; }
+    #actions-list { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 18px 24px; }
+    .action-top { display: flex; align-items: center; gap: 7px; }
+
+    /* Toolbar: wraps onto more rows when narrow, never scrolls sideways. */
+    .toolbar { flex: 0 0 auto; min-height: 48px; padding: 9px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+    .search-box { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 30px; border-radius: 8px; background: var(--bg-elevated); border: 1px solid var(--border); flex: 1 1 160px; max-width: 260px; }
     .search-box svg { flex-shrink: 0; color: var(--muted); }
     .search-box input { border: none; background: transparent; color: var(--fg); font-size: 13px; outline: none; width: 100%; padding: 0; font-family: inherit; }
-    .chips { display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 9px; background: var(--bg-elevated); border: 1px solid var(--border); flex: 0 0 auto; }
+    .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 3px; border-radius: 9px; background: var(--bg-elevated); border: 1px solid var(--border); flex: 0 0 auto; max-width: 100%; }
     .chip { height: 24px; padding: 0 9px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; }
     .chip.active { background: var(--accent); color: #0b0b0f; }
     /* width: auto overrides the global `select { width: 100% }` rule below --
@@ -58,6 +70,7 @@
     .pill-toggle[aria-pressed="true"] .knob::after { left: 12px; background: #0b0b0f; }
     #visible-count { font-family: var(--mono); font-size: 11.5px; color: var(--muted); flex: 0 0 auto; }
 
+    #project:empty { display: none; }
     #project { padding: 8px 18px; color: var(--muted); font-size: 12.5px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
     #evidence { border-bottom: 1px solid var(--border); color: var(--muted); flex: 0 0 auto; }
     #evidence > summary { padding: 8px 18px; cursor: pointer; font-size: 12.5px; }
@@ -122,7 +135,6 @@
     @media (max-width: 760px) {
       main { grid-template-columns: 1fr; }
       #list { max-height: 220px; }
-      .toolbar { flex-wrap: nowrap; }
     }
   </style>
 </head>
@@ -141,6 +153,19 @@
     </button>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" id="tab-memories" type="button" role="tab" aria-selected="true" aria-controls="memories-view" data-tab="memories">
+      Memories <span class="tab-count" id="memories-count"></span><span class="unseen-dot" id="memories-dot" hidden title="Holds memories you have not opened yet"></span>
+    </button>
+    <button class="tab" id="tab-actions" type="button" role="tab" aria-selected="false" aria-controls="actions-view" data-tab="actions">
+      Actions <span class="tab-count" id="actions-count"></span><span class="unseen-dot" id="actions-dot" hidden title="Holds actions you have not seen yet"></span>
+    </button>
+  </nav>
+
+  <div id="project"></div>
+  <div id="unsupported"></div>
+
+  <section id="memories-view" class="view" role="tabpanel" aria-labelledby="tab-memories">
   <div class="toolbar">
     <div class="search-box">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -182,20 +207,19 @@
     <div id="visible-count"></div>
   </div>
 
-  <div id="project"></div>
-  <div id="unsupported"></div>
   <details id="evidence">
     <summary>Recorded evidence <span id="evidence-count"></span></summary>
     <div id="evidence-list"></div>
-  </details>
-  <details id="actions" open>
-    <summary>Pending actions <span id="actions-count"></span></summary>
-    <div id="actions-list"></div>
   </details>
   <main>
     <section id="list"></section>
     <section id="detail" class="empty">Select a memory.</section>
   </main>
+  </section>
+
+  <section id="actions-view" class="view" role="tabpanel" aria-labelledby="tab-actions" hidden>
+    <div id="actions-list"></div>
+  </section>
 
   <div id="settings-backdrop" class="modal-backdrop" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
@@ -237,8 +261,14 @@
       { value: 'contested', label: 'Contested' }, { value: 'rejected', label: 'Rejected' },
       { value: 'superseded', label: 'Superseded' }, { value: 'legacy', label: 'Legacy' }, { value: 'archived', label: 'Archived' },
     ];
+    let allAtoms = [];
     let atoms = [];
     let selected = null;
+    let actions = [];
+    let activeTab = 'memories';
+    // Actions marked seen during this visit to the tab keep their dot until the
+    // reviewer leaves it, so what arrived stays visible while it is being read.
+    const freshActions = new Set();
     let unseenOnly = false;
     // A blank rationale falls back to this rather than blocking the review: still
     // a written decision on the record (INV-04's audit trail is a stamp, not a
@@ -361,16 +391,16 @@
       if (status.archive_review?.due) {
         document.getElementById('unsupported').innerHTML += `<p class="notice">The archive holds ${escapeHtml(String(status.archive_review.archived))} memories (review at ${escapeHtml(String(status.archive_review.threshold))}). Ask the agent for /dd:clean.</p>`;
       }
-      const project = await api('/api/project');
-      document.getElementById('project').textContent = `${project.purpose || project.name} · Sources: ${project.sources.join(', ') || 'repository structure'}`;
-      const q = new URLSearchParams();
-      if (filterEl.value) q.set('lifecycle', filterEl.value);
-      if (originFilterEl.value) q.set('capture_origin', originFilterEl.value);
-      if (typeFilterEl.value) q.set('memory_type', typeFilterEl.value);
       await loadEvidence();
       await loadActions();
-      let fetched = await api('/api/atoms?' + q);
-      document.getElementById('unseen-count').textContent = fetched.filter(a => !a.seen).length;
+      // Filtered here rather than by the server, so the tab's unseen dot and the
+      // counters reflect every memory, not only the ones the filters show.
+      allAtoms = await api('/api/atoms');
+      renderMemoriesSeen();
+      document.getElementById('memories-count').textContent = allAtoms.length;
+      const fetched = allAtoms.filter(a => (!filterEl.value || a.lifecycle_state === filterEl.value)
+        && (!originFilterEl.value || a.capture_origin === originFilterEl.value)
+        && (!typeFilterEl.value || a.memory_type === typeFilterEl.value));
       atoms = fetched;
       if (unseenOnly) atoms = atoms.filter(a => !a.seen);
       const query = searchEl.value.trim().toLowerCase();
@@ -424,15 +454,48 @@
         ${(r.tags ?? []).length ? `<p>Tags: ${escapeHtml(r.tags.join(', '))}${r.tags.includes('ambient') ? ' — ambient: sent at every session start' : ''}</p>` : ''}
         <p>Evidence: ${(r.evidence_refs ?? []).map(e => `${escapeHtml(e.source_type)} ${escapeHtml(e.source_ref)}`).join('; ') || 'none'}</p></div>`;
     }
+    function renderMemoriesSeen() {
+      const unseen = allAtoms.filter(a => !a.seen).length;
+      document.getElementById('unseen-count').textContent = unseen;
+      document.getElementById('memories-dot').hidden = !unseen;
+    }
+    async function markActionsSeen() {
+      const ids = actions.filter(a => !a.seen).map(a => a.id);
+      if (!ids.length) return;
+      for (const action of actions) { if (!action.seen) { action.seen = true; freshActions.add(action.id); } }
+      document.getElementById('actions-dot').hidden = true;
+      try { await api('/api/actions/seen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) }); }
+      catch { /* the dot returns on the next load; nothing else depends on it */ }
+    }
+    function selectTab(tab) {
+      if (activeTab === 'actions' && tab !== 'actions' && freshActions.size) { freshActions.clear(); renderActions(); }
+      activeTab = tab;
+      for (const button of document.querySelectorAll('.tab')) button.setAttribute('aria-selected', String(button.dataset.tab === tab));
+      document.getElementById('memories-view').hidden = tab !== 'memories';
+      document.getElementById('actions-view').hidden = tab !== 'actions';
+      if (tab === 'actions') markActionsSeen().then(renderActions);
+    }
+    document.querySelector('.tabs').addEventListener('click', (ev) => {
+      const tab = ev.target.closest('.tab');
+      if (tab) selectTab(tab.dataset.tab);
+    });
     async function loadActions() {
-      const actions = await api('/api/actions');
+      actions = await api('/api/actions');
+      if (activeTab === 'actions') await markActionsSeen();
+      document.getElementById('actions-dot').hidden = !actions.some(a => !a.seen);
+      renderActions();
+    }
+    function renderActions() {
       // A live update re-renders the panel; a note being written must survive it.
       const drafts = new Map([...document.querySelectorAll('#actions-list [data-action]')]
         .map(card => [card.dataset.action, card.querySelector('[name="action_note"]').value]));
-      document.getElementById('actions-count').textContent = actions.length ? `· ${actions.length}` : '· none';
+      document.getElementById('actions-count').textContent = actions.length || '';
       document.getElementById('actions-list').innerHTML = actions.map(a => `
         <div class="observation action" data-action="${escapeHtml(a.id)}" data-kind="${escapeHtml(a.kind)}">
-          <span class="badge">${escapeHtml(a.kind)}</span>${a.status === 'stale' ? ' <span class="badge">stale: review again</span>' : ''}
+          <div class="action-top">
+            <span class="unseen-dot ${!a.seen || freshActions.has(a.id) ? '' : 'spacer-dot'}" aria-label="${!a.seen || freshActions.has(a.id) ? 'new' : ''}"></span>
+            <span class="badge">${escapeHtml(a.kind)}</span>${a.status === 'stale' ? ' <span class="badge">stale: review again</span>' : ''}
+          </div>
           <p class="action-msg">${escapeHtml(a.rationale)}</p>
           ${a.revision_requested ? `<p class="notice warning">Revision requested: ${escapeHtml(a.revision_requested.reason)}</p>` : ''}
           <ul>${a.target_atoms.map(t => `<li>${escapeHtml(t.topic_key ?? t.id)} · ${escapeHtml(t.lifecycle_state ?? 'missing')} → ${escapeHtml(NEXT_STATE[a.kind](t.lifecycle_state))}</li>`).join('')}</ul>
@@ -528,10 +591,10 @@
       selected = await api('/api/atoms/' + encodeURIComponent(id));
       // The server already marked it seen; reflect that locally now so the
       // unseen dot and counter clear immediately, with no reload needed.
-      const local = atoms.find(a => a.id === id);
+      const local = allAtoms.find(a => a.id === id);
       if (local && !local.seen) {
         local.seen = true;
-        document.getElementById('unseen-count').textContent = atoms.filter(a => !a.seen).length;
+        renderMemoriesSeen();
       }
       const outcomes = await api('/api/feedback?atom=' + encodeURIComponent(id));
       detailEl.className = '';

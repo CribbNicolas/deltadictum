@@ -62,3 +62,21 @@ test('a candidate memory can be sent back with a reason', async t => {
   assert.equal((await store.getAtom(atom.id, 'demo')).revision_requested.reason, 'Say which marketplace.');
   assert.equal((await call(`/api/atoms/${atom.id}/admit`, { rationale: 'ok' })).body.error, 'revision_requested');
 });
+
+// The Actions tab shows which actions arrived since the reviewer last looked,
+// through the same machine-local record as memories (src/store/seen.js).
+test('an action stays unseen until the reviewer marks it seen', async t => {
+  const previous = process.env.CLAUDE_PLUGIN_DATA;
+  process.env.CLAUDE_PLUGIN_DATA = await mkdtemp(join(tmpdir(), 'dd-seen-'));
+  t.after(() => { if (previous === undefined) delete process.env.CLAUDE_PLUGIN_DATA; else process.env.CLAUDE_PLUGIN_DATA = previous; });
+  const { store, call } = await setup(t);
+  const [a1, a2] = await fileActions([
+    { kind: 'archive', targets: ['u1'], archived_reason: 'Replaced.', rationale: 'The user asked.' },
+    { kind: 'legacy', targets: ['u1'], legacy_reason: 'Broke on Windows.', rationale: 'The user asked.' },
+  ], { store, projectId: 'demo' });
+  assert.deepEqual((await call('/api/actions')).body.map(a => a.seen), [false, false]);
+  assert.equal((await call('/api/actions/seen', { ids: [a1.id] }, { review: false })).status, 403);
+  assert.equal((await call('/api/actions/seen', { ids: [a1.id] })).status, 200);
+  const seen = Object.fromEntries((await call('/api/actions')).body.map(a => [a.id, a.seen]));
+  assert.deepEqual(seen, { [a1.id]: true, [a2.id]: false });
+});

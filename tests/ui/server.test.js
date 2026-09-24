@@ -445,6 +445,17 @@ test('the audit UI answers only a browser holding its key', async t => {
   const page = await plainFetch(ui.url + opened.headers.get('location'), { headers: { cookie: cookie.split(';')[0] } });
   assert.equal(page.status, 200);
   assert.match(await page.text(), /dd-review-token/);
+  // A cut or outdated key in a browser that already holds the cookie still opens the UI.
+  const reopened = await plainFetch(ui.url + '/?project=x&key=' + ui.uiKey.slice(0, 20), { redirect: 'manual', headers: { cookie: cookie.split(';')[0] } });
+  assert.equal(reopened.status, 303);
+  assert.equal(reopened.headers.get('location'), '/?project=x');
+  // Without the cookie, a bad key gets a page that says why, not bare JSON.
+  const truncated = await plainFetch(ui.url + '/?key=' + ui.uiKey.slice(0, 20));
+  assert.equal(truncated.status, 403);
+  assert.match(truncated.headers.get('content-type'), /text\/html/);
+  assert.match(await truncated.text(), /incomplete/);
+  const api = await plainFetch(ui.url + '/api/atoms');
+  assert.match(api.headers.get('content-type'), /application\/json/);
   // Hooks and the resident probe keep their own authentication.
   assert.equal((await plainFetch(ui.url + '/api/resident')).status, 200);
   assert.equal((await plainFetch(ui.url + '/api/hooks/prompt', { method: 'POST', body: '{}' })).status, 403);
