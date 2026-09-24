@@ -1,0 +1,101 @@
+{
+  "id": "741f0f52-cec7-414b-b0e7-fbb5c79b9a1f",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Tests that reach the bridge must use a temporary registry",
+  "topic_key": "testing/resident/isolate-bridge-in-tests",
+  "trigger": "when writing or changing a test that calls MCP tool handlers (retrieve, orient, similar) or hook commands that bridge to the resident",
+  "behavior_delta": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project.",
+  "what": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project.",
+  "why": "On 2026-09-24 tests/mcp/tools.test.js passed for weeks, then failed right after the resident was restarted from this checkout; the failure left a SQLite store open and npm test hung past 10 minutes instead of reporting it.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "tests/",
+      "tests/helpers/resident.js",
+      "src/hooks/bridge.js"
+    ],
+    "components": [
+      "tests",
+      "resident"
+    ],
+    "operations": [
+      "test"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "tests/mcp/tools.test.js",
+      "summary": "Now calls useTempRegistry so retrieve cannot reach the machine's resident."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/bridge.js",
+      "summary": "callRunningStore takes a reply from any resident of this tree or version recorded in the registry."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "87dc29f3-568e-4665-b8d7-0a415b09dcae",
+      "summary": "Full suite green after the isolation fix."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T18:10:03.353Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project.",
+    "short": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project. Why: On 2026-09-24 tests/mcp/tools.test.js passed for weeks, then failed right after the resident was restarted from this checkout; the failure left a SQLite store open and npm test hung past 10 minutes instead of reporting it.",
+    "full": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project. Why: On 2026-09-24 tests/mcp/tools.test.js passed for weeks, then failed right after the resident was restarted from this checkout; the failure left a SQLite store open and npm test hung past 10 minutes instead of reporting it."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "898896ef-98db-48d5-8bdd-e47b56fd9058",
+  "evidence_state": {
+    "checked_at": "2026-09-24T18:22:46.683Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "tests/mcp/tools.test.js",
+        "summary": "Now calls useTempRegistry so retrieve cannot reach the machine's resident.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "b7e6d6f7fd06476b48d84af650d8569d51f6533dd233696bf7d86d670e7bc06f"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/bridge.js",
+        "summary": "callRunningStore takes a reply from any resident of this tree or version recorded in the registry.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6bfc6a4bf540553077fc1b8413b2c811ce4ab23f00fdd685ef20e58e4c7aeb0d"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "87dc29f3-568e-4665-b8d7-0a415b09dcae",
+        "summary": "Full suite green after the isolation fix.",
+        "status": "verified",
+        "provenance": "host",
+        "hash": "ab224ad6895520c17e14f50fe50e22bae166b3c258db3a1b9ee33a991363d4c3"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T18:10:03.397Z",
+  "updated_at": "2026-09-24T18:22:46.689Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T18:22:46.683Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

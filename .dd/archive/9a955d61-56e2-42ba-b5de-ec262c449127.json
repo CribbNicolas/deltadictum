@@ -44,7 +44,7 @@
     }
   ],
   "authority": "validated",
-  "lifecycle_state": "active",
+  "lifecycle_state": "superseded",
   "valid_from": "2026-09-19T15:28:48.658Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -76,11 +76,13 @@
     "support": "human_reviewed"
   },
   "created_at": "2026-09-19T15:28:48.793Z",
-  "updated_at": "2026-09-19T16:22:29.265Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-24T21:38:23.851Z",
+  "activation_count": 4,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-19T16:22:29.261Z",
     "rationale": "Reviewed as proposed."
-  }
+  },
+  "superseded_by": "134c931e-6f04-46c3-8370-b7a8cfca0207",
+  "contested_at": null
 }

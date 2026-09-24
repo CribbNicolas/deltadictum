@@ -54,7 +54,7 @@
     }
   ],
   "authority": "validated",
-  "lifecycle_state": "active",
+  "lifecycle_state": "legacy",
   "valid_from": "2026-09-19T04:09:59.421Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -94,11 +94,15 @@
     "support": "human_reviewed"
   },
   "created_at": "2026-09-19T04:09:59.450Z",
-  "updated_at": "2026-09-19T10:35:54.650Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-24T21:38:31.965Z",
+  "activation_count": 1,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-19T10:35:54.647Z",
     "rationale": "Reviewed as proposed."
-  }
+  },
+  "legacy_reason": "The live data directory is no longer found by inspecting a `node mcp.js` process: one resident (node src/cli.js ui) serves every project, and projectDataDir() names each project's directory from normalizePath(repoRoot), not resolve(repoRoot).",
+  "legacy_at": "2026-09-24T21:38:31.959Z",
+  "replaced_by": null,
+  "contested_at": null
 }

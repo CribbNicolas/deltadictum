@@ -512,6 +512,87 @@
       "notes": null,
       "created_at": "2026-09-24T02:07:04.932Z",
       "updated_at": "2026-09-24T02:07:04.932Z"
+    },
+    {
+      "id": "6a4565ad-a776-48b1-ae82-a8eda0bec0d2",
+      "project_id": "supermem",
+      "canonical_key": "development/hooks/capture-real-payloads",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T12:08:16.421Z",
+      "updated_at": "2026-09-24T12:08:16.421Z"
+    },
+    {
+      "id": "85033668-7954-4e6b-b0c9-f8c383e3d6e1",
+      "project_id": "supermem",
+      "canonical_key": "store/index/schema-check-migration",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T15:40:21.030Z",
+      "updated_at": "2026-09-24T15:40:21.030Z"
+    },
+    {
+      "id": "9c988cec-340e-49d4-b86d-34e19ea28f00",
+      "project_id": "supermem",
+      "canonical_key": "distribution/claude-code/command-namespace",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T15:40:21.098Z",
+      "updated_at": "2026-09-24T15:40:21.098Z"
+    },
+    {
+      "id": "dfadf693-87a8-4a1d-9ca8-6c29b71436ab",
+      "project_id": "supermem",
+      "canonical_key": "store/layout/new-dd-directory",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T17:01:44.033Z",
+      "updated_at": "2026-09-24T17:01:44.033Z"
+    },
+    {
+      "id": "898896ef-98db-48d5-8bdd-e47b56fd9058",
+      "project_id": "supermem",
+      "canonical_key": "testing/resident/isolate-bridge-in-tests",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T18:10:03.357Z",
+      "updated_at": "2026-09-24T18:10:03.357Z"
+    },
+    {
+      "id": "017bb55e-c0b6-43bd-9cf9-658f134a3404",
+      "project_id": "supermem",
+      "canonical_key": "testing/ui/seen-json-isolation",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T21:07:36.862Z",
+      "updated_at": "2026-09-24T21:07:36.862Z"
+    },
+    {
+      "id": "3fe486fd-c8ab-4830-b884-76f8ccc39680",
+      "project_id": "supermem",
+      "canonical_key": "hooks/observe/validation-false-positives",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T21:41:37.838Z",
+      "updated_at": "2026-09-24T21:41:37.838Z"
+    },
+    {
+      "id": "96e6a47a-deeb-453b-b10b-597a7009b996",
+      "project_id": "supermem",
+      "canonical_key": "development/claude-code/live-session-probe",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T21:56:28.215Z",
+      "updated_at": "2026-09-24T21:56:28.215Z"
+    },
+    {
+      "id": "e04019f1-8856-4990-8578-1df83faf92b3",
+      "project_id": "supermem",
+      "canonical_key": "integrations/codex/project-trust-gates-config",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T21:56:28.292Z",
+      "updated_at": "2026-09-24T21:56:28.292Z"
     }
   ],
   "aliases": [],

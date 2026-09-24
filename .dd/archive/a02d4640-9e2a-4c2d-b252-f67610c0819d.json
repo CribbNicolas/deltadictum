@@ -1,0 +1,121 @@
+{
+  "id": "a02d4640-9e2a-4c2d-b252-f67610c0819d",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "On Claude Code, observe records no tool outcomes",
+  "topic_key": "hooks/observe/claude-code-outcomes",
+  "trigger": "Before relying on host observations (Stop capture reminder, evidence IDs) on Claude Code, or when the Stop reminder seems never to fire",
+  "behavior_delta": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction.",
+  "what": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction.",
+  "why": "observationFromTool needs a numeric exit code or is_error; Claude Code's Bash response has neither on success, and failed calls likely go to PostToolUseFailure, which hooks/hooks.json does not register. A full day of passing and failing test runs left 0 tool observations and 3 user corrections, so the capture reminder looked broken.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/hooks/observe.js",
+      "hooks/hooks.json",
+      "src/hooks/run.js"
+    ],
+    "components": [
+      "hooks",
+      "capture"
+    ],
+    "operations": [
+      "debug",
+      "edit"
+    ]
+  },
+  "assumptions": [
+    {
+      "key": "",
+      "description": "Claude Code routes failed tool calls to PostToolUseFailure rather than PostToolUse; not yet confirmed with a logging hook"
+    }
+  ],
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "observe learns Claude Code's result shapes",
+      "path": "src/hooks/observe.js",
+      "hash": "b596554bbbc2cd5b8782bab4edbd962833ebdf51b3bc2702bc65f45e1042a1c7"
+    },
+    {
+      "kind": "file_changed",
+      "description": "a failure event is registered",
+      "path": "hooks/hooks.json",
+      "hash": "c45dd6984b86b932c44185d9fb77f74c872191b2969bf6ce715cbcc86b53d533"
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/observe.js",
+      "summary": "observationFromTool returns null unless exit code or is_error marks a failure or a validation"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "hooks/hooks.json",
+      "summary": "Registers PostToolUse only; no failure event"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "379bb5de-49a3-42d6-aaae-0e527fdcb39c",
+      "summary": "The only observation offered at Stop this session was a user correction"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-24T02:07:04.928Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction.",
+    "short": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction. Why: observationFromTool needs a numeric exit code or is_error; Claude Code's Bash response has neither on success, and failed calls likely go to PostToolUseFailure, which hooks/hooks.json does not register. A full day of passing and failing test runs left 0 tool observations and 3 user corrections, so the capture reminder looked broken.",
+    "full": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction. Why: observationFromTool needs a numeric exit code or is_error; Claude Code's Bash response has neither on success, and failed calls likely go to PostToolUseFailure, which hooks/hooks.json does not register. A full day of passing and failing test runs left 0 tool observations and 3 user corrections, so the capture reminder looked broken."
+  },
+  "confidence": 0.855,
+  "registry_key_id": "d98e5105-0f3d-4554-a06b-6427152bab69",
+  "evidence_state": {
+    "checked_at": "2026-09-24T11:41:56.007Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/observe.js",
+        "summary": "observationFromTool returns null unless exit code or is_error marks a failure or a validation",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "b596554bbbc2cd5b8782bab4edbd962833ebdf51b3bc2702bc65f45e1042a1c7"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "hooks/hooks.json",
+        "summary": "Registers PostToolUse only; no failure event",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "c45dd6984b86b932c44185d9fb77f74c872191b2969bf6ce715cbcc86b53d533"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "379bb5de-49a3-42d6-aaae-0e527fdcb39c",
+        "summary": "The only observation offered at Stop this session was a user correction",
+        "status": "verified",
+        "provenance": "user_correction",
+        "hash": "30c84c0ebd829147a685f37cbfdfe5975f5d925754229cecd12b2857940d28e8"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T02:07:04.966Z",
+  "updated_at": "2026-09-24T16:49:24.579Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T11:41:56.008Z",
+    "rationale": "Auto-accepted: confidence 0.855 >= threshold 0.765."
+  },
+  "activation_count": 1,
+  "superseded_by": "354338bf-10ee-40df-998c-744c227affd4"
+}

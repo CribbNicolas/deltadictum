@@ -1,0 +1,89 @@
+{
+  "id": "aaf0b012-5580-456b-8b45-d83637acd079",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "user_explicit",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Moving the data directory needs the old base in adopt.js",
+  "topic_key": "dd/store/data-directory-renames",
+  "trigger": "when changing where DD keeps its per-project data (dataBase in src/project.js, DD_DATA handling, plugin data variables)",
+  "behavior_delta": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. A new index adopts this project's telemetry, observations and contradiction log only from locations listed there; any other old path is abandoned silently, because atoms return from git and the store still looks complete.",
+  "what": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. A new index adopts this project's telemetry, observations and contradiction log only from locations listed there; any other old path is abandoned silently, because atoms return from git and the store still looks complete.",
+  "why": "The data directory moved three times (~/.supermem, ~/.dd, ~/.dd-data) and telemetry was split across them until adoptHistory was added on 2026-09-22; adoption is list-driven, so a fourth move without updating the list repeats the silent loss.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/project.js",
+      "src/store/adopt.js"
+    ],
+    "components": [
+      "store"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/store/adopt.js",
+      "summary": "adoptHistory copies rows from a fixed list of bases (~/.dd-data, CLAUDE_PLUGIN_DATA, GROK_PLUGIN_DATA) plus known legacy locations."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "docs/memory/roadmap.md",
+      "summary": "Gap 6 records the three moves and the split telemetry that motivated adoption."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-24T12:07:09.420Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. A new index adopts this project's telemetry, observations and contradiction log only from locations listed there; any other old path is abandoned silently, because atoms return from git and the store still looks complete.",
+    "short": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. A new index adopts this project's telemetry, observations and contradiction log only from locations listed there; any other old path is abandoned silently, because atoms return from git and the store still looks complete. Why: The data directory moved three times (~/.supermem, ~/.dd, ~/.dd-data) and telemetry was split across them until adoptHistory was added on 2026-09-22; adoption is list-driven, so a fourth move without updating the list repeats the silent loss.",
+    "full": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. A new index adopts this project's telemetry, observations and contradiction log only from locations listed there; any other old path is abandoned silently, because atoms return from git and the store still looks complete. Why: The data directory moved three times (~/.supermem, ~/.dd, ~/.dd-data) and telemetry was split across them until adoptHistory was added on 2026-09-22; adoption is list-driven, so a fourth move without updating the list repeats the silent loss."
+  },
+  "confidence": 0.85,
+  "registry_key_id": "4c52ce91-05bd-4498-8113-5f6bd8df65ea",
+  "evidence_state": {
+    "checked_at": "2026-09-24T16:49:24.766Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/store/adopt.js",
+        "summary": "adoptHistory copies rows from a fixed list of bases (~/.dd-data, CLAUDE_PLUGIN_DATA, GROK_PLUGIN_DATA) plus known legacy locations.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "aa977d07d70489245e1beb5e838b833d949f91c2611e3b8e01c8d33562cb3d4e"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "docs/memory/roadmap.md",
+        "summary": "Gap 6 records the three moves and the split telemetry that motivated adoption.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "2511dfe68e9d08e6653e4b5b36fda200a99fbe589b368bd35053e6cd8314b98a"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "replaces": "e57a21a9-9302-4c77-ac11-0ea61b4321f1",
+  "created_at": "2026-09-24T12:07:09.434Z",
+  "updated_at": "2026-09-24T21:38:23.851Z",
+  "activation_count": 1,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T16:49:24.766Z",
+    "rationale": "Auto-accepted: confidence 0.85 >= threshold 0.765."
+  },
+  "superseded_by": "134c931e-6f04-46c3-8370-b7a8cfca0207",
+  "contested_at": null
+}
