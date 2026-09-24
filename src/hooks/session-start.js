@@ -49,6 +49,7 @@ export const PULL_GUIDANCE = 'DD - Pushed knowledge covers only what matched the
 export function microPack(memories) {
   return memories.map(memory => {
     const flag = memory.contested || memory.lifecycle_state === 'contested' ? 'DISPUTED'
+      : memory.lifecycle_state === 'legacy' ? 'LEGACY'
       : memory.lifecycle_state === 'review_required' ? 'REVIEW REQUIRED'
       : memory.memory_type === 'anti_memory' ? 'ANTI' : memory.memory_type.toUpperCase();
     return `[${flag} ${memory.id ?? ''}] ${memory.content || memory.retrieval_forms?.micro || memory.title}`;

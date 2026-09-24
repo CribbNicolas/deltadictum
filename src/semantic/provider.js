@@ -1,6 +1,7 @@
 import { retrieveMemories } from '../engine/retrieve.js';
 import { loadEmbedder } from './embedder.js';
 import { syncVectors, cosine } from './vectors.js';
+import { RECALL_STATES } from '../store/paths.js';
 
 // Embedding similarities from multilingual-e5 are compressed (0.75-0.90 for
 // related and unrelated text alike), so the signal is how far a memory stands
@@ -46,7 +47,7 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
   async function semanticRetrieve(request, deps) {
     const active = await ready();
     if (!active) return retrieveMemories(request, deps);
-    const vectors = await syncVectors({ store: deps.store, projectId: request.project_id, embedder: active });
+    const vectors = await syncVectors({ store: deps.store, projectId: request.project_id, embedder: active, states: RECALL_STATES });
     const [query] = await active.embed([queryText(request.action)], 'query');
     const sims = new Map([...vectors].map(([id, vector]) => [id, cosine(query, vector)]));
     // semantic.floor in .dd/config.json trades silence for recall per project:
@@ -61,7 +62,7 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
   // bridged call does not pay for either.
   semanticRetrieve.warm = async ({ store, projectId }) => {
     const active = await start();
-    if (active) await syncVectors({ store, projectId, embedder: active });
+    if (active) await syncVectors({ store, projectId, embedder: active, states: RECALL_STATES });
     return Boolean(active);
   };
   return semanticRetrieve;

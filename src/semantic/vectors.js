@@ -12,9 +12,9 @@ const fromBlob = blob => new Float32Array(blob.buffer.slice(blob.byteOffset, blo
 
 // Embed every live memory whose text or model changed since it was last
 // embedded. Returns the vectors of the live set, keyed by atom id.
-export async function syncVectors({ store, projectId, embedder }) {
+export async function syncVectors({ store, projectId, embedder, states = ['active', 'contested'] }) {
   const db = store.index.db;
-  const atoms = await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] });
+  const atoms = await store.listAtoms({ projectId, lifecycleStates: states });
   const known = new Map(db.prepare('SELECT atom_id, text_hash, vector FROM memory_vectors WHERE model = ?').all(embedder.model)
     .map(row => [row.atom_id, row]));
   const stale = atoms.filter(atom => known.get(atom.id)?.text_hash !== hashOf(passageText(atom)));
