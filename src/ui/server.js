@@ -31,6 +31,20 @@ function send(res, status, body, type = 'application/json', scriptNonce = null) 
     'x-content-type-options': 'nosniff', 'content-security-policy': `default-src 'self'; script-src ${scripts}; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'` });
   res.end(type === 'application/json' ? JSON.stringify(body) : body);
 }
+// A browser without the UI key gets a page that says how to get in; API callers
+// keep the JSON error.
+const DENIED = {
+  incomplete: 'The key in this address is incomplete or out of date. A terminal can cut a long link where it wraps,'
+    + ' and the key changes each time the DD resident restarts.',
+  missing: 'This address has no key.',
+};
+function denyUi(res, url, reason) {
+  const hint = 'Copy the whole audit UI address DD prints at session start, or ask the agent for it (the dd <code>ui</code> tool).';
+  if (url.pathname.startsWith('/api/')) return send(res, 403, { error: 'ui_key_required', message: `${DENIED[reason]} ${hint.replace(/<\/?code>/g, '`')}` });
+  return send(res, 403, `<!doctype html><meta charset="utf-8"><title>DD audit UI</title>`
+    + `<body style="font:16px system-ui;max-width:36rem;margin:4rem auto;padding:0 1rem"><h1>DD audit UI</h1>`
+    + `<p>${DENIED[reason]}</p><p>${hint}</p></body>`, 'text/html');
+}
 async function readBody(req) {
   const chunks = [];
   let bytes = 0;
@@ -105,7 +119,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
   // accounts. The audit UI and its API answer only a browser holding this key:
   // it reaches the person in the address hooks print, read from the owner-only
   // registry, and is traded for a cookie on the first visit.
-  const uiKey = randomBytes(32).toString('hex');
+  const uiKey = randomBytes(16).toString('hex');
   const withKey = address => `${address}&key=${uiKey}`;
 
   // Projects by key (src/project.js projectKey). The audit UI is the one place in
@@ -217,16 +231,17 @@ export async function startResidentServer({ projects: initial = [], openProject,
       // The key in an address becomes a cookie scoped to this port, and the
       // address is reloaded without it, out of the history and the referrer.
       const sessionCookie = `dd_ui_${actualPort}`;
+      const hasSession = sameSecret(cookie(req, sessionCookie), uiKey);
       if (req.method === 'GET' && url.searchParams.has('key')) {
-        if (!sameSecret(url.searchParams.get('key'), uiKey)) return send(res, 403, { error: 'ui_key_required' });
+        // A key cut by a terminal line wrap, or left over from a resident that
+        // restarted, is not an error for a browser that already holds the cookie.
+        if (!hasSession && !sameSecret(url.searchParams.get('key'), uiKey)) return denyUi(res, url, 'incomplete');
         url.searchParams.delete('key');
         res.writeHead(303, { location: url.pathname + url.search, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer',
           'set-cookie': `${sessionCookie}=${uiKey}; HttpOnly; SameSite=Strict; Path=/` });
         return res.end();
       }
-      if (!sameSecret(cookie(req, sessionCookie), uiKey)) {
-        return send(res, 403, { error: 'ui_key_required', message: 'Open the audit UI through the address DD prints at session start, or the dd `ui` tool.' });
-      }
+      if (!hasSession) return denyUi(res, url, 'missing');
       if (req.method !== 'GET' && (!sameSecret(req.headers['x-dd-review-token'], token)
           || (req.headers.origin && req.headers.origin !== `http://${expectedHost}`))) return send(res, 403, { error: 'local_review_required' });
       if (req.method === 'GET' && ['/', '/index.html'].includes(url.pathname)) {
@@ -314,10 +329,17 @@ export async function startResidentServer({ projects: initial = [], openProject,
       // Actions the agent filed (src/engine/actions.js). Only this reviewed
       // transport applies, rejects or sends one back.
       if (req.method === 'GET' && url.pathname === '/api/actions') {
-        return send(res, 200, await Promise.all((await store.listActions(projectId)).map(async action => ({ ...action,
+        const seen = await readSeen();
+        return send(res, 200, await Promise.all((await store.listActions(projectId)).map(async action => ({ ...action, seen: isSeen(action.id, seen),
           target_atoms: (await Promise.all(action.targets.map(id => store.getAtom(id, projectId)))).map((a, i) => a
             ? { id: a.id, title: a.title, topic_key: a.topic_key, lifecycle_state: a.lifecycle_state }
             : { id: action.targets[i], missing: true }) }))));
+      }
+      if (req.method === 'POST' && url.pathname === '/api/actions/seen') {
+        const { ids } = await readBody(req);
+        const pending = new Set((await store.listActions(projectId)).map(a => a.id));
+        await markSeen(...(Array.isArray(ids) ? ids.filter(id => pending.has(id)) : []));
+        return send(res, 200, { ok: true });
       }
       const actionMatch = url.pathname.match(/^\/api\/actions\/([^/]+)\/(apply|reject|revise)$/);
       if (req.method === 'POST' && actionMatch) {

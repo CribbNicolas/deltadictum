@@ -1,0 +1,31 @@
+{
+  "id": "1309c59f-e1e8-4947-b69d-02c4a2a34c2a",
+  "project_id": "supermem",
+  "kind": "archive",
+  "targets": [
+    "f4c6ec8f-aef0-4b24-b967-05e39a362d6a"
+  ],
+  "fields": {
+    "archived_reason": "observationFromTool now records a validation only when a test, lint or type-check runner is a statement's own program, not piped and followed only by &&, and when the output reports no failures. Piped runs and commands that only read test files are no longer validations."
+  },
+  "rationale": "The bug this warning describes is fixed; keeping it would tell agents to distrust validations that are now reliable.",
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/observe.js",
+      "summary": "runsValidation() and FAILURE_OUTPUT gate the validation classification."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "tests/hooks/capture.test.js",
+      "summary": "Test 'a validation is a test run whose own exit status the host reported' covers piped runs, file reads and failure output."
+    }
+  ],
+  "capture_source": "agent",
+  "session_id": "0825ae45-88d6-4a80-b120-08af76d20056",
+  "created_at": "2026-09-24T21:53:51.613Z",
+  "snapshot": {
+    "f4c6ec8f-aef0-4b24-b967-05e39a362d6a": "2026-09-24T21:41:38.093Z|active"
+  },
+  "status": "pending"
+}

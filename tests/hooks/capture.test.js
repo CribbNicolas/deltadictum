@@ -86,6 +86,30 @@ test('Claude Code outcomes are read from the event, not from an exit code', () =
   assert.equal(observationFromTool({ hook_event_name: 'PostToolUseFailure', tool_name: 'Read', error: 'File does not exist.' }, claudeCode).source_type, 'tool_failure');
 });
 
+// Seen 2026-09-24: a piped test run exits with the pipe's last status, and a
+// command that only reads a test file named "test"; both were recorded as passes.
+test('a validation is a test run whose own exit status the host reported', () => {
+  const claudeCode = { claudeCode: true };
+  const run = (command, stdout = 'pass 42') => observationFromTool({ hook_event_name: 'PostToolUse', tool_name: 'Bash',
+    tool_input: { command }, tool_response: { stdout, stderr: '', interrupted: false } }, claudeCode);
+  for (const command of ['npm test', 'cd /c/dev/supermem && npm test', 'npm run test:stress', 'node --test tests/a.test.js',
+    'DD_RETRIEVAL=lexical npx vitest run', 'pytest -q', 'npx tsc --noEmit && npm run lint', 'dotnet test', 'go test ./...']) {
+    assert.equal(run(command)?.source_type, 'validation', command);
+  }
+  for (const command of ['npm test 2>&1 | tail -15', 'npm test; echo done', 'npm test || true',
+    'grep -n "test" tests/ui/server.test.js', 'sed -n 1,40p tests/helpers/resident.js', 'cat src/check.js',
+    'git commit -m "fix: npm test | grep"', 'echo npm test']) {
+    assert.equal(run(command), null, command);
+  }
+  // An exit status of 0 with failures in the output is not a pass.
+  for (const stdout of ['ℹ tests 397\nℹ pass 396\nℹ fail 1', 'not ok 3 - an action', '✖ compact propose', 'AssertionError [ERR_ASSERTION]']) {
+    assert.equal(run('npm test', stdout), null, stdout);
+  }
+  assert.equal(run('npm test', 'ℹ tests 397\nℹ pass 397\nℹ fail 0')?.source_type, 'validation');
+  // Other hosts report an exit code; the same command rules apply.
+  assert.equal(observationFromTool({ tool_name: 'Bash', tool_input: { command: 'npm test | tail' }, tool_response: { exit_code: 0 } }), null);
+});
+
 test('capture evidence references are bounded, session-scoped, inspectable and engine-verified', async t => {
   const root = await mkdtemp(join(tmpdir(), 'dd-host-evidence-'));
   const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });

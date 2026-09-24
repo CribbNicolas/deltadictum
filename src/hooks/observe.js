@@ -7,6 +7,31 @@ function redact(raw, limit) {
   return redactSecrets(sanitizeText(String(raw))).slice(0, limit);
 }
 
+// A command is a validation only when a test, lint or type-check runner is the
+// program of one of its statements and the host's exit status is that runner's:
+// not piped into another program, and followed only by `&&` (after `;` or `||`
+// the last command decides the status). Quoted text is blanked first, so a
+// message or grep pattern cannot supply a runner or a separator.
+const RUNNER = new RegExp('^(?:\\w+=\\S*\\s+)*(?:'
+  + '(?:npm|pnpm|yarn|bun)\\s+(?:run\\s+)?(?:test|t|lint|typecheck|check)(?:[:\\w-]*)'
+  + '|(?:npx\\s+|python3?\\s+-m\\s+)?(?:pytest|jest|vitest|tsc|eslint|mocha)'
+  + '|node\\s+(?:\\S+\\s+)*--test|(?:cargo|go|dotnet|deno|swift|mvn|(?:\\.\\/)?gradlew|gradle)\\s+(?:\\S+\\s+)*test'
+  + '|make\\s+(?:test|check|lint)|rspec|phpunit'
+  + ')(?:\\s|$)');
+function runsValidation(command) {
+  const plain = String(command).replace(/'[^']*'|"(?:\\.|[^"\\])*"/g, '""');
+  const parts = plain.split(/(&&|\|\||;|\n)/);
+  for (let i = 0; i < parts.length; i += 2) {
+    const stages = parts[i].split(/(?<!\|)\|(?!\|)/);
+    if (stages.length !== 1 || !RUNNER.test(stages[0].trim())) continue;
+    if (parts.slice(i + 1).filter((_, j) => j % 2 === 0).every(sep => sep === '&&')) return true;
+  }
+  return false;
+}
+// Reported failures in an output whose exit status says success: a runner that
+// exits 0 on failure, or a wrapper that swallowed its status.
+const FAILURE_OUTPUT = /(?:^|\s)(?:fail(?:ed|ures?)?|failing|errors?)\s*[:=]?\s*[1-9]|[1-9]\d*\s+(?:failed|failing)\b|^\s*not ok\b|✖|AssertionError/im;
+
 // Claude Code reports an outcome through the event rather than an exit code
 // (shapes recorded from a real session, 2026-09-24): a successful Bash call fires
 // PostToolUse with {stdout, stderr, interrupted} and no exit code, and a failed
@@ -24,7 +49,8 @@ export function observationFromTool(payload, { claudeCode = false } = {}) {
   const succeeded = typeof exit === 'number' ? exit === 0 : event === 'PostToolUse' && response.interrupted === false;
   const input = payload.tool_input ?? payload.toolInput ?? {};
   const command = typeof input === 'string' ? input : input.command ?? input.cmd ?? '';
-  const validation = !failed && succeeded && /\b(test|pytest|jest|vitest|lint|typecheck|tsc|check)\b/i.test(command);
+  const output = typeof response === 'string' ? response : [response.stdout, response.stderr, response.output].filter(Boolean).join('\n');
+  const validation = !failed && succeeded && runsValidation(command) && !FAILURE_OUTPUT.test(output);
   if (!failed && !validation) return null;
   const raw = event === 'PostToolUseFailure' ? payload.error ?? ''
     : typeof response === 'string' ? response : response.stderr || response.output || response.stdout || response.error || '';

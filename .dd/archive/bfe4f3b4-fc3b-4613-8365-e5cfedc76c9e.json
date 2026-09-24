@@ -1,0 +1,91 @@
+{
+  "id": "bfe4f3b4-fc3b-4613-8365-e5cfedc76c9e",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "user_explicit",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "A running resident keeps its route code; index.html is read fresh",
+  "topic_key": "ui/server-routes-need-restart",
+  "trigger": "when editing src/ui/server.js routes or handlers and verifying against a running audit UI",
+  "behavior_delta": "Verify a route or handler change against a restarted resident: pipe a session-start payload into node hooks/run.cjs session-start, then check GET /api/resident shows stale:false. index.html is read on every GET / and needs only a browser refresh. A resident whose src/ changed refuses hooks (409 build_stale) and is replaced at the next prompt or session start, but until then it keeps serving UI routes with its old code.",
+  "what": "Verify a route or handler change against a restarted resident: pipe a session-start payload into node hooks/run.cjs session-start, then check GET /api/resident shows stale:false. index.html is read on every GET / and needs only a browser refresh. A resident whose src/ changed refuses hooks (409 build_stale) and is replaced at the next prompt or session start, but until then it keeps serving UI routes with its old code.",
+  "why": "A new route returned 404 against the already-running process while a fresh one served it. Stale detection only guards hook calls, so UI routes silently run old code until replacement.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/ui/server.js",
+      "src/ui/public/index.html"
+    ],
+    "components": [
+      "audit-ui",
+      "resident"
+    ],
+    "operations": [
+      "edit",
+      "debug"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/ui/server.js",
+      "summary": "staleCode() gates /api/hooks/* only; index.html is read per request."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/run.js",
+      "summary": "The prompt path now calls ensureResident, which replaces a stale resident."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-24T12:07:09.505Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Verify a route or handler change against a restarted resident: pipe a session-start payload into node hooks/run.cjs session-start, then check GET /api/resident shows stale:false. index.html is read on every GET / and needs only a browser refresh. A resident whose src/ changed refuses hooks (409 build_stale) and is replaced at the next prompt or session start, but until then it keeps serving UI routes with its old code.",
+    "short": "Verify a route or handler change against a restarted resident: pipe a session-start payload into node hooks/run.cjs session-start, then check GET /api/resident shows stale:false. index.html is read on every GET / and needs only a browser refresh. A resident whose src/ changed refuses hooks (409 build_stale) and is replaced at the next prompt or session start, but until then it keeps serving UI routes with its old code. Why: A new route returned 404 against the already-running process while a fresh one served it. Stale detection only guards hook calls, so UI routes silently run old code until replacement.",
+    "full": "Verify a route or handler change against a restarted resident: pipe a session-start payload into node hooks/run.cjs session-start, then check GET /api/resident shows stale:false. index.html is read on every GET / and needs only a browser refresh. A resident whose src/ changed refuses hooks (409 build_stale) and is replaced at the next prompt or session start, but until then it keeps serving UI routes with its old code. Why: A new route returned 404 against the already-running process while a fresh one served it. Stale detection only guards hook calls, so UI routes silently run old code until replacement."
+  },
+  "confidence": 0.85,
+  "registry_key_id": "6e6b882c-5c9a-4660-ae93-ece70f458df3",
+  "evidence_state": {
+    "checked_at": "2026-09-24T16:49:24.628Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/ui/server.js",
+        "summary": "staleCode() gates /api/hooks/* only; index.html is read per request.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "297196f0916649a6f60d100d56a54b514efb282217646c46dbcf2fc91896153b"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/run.js",
+        "summary": "The prompt path now calls ensureResident, which replaces a stale resident.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "2c1cf2140140c61db89ecf3019f923eb57b4bd2bc979379bfdd5e2b71ae420e3"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "replaces": "cf1ad3c5-9c4b-4cdf-83ce-73df45201ffb",
+  "created_at": "2026-09-24T12:07:09.516Z",
+  "updated_at": "2026-09-24T21:38:22.606Z",
+  "activation_count": 2,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T16:49:24.628Z",
+    "rationale": "Auto-accepted: confidence 0.85 >= threshold 0.765."
+  },
+  "superseded_by": "a723154d-3652-46ff-8fcb-6c6f3b510dd3",
+  "contested_at": null
+}

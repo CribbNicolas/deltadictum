@@ -1,5 +1,8 @@
 # Grok Build installation
 
+**Status: not tested yet.** No live session with a model has run DD on this harness; the checks below are
+the ones done without one.
+
 DD ships as a native Grok Build plugin via `.grok-plugin/plugin.json` and `.grok-plugin/marketplace.json`
 at the repository root, mirroring the Claude Code layout (`${GROK_PLUGIN_ROOT}` in place of
 `${CLAUDE_PLUGIN_ROOT}`). This repository is also usable as a project-level Grok config directly —
