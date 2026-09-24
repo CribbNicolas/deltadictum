@@ -1,25 +1,28 @@
 {
-  "id": "e96a63b1-6a4a-438e-979a-0a1e6159829e",
+  "id": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
   "project_id": "supermem",
   "schema_version": 7,
-  "capture_origin": "model_initiated",
+  "capture_origin": "user_explicit",
   "capture_source": "agent",
   "memory_type": "lesson",
   "scope": "project",
-  "title": "Failing store tests hang node --test",
+  "title": "Failing store tests hang node --test; --test-force-exit breaks resident tests on Windows",
   "topic_key": "testing/store-handle-hangs-node-test",
-  "trigger": "When running a single DD test file with node --test and it never finishes, or when an assertion fails before store.close()",
-  "behavior_delta": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit.",
-  "what": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit.",
-  "why": "On 2026-09-22 a deliberately failing tests/mcp/tools.test.js hung past the 120 s tool timeout with no output; rerunning with --test-force-exit showed the assertion immediately. A measurement script that opened createMemoryStore without process.exit also stayed alive and locked the copied index.sqlite.",
+  "trigger": "when a single DD test file run with node --test never finishes, or when choosing flags to run test files",
+  "behavior_delta": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit.",
+  "what": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit.",
+  "why": "A failing assertion before store.close() kept tests/mcp/tools.test.js alive past the 120 s timeout with no output (2026-09-22); --test-force-exit revealed it, but the same flag crashed the resident tests on Windows, so it is not a safe default.",
   "tags": [],
   "trigger_variants": [],
   "applies_to": {
     "files": [
+      "tests/hooks/resident.test.js",
       "tests/mcp/tools.test.js",
       "src/store/create-store.js"
     ],
-    "components": [],
+    "components": [
+      "tests"
+    ],
     "operations": [
       "test"
     ]
@@ -30,42 +33,56 @@
   "evidence_refs": [
     {
       "source_type": "file",
-      "source_ref": "tests/mcp/tools.test.js",
-      "summary": "store.close() is called at the end of each test, not in a finally/after hook"
+      "source_ref": "TODO.md",
+      "summary": "Item 9 records that --test-force-exit crashes the resident tests on Windows."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "tests/hooks/resident.test.js",
+      "summary": "Resident tests start UI servers and close them in t.after."
     }
   ],
   "authority": "validated",
   "lifecycle_state": "active",
-  "valid_from": "2026-09-22T19:46:25.462Z",
+  "valid_from": "2026-09-24T12:07:09.466Z",
   "valid_until": null,
   "retrieval_forms": {
-    "micro": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit.",
-    "short": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit. Why: On 2026-09-22 a deliberately failing tests/mcp/tools.test.js hung past the 120 s tool timeout with no output; rerunning with --test-force-exit showed the assertion immediately. A measurement script that opened createMemoryStore without process.exit also stayed alive and locked the copied index.sqlite.",
-    "full": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit. Why: On 2026-09-22 a deliberately failing tests/mcp/tools.test.js hung past the 120 s tool timeout with no output; rerunning with --test-force-exit showed the assertion immediately. A measurement script that opened createMemoryStore without process.exit also stayed alive and locked the copied index.sqlite."
+    "micro": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit.",
+    "short": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit. Why: A failing assertion before store.close() kept tests/mcp/tools.test.js alive past the 120 s timeout with no output (2026-09-22); --test-force-exit revealed it, but the same flag crashed the resident tests on Windows, so it is not a safe default.",
+    "full": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit. Why: A failing assertion before store.close() kept tests/mcp/tools.test.js alive past the 120 s timeout with no output (2026-09-22); --test-force-exit revealed it, but the same flag crashed the resident tests on Windows, so it is not a safe default."
   },
-  "confidence": 0.765,
+  "confidence": 0.85,
   "registry_key_id": "900d7093-1f10-4ce8-8478-b21d67c2a6bd",
   "evidence_state": {
-    "checked_at": "2026-09-22T19:59:39.921Z",
+    "checked_at": "2026-09-24T16:49:24.683Z",
     "artifacts": [
       {
         "source_type": "file",
-        "source_ref": "tests/mcp/tools.test.js",
-        "summary": "store.close() is called at the end of each test, not in a finally/after hook",
+        "source_ref": "TODO.md",
+        "summary": "Item 9 records that --test-force-exit crashes the resident tests on Windows.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "92ca90f8b6a84e28366cb4f4d03f483b29a3dbadce6611529206387935d1e62f"
+        "hash": "ad356d865232f798022a5d4e12be6a7727eff47e420e99168d80fe99a4c1ccbc"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "tests/hooks/resident.test.js",
+        "summary": "Resident tests start UI servers and close them in t.after.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "ec220fa28759f3f73face3c40a4b77560c706e164443555dfcac1eb2b9120557"
       }
     ],
-    "verified_count": 1,
+    "verified_count": 2,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-22T19:46:25.511Z",
-  "updated_at": "2026-09-22T19:59:39.925Z",
+  "replaces": "e96a63b1-6a4a-438e-979a-0a1e6159829e",
+  "created_at": "2026-09-24T12:07:09.477Z",
+  "updated_at": "2026-09-24T16:49:24.687Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-22T19:59:39.921Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-24T16:49:24.683Z",
+    "rationale": "Auto-accepted: confidence 0.85 >= threshold 0.765."
   }
 }

@@ -1,0 +1,93 @@
+{
+  "id": "e57a21a9-9302-4c77-ac11-0ea61b4321f1",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Renaming the data directory orphans telemetry, silently",
+  "topic_key": "dd/store/data-directory-renames",
+  "trigger": "when changing how dataDir or dataBase is derived in project.js, or when diagnosing telemetry that vanished across versions",
+  "behavior_delta": "Treat a dataDir change as a migration, not a rename. Atoms come back from git on any rebuild, so the store looks healthy and complete; retrieval events, observations, admission decisions and the contradiction log live only in SQLite under the old path and are silently abandoned. Either migrate the old directory or report that history was left behind.",
+  "what": "Treat a dataDir change as a migration, not a rename. Atoms come back from git on any rebuild, so the store looks healthy and complete; retrieval events, observations, admission decisions and the contradiction log live only in SQLite under the old path and are silently abandoned. Either migrate the old directory or report that history was left behind.",
+  "why": "Three data directories for one project were found holding the same 17 atoms and split telemetry: ~/.supermem (12 events), ~/.dd (6) and ~/.dd-data (1). Indicators with a min_events floor, such as cap_saturation, read as skipped for want of telemetry that exists but is unreachable.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/project.js",
+      "src/store/create-store.js"
+    ],
+    "components": [],
+    "operations": [
+      "refactor",
+      "debug"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "dataBase or dataDir derivation changes again",
+      "path": "src/project.js",
+      "hash": "c59b66f838b66473a52d93424702b3d2cc9041f68399ed56da018666d781ecf0"
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/project.js",
+      "summary": "dataBase derivation and the comment recording the deliberate move away from ~/.dd"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/engine/health/deterioration.js",
+      "summary": "cap_saturation reports status skipped with reason insufficient_telemetry below min_events"
+    }
+  ],
+  "authority": "validated",
+  "confidence": 0.765,
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-19T01:16:55.817Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Treat a dataDir change as a migration, not a rename. Atoms come back from git on any rebuild, so the store looks healthy and complete; retrieval events, observations, admission decisions and the contradiction log live only in SQLite under the old path and are silently abandoned. Either migrate the old directory or report that history was left behind.",
+    "short": "Treat a dataDir change as a migration, not a rename. Atoms come back from git on any rebuild, so the store looks healthy and complete; retrieval events, observations, admission decisions and the contradiction log live only in SQLite under the old path and are silently abandoned. Either migrate the old directory or report that history was left behind. Why: Three data directories for one project were found holding the same 17 atoms and split telemetry: ~/.supermem (12 events), ~/.dd (6) and ~/.dd-data (1). Indicators with a min_events floor, such as cap_saturation, read as skipped for want of telemetry that exists but is unreachable.",
+    "full": "Treat a dataDir change as a migration, not a rename. Atoms come back from git on any rebuild, so the store looks healthy and complete; retrieval events, observations, admission decisions and the contradiction log live only in SQLite under the old path and are silently abandoned. Either migrate the old directory or report that history was left behind. Why: Three data directories for one project were found holding the same 17 atoms and split telemetry: ~/.supermem (12 events), ~/.dd (6) and ~/.dd-data (1). Indicators with a min_events floor, such as cap_saturation, read as skipped for want of telemetry that exists but is unreachable."
+  },
+  "registry_key_id": "4c52ce91-05bd-4498-8113-5f6bd8df65ea",
+  "evidence_state": {
+    "checked_at": "2026-09-19T10:35:53.020Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/project.js",
+        "summary": "dataBase derivation and the comment recording the deliberate move away from ~/.dd",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "c59b66f838b66473a52d93424702b3d2cc9041f68399ed56da018666d781ecf0"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/engine/health/deterioration.js",
+        "summary": "cap_saturation reports status skipped with reason insufficient_telemetry below min_events",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "3994cd14ef92e2d26f24ca7a86877b40cf0b55f2c84d44dce34c745285099bdd"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-19T01:16:55.833Z",
+  "updated_at": "2026-09-24T16:49:24.770Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-19T10:35:53.020Z",
+    "rationale": "Reviewed as proposed."
+  },
+  "superseded_by": "aaf0b012-5580-456b-8b45-d83637acd079"
+}

@@ -1,0 +1,72 @@
+{
+  "id": "e96a63b1-6a4a-438e-979a-0a1e6159829e",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Failing store tests hang node --test",
+  "topic_key": "testing/store-handle-hangs-node-test",
+  "trigger": "When running a single DD test file with node --test and it never finishes, or when an assertion fails before store.close()",
+  "behavior_delta": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit.",
+  "what": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit.",
+  "why": "On 2026-09-22 a deliberately failing tests/mcp/tools.test.js hung past the 120 s tool timeout with no output; rerunning with --test-force-exit showed the assertion immediately. A measurement script that opened createMemoryStore without process.exit also stayed alive and locked the copied index.sqlite.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "tests/mcp/tools.test.js",
+      "src/store/create-store.js"
+    ],
+    "components": [],
+    "operations": [
+      "test"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "tests/mcp/tools.test.js",
+      "summary": "store.close() is called at the end of each test, not in a finally/after hook"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-22T19:46:25.462Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit.",
+    "short": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit. Why: On 2026-09-22 a deliberately failing tests/mcp/tools.test.js hung past the 120 s tool timeout with no output; rerunning with --test-force-exit showed the assertion immediately. A measurement script that opened createMemoryStore without process.exit also stayed alive and locked the copied index.sqlite.",
+    "full": "Run single test files with node --test --test-force-exit and a timeout. A failing assertion before store.close() leaves the SQLite handle open and the process never exits, hiding the failure output. Scripts that open a store must end with process.exit. Why: On 2026-09-22 a deliberately failing tests/mcp/tools.test.js hung past the 120 s tool timeout with no output; rerunning with --test-force-exit showed the assertion immediately. A measurement script that opened createMemoryStore without process.exit also stayed alive and locked the copied index.sqlite."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "900d7093-1f10-4ce8-8478-b21d67c2a6bd",
+  "evidence_state": {
+    "checked_at": "2026-09-22T19:59:39.921Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "tests/mcp/tools.test.js",
+        "summary": "store.close() is called at the end of each test, not in a finally/after hook",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "92ca90f8b6a84e28366cb4f4d03f483b29a3dbadce6611529206387935d1e62f"
+      }
+    ],
+    "verified_count": 1,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-22T19:46:25.511Z",
+  "updated_at": "2026-09-24T16:49:24.687Z",
+  "activation_count": 4,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-22T19:59:39.921Z",
+    "rationale": "Reviewed as proposed."
+  },
+  "superseded_by": "b85c7346-45dd-4416-a2b2-99dd9a6a494a"
+}

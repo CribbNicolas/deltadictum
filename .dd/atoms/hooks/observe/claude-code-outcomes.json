@@ -1,119 +1,103 @@
 {
-  "id": "a02d4640-9e2a-4c2d-b252-f67610c0819d",
+  "id": "354338bf-10ee-40df-998c-744c227affd4",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
   "capture_source": "agent",
   "memory_type": "lesson",
   "scope": "project",
-  "title": "On Claude Code, observe records no tool outcomes",
+  "title": "Claude Code reports tool outcomes by event, not exit code",
   "topic_key": "hooks/observe/claude-code-outcomes",
-  "trigger": "Before relying on host observations (Stop capture reminder, evidence IDs) on Claude Code, or when the Stop reminder seems never to fire",
-  "behavior_delta": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction.",
-  "what": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction.",
-  "why": "observationFromTool needs a numeric exit code or is_error; Claude Code's Bash response has neither on success, and failed calls likely go to PostToolUseFailure, which hooks/hooks.json does not register. A full day of passing and failing test runs left 0 tool observations and 3 user corrections, so the capture reminder looked broken.",
+  "trigger": "when changing how observe classifies tool results, or when registering DD hooks for Claude Code by hand",
+  "behavior_delta": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
+  "what": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
+  "why": "Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
   "tags": [],
   "trigger_variants": [],
   "applies_to": {
     "files": [
       "src/hooks/observe.js",
+      "src/hooks/run.js",
       "hooks/hooks.json",
-      "src/hooks/run.js"
+      "docs/integrations/grok-build.md"
     ],
     "components": [
       "hooks",
       "capture"
     ],
     "operations": [
-      "debug",
       "edit"
     ]
   },
-  "assumptions": [
-    {
-      "key": "",
-      "description": "Claude Code routes failed tool calls to PostToolUseFailure rather than PostToolUse; not yet confirmed with a logging hook"
-    }
-  ],
-  "revisit_when": [
-    {
-      "kind": "file_changed",
-      "description": "observe learns Claude Code's result shapes",
-      "path": "src/hooks/observe.js",
-      "hash": "b596554bbbc2cd5b8782bab4edbd962833ebdf51b3bc2702bc65f45e1042a1c7"
-    },
-    {
-      "kind": "file_changed",
-      "description": "a failure event is registered",
-      "path": "hooks/hooks.json",
-      "hash": "c45dd6984b86b932c44185d9fb77f74c872191b2969bf6ce715cbcc86b53d533"
-    }
-  ],
+  "assumptions": [],
+  "revisit_when": [],
   "alternatives": [],
   "evidence_refs": [
     {
       "source_type": "file",
       "source_ref": "src/hooks/observe.js",
-      "summary": "observationFromTool returns null unless exit code or is_error marks a failure or a validation"
+      "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then."
     },
     {
       "source_type": "file",
       "source_ref": "hooks/hooks.json",
-      "summary": "Registers PostToolUse only; no failure event"
+      "summary": "PostToolUseFailure is registered to the observe command."
     },
     {
-      "source_type": "tool_output",
-      "source_ref": "379bb5de-49a3-42d6-aaae-0e527fdcb39c",
-      "summary": "The only observation offered at Stop this session was a user correction"
+      "source_type": "file",
+      "source_ref": "tests/hooks/stop.test.js",
+      "summary": "Stop asks after a PostToolUseFailure or an exit-code-less PostToolUse under CLAUDECODE=1 only."
     }
   ],
   "authority": "validated",
   "lifecycle_state": "active",
-  "valid_from": "2026-09-24T02:07:04.928Z",
+  "valid_from": "2026-09-24T12:07:09.545Z",
   "valid_until": null,
   "retrieval_forms": {
-    "micro": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction.",
-    "short": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction. Why: observationFromTool needs a numeric exit code or is_error; Claude Code's Bash response has neither on success, and failed calls likely go to PostToolUseFailure, which hooks/hooks.json does not register. A full day of passing and failing test runs left 0 tool observations and 3 user corrections, so the capture reminder looked broken.",
-    "full": "Do not assume Claude Code tool results become observations: check memory_observations for non-user_correction rows first. Until observe handles Claude Code's shapes, the Stop capture reminder fires there only after a detected user correction. Why: observationFromTool needs a numeric exit code or is_error; Claude Code's Bash response has neither on success, and failed calls likely go to PostToolUseFailure, which hooks/hooks.json does not register. A full day of passing and failing test runs left 0 tool observations and 3 user corrections, so the capture reminder looked broken."
+    "micro": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
+    "short": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded. Why: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
+    "full": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded. Why: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape."
   },
-  "confidence": 0.855,
+  "confidence": 0.765,
   "registry_key_id": "d98e5105-0f3d-4554-a06b-6427152bab69",
   "evidence_state": {
-    "checked_at": "2026-09-24T11:41:56.007Z",
+    "checked_at": "2026-09-24T16:49:24.575Z",
     "artifacts": [
       {
         "source_type": "file",
         "source_ref": "src/hooks/observe.js",
-        "summary": "observationFromTool returns null unless exit code or is_error marks a failure or a validation",
+        "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "b596554bbbc2cd5b8782bab4edbd962833ebdf51b3bc2702bc65f45e1042a1c7"
+        "hash": "50a54ff3d463c4dacf9283a1f5073378f44f1a69576f873dcfecb8ab83a6023f"
       },
       {
         "source_type": "file",
         "source_ref": "hooks/hooks.json",
-        "summary": "Registers PostToolUse only; no failure event",
+        "summary": "PostToolUseFailure is registered to the observe command.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "c45dd6984b86b932c44185d9fb77f74c872191b2969bf6ce715cbcc86b53d533"
+        "hash": "db8153d7734b88de66c5ea16db597ae77885dd9a83fffa24e7d564b4ce78a6f1"
       },
       {
-        "source_type": "tool_output",
-        "source_ref": "379bb5de-49a3-42d6-aaae-0e527fdcb39c",
-        "summary": "The only observation offered at Stop this session was a user correction",
+        "source_type": "file",
+        "source_ref": "tests/hooks/stop.test.js",
+        "summary": "Stop asks after a PostToolUseFailure or an exit-code-less PostToolUse under CLAUDECODE=1 only.",
         "status": "verified",
-        "provenance": "user_correction",
-        "hash": "30c84c0ebd829147a685f37cbfdfe5975f5d925754229cecd12b2857940d28e8"
+        "provenance": "filesystem",
+        "hash": "8d7b6559fed4f25b19fde69a3bb1d48033064ca02c1eb55a25f9b6f8925b4cec"
       }
     ],
     "verified_count": 3,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-24T02:07:04.966Z",
-  "updated_at": "2026-09-24T11:41:56.013Z",
+  "replaces": "a02d4640-9e2a-4c2d-b252-f67610c0819d",
+  "created_at": "2026-09-24T12:07:09.557Z",
+  "updated_at": "2026-09-24T16:49:24.579Z",
+  "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-24T11:41:56.008Z",
-    "rationale": "Auto-accepted: confidence 0.855 >= threshold 0.765."
+    "reviewed_at": "2026-09-24T16:49:24.575Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

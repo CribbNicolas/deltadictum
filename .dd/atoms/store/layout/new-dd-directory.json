@@ -1,0 +1,102 @@
+{
+  "id": "69a66da2-6d70-4b30-a5f7-c0265c894601",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "A new directory under .dd needs four places updated",
+  "topic_key": "store/layout/new-dd-directory",
+  "trigger": "when adding a new directory or file kind under .dd/ that the store writes (like legacy/ or actions/)",
+  "behavior_delta": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
+  "what": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
+  "why": "Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/store/transactions.js",
+      "src/store/git-file-store.js",
+      "src/store/fingerprint.js",
+      "src/store/create-store.js",
+      "src/store/paths.js"
+    ],
+    "components": [
+      "store"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/store/transactions.js",
+      "summary": "operationPath only accepts journal paths under an explicit list of directories."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/store/create-store.js",
+      "summary": "The .dd watcher regex names the directories whose changes refresh the index and notify the UI."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/store/fingerprint.js",
+      "summary": "sourceFingerprint walks a fixed list of directories to decide when to reindex."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T17:01:44.027Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
+    "short": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error. Why: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
+    "full": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error. Why: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "dfadf693-87a8-4a1d-9ca8-6c29b71436ab",
+  "evidence_state": {
+    "checked_at": "2026-09-24T17:08:30.067Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/store/transactions.js",
+        "summary": "operationPath only accepts journal paths under an explicit list of directories.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "281783e2c13a0198c9a8d152d323323b8d42f09043d33af1660fdfa01627f7ae"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/store/create-store.js",
+        "summary": "The .dd watcher regex names the directories whose changes refresh the index and notify the UI.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "e88f1e6f1d8a280a1fbf9a6a683d50b1531bba2f4e369eb6cf20e0b9ca719b51"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/store/fingerprint.js",
+        "summary": "sourceFingerprint walks a fixed list of directories to decide when to reindex.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "5cec056ef4ca3e3020df14290e5e709d009dd209999424aea4d7a3ef741cc25d"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T17:01:44.100Z",
+  "updated_at": "2026-09-24T17:08:30.074Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T17:08:30.067Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

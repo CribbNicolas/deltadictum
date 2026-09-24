@@ -48,7 +48,7 @@
     }
   ],
   "authority": "validated",
-  "lifecycle_state": "active",
+  "lifecycle_state": "archived",
   "valid_from": "2026-09-19T15:30:52.178Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -82,11 +82,14 @@
     "support": "human_reviewed"
   },
   "created_at": "2026-09-19T15:30:52.274Z",
-  "updated_at": "2026-09-19T16:22:31.616Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-24T21:38:30.401Z",
+  "activation_count": 1,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-19T16:22:31.611Z",
     "rationale": "Reviewed as proposed."
-  }
+  },
+  "archived_at": "2026-09-24T21:38:30.396Z",
+  "archived_reason": "The default auto_accept.confidence_threshold is now 0.765 (src/store/paths.js), which a model_initiated filesystem-evidenced proposal reaches. The general rule, that a threshold must be one of the reachable ceilings, lives in d3d5bf57.",
+  "contested_at": null
 }

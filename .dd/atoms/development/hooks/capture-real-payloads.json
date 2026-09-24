@@ -1,0 +1,101 @@
+{
+  "id": "f825dc49-09aa-4842-8fec-6a0842f87966",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "procedure",
+  "scope": "project",
+  "title": "Capture a host's real hook payload through hooks/run.cjs, not docs or settings",
+  "topic_key": "development/hooks/capture-real-payloads",
+  "trigger": "when a hook change depends on the exact payload a host sends (tool_response fields, event names, environment)",
+  "behavior_delta": "In a checkout session, temporarily make hooks/run.cjs append stdin (or filtered env) for the event to a scratch file, trigger the tool call, read it, then git checkout hooks/run.cjs. Do not trust documentation summaries for the shape, and do not plan on registering new events in .claude/settings.local.json from the agent: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a plugin-dir session.",
+  "what": "In a checkout session, temporarily make hooks/run.cjs append stdin (or filtered env) for the event to a scratch file, trigger the tool call, read it, then git checkout hooks/run.cjs. Do not trust documentation summaries for the shape, and do not plan on registering new events in .claude/settings.local.json from the agent: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a plugin-dir session.",
+  "why": "On 2026-09-24 this captured Claude Code's real PostToolUse Bash shape ({stdout, stderr, interrupted, ...}, no exit code) and CLAUDECODE=1 in hook env, while a docs-derived summary claimed tool_response was {type, text}. Adding PostToolUseFailure to settings.local.json was denied by the permission classifier.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "hooks/run.cjs",
+      "src/hooks/observe.js",
+      ".claude/settings.local.json"
+    ],
+    "components": [
+      "hooks"
+    ],
+    "operations": [
+      "debug",
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "tool_output",
+      "source_ref": "003647de-f3a6-4e8f-a8df-ae7c4162e8f0",
+      "summary": "Validation recorded after the observe fix, from a real Claude Code PostToolUse without exit code."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "hooks/run.cjs",
+      "summary": "Launcher every checkout hook runs through; edits take effect on the next hook call."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/observe.js",
+      "summary": "Comment records the shapes captured this way."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T12:08:16.414Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "In a checkout session, temporarily make hooks/run.cjs append stdin (or filtered env) for the event to a scratch file, trigger the tool call, read it, then git checkout hooks/run.cjs. Do not trust documentation summaries for the shape, and do not plan on registering new events in .claude/settings.local.json from the agent: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a plugin-dir session.",
+    "short": "In a checkout session, temporarily make hooks/run.cjs append stdin (or filtered env) for the event to a scratch file, trigger the tool call, read it, then git checkout hooks/run.cjs. Do not trust documentation summaries for the shape, and do not plan on registering new events in .claude/settings.local.json from the agent: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a plugin-dir session. Why: On 2026-09-24 this captured Claude Code's real PostToolUse Bash shape ({stdout, stderr, interrupted, ...}, no exit code) and CLAUDECODE=1 in hook env, while a docs-derived summary claimed tool_response was {type, text}. Adding PostToolUseFailure to settings.local.json was denied by the permission classifier.",
+    "full": "In a checkout session, temporarily make hooks/run.cjs append stdin (or filtered env) for the event to a scratch file, trigger the tool call, read it, then git checkout hooks/run.cjs. Do not trust documentation summaries for the shape, and do not plan on registering new events in .claude/settings.local.json from the agent: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a plugin-dir session. Why: On 2026-09-24 this captured Claude Code's real PostToolUse Bash shape ({stdout, stderr, interrupted, ...}, no exit code) and CLAUDECODE=1 in hook env, while a docs-derived summary claimed tool_response was {type, text}. Adding PostToolUseFailure to settings.local.json was denied by the permission classifier."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "6a4565ad-a776-48b1-ae82-a8eda0bec0d2",
+  "evidence_state": {
+    "checked_at": "2026-09-24T16:49:24.470Z",
+    "artifacts": [
+      {
+        "source_type": "tool_output",
+        "source_ref": "003647de-f3a6-4e8f-a8df-ae7c4162e8f0",
+        "summary": "Validation recorded after the observe fix, from a real Claude Code PostToolUse without exit code.",
+        "status": "verified",
+        "provenance": "host",
+        "hash": "b4c5ee257686d6e6e95456942a078fef33adffc67f925de2ecdf16ee367c1f4c"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "hooks/run.cjs",
+        "summary": "Launcher every checkout hook runs through; edits take effect on the next hook call.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6306fcb958d4881a6d99a38eb53c9cc0e6259a338412c5ef7ecc895a88a12286"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/observe.js",
+        "summary": "Comment records the shapes captured this way.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "50a54ff3d463c4dacf9283a1f5073378f44f1a69576f873dcfecb8ab83a6023f"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T12:08:16.470Z",
+  "updated_at": "2026-09-24T16:49:24.475Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T16:49:24.470Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

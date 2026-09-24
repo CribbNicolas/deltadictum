@@ -65,7 +65,7 @@
     }
   ],
   "authority": "validated",
-  "lifecycle_state": "active",
+  "lifecycle_state": "archived",
   "valid_from": "2026-09-19T14:21:45.423Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -104,11 +104,14 @@
     "support": "human_reviewed"
   },
   "created_at": "2026-09-19T14:21:45.452Z",
-  "updated_at": "2026-09-19T14:59:10.234Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-24T21:38:32.540Z",
+  "activation_count": 4,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-19T14:59:10.228Z",
     "rationale": "Reviewed as proposed."
-  }
+  },
+  "archived_at": "2026-09-24T21:38:32.534Z",
+  "archived_reason": "It says SessionStart systemMessage never reaches the user's terminal on Claude Code 2.1.227+. On 2026-09-24, on Claude Code 2.1.282, the user saw 'SessionStart:startup says: DD audit UI: <url>' in the terminal at session start. The advice not to chase it as a DD bug no longer holds.",
+  "contested_at": null
 }
