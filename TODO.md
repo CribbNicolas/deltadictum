@@ -21,7 +21,7 @@ Then confirm: `npm view deltadictum version` is 0.3.1; `npm install -g deltadict
 --host codex --project <p>` and `node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project <p>`
 pass; OpenCode loads the plugin without error (`opencode serve --print-logs --log-level DEBUG`, then any
 request with `?directory=<project>`; look for `service=plugin path=deltadictum`). Run these with
-`DD_RESIDENT_REGISTRY` pointing at a temporary file, or they replace the machine's resident (item 4).
+`DD_RESIDENT_REGISTRY` pointing at a temporary file, or they replace the machine's resident (item 5).
 
 ## 2. The agent never asks DD on its own in Claude Code (seen in the 2026-09-23/24 session)
 
