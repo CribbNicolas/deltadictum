@@ -97,6 +97,18 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
   requireReview(actor);
   if (!rationale?.trim()) throw new Error('review_rationale_required');
   return store.withWriteLock(async () => {
+    const atoms = await planResolution(winnerId, loserId, { store, projectId, rationale });
+    await store.commitAtoms(atoms);
+    await store.logContradiction({ project_id: projectId, atom_a_id: winnerId, atom_b_id: loserId,
+      detection_source: 'explicit', action: 'resolved', winner_atom_id: winnerId, reasons: ['human_reviewed'] });
+    return { winner_id: winnerId, loser_id: loserId };
+  });
+}
+
+// The atoms a resolution writes, without writing them, so an action can commit
+// them together with its own changes. Callers hold the write lock.
+export async function planResolution(winnerId, loserId, { store, projectId, rationale }) {
+  {
     const winner = await store.getAtom(winnerId, projectId);
     const loser = await store.getAtom(loserId, projectId);
     const relations = await store.listRelations({ atomIds: [winnerId] });
@@ -119,11 +131,8 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
       const remaining = (await effectivePeers(peer.id, store, projectId)).filter(a => a.id !== loserId);
       if (!remaining.length) atoms.push({ ...peer, lifecycle_state: 'active', contested_at: null });
     }
-    await store.commitAtoms(atoms);
-    await store.logContradiction({ project_id: projectId, atom_a_id: winnerId, atom_b_id: loserId,
-      detection_source: 'explicit', action: 'resolved', winner_atom_id: winnerId, reasons: ['human_reviewed'] });
-    return { winner_id: winnerId, loser_id: loserId };
-  });
+    return atoms;
+  }
 }
 
 // Archiving is not deleting. The file moves to `archive/`, the memory leaves the
