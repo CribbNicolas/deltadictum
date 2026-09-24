@@ -27,10 +27,14 @@ request with `?directory=<project>`; look for `service=plugin path=deltadictum`)
 
 In a long working session on this repository the model never called `orient`, `retrieve`, `propose` or
 `feedback` until the user asked; it only received what hooks pushed (16 deliveries). Causes found:
-- **Stop reminder likely never reaches the model on Claude Code.** `run.js` answers Stop with
-  `hookSpecificOutput.additionalContext`; the session had recorded validations and failures, yet no capture
-  reminder ever appeared. Codex gets `decision: block` instead. Verify what Claude Code accepts at Stop
-  (top-level `additionalContext`, or `decision: block` with `reason` like Codex) with a real session.
+- **On Claude Code, DD records no tool outcomes, so the Stop reminder only follows user corrections.**
+  The Stop reminder does reach the model (it appeared after a detected user correction), but it fires
+  only when the turn has recorded evidence, and this project's store holds 0 tool observations against 3
+  user corrections, after a session full of passing and failing test runs. `observationFromTool`
+  (`src/hooks/observe.js`) needs a numeric exit code or an `is_error` flag; Claude Code's Bash response
+  carries neither on success, and a failed tool call probably fires `PostToolUseFailure`, which
+  `hooks/hooks.json` does not register. Verify both shapes with a logging hook in a real session, then
+  register the failure event and read Claude Code's success shape without guessing (L4).
 - **Nothing tells the model to pull.** The SessionStart context names the `ui` tool only. The MCP server
   instructions ask for orient/retrieve/propose, but Claude Code defers MCP tools (names only, schema
   loaded by tool search), and hooks already push context, so pulling feels redundant. Consider one line
