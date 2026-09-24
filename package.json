@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
@@ -10,7 +10,8 @@
     "deltadictum": "src/cli.js"
   },
   "exports": {
-    ".": "./adapters/opencode/index.js"
+    ".": "./adapters/opencode/index.js",
+    "./server": "./adapters/opencode/index.js"
   },
   "scripts": {
     "test": "node --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/mcp/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/semantic/**/*.test.js\"",
