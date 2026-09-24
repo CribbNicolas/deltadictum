@@ -1,21 +1,27 @@
 # To do — DD (DeltaDictum)
 
-Updated 2026-09-23. Only open items; each carries its references and needs no context from a past session.
+Updated 2026-09-24. Only open items; each carries its references and needs no context from a past session.
 Finished work is recorded in the commit history.
 
-## 1. Publish to npm
+## 1. Publish 0.3.1 to npm — needs the owner, in a real terminal
 
-There is no `npm login` on this machine. The unscoped name `deltadictum` was free on the registry
-(checked 2026-09-19). Until it is published, the OpenCode install (`"plugin": ["deltadictum"]`) does not
-work. Deferred until DD is ready to publish; the package contents were checked on 2026-09-23
-(`npm pack --dry-run`).
+`deltadictum@0.3.0` is on npm but broken in OpenCode (no `./server` export; the adapter imported
+`node:sqlite`, which Bun lacks) and `scripts/check-codex.mjs` fails (no UI key; audited a project the
+resident had not opened). Both fixed in `b9318aa` as 0.3.1, pushed. The npm account uses a security key:
+`npm publish` must run in PowerShell or Windows Terminal, not through Claude Code's `!` (no TTY, so npm asks
+for an OTP instead of opening the browser flow).
 
-```bash
-npm login
-cd C:/dev/supermem
-npm publish --dry-run   # review what would be uploaded
-npm publish
+```powershell
+cd C:\dev\supermem
+npm publish        # open the printed link in Chrome, confirm with the security key
+Remove-Item -Recurse -Force "$HOME\.cache\opencode\packages\deltadictum@latest"   # a copy patched during testing
 ```
+
+Then confirm: `npm view deltadictum version` is 0.3.1; `npm install -g deltadictum`, `deltadictum install
+--host codex --project <p>` and `node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project <p>`
+pass; OpenCode loads the plugin without error (`opencode serve --print-logs --log-level DEBUG`, then any
+request with `?directory=<project>`; look for `service=plugin path=deltadictum`). Run these with
+`DD_RESIDENT_REGISTRY` pointing at a temporary file, or they replace the machine's resident (item 4).
 
 ## 2. Verify Grok Build live — blocked: Grok is not signed in
 
@@ -30,15 +36,17 @@ hook. Under `grok mcp doctor`, the install the MCP server started did not run. I
 remove `PreToolUse`, `UserPromptSubmit`, `PostToolUse` and `Stop` from `.grok-plugin/plugin.json`
 and keep only `SessionStart`.
 
-## 3. Verify OpenCode live — blocked: no working model credential
+## 3. Verify OpenCode and Codex live — blocked: no working model credential
 
 The Anthropic key has no credit, the OpenAI OAuth token fails to refresh (401), and MiniMax does not answer
-even without DD. Refresh one (`opencode auth login`), then run
-`opencode run "Report every 'DD -' line in your system prompt" -m <provider/model>` in a project whose
-`opencode.json` loads the adapter (`"plugin": ["file:///<dd>/adapters/opencode/index.js"]`, no npm publish
-needed) and the MCP server by absolute path. What to confirm: that
-`experimental.chat.system.transform` injects DD context in a real conversation
-(`docs/integrations/opencode.md`).
+even without DD. Refresh one (`opencode auth login`), then, with 0.3.1 published and `"plugin":
+["deltadictum"]` in the project's `opencode.json`, run
+`opencode run "Report every 'DD -' line in your system prompt" -m <provider/model>`. What to confirm: the
+system prompt carries the advisory frame and DD's context (`docs/integrations/opencode.md`). Verified
+without a model on 2026-09-24: OpenCode loads the plugin, and the adapter run under Bun injects the context.
+
+For Codex: open a project installed with `deltadictum install --host codex`, trust the five hooks in
+`/hooks`, and check that a session shows the audit UI address and that `dd` tools answer.
 
 ## 4. Two DD installs on one machine replace each other's resident
 
@@ -48,14 +56,32 @@ checkout, has each host's session start replace the other's resident and reload 
 2026-09-23 while testing the Grok install). Decide whether a resident should serve any install of the same
 version instead of only its own directory.
 
-## 5. Test on a real Mac — blocked: no Mac available
+## 5. Verify a Claude Code session from the marketplace install
+
+Marketplace install from GitHub and the MCP connection were verified in an isolated config dir
+(2026-09-23). Not yet seen: a real session of the marketplace-installed plugin in another project, showing
+the audit UI address at session start and, when the model is loading, "DD is active" on a later prompt.
+`/plugin marketplace add CribbNicolas/deltadictum`, `/plugin install deltadictum@deltadictum`. This
+changes the user's global Claude Code config; the source checkout's own hooks in
+`.claude/settings.local.json` would then run alongside the plugin's in this repository.
+
+## 6. Security hardening left open (from the 2026-09-24 review)
+
+Fixed items are in `0fbfed4` and the README's "Security boundary". Still open, lower priority:
+- The audit UI's CSP allows `'unsafe-inline'` scripts; moving the page script to a nonce or a file would
+  make any future escaping mistake non-exploitable.
+- `hasUnsafeMemoryContent` (`src/engine/v2/sanitizer.js`) is a phrase list; it stops obvious injection
+  text only. Review remains the real control.
+- The agent runs as the user and can write `.dd/` directly; documented as outside the boundary.
+
+## 7. Test on a real Mac — blocked: no Mac available
 
 Linux is verified (WSL Ubuntu, Node 22: full suite, stress, eval, semantic benchmark and the resident
 process end to end through a symlink). macOS is covered in code only (`src/paths.js` folds case on darwin
 and resolves symlinks such as `/tmp` → `/private/tmp`; `onnxruntime-node` ships darwin binaries). To run on
 a Mac: `npm test`, `npm run bench:semantic` and a real session, ideally also on a case-sensitive APFS volume.
 
-## 6. Archive memories that the code already states
+## 8. Archive memories that the code already states
 
 Reviewed against "would an agent reading the code, tests and docs work this out on its own?". Archive in
 the audit UI: `22291eb8`, `8724c2f2`, `bfacc975`, `b06e473d`, `292df784`, `9a955d61`, `c61d7902`,
@@ -64,20 +90,20 @@ per run (plan, "Pruned store"). Update with what changed on 2026-09-22: `e57a21a
 `adopt.js`), `e96a63b1` (`--test-force-exit` crashes the resident tests on Windows), `cf1ad3c5` (a stale
 resident is now replaced at session start).
 
-## 7. Measure the capture criterion (agent-level evaluation)
+## 9. Measure the capture criterion (agent-level evaluation)
 
 Capture memories under the new capture prompt during real work, then rerun
 `node src/eval/agent/run.js --repeat=3` and compare with `output/eval/agent-results-full.json` (about $7 of
 model usage per run). Three runs per cell leave a 2/18 difference within noise; five would settle the
 pruning question.
 
-## 8. Project-Patriark: semantic floor (optional)
+## 10. Project-Patriark: semantic floor (optional)
 
 After the translation the default floor reaches must recall 0.61 at precision 0.77 on Patriark's
 benchmark. `semantic.floor: 0.025` in Patriark's `.dd/config.json` raised must recall further before the
 translation, at the cost of one unrelated task no longer staying quiet. A choice for Patriark's owner.
 
-## 9. Commit Patriark's translated memories
+## 11. Commit Patriark's translated memories
 
 The 48 English memories and the archived Spanish originals are in `C:/dev/Project-Patriark/.dd/`,
 uncommitted: that repository has no commits yet.
