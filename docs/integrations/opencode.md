@@ -1,5 +1,8 @@
 # OpenCode installation
 
+**Status: not tested yet.** No live session with a model has run DD on this harness; the checks below are
+the ones done without one.
+
 DD ships an OpenCode plugin adapter at `adapters/opencode/index.js`, published under the `deltadictum`
 package's `exports` entry. OpenCode pulls plugins directly from npm — no installer script.
 
@@ -58,4 +61,4 @@ The 2026-09-19 check (`opencode debug startup` completing) proved less than it s
 had no `./server` export, so OpenCode never loaded the adapter, which would also have failed in Bun on
 `node:sqlite`.
 
-**Not verified:** a real conversation turn, which needs a working model credential (`TODO.md`).
+**Not verified:** a real conversation turn, which needs a working model credential.

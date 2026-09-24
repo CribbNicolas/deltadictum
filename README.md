@@ -4,7 +4,7 @@ DD supplies project context and conditional engineering knowledge to coding agen
 
 **DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** It runs from hooks and a local MCP server, stores knowledge as git-tracked files in the project it describes, and requires no database engine, no external vector store, no inference server and no cloud account. The seven constraints that follow from being a plugin are stated in [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md).
 
-Version **0.3.0** implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). The engine is local and provider independent: no model call, embeddings service or cloud account is required. Retrieval uses a local embedding model held by the [resident process](#resident-process); without it DD is inactive and says why.
+Version **0.3.1** implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). The engine is local and provider independent: no model call, embeddings service or cloud account is required. Retrieval uses a local embedding model held by the [resident process](#resident-process); without it DD is inactive and says why.
 
 ## What the agent receives
 
@@ -54,19 +54,98 @@ On Codex the same skills are installed as `dd-<name>`.
 
 ## Install
 
-Node 22 or later. Each host installs DD its own way:
+DD needs Node 22 or later on the machine. Each harness installs it its own way:
 
-| Host | Install | Details |
-|---|---|---|
-| Claude Code | `/plugin marketplace add CribbNicolas/deltadictum`, then `/plugin install dd@deltadictum` | Claude Code installs the packages itself (`npm ci --ignore-scripts`). |
-| Grok Build | `grok plugin marketplace add CribbNicolas/deltadictum`, then `grok plugin install deltadictum@deltadictum --trust` | [Grok Build guide](docs/integrations/grok-build.md) |
-| Codex | `npm install -g deltadictum`, then `deltadictum install --host codex --project <path>` | [Codex guide](docs/integrations/codex.md) |
-| OpenCode | `"plugin": ["deltadictum"]` in `opencode.json` | [OpenCode guide](docs/integrations/opencode.md) |
+| Harness | Status |
+|---|---|
+| [Claude Code](#claude-code) | Tested (Claude Code 2.1.282, 2026-09-24) |
+| [Codex](#codex) | Partly tested: installer and MCP server check pass; a live session with trusted hooks is not verified |
+| [Grok Build](#grok-build) | **Not tested yet** |
+| [OpenCode](#opencode) | **Not tested yet** |
 
-A host that copies the plugin without its packages (Grok Build) gets them on first use: the first session
-installs them into the plugin directory in the background, says DD is inactive until they are in place,
-and starts the [resident process](#resident-process) once they are. A failed attempt is named in the next
-session's message, with its log (`.dd-install.log` in the plugin directory) and the command to run by hand.
+Platforms: tested on Windows and Linux (WSL Ubuntu, Node 22). macOS is handled in code (`src/paths.js`)
+but has not been run on a Mac.
+
+The first session on a machine downloads the embedding model (about 130 MB). Until it is loaded, DD says
+it is inactive and recalls nothing; it turns on by itself.
+
+### Claude Code
+
+1. In Claude Code, add the marketplace and install the plugin:
+
+   ```text
+   /plugin marketplace add CribbNicolas/deltadictum
+   /plugin install dd@deltadictum
+   ```
+
+2. Start a new session in your project. The first line names the audit UI address; the `/dd:*` commands
+   and the `dd` MCP tools are available.
+
+Claude Code installs the packages itself. What was checked on 2026-09-24: the session start context and
+audit UI address, the MCP tools, a failing command recorded as a `tool_failure` and a passing test run as
+a `validation`.
+
+### Codex
+
+1. Install the package globally, so Codex has a directory that stays:
+
+   ```powershell
+   npm install -g deltadictum
+   ```
+
+2. Write DD's configuration into the project, then check it:
+
+   ```powershell
+   deltadictum install --host codex --project "<absolute-project-path>"
+   node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project "<absolute-project-path>"
+   ```
+
+3. Open the project in Codex, trust the project, then trust DD's five hooks in `/hooks`. Codex ignores a
+   project's `.codex/` configuration until the project is trusted.
+
+The skills are installed as `dd-<name>`. Details: [Codex guide](docs/integrations/codex.md).
+
+### Grok Build
+
+**Not tested yet.** The marketplace install and the MCP handshake (`grok mcp doctor`) were checked; a live
+session was not.
+
+```bash
+grok plugin marketplace add CribbNicolas/deltadictum
+grok plugin install deltadictum@deltadictum --trust
+```
+
+`--trust` is required for hooks and the MCP server to load. Grok copies the plugin without its packages,
+so the first session installs them in the background and says DD is inactive until they are in place. A
+failed attempt is named in the next session's message, with its log (`.dd-install.log` in the plugin
+directory) and the command to run by hand. Details: [Grok Build guide](docs/integrations/grok-build.md).
+
+### OpenCode
+
+**Not tested yet.** OpenCode loading the plugin and the adapter injecting its context were checked; a live
+session with a model was not.
+
+Add DD to the project's `opencode.json` (the same file is in `adapters/opencode.json`):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["deltadictum"],
+  "mcp": {
+    "dd": {
+      "type": "local",
+      "command": ["npx", "-y", "deltadictum", "mcp"],
+      "environment": { "DD_PROJECT_DIR": "<absolute-project-path>" },
+      "enabled": true
+    }
+  }
+}
+```
+
+OpenCode has no per-tool-call hook, so DD's context arrives once per session and recall is through the
+`dd` tools. Details: [OpenCode guide](docs/integrations/opencode.md).
+
+### Other MCP hosts
 
 For any other MCP host, install the packages with `npm install` and register this entrypoint:
 
@@ -130,7 +209,9 @@ Required authored fields: `topic_key`, `trigger`, `behavior_delta`, `why`, `evid
 
 Hooks retain small failure diagnostics and explicit validation results. On Claude Code the outcome comes
 from the event: `PostToolUseFailure` is a failure, and `PostToolUse` a success, since that host reports
-no exit code; other hosts must report one. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
+no exit code; other hosts must report one. A success counts as a validation only when a test, lint or
+type-check runner is a statement's own program, its output is not piped and only `&&` follows it (after `;`,
+`||` or a pipe the status belongs to another command), and its output reports no failures. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
 
 Automatic capture reminders are separate from writes: the Stop hook reminds only after a turn that recorded a host failure, a validation or a user correction, and avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point.
 
