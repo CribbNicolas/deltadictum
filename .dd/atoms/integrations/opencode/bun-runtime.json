@@ -1,0 +1,87 @@
+{
+  "id": "0647b0f0-25eb-40ef-9fe7-ad3d2fc5b903",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "OpenCode runs plugins in Bun: the adapter must import no DD module",
+  "topic_key": "integrations/opencode/bun-runtime",
+  "trigger": "Before editing adapters/opencode/index.js or adding an import or export to it",
+  "behavior_delta": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.",
+  "what": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.",
+  "why": "OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "adapters/opencode/index.js",
+      "adapters/opencode/frame.js",
+      "package.json"
+    ],
+    "components": [
+      "opencode-adapter"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "adapters/opencode/index.js",
+      "summary": "Header comment records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "tests/hooks/opencode.test.js",
+      "summary": "Test asserts the adapter imports only node:child_process, node:url and ./frame.js, exports only default, and package.json has ./server"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T02:05:11.982Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.",
+    "short": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it. Why: OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean.",
+    "full": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it. Why: OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "127018ce-6a47-48b9-bd33-e8d83faa957a",
+  "evidence_state": {
+    "checked_at": "2026-09-24T11:41:56.208Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "adapters/opencode/index.js",
+        "summary": "Header comment records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "ce7c0642e4ce926363e1a9ff2a31f6619ea16442b1a1dea53330bb515adf7f1b"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "tests/hooks/opencode.test.js",
+        "summary": "Test asserts the adapter imports only node:child_process, node:url and ./frame.js, exports only default, and package.json has ./server",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "f8ac7d50fac978e5994c2f62a0641a7385e6b615154aa2ffde0e382439ff5522"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T02:05:12.058Z",
+  "updated_at": "2026-09-24T11:41:56.212Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T11:41:56.208Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

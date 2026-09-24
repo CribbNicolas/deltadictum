@@ -7,22 +7,33 @@ function redact(raw, limit) {
   return redactSecrets(sanitizeText(String(raw))).slice(0, limit);
 }
 
-export function observationFromTool(payload) {
+// Claude Code reports an outcome through the event rather than an exit code
+// (shapes recorded from a real session, 2026-09-24): a successful Bash call fires
+// PostToolUse with {stdout, stderr, interrupted} and no exit code, and a failed
+// call fires PostToolUseFailure with an `error` string instead. That meaning is
+// read only when the caller knows the host is Claude Code (L4): another host
+// sending an event of the same name is not assumed to share it.
+export function observationFromTool(payload, { claudeCode = false } = {}) {
   const tool = String(payload.tool_name ?? payload.toolName ?? '');
   if (/(^|__)(dd|deltadictum)(__|_)/i.test(tool)) return null;
   const response = payload.tool_response ?? payload.toolResponse ?? payload.result ?? {};
+  const event = claudeCode ? payload.hook_event_name : undefined;
   const exit = response.exit_code ?? response.exitCode ?? payload.exit_code;
-  const failed = payload.is_error === true || response.is_error === true || response.isError === true || (typeof exit === 'number' && exit !== 0);
+  const failed = event === 'PostToolUseFailure' || payload.is_error === true || response.is_error === true || response.isError === true
+    || (typeof exit === 'number' && exit !== 0);
+  const succeeded = typeof exit === 'number' ? exit === 0 : event === 'PostToolUse' && response.interrupted === false;
   const input = payload.tool_input ?? payload.toolInput ?? {};
   const command = typeof input === 'string' ? input : input.command ?? input.cmd ?? '';
-  const validation = typeof exit === 'number' && exit === 0 && /\b(test|pytest|jest|vitest|lint|typecheck|tsc|check)\b/i.test(command);
+  const validation = !failed && succeeded && /\b(test|pytest|jest|vitest|lint|typecheck|tsc|check)\b/i.test(command);
   if (!failed && !validation) return null;
-  const raw = typeof response === 'string' ? response : response.stderr || response.output || response.stdout || response.error || '';
+  const raw = event === 'PostToolUseFailure' ? payload.error ?? ''
+    : typeof response === 'string' ? response : response.stderr || response.output || response.stdout || response.error || '';
   // Keep a small diagnostic and a verified host exit signal, not the tool input
   // or full logs. Secret-like assignments and common tokens are redacted.
   const preview = redact(raw, 600);
+  const signal = typeof exit === 'number' || !event ? `exit ${exit ?? 'unknown'}` : event;
   return { source_type: failed ? 'tool_failure' : 'validation', source_ref: tool,
-    raw_preview: `${failed ? 'Failed' : 'Validation passed'} (exit ${exit ?? 'unknown'}). ${preview}`,
+    raw_preview: `${failed ? 'Failed' : 'Validation passed'} (${signal}). ${preview}`,
     metadata: { provenance: 'host', tool, exit_code: exit ?? null, signal: failed ? 'failure' : 'validation',
       session_id: String(payload.session_id ?? payload.sessionId ?? '').slice(0, 150) } };
 }

@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { ARCHIVE_STATES, archiveFilePath, atomFilePath, candidateFilePath, configPath,
-  DEFAULT_CONFIG, registryPath, relationsPath } from './paths.js';
+import { ARCHIVE_STATES, actionFilePath, archiveFilePath, atomFilePath, candidateFilePath, configPath,
+  DEFAULT_CONFIG, legacyFilePath, registryPath, relationsPath } from './paths.js';
 import { commitTransaction, createWriteLock, readJson, recoverTransaction, writeJson } from './transactions.js';
 import { SCHEMA_VERSION, deriveForms, unsupportedReason } from '../engine/contract.js';
 
@@ -25,6 +25,8 @@ export function createGitFileStore(ddDir) {
   const rel = path => relative(ddDir, path).replaceAll('\\', '/');
   function destination(atom) {
     if (atom.lifecycle_state === 'candidate') return candidateFilePath(ddDir, atom.id);
+    // Legacy may share a topic with the memory that replaced it, so it is kept by id.
+    if (atom.lifecycle_state === 'legacy') return legacyFilePath(ddDir, atom.id);
     if (ARCHIVE_STATES.includes(atom.lifecycle_state)) return archiveFilePath(ddDir, atom.id);
     return atomFilePath(ddDir, atom.topic_key);
   }
@@ -33,7 +35,7 @@ export function createGitFileStore(ddDir) {
   // A file that is not valid JSON is reported like any other unsupported atom
   // rather than failing the whole read (L5).
   async function readStored() {
-    const files = (await Promise.all(['atoms', 'candidates', 'archive'].map(dir => walk(join(ddDir, dir))))).flat();
+    const files = (await Promise.all(['atoms', 'candidates', 'archive', 'legacy'].map(dir => walk(join(ddDir, dir))))).flat();
     return Promise.all(files.map(async file => {
       try {
         const atom = await readJson(file, null);
@@ -60,7 +62,9 @@ export function createGitFileStore(ddDir) {
       .map(({ file, atom, reason }) => ({ path: rel(file), id: atom?.id ?? null, topic_key: atom?.topic_key ?? null, reason }));
   }
 
-  async function commit({ atoms = [], deleteAtoms = [], relations } = {}) {
+  // `actions` writes or removes pending action files in the same transaction,
+  // so applying an action and closing it cannot come apart.
+  async function commit({ atoms = [], deleteAtoms = [], relations, actions = [] } = {}) {
     return withWriteLock(async () => {
       await recoverTransaction(ddDir);
       const operations = new Map();
@@ -90,17 +94,30 @@ export function createGitFileStore(ddDir) {
       }
       // Remove only files that belong to this identity, wherever its state placed them.
       for (const atom of [...stored, ...deleteAtoms]) {
-        for (const path of [atomFilePath(ddDir, atom.topic_key), candidateFilePath(ddDir, atom.id), archiveFilePath(ddDir, atom.id)]) {
+        for (const path of [atomFilePath(ddDir, atom.topic_key), candidateFilePath(ddDir, atom.id), archiveFilePath(ddDir, atom.id), legacyFilePath(ddDir, atom.id)]) {
           const previous = await readJson(path, null);
           if (previous?.id === atom.id && previous.project_id === atom.project_id) operations.set(rel(path), null);
         }
       }
       for (const atom of stored) operations.set(rel(destination(atom)), atom);
       if (relations !== undefined) operations.set('relations.json', relations);
+      for (const { id, value } of actions) operations.set(rel(actionFilePath(ddDir, id)), value);
       await commitTransaction(ddDir, [...operations].map(([path, value]) => ({ path, value })));
       return stored;
     });
   }
+
+  // Pending actions are not knowledge: they are never indexed or recalled.
+  async function listActions(projectId) {
+    const actions = await Promise.all((await walk(join(ddDir, 'actions'))).map(file => readJson(file, null).catch(() => null)));
+    return actions.filter(a => a?.id && (!projectId || a.project_id === projectId))
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  }
+  const getAction = id => readJson(actionFilePath(ddDir, id), null);
+  const putAction = action => withWriteLock(async () => {
+    await commitTransaction(ddDir, [{ path: rel(actionFilePath(ddDir, action.id)), value: action }]);
+    return action;
+  });
 
   async function loadConfig() {
     if (configCache) return configCache;
@@ -110,7 +127,7 @@ export function createGitFileStore(ddDir) {
   }
 
   return {
-    ddDir, withWriteLock, commit, listAtoms, listUnsupported, loadConfig,
+    ddDir, withWriteLock, commit, listAtoms, listUnsupported, loadConfig, listActions, getAction, putAction,
     // An out-of-band edit to config.json (another process, a person editing it by
     // hand) must still be picked up here, same as it would be for any other file
     // under ddDir, so recover() clears the memo along with everything else it recovers.

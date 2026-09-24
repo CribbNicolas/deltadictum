@@ -1,0 +1,88 @@
+{
+  "id": "54c44c36-6c1e-476a-93d5-6495ac995612",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Testing another DD install replaces the machine's resident",
+  "topic_key": "development/resident/isolate-test-installs",
+  "trigger": "Before running hooks, the MCP server, check-codex or the OpenCode adapter from any DD copy other than this checkout (plugin cache, npm install, test copy)",
+  "behavior_delta": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards.",
+  "what": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards.",
+  "why": "There is one resident per machine and a resident from another build is retired and replaced at session start, so a test copy kills the user's working resident and invalidates the audit UI address they were given (seen 2026-09-23 when a Grok test copy's installer replaced it).",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/resident.js",
+      "scripts/install-deps.mjs",
+      "scripts/check-codex.mjs"
+    ],
+    "components": [
+      "resident"
+    ],
+    "operations": [
+      "test",
+      "verify"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/resident.js",
+      "summary": "ensureResident starts a replacement for any resident whose build differs; registryPath honors DD_RESIDENT_REGISTRY"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "TODO.md",
+      "summary": "Item 4 records the replacement conflict between installs"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T02:05:12.218Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards.",
+    "short": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards. Why: There is one resident per machine and a resident from another build is retired and replaced at session start, so a test copy kills the user's working resident and invalidates the audit UI address they were given (seen 2026-09-23 when a Grok test copy's installer replaced it).",
+    "full": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards. Why: There is one resident per machine and a resident from another build is retired and replaced at session start, so a test copy kills the user's working resident and invalidates the audit UI address they were given (seen 2026-09-23 when a Grok test copy's installer replaced it)."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "ae4da163-0e87-4c41-829c-27c590c89123",
+  "evidence_state": {
+    "checked_at": "2026-09-24T11:41:56.082Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/resident.js",
+        "summary": "ensureResident starts a replacement for any resident whose build differs; registryPath honors DD_RESIDENT_REGISTRY",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "1567ae62564fe8cc55d85a0af51a74ec8229a0e915ccf994605ecdf3e7fb09aa"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "TODO.md",
+        "summary": "Item 4 records the replacement conflict between installs",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "73a0b65fc9885acc6caa93665853fc8faeb7b8687ea112e3d678efd8e3899181"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T02:05:12.258Z",
+  "updated_at": "2026-09-24T11:41:56.097Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T11:41:56.083Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

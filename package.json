@@ -14,7 +14,7 @@
     "./server": "./adapters/opencode/index.js"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/mcp/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/semantic/**/*.test.js\"",
+    "test": "node --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/mcp/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/semantic/**/*.test.js\" \"tests/skills/**/*.test.js\"",
     "test:engine": "node --test --test-concurrency=1 \"tests/engine/**/*.test.js\"",
     "test:store": "node --test --test-concurrency=1 \"tests/store/**/*.test.js\"",
     "test:mcp": "node --test --test-concurrency=1 \"tests/mcp/**/*.test.js\"",

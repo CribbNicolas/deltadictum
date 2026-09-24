@@ -80,9 +80,12 @@ describe('SessionStart context', () => {
     const opts = { store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'sess-1' };
     const first = await buildSessionStartContext(opts);
     assert.match(first.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    // Pushed knowledge made pulling look redundant; the start says when to pull.
+    assert.match(first.hookSpecificOutput.additionalContext, /`retrieve` tool before changing an area.*`propose`.*load them first/s);
 
     const second = await buildSessionStartContext(opts);
     assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
+    assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /`retrieve` tool/);
     assert.match(second.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
     store.close();
   });
@@ -105,5 +108,26 @@ describe('SessionStart context', () => {
     const other = await buildSessionStartContext({ ...shared, sessionId: 'sess-4' });
     assert.match(other.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
     store.close();
+  });
+
+  // Past the threshold the archive is worth a cleanup; the session start offers /dd:clean.
+  test('an archive past its review threshold prompts a cleanup once per session', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    try {
+    for (const id of ['z1', 'z2']) {
+      await store.putAtom({ id, project_id: 'demo', memory_type: 'lesson', scope: 'project', title: `T ${id}`, trigger: `when ${id}`,
+        behavior_delta: `Do ${id}.`, what: 'W.', why: 'Y.', authority: 'inferred', confidence: 0.5, valid_from: '2026-09-09T00:00:00.000Z',
+        topic_key: `demo/archive/${id}`, tags: [], ...PROVENANCE, lifecycle_state: 'archived', archived_reason: 'Unused.' });
+    }
+    await store.saveConfig({ ...(await store.loadConfig()), archive_review_at: 1 });
+    const due = await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'arc-1' });
+    assert.match(due.hookSpecificOutput.additionalContext, /The archive holds 2 memories \(review at 1\)\. Offer the user \/dd:clean/);
+    const again = await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'arc-1' });
+    assert.doesNotMatch(again.hookSpecificOutput.additionalContext, /The archive holds/);
+    await store.saveConfig({ ...(await store.loadConfig()), archive_review_at: 5 });
+    const quiet = await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 'arc-2' });
+    assert.doesNotMatch(quiet.hookSpecificOutput.additionalContext, /The archive holds/);
+    } finally { store.close(); }
   });
 });

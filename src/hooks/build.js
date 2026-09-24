@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +14,28 @@ export { normalizePath, samePath };
 // are one build; the tree is walked by its physical path.
 export const BUILD_ROOT = physicalPath(dirname(dirname(fileURLToPath(import.meta.url))));
 export const BUILD_ID = createHash('sha256').update(normalizePath(BUILD_ROOT)).digest('hex').slice(0, 16);
+
+// The package version this tree ships. Installs of one version (a plugin, an npm
+// install, a checkout) share a resident instead of replacing each other's (L2);
+// null when it cannot be read, which shares with nothing.
+export const VERSION = (() => {
+  try { return JSON.parse(readFileSync(join(dirname(BUILD_ROOT), 'package.json'), 'utf8')).version ?? null; }
+  catch { return null; }
+})();
+
+// Whether a resident's reply may stand for this install: the same tree, or an
+// unchanged process of the same version.
+export function compatibleBuild({ build, version }) {
+  return build === BUILD_ID || (VERSION !== null && version === VERSION);
+}
+
+// Numeric comparison of dotted versions; anything unreadable counts as older.
+export function compareVersions(a, b) {
+  const parts = v => String(v ?? '').split(/[.+-]/).slice(0, 3).map(n => Number.parseInt(n, 10) || 0);
+  const [x, y] = [parts(a), parts(b)];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return (x[i] ?? 0) - (y[i] ?? 0);
+  return 0;
+}
 
 // Size and mtime of every source file. Only the long-lived audit UI computes
 // this, to notice that the tree it started from has since been edited; hooks

@@ -5,6 +5,7 @@ import { classifyIntent, profileFor } from './v4/intent.js';
 import { ftsQuery } from './v4/fts-query.js';
 import { expandTopicTerms } from './v5/expander.js';
 import { formsList } from './forms-util.js';
+import { RECALL_STATES } from '../store/paths.js';
 import { activationScore, assessApplicability, conceptTokens } from './activation.js';
 import { checkEvidenceFreshness } from './evidence.js';
 import { boundedBudget, estimateTokens } from './budget.js';
@@ -52,7 +53,7 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   const query = ftsQuery(`${activationText} ${conceptTokens(activationText).join(' ')} ${(expansion?.terms ?? []).join(' ')}`);
   let candidates;
   try {
-    candidates = query ? await store.search({ projectId: request.project_id, query, lifecycleStates: ['active', 'contested'],
+    candidates = query ? await store.search({ projectId: request.project_id, query, lifecycleStates: RECALL_STATES,
       memoryTypes: request.memory_types, limit: 50 }) : [];
   } catch { candidates = []; } // Never replace a failed search with arbitrary newest memories.
   if (semantic?.size) {
@@ -60,7 +61,7 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     for (const id of semantic.keys()) {
       if (have.has(id) || !(semantic.get(id) > 0)) continue;
       const atom = await store.getAtom(id, request.project_id);
-      if (atom && ['active', 'contested'].includes(atom.lifecycle_state)
+      if (atom && RECALL_STATES.includes(atom.lifecycle_state)
           && (!request.memory_types?.length || request.memory_types.includes(atom.memory_type))) candidates.push(atom);
     }
   }
@@ -80,10 +81,17 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   // pack that argues with itself is worse than a smaller one.
   const excluded = new Set();
   const feedback = store.feedbackSummary ? await store.feedbackSummary(scored.map(c => c.atom.id), request.project_id) : {};
+  // Legacy knowledge warns only where nothing current speaks: its replacement,
+  // or any current memory on its topic, among those this request reached makes
+  // the warning redundant. It is filtered here, never boosted.
+  const current = scored.filter(c => c.atom.lifecycle_state !== 'legacy').map(c => c.atom);
+  const covered = atom => current.some(a => a.id === atom.replaced_by || a.topic_key === atom.topic_key);
   for (const candidate of scored) {
     if (result.memories.length >= 8) break;
     const { atom, applicability, value } = candidate;
     if (excluded.has(atom.id)) continue;
+    const legacy = atom.lifecycle_state === 'legacy';
+    if (legacy && covered(atom)) continue;
     const penalty = redundancyPenalty(atom, selected.map(s => s.atom));
     if (penalty >= NEAR_DUPLICATE) continue;
     const marginal = applyRedundancy(value, penalty);
@@ -108,7 +116,7 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       .map(r => r.source_atom_id === atom.id ? r.target_atom_id : r.source_atom_id);
     const peers = await Promise.all(relatedIds.map(id => store.getAtom(id, request.project_id)));
     const contradicts = peers.filter(a => a && ['active', 'contested'].includes(a.lifecycle_state)).map(a => a.id);
-    const state = reviewRequired ? 'review_required' : contested ? 'contested' : 'active';
+    const state = legacy ? 'legacy' : reviewRequired ? 'review_required' : contested ? 'contested' : 'active';
     // Scope constraints are left out: which ones are restated depends on how the
     // call was shaped, not on the memory, so they would defeat session dedup.
     // Warnings (unknown assumptions) and revision reasons do change what the
@@ -119,7 +127,11 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     if (request.session_id && !request.repeat && store.wasDelivered
         && await store.wasDelivered(request.project_id, request.session_id, atom.id, revision)) continue;
 
-    const options = withheld
+    const micro = formsList(atom).find(f => f.form_type === 'micro')?.content ?? atom.behavior_delta;
+    const options = legacy
+      ? [{ form_type: 'micro', content: `No longer done: ${micro} Abandoned because: ${String(atom.legacy_reason ?? '').replace(/\.$/, '')}. `
+        + `Now: ${atom.replaced_by ?? 'no replacement recorded'}.` }]
+      : withheld
       ? [{ form_type: 'micro', content: `Review ${atom.topic_key}: ${revisionReasons.join('; ')}. Fetch this memory before applying its advice.` }]
       : reviewRequired
         ? formsList(atom).filter(f => f.form_type === 'micro').map(f => ({ ...f,

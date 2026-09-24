@@ -1,0 +1,87 @@
+{
+  "id": "31c07973-1037-4544-bb82-610a41d415d5",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Grok Build plugin manifest traps",
+  "topic_key": "integrations/grok/manifest-traps",
+  "trigger": "Before changing .grok-plugin/plugin.json, .grok-plugin/marketplace.json or .grok-plugin/mcp.json",
+  "behavior_delta": "Point mcpServers in .grok-plugin/plugin.json at a file path (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}; never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`.",
+  "what": "Point mcpServers in .grok-plugin/plugin.json at a file path (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}; never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`.",
+  "why": "Grok 1.0.41 ignored an inline mcpServers object and fell back to the root .mcp.json, whose relative mcp.js resolved in the user's project; it expands ${VAR} but not ${VAR:-default}; its marketplace rejects \"./\" as 'marketplace path is empty'. grok plugin validate passed on all of these.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      ".grok-plugin/plugin.json",
+      ".grok-plugin/marketplace.json",
+      ".grok-plugin/mcp.json"
+    ],
+    "components": [
+      "grok-plugin"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "docs/integrations/grok-build.md",
+      "summary": "Section 'How the manifest is laid out, and why' records each finding from grok mcp doctor on 2026-09-23"
+    },
+    {
+      "source_type": "file",
+      "source_ref": "tests/hooks/install.test.js",
+      "summary": "Test pins the file-path mcpServers, the GROK_PLUGIN_ROOT anchor and the url marketplace source"
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-09-24T02:05:12.079Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Point mcpServers in .grok-plugin/plugin.json at a file path (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}; never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`.",
+    "short": "Point mcpServers in .grok-plugin/plugin.json at a file path (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}; never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`. Why: Grok 1.0.41 ignored an inline mcpServers object and fell back to the root .mcp.json, whose relative mcp.js resolved in the user's project; it expands ${VAR} but not ${VAR:-default}; its marketplace rejects \"./\" as 'marketplace path is empty'. grok plugin validate passed on all of these.",
+    "full": "Point mcpServers in .grok-plugin/plugin.json at a file path (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}; never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`. Why: Grok 1.0.41 ignored an inline mcpServers object and fell back to the root .mcp.json, whose relative mcp.js resolved in the user's project; it expands ${VAR} but not ${VAR:-default}; its marketplace rejects \"./\" as 'marketplace path is empty'. grok plugin validate passed on all of these."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "138fd07f-0080-4912-87ad-c1ffdb8eee84",
+  "evidence_state": {
+    "checked_at": "2026-09-24T11:41:56.163Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "docs/integrations/grok-build.md",
+        "summary": "Section 'How the manifest is laid out, and why' records each finding from grok mcp doctor on 2026-09-23",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "bbb5cb7537b17fbebc2caf17c48c178d1ffd55b02d73dcd486b7288ec86fffa0"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "tests/hooks/install.test.js",
+        "summary": "Test pins the file-path mcpServers, the GROK_PLUGIN_ROOT anchor and the url marketplace source",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6d580cee9a3a84a482adfd32a4a5db33558b8e89e833b34cc434c3491073d9bb"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-09-24T02:05:12.114Z",
+  "updated_at": "2026-09-24T11:41:56.167Z",
+  "activation_count": 0,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T11:41:56.163Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

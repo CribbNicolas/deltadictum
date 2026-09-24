@@ -7,6 +7,7 @@ import { AMBIENT_TAG, ambientRevision } from '../engine/retrieve.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { AUTHORITY_WEIGHT } from '../engine/ranking.js';
 import { estimateTokens } from '../engine/budget.js';
+import { revisionNotices } from '../engine/revisions.js';
 
 // Memories a reviewer tagged `ambient` apply to nearly every task (architecture,
 // project-wide conventions), which no single tool call names. They are sent once
@@ -38,9 +39,18 @@ async function ambientMemories({ store, projectId, sessionId }) {
 // "this is a reconnect, not a new session".
 const SESSION_CONTEXT_ATOM_ID = '__session_context__';
 
+// Hooks push what matches the prompt or the tool call; seen in a Claude Code
+// session (2026-09-23/24), that push made pulling look redundant, and the model
+// never called retrieve or propose unasked. Claude Code also defers MCP tools
+// to names only, so the line says they may need loading first.
+export const PULL_GUIDANCE = 'DD - Pushed knowledge covers only what matched the prompt or tool call. Call the dd `retrieve` tool before '
+  + 'changing an area it did not cover, and `propose` when you learn something an agent reading the code would miss. If the dd '
+  + 'tools are listed by name only, load them first.';
+
 export function microPack(memories) {
   return memories.map(memory => {
     const flag = memory.contested || memory.lifecycle_state === 'contested' ? 'DISPUTED'
+      : memory.lifecycle_state === 'legacy' ? 'LEGACY'
       : memory.lifecycle_state === 'review_required' ? 'REVIEW REQUIRED'
       : memory.memory_type === 'anti_memory' ? 'ANTI' : memory.memory_type.toUpperCase();
     return `[${flag} ${memory.id ?? ''}] ${memory.content || memory.retrieval_forms?.micro || memory.title}`;
@@ -82,7 +92,8 @@ export function residentNotice(resident = {}) {
     ? `DD - Inactive: installing DD's packages failed (${resident.failed}); another attempt is running in the background, logged in ${join(resident.root, INSTALL_LOG)}. To install them by hand: ${manualInstallCommand(resident.root)}. ${tell}`
     : `DD - Inactive for now: DD is installing its packages in the background (first run after installing or updating the plugin; it can take a few minutes). DD activates at a later session once they are in place. ${tell}`;
   if (state === 'started') return `DD - Inactive for now: no resident DD process was running, so one was started in the background. DD activates once its embedding model is ready. ${fix} ${tell}`;
-  if (state === 'unreachable') return `DD - Inactive: the resident DD process is not answering, so nothing is recalled. The next session start replaces it. ${fix} ${tell}`;
+  if (state === 'unreachable') return `DD - Inactive: the resident DD process is not answering, so nothing is recalled. A later prompt or session start replaces it if it stays down. ${fix} ${tell}`;
+  if (state === 'superseded') return `DD - Inactive: the resident DD process on this machine is version ${resident.version}, newer than this install, and serves only that version. Update this DD install to ${resident.version}. ${tell}`;
   if (state === 'disabled') return `DD - Inactive: the resident DD process is disabled (DD_RESIDENT=0), and DD requires it. ${tell}`;
   return `DD - Inactive: the resident DD process could not be started, and DD requires it. ${fix} ${tell}`;
 }
@@ -113,8 +124,15 @@ export async function buildSessionStartContext({ store, projectId, uiUrl, uiLive
     catch { /* best-effort: a missed mark just means the next reconnect resends */ }
   }
   const ambient = await ambientMemories({ store, projectId, sessionId }).catch(() => []);
+  const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
   const knowledge = ambient.length ? `DD - Project-wide knowledge (advisory):
 ${microPack(ambient)}` : null;
+  // Past the threshold, the archive is worth a person's cleanup; said once per session.
+  const archiveAt = (await store.loadConfig()).archive_review_at;
+  const archivedCount = alreadyPrimed ? 0 : await store.countAtoms({ projectId, lifecycleStates: ['archived'] });
+  const archiveNote = archivedCount > archiveAt
+    ? `DD - The archive holds ${archivedCount} memories (review at ${archiveAt}). Offer the user /dd:clean to restore what is still useful and delete the rest.`
+    : null;
   const advisory = alreadyPrimed ? null
     : `DD - Project context (advisory): ${JSON.stringify({ ...context, ...(sessionId ? { session_id: sessionId } : {}) })}`;
   return {
@@ -124,7 +142,8 @@ ${microPack(ambient)}` : null;
     ...(uiLive && uiUrl ? { systemMessage: uiPointer(uiUrl) } : {}),
     hookSpecificOutput: {
       hookEventName: 'SessionStart',
-      additionalContext: [banner, residentNotice(resident), advisory, knowledge].filter(Boolean).join('\n\n'),
+      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, revisions, archiveNote, advisory, knowledge]
+        .filter(Boolean).join('\n\n'),
     },
   };
 }

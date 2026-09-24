@@ -24,6 +24,20 @@ const proposal = z.object({
   tags: z.array(z.string().max(50)).max(12).optional()
     .describe('Include "ambient" only for project-wide knowledge that applies to nearly every task (architecture, conventions); it is then sent once at every session start.'),
   valid_from: z.string().optional(), valid_until: z.string().nullable().optional(),
+  revises: z.string().max(150).optional().describe('Id of a candidate this corrects after the reviewer requested a revision.'),
+});
+const action = z.object({
+  kind: z.enum(['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve']),
+  targets: z.array(z.string().max(150)).min(1).max(50), rationale: text,
+  evidence_refs: z.array(evidence).max(12).optional(),
+  archived_reason: text.optional().describe('archive: why these memories stopped being useful.'),
+  legacy_reason: text.optional().describe('legacy, an all-legacy merge, or resolve to legacy: why the practice was abandoned.'),
+  replaced_by: z.string().max(150).optional().describe('legacy: the memory that now covers the ground.'),
+  result: proposal.optional().describe('merge: the single memory the targets become.'),
+  results: z.array(proposal).min(2).max(5).optional().describe('split: the memories the target becomes.'),
+  topic_key: z.string().max(150).optional().describe('retopic: the new topic.'),
+  winner: z.string().max(150).optional(), loser_state: z.enum(['superseded', 'legacy']).optional(),
+  revises: z.string().max(150).optional().describe('Id of a pending action this corrects after the reviewer requested a revision.'),
 });
 const retrieval = {
   action: z.string().min(1).max(2000), query: text.optional(),
@@ -52,10 +66,24 @@ export function createMcpServer(options) {
       capture_origin: z.enum(CAPTURE_ORIGINS).optional(),
       offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(50).optional() }],
     contradict: ['Flag two effective memories as disputed; this does not select a winner.', { id: z.string(), contradicts: z.string() }],
+    act: ['Request store changes for the user to review in the audit UI: archive, restore, delete, legacy, merge, split, retopic, resolve. '
+      + 'Nothing changes until the user applies it; never say it was applied. Write the rationale and reasons in English. '
+      + 'Merge moves active sources to superseded and superseded or legacy sources to archived. Use revises=<id> to answer a revision request.',
+      { actions: z.array(action).min(1).max(20), session_id: z.string().max(150).optional() }],
+    similar: ['Find the memories nearest to a memory id or a text, in any state but rejected, to spot overlaps before proposing or merging.',
+      { id: z.string().max(150).optional(), text: z.string().max(2000).optional(), limit: z.number().int().min(1).max(20).optional() }],
     ui: ['Open the project audit URL for human approval, rejection, resolution or deletion.', {}],
     status: ['Get project counts and the audit URL.', {}],
     health: ['Inspect memory crowding and unresolved disputes; this is not a correctness score.', {}],
   };
-  for (const [name, [description, inputSchema]] of Object.entries(definitions)) server.registerTool(name, { description, inputSchema }, args => handlers[name](args));
+  // A host keeps a session's MCP server running the code it started with, so after
+  // an edit its answers can contradict the tree (seen 2026-09-24: a status without
+  // the audit UI key). Each answer then says so.
+  const call = async (name, args) => {
+    const result = await handlers[name](args);
+    const notice = await options.staleNotice?.().catch(() => null);
+    return notice ? { ...result, content: [...(result.content ?? []), { type: 'text', text: notice }] } : result;
+  };
+  for (const [name, [description, inputSchema]] of Object.entries(definitions)) server.registerTool(name, { description, inputSchema }, args => call(name, args));
   return server;
 }

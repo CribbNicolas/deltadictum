@@ -22,6 +22,8 @@ export async function admitMemory(id, { store, projectId, actor, rationale, auth
   return store.withWriteLock(async () => {
     const candidate = await store.getAtom(id, projectId);
     if (!candidate || candidate.lifecycle_state !== 'candidate') throw new Error('candidate_required');
+    // A reviewer asked for changes: only the corrected version can be admitted.
+    if (candidate.revision_requested) throw new Error('revision_requested');
     if (!rationale?.trim()) throw new Error('review_rationale_required');
     const gate = decideAdmission(candidate);
     if (gate.decision !== 'write') throw new Error(`cannot_admit:${gate.reasons.join(',')}`);
@@ -95,6 +97,18 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
   requireReview(actor);
   if (!rationale?.trim()) throw new Error('review_rationale_required');
   return store.withWriteLock(async () => {
+    const atoms = await planResolution(winnerId, loserId, { store, projectId, rationale });
+    await store.commitAtoms(atoms);
+    await store.logContradiction({ project_id: projectId, atom_a_id: winnerId, atom_b_id: loserId,
+      detection_source: 'explicit', action: 'resolved', winner_atom_id: winnerId, reasons: ['human_reviewed'] });
+    return { winner_id: winnerId, loser_id: loserId };
+  });
+}
+
+// The atoms a resolution writes, without writing them, so an action can commit
+// them together with its own changes. Callers hold the write lock.
+export async function planResolution(winnerId, loserId, { store, projectId, rationale }) {
+  {
     const winner = await store.getAtom(winnerId, projectId);
     const loser = await store.getAtom(loserId, projectId);
     const relations = await store.listRelations({ atomIds: [winnerId] });
@@ -117,11 +131,8 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
       const remaining = (await effectivePeers(peer.id, store, projectId)).filter(a => a.id !== loserId);
       if (!remaining.length) atoms.push({ ...peer, lifecycle_state: 'active', contested_at: null });
     }
-    await store.commitAtoms(atoms);
-    await store.logContradiction({ project_id: projectId, atom_a_id: winnerId, atom_b_id: loserId,
-      detection_source: 'explicit', action: 'resolved', winner_atom_id: winnerId, reasons: ['human_reviewed'] });
-    return { winner_id: winnerId, loser_id: loserId };
-  });
+    return atoms;
+  }
 }
 
 // Archiving is not deleting. The file moves to `archive/`, the memory leaves the
@@ -130,13 +141,15 @@ export async function resolveMemories(winnerId, loserId, { store, projectId, act
 //
 // Authority protects: a human put `validated` or `canonical` there, so crowding
 // caused by reviewed knowledge is a review decision, never an automatic one.
-export async function archiveMemory(id, { store, projectId, reason = 'never_activated' } = {}) {
+// Every archived memory says why, in words a reviewer reads when cleaning up.
+export async function archiveMemory(id, { store, projectId, reason } = {}) {
+  if (!String(reason ?? '').trim()) throw new Error('archive_reason_required');
   return store.withWriteLock(async () => {
     const atom = await store.getAtom(id, projectId);
     if (!atom || atom.lifecycle_state !== 'active') throw new Error('active_memory_required');
     if (!['inferred', 'observed'].includes(atom.authority)) throw new Error('authority_protected');
     return store.putAtom({ ...atom, lifecycle_state: 'archived',
-      archived_at: new Date().toISOString(), archived_reason: reason });
+      archived_at: new Date().toISOString(), archived_reason: String(reason).trim() });
   });
 }
 
@@ -144,12 +157,14 @@ export async function restoreMemory(id, { store, projectId, actor } = {}) {
   requireReview(actor);
   return store.withWriteLock(async () => {
     const atom = await store.getAtom(id, projectId);
-    if (!atom || atom.lifecycle_state !== 'archived') throw new Error('archived_memory_required');
+    // A legacy practice can be brought back the same way when it turns out to hold.
+    if (!atom || !['archived', 'legacy'].includes(atom.lifecycle_state)) throw new Error('archived_memory_required');
     // Archiving frees the topic_key, so another memory may hold it by now.
     // Restoring cannot take it back: that would put two memories on one trigger.
     const live = (await store.listByTopicLive(projectId, atom.topic_key))[0];
     if (live && live.id !== atom.id) throw new Error('topic_key_taken');
-    return store.putAtom({ ...atom, lifecycle_state: 'active', archived_at: null, archived_reason: null });
+    return store.putAtom({ ...atom, lifecycle_state: 'active', archived_at: null, archived_reason: null,
+      legacy_reason: null, legacy_at: null, replaced_by: null });
   });
 }
 
@@ -160,9 +175,13 @@ export async function retireByDisuse({ store, projectId, now } = {}) {
   const thresholds = healthThresholdsFromConfig(await store.loadConfig());
   const snapshot = await store.loadHealthSnapshot(projectId);
   const archived = [];
+  const events = snapshot.retrieval_events ?? [];
   for (const atom of retirementCandidates(snapshot, now ?? new Date().toISOString(), thresholds)) {
+    const since = Date.parse(atom.created_at);
+    const chances = events.filter(event => Date.parse(event.created_at) >= since).length;
+    const reason = `Never activated in ${chances} retrievals since ${String(atom.created_at).slice(0, 10)}.`;
     // One memory that refuses the transition does not stop the others.
-    try { archived.push((await archiveMemory(atom.id, { store, projectId })).id); } catch { /* left effective */ }
+    try { archived.push((await archiveMemory(atom.id, { store, projectId, reason })).id); } catch { /* left effective */ }
   }
   return archived;
 }

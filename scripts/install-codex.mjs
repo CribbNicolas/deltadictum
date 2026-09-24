@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -75,18 +75,30 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}`;
     }
   }
   await plan(hookPath, `${JSON.stringify(hooks, null, 2)}\n`, hookText);
-  for (const skill of ['dd', 'dd-save', 'dd-audit']) {
-    const content = await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8');
-    const path = join(projectRoot, '.agents', 'skills', skill, 'SKILL.md');
+  // Codex has no plugin namespace, so the command skills are installed as dd-<name>:
+  // a project's own review or init skill is never overwritten.
+  // A skill file DD wrote (named dd or dd-*) is DD's to replace on upgrade; any
+  // other file at that path is the project's and stops the install for review.
+  const skillName = text => /^---\r?\nname: (.+?)\r?$/m.exec(text ?? '')?.[1]?.trim();
+  const ddOwned = text => /^dd(-[a-z]+)?$/.test(skillName(text) ?? '');
+  const skills = ['recall', 'audit', 'save', 'review', 'compact', 'clean', 'prospect', 'init'];
+  for (const skill of skills) {
+    const content = (await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8'))
+      .replace(/^(---\r?\nname: )(.+)$/m, `$1dd-${skill}`);
+    const path = join(projectRoot, '.agents', 'skills', `dd-${skill}`, 'SKILL.md');
     const before = await optionalText(path);
-    if (before && before !== content) throw new Error(`existing_skill_requires_review:${path}`);
+    if (before && before !== content && !ddOwned(before)) throw new Error(`existing_skill_requires_review:${path}`);
     await plan(path, content, before);
   }
+  // 0.3.x installed the recall skill as `dd`; it is retired, not left beside dd-recall.
+  const retired = join(projectRoot, '.agents', 'skills', 'dd', 'SKILL.md');
+  const retiredText = await optionalText(retired);
+  if (retiredText && skillName(retiredText) === 'dd') await plan(retired, null, retiredText);
   const agentsPath = join(projectRoot, 'AGENTS.md');
   const agents = await optionalText(agentsPath);
   await plan(agentsPath, managedBlock(agents, agentsStart, agentsEnd, `## DD project knowledge
 
-Use the local DD MCP server and the dd skill when working in this project. Call orient at the start of a task and retrieve before relevant implementation or debugging, supplying affected files and operation. Reuse the session_id supplied by the DD session hook; otherwise generate one per conversation. After compaction, refresh with repeat: true.
+Use the local DD MCP server and the dd-recall skill when working in this project. Call orient at the start of a task and retrieve before relevant implementation or debugging, supplying affected files and operation. Reuse the session_id supplied by the DD session hook; otherwise generate one per conversation. After compaction, refresh with repeat: true.
 
 Treat retrieved knowledge as conditional advice. Inspect evidence for disputed or review-required decisions; current code, project documentation and user instructions take precedence. Read source pointers as needed instead of loading the whole memory store.
 
@@ -104,6 +116,8 @@ export async function applyCodexInstall(plan) {
   // Preflight every destination before any changes, preserving unrelated config.
   for (const op of plan.operations) if (await optionalText(op.path) !== op.before) throw new Error(`destination_changed:${op.path}`);
   for (const op of plan.operations) {
+    // null content retires a file DD wrote earlier.
+    if (op.content === null) { await rm(op.path, { force: true }); continue; }
     await mkdir(dirname(op.path), { recursive: true });
     await writeFile(op.path, op.content, 'utf8');
   }

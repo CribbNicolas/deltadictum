@@ -16,14 +16,19 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
 import { autoAcceptThresholdLevels } from '../engine/reliability.js';
 import { readSeen, markSeen, isSeen } from '../store/seen.js';
-import { BUILD_ID, codeFingerprint } from '../hooks/build.js';
+import { BUILD_ID, VERSION, codeFingerprint } from '../hooks/build.js';
 import { projectKey } from '../project.js';
+import { requestRevision, revisionNotices } from '../engine/revisions.js';
+import { applyAction, rejectAction } from '../engine/actions.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
-function send(res, status, body, type = 'application/json') {
+// Scripts run only with the nonce of the page that carries them, so markup an
+// escaping mistake let into the page cannot execute. Styles stay inline.
+function send(res, status, body, type = 'application/json', scriptNonce = null) {
+  const scripts = scriptNonce ? `'nonce-${scriptNonce}'` : "'none'";
   res.writeHead(status, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-store',
-    'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'" });
+    'x-content-type-options': 'nosniff', 'content-security-policy': `default-src 'self'; script-src ${scripts}; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'` });
   res.end(type === 'application/json' ? JSON.stringify(body) : body);
 }
 async function readBody(req) {
@@ -158,13 +163,14 @@ export async function startResidentServer({ projects: initial = [], openProject,
         return void setImmediate(onShutdown);
       }
       if (req.method === 'GET' && url.pathname === '/api/resident') {
-        return send(res, 200, { build: BUILD_ID, stale: await staleCode(), retrieval, projects: projects.size });
+        return send(res, 200, { build: BUILD_ID, version: VERSION, stale: await staleCode(), retrieval, projects: projects.size });
       }
       if (req.method === 'POST' && url.pathname.startsWith('/api/hooks/')) {
         if (!sameSecret(req.headers['x-dd-hook-token'], hookToken)) return send(res, 403, { error: 'hook_auth_required' });
         if (await staleCode()) return send(res, 409, { error: 'build_stale' });
         lastActivity = Date.now();
         res.setHeader('x-dd-build', BUILD_ID);
+        if (VERSION) res.setHeader('x-dd-version', VERSION);
         const body = await readBody(req);
         const project = await hookProject(body);
         if (!project) return send(res, 403, { error: 'project_mismatch' });
@@ -188,12 +194,19 @@ export async function startResidentServer({ projects: initial = [], openProject,
           await recordPromptObservation(payload, { store, projectId });
           const notes = sessionId ? await sessionNotes(store, projectId, sessionId, uiUrl, active) : [];
           const shown = notes.length ? { systemMessage: notes.join('\n') } : {};
-          if (!active) return send(res, 200, shown);
+          // A reviewer's revision request needs no embeddings: it is said even while the model loads.
+          const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
+          if (!active) return send(res, 200, { ...shown, ...contextPayload('UserPromptSubmit', revisions) });
           const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
             session_id: sessionId, budget_tokens: payload.budget_tokens }, { store });
-          return send(res, 200, { ...shown, ...contextPayload('UserPromptSubmit', microPack(result.memories ?? [])) });
+          return send(res, 200, { ...shown,
+            ...contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? [])].filter(Boolean).join('\n')) });
         }
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, active ? await buildPreToolContext(payload, { store, projectId, retrieve }) : {});
+        if (url.pathname.endsWith('/similar')) {
+          if (!active || !retrieve.similar) return send(res, 200, { error: { code: 503, message: inactiveMessage(retrieval) } });
+          return send(res, 200, await retrieve.similar({ store, projectId, id: payload.id, text: payload.text, limit: payload.limit }));
+        }
         if (url.pathname.endsWith('/retrieve')) {
           if (!active) return send(res, 200, { error: { code: 503, message: inactiveMessage(retrieval) } });
           const context = await projectContext(store);
@@ -217,8 +230,10 @@ export async function startResidentServer({ projects: initial = [], openProject,
       if (req.method !== 'GET' && (!sameSecret(req.headers['x-dd-review-token'], token)
           || (req.headers.origin && req.headers.origin !== `http://${expectedHost}`))) return send(res, 403, { error: 'local_review_required' });
       if (req.method === 'GET' && ['/', '/index.html'].includes(url.pathname)) {
-        const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token);
-        return send(res, 200, html, 'text/html');
+        const nonce = randomBytes(16).toString('base64');
+        const html = (await readFile(join(ROOT, 'public', 'index.html'), 'utf8')).replace('__DD_REVIEW_TOKEN__', token)
+          .replace(/<script>/g, `<script nonce="${nonce}">`);
+        return send(res, 200, html, 'text/html', nonce);
       }
       if (req.method === 'GET' && url.pathname === '/api/projects') {
         return send(res, 200, [...projects.values()].map(p => ({ key: p.key, project_id: p.projectId, repo_root: p.store.repoRoot })));
@@ -244,8 +259,12 @@ export async function startResidentServer({ projects: initial = [], openProject,
       }
       await store.refreshIfChanged();
       if (req.method === 'GET' && url.pathname === '/api/status') {
+        const lifecycle = await store.countByLifecycle(projectId);
+        const threshold = (await store.loadConfig()).archive_review_at;
+        const archived = lifecycle.counts.archived ?? 0;
         return send(res, 200, { project_id: projectId, project_key: project.key, build: BUILD_ID, stale: await staleCode(), retrieval,
-          ...await store.countByLifecycle(projectId), unsupported: await store.listUnsupported() });
+          ...lifecycle, unsupported: await store.listUnsupported(),
+          archive_review: { archived, threshold, due: archived > threshold } });
       }
       if (req.method === 'GET' && url.pathname === '/api/project') return send(res, 200, await projectContext(store));
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, await store.assessDeterioration(projectId));
@@ -292,7 +311,23 @@ export async function startResidentServer({ projects: initial = [], openProject,
         return send(res, 200, await resolveMemories(body.winner_id, body.loser_id,
           { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale }));
       }
-      const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject|restore))?$/);
+      // Actions the agent filed (src/engine/actions.js). Only this reviewed
+      // transport applies, rejects or sends one back.
+      if (req.method === 'GET' && url.pathname === '/api/actions') {
+        return send(res, 200, await Promise.all((await store.listActions(projectId)).map(async action => ({ ...action,
+          target_atoms: (await Promise.all(action.targets.map(id => store.getAtom(id, projectId)))).map((a, i) => a
+            ? { id: a.id, title: a.title, topic_key: a.topic_key, lifecycle_state: a.lifecycle_state }
+            : { id: action.targets[i], missing: true }) }))));
+      }
+      const actionMatch = url.pathname.match(/^\/api\/actions\/([^/]+)\/(apply|reject|revise)$/);
+      if (req.method === 'POST' && actionMatch) {
+        const id = decodeURIComponent(actionMatch[1]);
+        const body = await readBody(req);
+        if (actionMatch[2] === 'apply') return send(res, 200, await applyAction(id, { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale }));
+        if (actionMatch[2] === 'reject') return send(res, 200, await rejectAction(id, { store, projectId, actor: HUMAN_REVIEW, note: body.note }));
+        return send(res, 200, await requestRevision({ kind: 'action', id, reason: body.reason }, { store, projectId, actor: HUMAN_REVIEW }));
+      }
+      const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject|restore|revise))?$/);
       if (match) {
         const id = decodeURIComponent(match[1]);
         const action = match[2];
@@ -324,6 +359,8 @@ export async function startResidentServer({ projects: initial = [], openProject,
           { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale, authority: body.authority }));
         if (req.method === 'POST' && action === 'reject') return send(res, 200, await rejectMemory(id, { store, projectId, actor: HUMAN_REVIEW }));
         if (req.method === 'POST' && action === 'restore') return send(res, 200, await restoreMemory(id, { store, projectId, actor: HUMAN_REVIEW }));
+        if (req.method === 'POST' && action === 'revise') return send(res, 200, await requestRevision({ kind: 'memory', id, reason: body.reason },
+          { store, projectId, actor: HUMAN_REVIEW }));
       }
       send(res, 404, { error: 'not_found' });
     } catch (err) { send(res, 409, { error: err.message }); }

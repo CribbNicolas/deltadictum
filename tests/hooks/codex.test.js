@@ -46,7 +46,8 @@ test('Codex project installation preserves unrelated configuration and is idempo
   await writeFile(join(root, 'AGENTS.md'), '# Existing project guidance\nKeep domain tests independent.\n');
   await writeFile(join(root, '.codex/hooks.json'), JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command: 'existing-hook' }] }] } }));
   const plan = await planCodexInstall(root);
-  assert.equal(plan.operations.length, 7);
+  // config, hooks, AGENTS.md, .dd/.gitignore and the eight dd-* command skills.
+  assert.equal(plan.operations.length, 12);
   await applyCodexInstall(plan);
   const config = await readFile(join(root, '.codex/config.toml'), 'utf8');
   assert.match(config, /^model_reasoning_effort = "high"/);
