@@ -58,3 +58,18 @@ describe('audit UI form fields', () => {
     assert.match(html, /Nothing was deleted/, 'the page must say that archiving is not deletion');
   });
 });
+
+// Review finding 4: a merge or split result is admitted as validated, so the
+// reviewer must see all of it before applying, escaped, with ambient flagged.
+test('the Actions panel shows every field of a merge result, escaped', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const html = await readFile(htmlPath, 'utf8');
+  const pick = name => html.match(new RegExp(String.raw`    function ${name}\([^)]*\) \{[\s\S]*?\r?\n    \}\r?\n`))[0];
+  const renderResult = runInNewContext(`${pick('escapeHtml')}${pick('renderResult')}; renderResult`);
+  const out = renderResult({ memory_type: 'decision', topic_key: 'demo/a/b', trigger: 'when <x>', behavior_delta: 'Do y.', why: 'Because z.',
+    applies_to: { files: ['src/a.js'], components: [], operations: [] }, tags: ['ambient'],
+    evidence_refs: [{ source_type: 'file', source_ref: 'src/a.js', summary: 's' }] });
+  for (const expected of ['decision', 'demo/a/b', 'When: when &lt;x&gt;', 'Do: Do y.', 'Why: Because z.', 'files: src/a.js',
+    'ambient: sent at every session start', 'file src/a.js', 'admitted as validated']) assert.ok(out.includes(expected), expected);
+  assert.doesNotMatch(out, /<x>/);
+});

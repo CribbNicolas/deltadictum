@@ -40,19 +40,26 @@ export function checkProposal(raw, projectId) {
 async function validate(raw, { store, projectId }) {
   const rule = RULES[raw.kind];
   if (!rule) return 'unknown_action_kind';
-  const targets = [...new Set((raw.targets ?? []).map(String))];
-  if (targets.length < rule.min || targets.length > rule.max) return `target_count:${rule.min}-${rule.max}`;
-  for (const field of rule.fields) if (raw[field] === undefined || raw[field] === null || raw[field] === '') return `field_required:${field}`;
+  const requested = [...new Set((raw.targets ?? []).map(String))];
+  if (requested.length < rule.min || requested.length > rule.max) return `target_count:${rule.min}-${rule.max}`;
+  // A blank reason is no reason: every archived or legacy memory states why.
+  for (const field of rule.fields) {
+    const value = raw[field];
+    if (value === undefined || value === null || (typeof value === 'string' ? !text(value) : false)) return `field_required:${field}`;
+  }
   const rationale = text(raw.rationale);
   if (!rationale) return 'rationale_required';
   if (looksNonEnglish([rationale, raw.archived_reason, raw.legacy_reason].filter(Boolean).join(' '))) return 'action_must_be_english';
   const atoms = [];
-  for (const id of targets) {
+  for (const id of requested) {
+    // getAtom also resolves a topic key; the action records the memory's id.
     const atom = await store.getAtom(id, projectId);
     if (!atom) return `target_not_found:${id}`;
     if (!rule.states.includes(atom.lifecycle_state)) return `target_state_not_allowed:${id}:${atom.lifecycle_state}`;
-    atoms.push(atom);
+    if (!atoms.some(a => a.id === atom.id)) atoms.push(atom);
   }
+  const targets = atoms.map(a => a.id);
+  if (targets.length < rule.min) return `target_count:${rule.min}-${rule.max}`;
   if (raw.kind === 'merge') {
     // A practice cannot be both current and abandoned.
     const legacy = atoms.filter(a => a.lifecycle_state === 'legacy').length;
@@ -92,8 +99,9 @@ export async function fileActions(rawActions, { store, projectId, sessionId, cap
       ...(raw.revises ? { revises: String(raw.revises) } : {}) };
     await store.putAction(action);
     // A corrected action answers a revision request: the one it revises leaves the queue.
+    // Only an action a reviewer sent back can be withdrawn this way.
     const revised = action.revises ? await store.getAction(action.revises) : null;
-    if (revised?.project_id === projectId) {
+    if (revised?.project_id === projectId && revised.revision_requested) {
       await store.commitAtoms([], [], [], [{ id: revised.id, value: null }]);
       await store.logAction({ project_id: projectId, action_id: revised.id, kind: revised.kind, targets: revised.targets,
         outcome: 'revised', note: `revised by ${action.id}`, actor_ref: 'agent' });
@@ -168,8 +176,9 @@ const BUILD = {
     await topicFree(store, projectId, fields.topic_key, []);
     // Moving a memory does not re-judge what it says: it keeps its content,
     // authority and evidence under a new id on the new topic.
+    // The dispute stays with the old id, which leaves the effective set; the copy starts undisputed.
     const moved = { ...source, id: randomUUID(), topic_key: fields.topic_key, registry_key_id: null, created_at: undefined,
-      review: { source: 'local_ui', reviewed_at: new Date().toISOString(), rationale } };
+      lifecycle_state: 'active', contested_at: null, review: { source: 'local_ui', reviewed_at: new Date().toISOString(), rationale } };
     return { atoms: [{ ...source, lifecycle_state: 'superseded', superseded_by: moved.id, contested_at: null }, moved],
       relations: [{ source_atom_id: moved.id, relation_type: 'supersedes', target_atom_id: source.id }] };
   },
@@ -184,6 +193,32 @@ const BUILD = {
     return { atoms };
   },
 };
+
+// A dispute ends when one side leaves the effective set. A memory whose only
+// effective opponents are leaving returns to active, as resolution does
+// (planResolution): otherwise it would stay DISPUTED with nothing to resolve.
+async function settledPeers(before, written, { store, projectId }) {
+  const after = new Map(written.map(a => [a.id, a]));
+  const leaving = new Set(before.filter(a => EFFECTIVE.includes(a.lifecycle_state) && !EFFECTIVE.includes(after.get(a.id)?.lifecycle_state))
+    .map(a => a.id));
+  const opponents = async id => (await store.listRelations({ atomIds: [id] })).filter(r => r.relation_type === 'contradicts')
+    .map(r => r.source_atom_id === id ? r.target_atom_id : r.source_atom_id);
+  const settled = [];
+  for (const id of leaving) {
+    for (const peerId of await opponents(id)) {
+      if (leaving.has(peerId) || after.has(peerId) || settled.some(a => a.id === peerId)) continue;
+      const peer = await store.getAtom(peerId, projectId);
+      if (peer?.lifecycle_state !== 'contested') continue;
+      const remaining = [];
+      for (const other of await opponents(peerId)) {
+        if (leaving.has(other)) continue;
+        if (EFFECTIVE.includes((after.get(other) ?? await store.getAtom(other, projectId))?.lifecycle_state)) remaining.push(other);
+      }
+      if (!remaining.length) settled.push({ ...peer, lifecycle_state: 'active', contested_at: null });
+    }
+  }
+  return settled;
+}
 
 export async function applyAction(id, { store, projectId, actor, rationale } = {}) {
   requireReview(actor);
@@ -202,6 +237,7 @@ export async function applyAction(id, { store, projectId, actor, rationale } = {
     }
     const built = await BUILD[action.kind]({ atoms, targets: action.targets, fields: action.fields, store, projectId,
       rationale: text(rationale) || 'Applied in the audit UI.', now: new Date().toISOString() });
+    built.atoms.push(...await settledPeers(atoms, built.atoms, { store, projectId }));
     await store.commitAtoms(built.atoms, built.relations ?? [], built.deleteAtoms ?? [], [{ id, value: null }]);
     if (action.kind === 'resolve') {
       await store.logContradiction({ project_id: projectId, atom_a_id: action.fields.winner,

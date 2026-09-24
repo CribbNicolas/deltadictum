@@ -83,9 +83,14 @@ export async function proposeMemory(rawPayload, { store, captureSource = 'agent'
     await store.logAdmission({ project_id: atom.project_id, decision: route.decision, reasons: decided, atom_id: atom.id });
     // A corrected version answers a reviewer's revision request: the revised
     // candidate closes, linked to this one, so only the correction stays pending.
+    // Only a candidate a reviewer sent back closes, and only by its own id: getAtom
+    // also resolves topic keys, which would name the correction itself.
     if (rawPayload.revises) {
       const revised = await store.getAtom(String(rawPayload.revises), atom.project_id);
-      if (revised?.lifecycle_state === 'candidate') await store.putAtom({ ...revised, lifecycle_state: 'rejected', revised_by: atom.id });
+      if (revised?.id === String(rawPayload.revises) && revised.id !== atom.id && revised.lifecycle_state === 'candidate'
+          && revised.revision_requested) {
+        await store.putAtom({ ...revised, lifecycle_state: 'rejected', revised_by: atom.id });
+      }
     }
     // Forgetting is evaluated lazily, here, where a process is already running and
     // already holds the lock. It is advisory housekeeping: a failure to retire

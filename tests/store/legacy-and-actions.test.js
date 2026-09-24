@@ -60,3 +60,21 @@ test('an index built before legacy existed is migrated without losing activation
   await reopened.putAtom(atom('a4', { lifecycle_state: 'legacy', legacy_reason: 'Old way.' }));
   assert.equal(reopened.index.db.prepare('SELECT activation_count FROM memory_atoms WHERE id = ?').get('a3').activation_count, 7);
 });
+
+// Review finding 5: a process killed mid-migration must not lose activation counts,
+// which live only in the index.
+test('a migration interrupted after the rename is completed on the next open', async t => {
+  const { options, store } = await fresh();
+  await store.putAtom(atom('a5'));
+  store.index.db.prepare('UPDATE memory_atoms SET activation_count = 9 WHERE id = ?').run('a5');
+  const file = join(options.dataDir, 'index.sqlite');
+  store.close();
+  const db = new DatabaseSync(file);
+  db.exec(`DROP INDEX IF EXISTS uq_memory_atoms_project_topic_effective; DROP INDEX IF EXISTS idx_memory_atoms_project_lifecycle;
+    ALTER TABLE memory_atoms RENAME TO memory_atoms_before_legacy;`);
+  db.close();
+  const reopened = await createMemoryStore(options);
+  t.after(() => reopened.close());
+  assert.equal(reopened.index.db.prepare('SELECT activation_count FROM memory_atoms WHERE id = ?').get('a5').activation_count, 9);
+  assert.equal(reopened.index.db.prepare("SELECT name FROM sqlite_master WHERE name = 'memory_atoms_before_legacy'").get(), undefined);
+});
