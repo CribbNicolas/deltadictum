@@ -26,6 +26,32 @@ Local evidence references receive content hashes computed by DD. A verified file
 
 Changes to verified files keep the advice visible, flagged `EVIDENCE CHANGED`; revision conditions or supported counterevidence produce a review notice. Memories tagged `ambient` reach every session once, at session start. Contradictions remain visible in both tool results and hooks.
 
+| State | Answers | Reaches the agent |
+|---|---|---|
+| `candidate` | what is pending review? | no |
+| `active`, `contested` | what do I do? | yes (disputed ones flagged) |
+| `superseded` | where did this memory come from? | no; history for evolving it |
+| `legacy` | what must not be done again? | yes, as a `LEGACY` warning, when nothing current covers it |
+| `archived` | what stopped being useful? (restorable, with its reason) | no |
+| `rejected` | what was turned down? | no |
+
+## Managing memory from chat
+
+Ask the agent in plain words ("merge these two", "that practice is dead, mark it legacy") or use a command.
+Every change it makes is a pending proposal or action; you apply, reject or send it back with a reason in the
+audit UI, and the reason reaches the agent on its next prompt.
+
+| Command | Does |
+|---|---|
+| `/dd:review [id]` | Works revision requests and memories whose evidence changed; files corrections, legacy or archive actions. |
+| `/dd:compact` | Finds memories that repeat or overlap and files merges. |
+| `/dd:clean` | Reviews the archive and files one restore and one delete action. |
+| `/dd:prospect <area>` | Looks for knowledge in one area and proposes only what is new or improves a memory. |
+| `/dd:init` | Deep first survey of a project; warns about the cost and waits for a yes. |
+| `/dd:recall`, `/dd:save`, `/dd:audit` | Use knowledge, save a lesson, inspect the store. |
+
+On Codex the same skills are installed as `dd-<name>`.
+
 ## Install
 
 Node 22 or later. Each host installs DD its own way:
