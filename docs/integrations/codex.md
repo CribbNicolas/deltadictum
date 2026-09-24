@@ -24,7 +24,7 @@ Created or updated project files:
 
 - `.codex/config.toml`: the absolute Node/server paths, project cwd and project-specific data directory.
 - `.codex/hooks.json`: orientation, recall, selective observation and capture hooks.
-- `.agents/skills/dd/SKILL.md`, `dd-save/SKILL.md`, `dd-audit/SKILL.md`: the three project skills.
+- `.agents/skills/dd-<name>/SKILL.md`: the eight command skills (`recall`, `audit`, `save`, `review`, `compact`, `clean`, `prospect`, `init`), prefixed so a project skill of the same name is never overwritten.
 - `AGENTS.md`: a short DD workflow section.
 - `.dd/.gitignore`: exclusions for local cache and runtime capabilities.
 

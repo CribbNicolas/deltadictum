@@ -46,8 +46,13 @@ A model proposes; deterministic code validates and commits. No MCP argument, no 
 reported outcome can set lifecycle state, authority, confidence or approval. Promotion happens only
 through local human review.
 
-**Enforced by:** `normalizeProposal` overwrites every epistemic field; `admitMemory` requires a
-capability that no transport can construct; `recordOutcome` writes telemetry only.
+A store change the model asks for (archive, restore, delete, legacy, merge, split, retopic, resolve) is
+an action: a pending request that changes nothing until a person applies it in the audit UI. Applying it
+first checks every target against the snapshot taken when it was filed, and writes all of it or none.
+
+**Enforced by:** `normalizeProposal` overwrites every epistemic field; `admitMemory`, `applyAction`,
+`rejectAction` and `requestRevision` require a capability that no transport can construct; the MCP `act`
+tool only writes a pending file (`fileActions`); `recordOutcome` writes telemetry only.
 
 ## INV-05: Evidence establishes integrity, not support
 
@@ -90,8 +95,15 @@ the memory was written that its trigger had real chances to fire. Age alone reti
 currently before a reviewer is retired either: a contested memory, or one a pending candidate names in
 `replaces`, is left effective.
 
-**Enforced by:** `archiveMemory` refuses any authority above `observed` and any state but `active`;
-`restoreMemory` requires the local review capability; deletion lives only on the audit UI's DELETE path.
+Every archived memory states why, in words: the disuse sweep names the retrievals that passed it by, a
+merge names the memory it went into, and an archive action carries the reason the agent gave. A `legacy`
+memory (a practice the project abandoned) is also restorable, and is recalled only as a warning that never
+outranks current knowledge.
+
+**Enforced by:** `archiveMemory` refuses a missing reason, any authority above `observed` and any state
+but `active`; `restoreMemory` requires the local review capability; deletion lives only on the audit UI's
+DELETE path and on a `delete` action a person applies, which reaches only archived, rejected or candidate
+memories.
 
 ## INV-10: Git is the authority, SQLite is derived
 

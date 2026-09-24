@@ -10,6 +10,7 @@ import { microPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
 import { ensureResident, projectUiUrl, sessionUiUrl } from '../resident.js';
 import { ensureDependencies } from '../deps.js';
+import { revisionNotices } from '../engine/revisions.js';
 
 function ok(payload) {
   if (payload.decision === 'allow') delete payload.decision;
@@ -56,7 +57,9 @@ if (dataArg >= 0 && process.argv[dataArg + 1]) process.env.DD_DATA = process.arg
 
 try {
   const payload = await readJsonStdin();
-  const observation = command === 'observe' ? observationFromTool(payload) : null;
+  // Claude Code sets CLAUDECODE=1 in its hook processes (recorded 2026-09-24).
+  const claudeCode = process.env.CLAUDECODE === '1' && !codexHost;
+  const observation = command === 'observe' ? observationFromTool(payload, { claudeCode }) : null;
   if (command === 'observe' && !observation) skip();
   if (command === 'pre-tool' && /(^|__)(dd|deltadictum)(__|_)/i.test(payload.tool_name || payload.toolName || '')) skip();
   const cwd = payload.cwd || process.env.DD_PROJECT_DIR || process.cwd();
@@ -108,13 +111,20 @@ try {
   if (command === 'prompt') {
     await store.beginCaptureTurn(projectId, sessionId);
     await recordPromptObservation(payload, { store, projectId });
+    // A reviewer's revision request needs no embeddings: it is said even while DD is inactive.
+    const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
     if (!lexical) {
       // Said once per session, so a resident that went away mid-session is noticed.
       const deps = ensureDependencies();
-      const notice = residentNotice(deps.state === 'present' ? { state: 'unreachable' } : deps);
+      // A resident edited since it started refuses every hook until replaced, and
+      // one may have exited or be older; replace it here as a session start would,
+      // rather than leave the rest of the session without recall. Never on
+      // pre-tool (L1); a live one that did not answer is only unreachable.
+      const resident = deps.state !== 'present' ? deps : await ensureResident(repoRoot).catch(() => ({ state: 'unavailable' }));
+      const notice = residentNotice(resident.state === 'live' ? { state: 'unreachable' } : resident);
       const first = sessionId && store.claimDelivery ? await store.claimDelivery(projectId, sessionId, '__dd_inactive__', 'inactive') : true;
       store.close();
-      ok(first ? contextPayload('UserPromptSubmit', notice) : {});
+      ok(contextPayload('UserPromptSubmit', [revisions, first ? notice : null].filter(Boolean).join('\n')));
     }
     const action = payload.prompt || payload.text || payload.user_prompt || '';
     const result = await retrieveMemories({
@@ -124,7 +134,7 @@ try {
       session_id: payload.session_id ?? payload.sessionId,
     }, { store });
     store.close();
-    ok(contextPayload('UserPromptSubmit', microPack(result.memories ?? [])));
+    ok(contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? [])].filter(Boolean).join('\n')));
   }
 
   if (command === 'observe') {

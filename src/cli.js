@@ -2,8 +2,7 @@
 import { openStore } from './project.js';
 import { startResidentServer } from './ui/server.js';
 import { orientProject } from './engine/project-context.js';
-import { readRegistry, residentStatus, retireResident, writeRegistry } from './resident.js';
-import { BUILD_ID } from './hooks/build.js';
+import { readRegistry, residentFit, residentStatus, retireResident, writeRegistry } from './resident.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
 
 const [command, ...rest] = process.argv.slice(2);
@@ -72,13 +71,14 @@ async function main() {
 // The resident process (L2): one per machine, shared by every project and
 // session. It opens each project's store the first time a hook or the audit UI
 // asks for it, and loads the embedding model once. It steps aside for a live
-// one of the same build, replaces one from another build, and exits after a
-// long idle period.
+// one serving this install or a newer version, replaces a stale or older one,
+// and exits after a long idle period.
 const IDLE_EXIT_MS = 12 * 60 * 60 * 1000;
 async function runResident() {
   const existing = await residentStatus();
-  if (existing?.build === BUILD_ID && !existing.stale) {
-    console.log(`DD - resident ${existing.url} (already running)`);
+  const fit = residentFit(existing);
+  if (fit === 'live' || fit === 'superseded') {
+    console.log(`DD - resident ${existing.url} (already running${fit === 'superseded' ? `, version ${existing.version}, newer than this install` : ''})`);
     return;
   }
   if (existing) await retireResident(existing);

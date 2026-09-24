@@ -1,6 +1,7 @@
 import { retrieveMemories } from '../engine/retrieve.js';
 import { loadEmbedder } from './embedder.js';
 import { syncVectors, cosine } from './vectors.js';
+import { RECALL_STATES } from '../store/paths.js';
 
 // Embedding similarities from multilingual-e5 are compressed (0.75-0.90 for
 // related and unrelated text alike), so the signal is how far a memory stands
@@ -46,7 +47,7 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
   async function semanticRetrieve(request, deps) {
     const active = await ready();
     if (!active) return retrieveMemories(request, deps);
-    const vectors = await syncVectors({ store: deps.store, projectId: request.project_id, embedder: active });
+    const vectors = await syncVectors({ store: deps.store, projectId: request.project_id, embedder: active, states: RECALL_STATES });
     const [query] = await active.embed([queryText(request.action)], 'query');
     const sims = new Map([...vectors].map(([id, vector]) => [id, cosine(query, vector)]));
     // semantic.floor in .dd/config.json trades silence for recall per project:
@@ -61,8 +62,25 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
   // bridged call does not pay for either.
   semanticRetrieve.warm = async ({ store, projectId }) => {
     const active = await start();
-    if (active) await syncVectors({ store, projectId, embedder: active });
+    if (active) await syncVectors({ store, projectId, embedder: active, states: RECALL_STATES });
     return Boolean(active);
+  };
+  // The memories nearest to one memory or a text, in any state but rejected:
+  // what /dd:compact and /dd:prospect use to find overlaps. Read-only.
+  semanticRetrieve.similar = async ({ store, projectId, id, text, limit = 8 }) => {
+    const active = await ready();
+    if (!active) return { error: { code: 503, message: 'The embedding model is not ready.' } };
+    const states = ['candidate', 'active', 'contested', 'superseded', 'legacy', 'archived'];
+    const vectors = await syncVectors({ store, projectId, embedder: active, states });
+    const probe = id ? vectors.get(id) : (await active.embed([queryText(text)], 'query'))[0];
+    if (!probe) return { error: { code: 404, message: `not_found:${id}` } };
+    const ranked = [...vectors].filter(([other]) => other !== id).map(([other, vector]) => [other, cosine(probe, vector)])
+      .sort((a, b) => b[1] - a[1]).slice(0, Math.min(20, Math.max(1, Number(limit) || 8)));
+    return { similar: await Promise.all(ranked.map(async ([other, similarity]) => {
+      const atom = await store.getAtom(other, projectId);
+      return { id: other, topic_key: atom.topic_key, title: atom.title, lifecycle_state: atom.lifecycle_state,
+        similarity: Math.round(similarity * 1000) / 1000 };
+    })) };
   };
   return semanticRetrieve;
 }

@@ -22,6 +22,7 @@ export async function sourceFingerprint(ddDir) {
     ...await walkJsonFiles(join(ddDir, 'atoms')),
     ...await walkJsonFiles(join(ddDir, 'archive')),
     ...await walkJsonFiles(join(ddDir, 'candidates')),
+    ...await walkJsonFiles(join(ddDir, 'legacy')),
     join(ddDir, 'registry', 'topics.json'),
     join(ddDir, 'relations.json'),
   ].sort();

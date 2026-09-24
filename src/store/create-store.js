@@ -15,8 +15,8 @@ function nowIso() {
 
 // Bumped whenever what the index may hold changes, so an index built by an
 // earlier build is rebuilt from git. 7.2: atoms outside the stored contract
-// (src/engine/contract.js) are no longer indexed.
-const INDEX_FORMAT = '7.2';
+// (src/engine/contract.js) are no longer indexed. 7.3: the legacy lifecycle state.
+const INDEX_FORMAT = '7.3';
 
 export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddDir) }) {
   // Local telemetry holds prompts and command output: private to its owner (POSIX).
@@ -67,7 +67,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
   function notifyChange() { for (const fn of changeListeners) { try { fn(); } catch { /* a bad listener must not break the write path */ } } }
   try {
     watcher = watch(ddDir, { recursive: true }, (_event, file) => {
-      if (/^(atoms|archive|candidates|registry)([\\/]|$)|^relations\.json$/.test(String(file))) { dirty = true; notifyChange(); }
+      if (/^(atoms|archive|candidates|legacy|actions|registry)([\\/]|$)|^relations\.json$/.test(String(file))) { dirty = true; notifyChange(); }
     });
     watcher.on('error', () => { dirty = true; });
   } catch { /* Periodic freshness checks cover platforms without recursive watch. */ }
@@ -81,7 +81,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     return git.withWriteLock(async () => { await refresh(); const result = await work(); notifyChange(); return result; });
   }
 
-  async function commitAtoms(atoms, newRelations = [], deleteAtoms = []) {
+  async function commitAtoms(atoms, newRelations = [], deleteAtoms = [], actionWrites = []) {
     return withWriteLock(async () => {
       for (const atom of atoms) {
         const previous = index.getAtom(atom.id);
@@ -95,7 +95,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
       }
       const deleted = new Set(deleteAtoms.map(atom => atom.id));
       const kept = relations.filter(r => !deleted.has(r.source_atom_id) && !deleted.has(r.target_atom_id));
-      const stored = await git.commit({ atoms, deleteAtoms, relations: kept });
+      const stored = await git.commit({ atoms, deleteAtoms, relations: kept, actions: actionWrites });
       // Index updates are atomic; on failure the Git journal/source wins on reopen.
       if (newRelations.length || deleteAtoms.length) await reindex();
       else {
@@ -142,6 +142,17 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
       ? index.db.prepare('SELECT decision, reasons, atom_id, created_at FROM memory_admission_decisions WHERE project_id = ? ORDER BY created_at').all(projectId)
       : index.db.prepare('SELECT decision, reasons, atom_id, created_at FROM memory_admission_decisions ORDER BY created_at').all();
     return rows.map(row => ({ ...row, reasons: JSON.parse(row.reasons) }));
+  }
+
+  async function logAction(entry) {
+    index.db.prepare(`INSERT INTO memory_action_log (id, project_id, action_id, kind, targets, outcome, note, actor_ref, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(randomUUID(), entry.project_id, entry.action_id, entry.kind,
+      JSON.stringify(entry.targets ?? []), entry.outcome, entry.note ?? null, entry.actor_ref ?? null, nowIso());
+  }
+
+  async function listActionLog(projectId) {
+    return index.db.prepare('SELECT * FROM memory_action_log WHERE project_id = ? ORDER BY created_at DESC, rowid DESC').all(projectId)
+      .map(row => ({ ...row, targets: JSON.parse(row.targets) }));
   }
 
   async function logContradiction(entry) {
@@ -349,6 +360,11 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     listAdmissions,
     logRetrieval,
     logContradiction,
+    logAction,
+    listActionLog,
+    listActions: git.listActions,
+    getAction: git.getAction,
+    putAction: git.putAction,
     incrementActivation,
     getVocabulary,
     getVocabularyValue,

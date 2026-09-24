@@ -503,6 +503,15 @@
       "notes": null,
       "created_at": "2026-09-24T02:05:12.306Z",
       "updated_at": "2026-09-24T02:05:12.306Z"
+    },
+    {
+      "id": "d98e5105-0f3d-4554-a06b-6427152bab69",
+      "project_id": "supermem",
+      "canonical_key": "hooks/observe/claude-code-outcomes",
+      "status": "provisional",
+      "notes": null,
+      "created_at": "2026-09-24T02:07:04.932Z",
+      "updated_at": "2026-09-24T02:07:04.932Z"
     }
   ],
   "aliases": [],

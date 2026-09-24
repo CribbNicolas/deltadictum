@@ -35,6 +35,20 @@ export function candidateFilePath(ddDir, id) {
   return join(ddDir, 'candidates', `${id}.json`);
 }
 export const ARCHIVE_STATES = ['superseded', 'archived', 'rejected'];
+export const EFFECTIVE_STATES = ['active', 'contested'];
+// Legacy knowledge is recalled as a warning; see src/engine/retrieve.js.
+export const RECALL_STATES = ['active', 'contested', 'legacy'];
+
+export function legacyFilePath(ddDir, id) {
+  archiveFilePath(ddDir, id);
+  return join(ddDir, 'legacy', `${id}.json`);
+}
+
+// A pending action (src/engine/actions.js): a request a person applies in the audit UI.
+export function actionFilePath(ddDir, id) {
+  archiveFilePath(ddDir, id);
+  return join(ddDir, 'actions', `${id}.json`);
+}
 
 export function topicKeyFromAtomFile(ddDir, filePath) {
   const rel = relative(join(ddDir, 'atoms'), filePath).replaceAll('\\', '/');
@@ -84,4 +98,6 @@ export const DEFAULT_CONFIG = {
   capture: { retention_days: 14, max_observations: 200 },
   telemetry: { retention_days: 90, max_events: 2000 },
   session: { retention_hours: 24, max_entries: 500 },
+  // Past this many archived memories, the session start asks for a cleanup.
+  archive_review_at: 50,
 };
