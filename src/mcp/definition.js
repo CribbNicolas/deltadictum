@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { createToolHandlers } from './tools.js';
 import { CAPTURE_ORIGINS } from '../engine/contract.js';
+import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
 
 const text = z.string().max(2000);
 const fact = z.union([z.string().max(200), z.boolean(), z.number().finite()]);
@@ -11,7 +12,7 @@ const proposal = z.object({
   capture_origin: z.enum(CAPTURE_ORIGINS).default('user_explicit')
     .describe('Use user_explicit only when the user explicitly asked to save this knowledge; otherwise model_initiated. This is not approval.'),
   memory_type: z.enum(['claim', 'decision', 'lesson', 'anti_memory', 'procedure']).default('lesson'),
-  topic_key: z.string().max(150), trigger: text, behavior_delta: text, why: text,
+  topic_key: z.string().max(150).describe(KEY_FORMAT_HINT), trigger: text, behavior_delta: text, why: text,
   evidence_refs: z.array(evidence).min(1).max(12), title: z.string().max(150).optional(),
   scope: z.enum(['project', 'user', 'agent', 'workflow', 'file', 'service']).optional(),
   trigger_variants: z.array(z.string().max(250)).max(8).optional(),
@@ -35,7 +36,7 @@ const action = z.object({
   replaced_by: z.string().max(150).optional().describe('legacy: the memory that now covers the ground.'),
   result: proposal.optional().describe('merge: the single memory the targets become.'),
   results: z.array(proposal).min(2).max(5).optional().describe('split: the memories the target becomes.'),
-  topic_key: z.string().max(150).optional().describe('retopic: the new topic.'),
+  topic_key: z.string().max(150).optional().describe(`retopic: the new topic. ${KEY_FORMAT_HINT}`),
   winner: z.string().max(150).optional(), loser_state: z.enum(['superseded', 'legacy']).optional(),
   revises: z.string().max(150).optional().describe('Id of a pending action this corrects after the reviewer requested a revision.'),
 });

@@ -1,4 +1,6 @@
 const KEY_PATTERN = /^[a-z0-9_-]+(\/[a-z0-9_-]+){1,3}$/;
+// Stated to the agent at the schema and on rejection: a bare code gives it nothing to correct.
+export const KEY_FORMAT_HINT = 'topic_key must be 2-4 lowercase segments joined by "/", each of a-z, 0-9, "_" or "-" (e.g. "rules/holdings/empty-on-death"); no dots, spaces or colons.';
 
 export function normalizeKey(value) {
   return String(value ?? '')
