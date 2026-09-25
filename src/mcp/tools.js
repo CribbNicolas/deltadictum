@@ -8,11 +8,14 @@ import { openRevisionRequests } from '../engine/revisions.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { callRunningStore } from '../hooks/bridge.js';
 import { lexicalMode, residentNotice } from '../hooks/session-start.js';
+import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
 
 const jsonResult = data => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 const errorResult = message => ({ isError: true, content: [{ type: 'text', text: message }] });
 function proposalResult(result) {
+  const keyRejected = result.reasons?.some(reason => reason === 'invalid_key_format' || reason === 'empty_key');
   return { decision: result.decision, reasons: result.reasons,
+    ...(keyRejected ? { hint: KEY_FORMAT_HINT } : {}),
     ...(result.atom ? { id: result.atom.id, lifecycle_state: result.atom.lifecycle_state,
       capture_origin: result.atom.capture_origin, capture_source: result.atom.capture_source,
       evidence_verified: result.atom.evidence_state?.verified_count ?? 0,

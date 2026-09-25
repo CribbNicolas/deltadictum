@@ -137,3 +137,21 @@ test('the retrieve tool asks the resident process first and falls back to lexica
   assert.equal(inactive.isError, true);
   assert.match(inactive.content[0].text, /DD - Inactive/);
 });
+
+describe('MCP propose key format', () => {
+  test('a rejected topic_key tells the agent the format it needs', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-mcp-key-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    t.after(() => store.close());
+    const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
+
+    for (const topic_key of ['Holdings.Counter', 'solo', 'a/b/c/d/e']) {
+      const [result] = JSON.parse((await tools.propose({ proposals: [{ ...proposal(), topic_key }] })).content[0].text).proposals;
+      assert.equal(result.decision, 'block');
+      assert.deepEqual(result.reasons, ['invalid_key_format']);
+      assert.match(result.hint, /2-4 lowercase segments/);
+    }
+    const [ok] = JSON.parse((await tools.propose({ proposals: [proposal()] })).content[0].text).proposals;
+    assert.equal(ok.hint, undefined);
+  });
+});
