@@ -24,6 +24,14 @@ describe('V4 trigger activation score', () => {
     assert.strictEqual(triggerActivationScore('deploy frontend assets', 'rotate database credentials'), 0);
   });
 
+  // A Spanish trigger variant shares articles and prepositions with any Spanish
+  // request; counted as content they pushed it past the activation floor.
+  test('Spanish function words do not activate an unrelated Spanish trigger', () => {
+    assert.strictEqual(triggerActivationScore('¿Cuál es la diferencia entre un record y una clase en C#?',
+      'Cambiar las tiradas de dados, el d20, los críticos o la dificultad'), 0);
+    assert.ok(triggerActivationScore('Cambiá la tirada d20 para que sume un bono', 'Cambiar las tiradas de dados, el d20') > 0);
+  });
+
   test('stopwords do not inflate overlap between unrelated before-writing actions', () => {
     const score = triggerActivationScore('before writing tests', 'before writing durable memory');
     assert.ok(score < 0.5);
