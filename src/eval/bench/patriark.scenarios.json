@@ -1,6 +1,6 @@
 {
   "project": "Project-Patriark",
-  "note": "Tasks written from Project-Patriark's store (2026-09-22). Its memories are in Spanish, so every English probe is cross-language. must: needed to do the task right. orbit: useful while doing it. Ids are 8-character prefixes. The architecture memory (01cd4358) is orbit for every code task: the user wants it considered almost always.",
+  "note": "Tasks written from Project-Patriark's store (2026-09-22). Its memories were in Spanish then and are in English since, so the cross-language probes are now the Spanish ones. endurance-design (2026-09-26) replays a real session whose Spanish prompts reached none of its design memories. must: needed to do the task right. orbit: useful while doing it. Ids are 8-character prefixes. The architecture memory (01cd4358) is orbit for every code task: the user wants it considered almost always.",
   "tasks": [
     {
       "id": "refuge-recruit-button",
@@ -228,6 +228,39 @@
             "file_path": "doc/NARR-03-Cronica.md",
             "old_string": "## Exodo",
             "new_string": "## Exodo\nHace siglos el Arca partio."
+          }
+        }
+      ]
+    },
+    {
+      "id": "endurance-design",
+      "must": [
+        "a56f6302",
+        "28aad40e",
+        "3a2249fa"
+      ],
+      "orbit": [
+        "f74d6bcb",
+        "1744f3dd",
+        "6aa4f61f"
+      ],
+      "probes": [
+        {
+          "prompt": "Me gustaria que exploremos un poco los stats que existen y aun no estan implementados en el juego, los podrias revisar?"
+        },
+        {
+          "prompt": "Dale exploremos un poco la Resistencia. Por ahora es lluvia de ideas, para el jugador tiene que tener un tradeoff cargarse ese stat."
+        },
+        {
+          "prompt": "Me gusta la Resistencia con poder ir mas lejos. Esto consecuentemente afecta al consumo de agua y alimento."
+        },
+        {
+          "prompt": "Design the Endurance attribute: it sets how far the character can travel before resting."
+        },
+        {
+          "tool": "Read",
+          "input": {
+            "file_path": "doc/GDD-09-Stats-Mecanicas-y-Desarrollo.md"
           }
         }
       ]
