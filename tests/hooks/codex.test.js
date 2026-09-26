@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -52,7 +52,8 @@ test('Codex project installation preserves unrelated configuration and is idempo
   const config = await readFile(join(root, '.codex/config.toml'), 'utf8');
   assert.match(config, /^model_reasoning_effort = "high"/);
   assert.match(config, /\[mcp_servers.dd.env\]/);
-  assert.ok(config.includes(root.replaceAll('\\', '/')));
+  // The installer writes the real path; a Windows runner's TEMP is an 8.3 short name (RUNNER~1).
+  assert.ok(config.includes((await realpath(root)).replaceAll('\\', '/')));
   const hooks = JSON.parse(await readFile(join(root, '.codex/hooks.json'), 'utf8'));
   assert.equal(hooks.hooks.Stop[0].hooks[0].command, 'existing-hook');
   assert.equal(hooks.hooks.Stop.length, 2);
