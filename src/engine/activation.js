@@ -16,9 +16,8 @@ const GROUPS = [
   ['timeout', 'timeouts', 'espera'], ['component', 'components', 'componente', 'componentes'],
 ];
 const CONCEPT = new Map(GROUPS.flatMap(group => group.map(word => [word, group[0]])));
-const ES_STOP = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'en', 'al', 'un', 'una', 'cuando', 'antes', 'despues', 'para', 'por', 'con', 'que', 'se']);
 export function conceptTokens(value) {
-  return [...new Set(contentTokens(value).filter(t => !ES_STOP.has(t)).map(t => CONCEPT.get(t) ?? t))];
+  return [...new Set(contentTokens(value).map(t => CONCEPT.get(t) ?? t))];
 }
 export function searchableTrigger(atom) {
   const text = [atom.trigger, ...(atom.trigger_variants ?? []), ...(atom.applies_to?.files ?? []),
