@@ -17,6 +17,16 @@ const ENGLISH = new Set(['the', 'a', 'an', 'to', 'of', 'and', 'or', 'in', 'is', 
   'before', 'after', 'not', 'do', 'does', 'use', 'it', 'this', 'that', 'on', 'be', 'by', 'from', 'as', 'if',
   'must', 'should', 'never', 'always', 'keep', 'instead', 'because', 'into', 'than', 'only', 'which']);
 
+// Spanish articles, prepositions, conjunctions and pronouns, accents stripped.
+// Matching treats them as noise, as it does their English counterparts: two
+// Spanish sentences share them whatever they are about.
+export const SPANISH_FUNCTION_WORDS = new Set([
+  'el', 'la', 'los', 'las', 'lo', 'un', 'una', 'unos', 'unas', 'al', 'del', 'de', 'en', 'con', 'sin', 'por', 'para',
+  'entre', 'sobre', 'desde', 'hasta', 'hacia', 'segun', 'que', 'se', 'su', 'sus', 'le', 'les', 'mi', 'mis', 'tu', 'tus',
+  'es', 'son', 'esta', 'este', 'estos', 'estas', 'ese', 'esa', 'esos', 'esas', 'cuando', 'antes', 'despues', 'como',
+  'pero', 'porque', 'si', 'ya', 'muy', 'mas', 'tambien', 'donde', 'cual', 'cuales',
+]);
+
 function prose(text) {
   // Strip what is not prose: inline code, paths, dotted and snake/camel identifiers, flags.
   return String(text ?? '').replace(/`[^`]*`/g, ' ').replace(/\S*[/\\._]\S*/g, ' ').replace(/--?\w[\w-]*/g, ' ');
