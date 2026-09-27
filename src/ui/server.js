@@ -19,7 +19,7 @@ import { readSeen, markSeen, isSeen } from '../store/seen.js';
 import { BUILD_ID, VERSION, codeFingerprint } from '../hooks/build.js';
 import { projectKey } from '../project.js';
 import { requestRevision, revisionNotices } from '../engine/revisions.js';
-import { applyAction, rejectAction } from '../engine/actions.js';
+import { applyAction, rejectAction, retargetAction } from '../engine/actions.js';
 import { createSemanticRetrieve } from '../semantic/provider.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -341,12 +341,13 @@ export async function startResidentServer({ projects: initial = [], openProject,
         await markSeen(...(Array.isArray(ids) ? ids.filter(id => pending.has(id)) : []));
         return send(res, 200, { ok: true });
       }
-      const actionMatch = url.pathname.match(/^\/api\/actions\/([^/]+)\/(apply|reject|revise)$/);
+      const actionMatch = url.pathname.match(/^\/api\/actions\/([^/]+)\/(apply|reject|revise|retarget)$/);
       if (req.method === 'POST' && actionMatch) {
         const id = decodeURIComponent(actionMatch[1]);
         const body = await readBody(req);
         if (actionMatch[2] === 'apply') return send(res, 200, await applyAction(id, { store, projectId, actor: HUMAN_REVIEW, rationale: body.rationale }));
         if (actionMatch[2] === 'reject') return send(res, 200, await rejectAction(id, { store, projectId, actor: HUMAN_REVIEW, note: body.note }));
+        if (actionMatch[2] === 'retarget') return send(res, 200, await retargetAction(id, { store, projectId, actor: HUMAN_REVIEW }));
         return send(res, 200, await requestRevision({ kind: 'action', id, reason: body.reason }, { store, projectId, actor: HUMAN_REVIEW }));
       }
       const match = url.pathname.match(/^\/api\/atoms\/([^/]+)(?:\/(admit|reject|restore|revise))?$/);

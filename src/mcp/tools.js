@@ -9,7 +9,7 @@ import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { callRunningStore } from '../hooks/bridge.js';
 import { lexicalMode, residentNotice } from '../hooks/session-start.js';
 import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
-import { ANCHOR_HINT, anchorCollisions, isAnchored, validateAnchors } from '../engine/anchors.js';
+import { ANCHOR_HINT, anchorCollisions, anchorWarnings, isAnchored, validateAnchors } from '../engine/anchors.js';
 
 const jsonResult = data => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 const errorResult = message => ({ isError: true, content: [{ type: 'text', text: message }] });
@@ -87,7 +87,7 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
         // reached by similarity, which is what anchors exist to replace.
         if (!proposal?.anchors?.keywords?.length) { results.push(proposalResult({ decision: 'block', reasons: ['anchors_required'] })); continue; }
         const result = await proposeMemory({ ...proposal, project_id: projectId }, { store });
-        const warnings = result.atom ? anchorCollisions(result.atom, live).map(c => `keyword "${c.keyword}" also anchors ${c.memories} other memories`) : [];
+        const warnings = result.atom ? anchorWarnings(result.atom, live) : [];
         results.push(proposalResult({ ...result, anchor_warnings: warnings }));
       }
       return { proposals: results };
