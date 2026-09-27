@@ -43,8 +43,8 @@ const SESSION_CONTEXT_ATOM_ID = '__session_context__';
 // session (2026-09-23/24), that push made pulling look redundant, and the model
 // never called retrieve or propose unasked. Claude Code also defers MCP tools
 // to names only, so the line says they may need loading first.
-export const PULL_GUIDANCE = 'DD - Pushed knowledge arrives only when one of its anchors matched the prompt or tool call. The memory map '
-  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key. Call `propose` '
+export const PULL_GUIDANCE = 'DD - Pushed knowledge covers what an anchor or similarity matched in the prompt or tool call. The memory map '
+  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key and this session_id. Call `propose` '
   + 'when you learn something an agent reading the code would miss. If the dd tools are listed by name only, load them first.';
 
 // The map is the one delivery every host supports (session context), and the

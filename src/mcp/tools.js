@@ -69,11 +69,17 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
       const result = await retrieveMemories({ ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
       return result.error ? result : retrieveView(result);
     },
-    async get({ id, verbose = false }) {
+    async get({ id, verbose = false, session_id: sessionId }) {
       const atom = await store.getAtom(id, projectId);
+      // A memory pulled but never pushed in this session is one its anchors missed.
+      // Nothing is learned here: the agent may file an anchor action a person applies.
+      const missed = sessionId && ['active', 'contested'].includes(atom?.lifecycle_state) && store.deliveredInSession
+        && !await store.deliveredInSession(projectId, sessionId, atom.id);
       if (atom) return { ...(verbose ? atom : atomView(atom)), freshness: await checkEvidenceFreshness(atom, store),
         relations: await store.listRelations({ atomIds: [atom.id] }),
-        outcomes: (await store.listFeedback(projectId, atom.id)).slice(0, 10) };
+        outcomes: (await store.listFeedback(projectId, atom.id)).slice(0, 10),
+        ...(missed ? { anchor_hint: 'This memory was not pushed in this session. If it applies to the current request, file an act '
+          + 'anchor action for it with the words of the request it should have matched, grounded through a trigger variant in that language.' } : {}) };
       const observation = await store.getObservation(id);
       if (observation?.project_id === projectId) return { kind: 'observation', ...observation };
       throw new Error(`not_found:${id}`);

@@ -90,6 +90,12 @@ export function createTelemetry(index, git) {
     const row = db.prepare('SELECT revision,delivered_at FROM session_deliveries WHERE project_id=? AND session_id=? AND atom_id=?').get(projectId, sessionId, atomId);
     return row?.revision === revision && row.delivered_at >= since(1);
   }
+  // Whether any revision of the memory reached this session: a pull of one it
+  // never reached means its anchors missed the request.
+  async function deliveredInSession(projectId, sessionId, atomId) {
+    const row = db.prepare('SELECT delivered_at FROM session_deliveries WHERE project_id=? AND session_id=? AND atom_id=?').get(projectId, sessionId, atomId);
+    return Boolean(row && row.delivered_at >= since(1));
+  }
   async function markDelivered(projectId, sessionId, atomId, revision) {
     db.prepare(`INSERT INTO session_deliveries VALUES (?,?,?,?,?) ON CONFLICT(project_id,session_id,atom_id)
       DO UPDATE SET revision=excluded.revision,delivered_at=excluded.delivered_at`).run(projectId, sessionId, atomId, revision, now());
@@ -125,5 +131,5 @@ export function createTelemetry(index, git) {
     });
   }
   return { prune, putObservation, getObservation, listObservations, recentObservations, putFeedback, feedbackSummary, listFeedback, reviewFeedback,
-    wasDelivered, markDelivered, claimDelivery, clearSessionDeliveries, beginCaptureTurn, claimCapturePrompt };
+    wasDelivered, deliveredInSession, markDelivered, claimDelivery, clearSessionDeliveries, beginCaptureTurn, claimCapturePrompt };
 }

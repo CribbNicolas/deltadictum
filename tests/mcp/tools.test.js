@@ -156,6 +156,23 @@ describe('MCP propose key format', () => {
     assert.equal(ok.hint, undefined);
   });
 
+  // Pulling a memory the session was never pushed means its anchors missed this
+  // request: get says so, and the agent can file an anchor action for review.
+  test('get with a session suggests an anchor action for a memory that was not pushed', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-mcp-missed-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    t.after(() => store.close());
+    const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
+    const [p] = JSON.parse((await tools.propose({ proposals: [proposal()] })).content[0].text).proposals;
+    await admitMemory(p.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Reviewed.' });
+    const pulled = JSON.parse((await tools.get({ id: p.id, session_id: 'missed' })).content[0].text);
+    assert.match(pulled.anchor_hint, /not pushed in this session/);
+    await store.markDelivered('demo', 'pushed', p.id, 'any-revision');
+    const pushed = JSON.parse((await tools.get({ id: p.id, session_id: 'pushed' })).content[0].text);
+    assert.equal(pushed.anchor_hint, undefined);
+    assert.equal(JSON.parse((await tools.get({ id: p.id })).content[0].text).anchor_hint, undefined);
+  });
+
   test('health names unanchored memories and anchors that no longer pass', async t => {
     const root = await mkdtemp(join(tmpdir(), 'dd-mcp-health-'));
     const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
