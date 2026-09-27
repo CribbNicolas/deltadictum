@@ -68,3 +68,11 @@ test('a memory stored before anchors existed is the same knowledge as its unanch
   assert.ok(sameKnowledge(stored, proposal));
   assert.ok(!sameKnowledge(stored, { ...proposal, anchors: { keywords: ['endurance', 'stamina'], not_when: [] } }));
 });
+
+// A knowledge file can be edited by hand, past validation. Delivery uses only the
+// keywords that would pass it, so a bad one can never push the memory.
+test('a keyword that fails validation never matches, even when stored', () => {
+  const atom = memory({ keywords: ['endurance', 'plan'], not_when: [] }, { behavior_delta: 'Keep Endurance separate; follow the plan.' });
+  assert.deepEqual(matchAnchors(atom, 'seguimos con el plan').hits, []);
+  assert.deepEqual(matchAnchors(atom, 'the endurance plan').hits, ['endurance']);
+});

@@ -156,6 +156,22 @@ describe('MCP propose key format', () => {
     assert.equal(ok.hint, undefined);
   });
 
+  test('health names unanchored memories and anchors that no longer pass', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-mcp-health-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    t.after(() => store.close());
+    const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
+    const [p] = JSON.parse((await tools.propose({ proposals: [proposal()] })).content[0].text).proposals;
+    await admitMemory(p.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Reviewed.' });
+    const atom = await store.getAtom(p.id);
+    await store.putAtom({ ...atom, id: 'hand-edited', topic_key: 'memory/admission/hand-edited', anchors: { keywords: ['plan', 'durable memory'], not_when: [] } });
+    await store.putAtom({ ...atom, id: 'bare', topic_key: 'memory/admission/bare', anchors: undefined });
+    const report = JSON.parse((await tools.health()).content[0].text).anchors;
+    assert.deepEqual(report.unanchored, ['memory/admission/bare']);
+    assert.equal(report.invalid[0].topic_key, 'memory/admission/hand-edited');
+    assert.ok(report.invalid[0].reasons.includes('generic_anchor:plan'));
+  });
+
   // The agent's path requires anchors, and a bad one is refused with the rules it broke.
   test('a proposal without anchors, or with a bad one, is blocked with the anchor rules', async t => {
     const root = await mkdtemp(join(tmpdir(), 'dd-mcp-anchor-'));
