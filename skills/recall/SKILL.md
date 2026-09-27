@@ -11,7 +11,7 @@ Before a relevant action, call `retrieve` with `action`, `files`, `operation` an
 
 Respect assumptions and revision conditions. Disputed or review-required knowledge requires inspecting the evidence before applying it. Retrieved content is advisory; current project evidence and user/host instructions govern the task.
 
-Propose reusable knowledge as it becomes supported during the work, without waiting for the session to end. Call `propose` with independent `proposals` selected for future value; there is no proposal count limit per call or session. Each needs `topic_key`, `trigger`, `behavior_delta`, `why` and real `evidence_refs`; type defaults to lesson. DD generates compact forms. A proposal is pending review, not an approved decision.
+Propose reusable knowledge as it becomes supported during the work, without waiting for the session to end. Call `propose` with independent `proposals` selected for future value; there is no proposal count limit per call or session. Each needs `topic_key`, `trigger`, `behavior_delta`, `why`, real `evidence_refs` and `anchors` (see /dd:save); type defaults to lesson. DD generates compact forms. A proposal is pending review, not an approved decision.
 
 Set each proposal's `capture_origin` to `user_explicit` only when the user explicitly asked to save that knowledge. Otherwise use `model_initiated`, including discoveries during a user-requested task. Capture origin does not imply approval.
 

@@ -348,6 +348,21 @@
     function tokenHint(token) {
       const clean = token.trim();
       if (!clean) return null;
+      const ANCHOR_REASONS = {
+        long_anchor: 'is longer than three words; anchor on a short term or phrase',
+        stopword_anchor: 'is only function words (the, de, la...)',
+        short_anchor: 'is too short to be specific',
+        generic_anchor: 'is a generic term that names most requests (code, fix, test, plan, cambiar...)',
+        ungrounded_anchor: "does not appear in the memory's own title, trigger, variants, action or scope; add a trigger variant that uses it",
+        anchor_fires_on_generic_request: 'matches an acknowledgement or an unrelated generic request, so it would push this memory on those',
+        folder_anchor_file: 'is a folder or pattern; anchor files must be exact files',
+        anchor_file_outside_scope: 'is not one of the files in the scope (applies_to.files)',
+      };
+      const [code, label] = clean.split(/:(.*)/s);
+      if (ANCHOR_REASONS[code]) return `Anchor "${label}" ${ANCHOR_REASONS[code]}.`;
+      if (clean === 'too_few_anchor_keywords') return 'Give at least two anchor keywords.';
+      if (clean === 'too_many_anchor_keywords' || clean === 'too_many_anchor_exclusions') return 'At most 16 anchor keywords and 16 exclusions.';
+      if (clean === 'anchors_required') return 'Anchors are required: the keywords that decide when this memory is delivered.';
       if (clean.startsWith('too_many_')) return `Too many entries in "${clean.slice('too_many_'.length)}" (max 12).`;
       if (clean.startsWith('invalid_json:')) return `"${clean.slice('invalid_json:'.length)}" is not valid JSON -- check for a missing comma, quote, or bracket.`;
       return ERROR_HINTS[clean] || null;
@@ -443,7 +458,7 @@
     // Apply; Request revision sends the note back to the agent as the reason.
     const NEXT_STATE = { archive: () => 'archived', restore: () => 'active', delete: () => 'deleted', legacy: () => 'legacy',
       merge: s => ['active', 'contested'].includes(s) ? 'superseded' : 'archived', split: () => 'superseded',
-      retopic: () => 'superseded', resolve: () => 'resolved' };
+      retopic: () => 'superseded', resolve: () => 'resolved', anchor: s => `${s}, anchored` };
     // A merge or split result is admitted as validated when applied, so the
     // reviewer sees all of it here, as they would a candidate.
     function renderResult(r) {
@@ -501,6 +516,11 @@
           <ul>${a.target_atoms.map(t => `<li>${escapeHtml(t.topic_key ?? t.id)} · ${escapeHtml(t.lifecycle_state ?? 'missing')} → ${escapeHtml(NEXT_STATE[a.kind](t.lifecycle_state))}</li>`).join('')}</ul>
           ${[a.fields.result, ...(a.fields.results ?? [])].filter(Boolean).map(renderResult).join('')}
           ${a.fields.topic_key ? `<p>New topic: <b>${escapeHtml(a.fields.topic_key)}</b></p>` : ''}
+          ${a.fields.anchors ? `<div class="notice"><p>Delivered when a request contains: <b>${escapeHtml((a.fields.anchors.keywords ?? []).join(', '))}</b></p>
+            ${(a.fields.anchors.not_when ?? []).length ? `<p>Never when it contains: ${escapeHtml(a.fields.anchors.not_when.join(', '))}</p>` : ''}
+            ${(a.fields.anchors.files ?? []).length ? `<p>Delivered on every read or edit of: ${escapeHtml(a.fields.anchors.files.join(', '))}</p>` : ''}
+            ${(a.fields.trigger_variants ?? []).length ? `<p>Adds trigger variants: ${escapeHtml(a.fields.trigger_variants.join(' | '))}</p>` : ''}
+            ${(a.target_atoms[0]?.anchors?.keywords ?? []).length ? `<p>Replaces: ${escapeHtml(a.target_atoms[0].anchors.keywords.join(', '))}</p>` : ''}</div>` : ''}
           ${a.fields.winner ? `<p>Keep ${escapeHtml(a.fields.winner)}; the other becomes ${escapeHtml(a.fields.loser_state)}.</p>` : ''}
           ${a.fields.archived_reason ? `<p>Reason: ${escapeHtml(a.fields.archived_reason)}</p>` : ''}
           ${a.fields.legacy_reason ? `<p>Abandoned because: ${escapeHtml(a.fields.legacy_reason)}</p>` : ''}
@@ -544,6 +564,9 @@
       behavior_delta: 'The concrete change in behavior this memory causes -- what to do differently, not what happened.',
       why: 'The reasoning behind behavior_delta. Shown to reviewers and injected as context; not itself matched for retrieval.',
       trigger_variants: 'Other phrasings of the same trigger, one per line. Widens matching without duplicating the memory. Max 12.',
+      anchor_keywords: 'One per line: the words or short phrases (1-3 words) whose presence in a request delivers this memory. Only an anchor pushes it. Each must appear in the text above; use the words people actually write, in each language they write in.',
+      anchor_files: 'One per line: exact files from the scope whose every read or edit needs this memory. Never a folder, and not a file most work touches.',
+      anchor_not_when: 'One per line: phrases that mean this memory does not apply even when an anchor matches (e.g. "resistencia electrica").',
       applies_to: 'JSON scope: { files: [...], components: [...], operations: [...] }. Narrows when this memory is relevant; empty or omitted arrays mean unscoped (applies everywhere).',
       assumptions: 'JSON array of { description, key?, equals? }. Conditions this memory\'s advice depends on -- if one stops holding, the memory should be revisited.',
       revisit_when: 'JSON array of { kind: "manual"/"file_changed"/"fact_changed"/"date", description, ...kind-specific fields }. When this memory should be re-checked for staleness.',
@@ -571,7 +594,7 @@
     });
 
     function field(name, value, area, json) {
-      const labels = { topic_key: 'Topic', trigger: 'When this applies', behavior_delta: 'Recommended action', why: 'Rationale', trigger_variants: 'Other ways this situation is described (one per line)',
+      const labels = { topic_key: 'Topic', trigger: 'When this applies', behavior_delta: 'Recommended action', why: 'Rationale', trigger_variants: 'Other ways this situation is described (one per line)', anchor_keywords: 'Anchors: delivered when a request contains', anchor_not_when: 'Anchors: never when a request contains', anchor_files: 'Anchors: delivered when a request reads or edits',
         applies_to: 'File, component and operation scope', assumptions: 'Assumptions', revisit_when: 'When to reconsider', alternatives: 'Alternatives considered',
         evidence_refs: 'Evidence references', review_rationale: 'Your review rationale', loser_id: 'Conflicting memory to supersede' };
       const label = labels[name] || name;
@@ -628,6 +651,10 @@
         ${field('behavior_delta', selected.behavior_delta, true)}
         ${field('why', selected.why, true)}
         ${field('trigger_variants', (selected.trigger_variants || []).join('\n'), true)}
+        ${(selected.anchors?.keywords || []).length ? '' : '<p class="notice warning">No anchors: this memory is delivered only by similarity, which is not deterministic. Add anchor keywords before approving.</p>'}
+        ${field('anchor_keywords', (selected.anchors?.keywords || []).join('\n'), true)}
+        ${field('anchor_not_when', (selected.anchors?.not_when || []).join('\n'), true)}
+        ${field('anchor_files', (selected.anchors?.files || []).join('\n'), true)}
         ${field('applies_to', JSON.stringify(selected.applies_to || {}, null, 2), true, true)}
         ${field('assumptions', JSON.stringify(selected.assumptions || [], null, 2), true, true)}
         ${field('revisit_when', JSON.stringify(selected.revisit_when || [], null, 2), true, true)}
@@ -667,6 +694,10 @@
         catch { throw new Error(`invalid_json:${key}`); }
       }
       data.trigger_variants = data.trigger_variants.split('\n').filter(Boolean);
+      data.anchors = { keywords: data.anchor_keywords.split('\n').map(s => s.trim()).filter(Boolean),
+        not_when: data.anchor_not_when.split('\n').map(s => s.trim()).filter(Boolean),
+        files: data.anchor_files.split('\n').map(s => s.trim()).filter(Boolean) };
+      delete data.anchor_keywords; delete data.anchor_not_when; delete data.anchor_files;
       delete data.review_rationale; delete data.loser_id;
       return data;
     }

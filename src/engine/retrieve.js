@@ -6,8 +6,9 @@ import { ftsQuery } from './v4/fts-query.js';
 import { expandTopicTerms } from './v5/expander.js';
 import { formsList } from './forms-util.js';
 import { RECALL_STATES } from '../store/paths.js';
-import { activationScore, assessApplicability, conceptTokens } from './activation.js';
+import { activationScore, assessApplicability, conceptTokens, matchesGlob } from './activation.js';
 import { checkEvidenceFreshness } from './evidence.js';
+import { isAnchored, matchAnchors } from './anchors.js';
 import { boundedBudget, estimateTokens } from './budget.js';
 import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, requiredActivation, usageFactors } from './ranking.js';
 
@@ -66,15 +67,44 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     }
   }
 
+  // An anchored memory is a candidate by its keywords alone: full-text search
+  // matches exact tokens and keeps 50, and neither may decide whether it is found.
+  // Recall comes first: missing an essential memory costs more than an extra one,
+  // so anchors guarantee delivery and similarity may still add. A project that
+  // sets anchors.only trades that recall for determinism: only anchors push.
+  let anchorsOnly = false;
+  {
+    const have = new Set(candidates.map(atom => atom.id));
+    const anchored = store.listAnchored ? await store.listAnchored({ projectId: request.project_id, lifecycleStates: RECALL_STATES })
+      : await store.listAtoms({ projectId: request.project_id, lifecycleStates: RECALL_STATES });
+    anchorsOnly = config.anchors?.only === true;
+    for (const atom of anchored) {
+      if (have.has(atom.id) || !isAnchored(atom)) continue;
+      if (request.memory_types?.length && !request.memory_types.includes(atom.memory_type)) continue;
+      if (matchAnchors(atom, activationText).hits.length) candidates.push(atom);
+    }
+  }
+
   const effective = candidates.filter(a => a.authority !== 'deprecated');
   const usage = usageFactors(effective);
   const scored = effective.map((atom, index) => {
-    const applicability = assessApplicability(atom, request);
-    const activation = applicability.applies
-      ? Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0) : 0;
-    return { atom, applicability, activation, floor: requiredActivation(atom, ACTIVATION_FLOOR),
+    const anchor = matchAnchors(atom, activationText, request.files ?? []);
+    const applicability = anchor.blocked.length ? { applies: false } : assessApplicability(atom, request);
+    // An anchor hit (a keyword, one of its anchor files, or one of its components)
+    // delivers it at full activation. Otherwise it keeps the lexical and semantic
+    // activation every memory has, unless the project is strict (anchors.only).
+    const scopeHit = anchor.files.length > 0
+      || (atom.applies_to?.components ?? []).some(c => (request.components ?? []).some(x => x.toLowerCase() === c.toLowerCase()));
+    const anchorHit = isAnchored(atom) && (anchor.hits.length > 0 || scopeHit);
+    const activation = !applicability.applies ? 0
+      : anchorHit ? 1
+      : anchorsOnly ? 0
+      : Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0);
+    const reason = anchorHit ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
+    return { atom, applicability, activation, reason, similarity: semantic?.get(atom.id) ?? 0, floor: requiredActivation(atom, ACTIVATION_FLOOR),
       value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
-  }).filter(c => c.activation >= c.floor).sort((a, b) => b.value - a.value || a.atom.id.localeCompare(b.atom.id));
+  }).filter(c => c.activation >= c.floor)
+    .sort((a, b) => b.value - a.value || b.similarity - a.similarity || a.atom.id.localeCompare(b.atom.id));
 
   const selected = [];
   // A memory that contradicts one already selected cannot join it: an injected
@@ -88,7 +118,7 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   const covered = atom => current.some(a => a.id === atom.replaced_by || a.topic_key === atom.topic_key);
   for (const candidate of scored) {
     if (result.memories.length >= 8) break;
-    const { atom, applicability, value } = candidate;
+    const { atom, applicability, value, reason } = candidate;
     if (excluded.has(atom.id)) continue;
     const legacy = atom.lifecycle_state === 'legacy';
     if (legacy && covered(atom)) continue;
@@ -144,6 +174,8 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       // Compact forms cannot remove the scope/assumptions that make advice valid.
       let content = form.content;
       if (contested) content = `DISPUTED; do not treat as settled. ${content}`;
+      // Says which anchor pushed it, so the person and the agent can see why.
+      if (reason) content = `${reason} ${content}`;
       if (!withheld && applicability.constraints?.length) content += ` Only within: ${applicability.constraints.join('; ')}.`;
       if (!withheld && applicability.warnings?.length) content += ` Check: ${applicability.warnings.join('; ')}.`;
       const contentTokens = estimateTokens(content);

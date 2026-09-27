@@ -43,9 +43,27 @@ const SESSION_CONTEXT_ATOM_ID = '__session_context__';
 // session (2026-09-23/24), that push made pulling look redundant, and the model
 // never called retrieve or propose unasked. Claude Code also defers MCP tools
 // to names only, so the line says they may need loading first.
-export const PULL_GUIDANCE = 'DD - Pushed knowledge covers only what matched the prompt or tool call. Call the dd `retrieve` tool before '
-  + 'changing an area it did not cover, and `propose` when you learn something an agent reading the code would miss. If the dd '
-  + 'tools are listed by name only, load them first.';
+export const PULL_GUIDANCE = 'DD - Pushed knowledge arrives only when one of its anchors matched the prompt or tool call. The memory map '
+  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key. Call `propose` '
+  + 'when you learn something an agent reading the code would miss. If the dd tools are listed by name only, load them first.';
+
+// The map is the one delivery every host supports (session context), and the
+// agent reading it matches meaning and language far better than any threshold.
+// Over budget it groups by domain rather than dropping a memory.
+export const MAP_BUDGET = 3000;
+export function memoryMap(atoms, { budget = MAP_BUDGET } = {}) {
+  const sorted = [...atoms].sort((a, b) => a.topic_key.localeCompare(b.topic_key));
+  const lines = sorted.map(a => `${a.topic_key} — ${a.title}`);
+  const flat = [`DD - Memory map (${sorted.length}):`, ...lines].join('\n');
+  if (estimateTokens(flat) <= budget) return flat;
+  const domains = new Map();
+  for (const atom of sorted) {
+    const [domain, ...rest] = atom.topic_key.split('/');
+    domains.set(domain, [...(domains.get(domain) ?? []), rest.join('/')]);
+  }
+  const grouped = [...domains].map(([domain, topics]) => `${domain} (${topics.length}): ${topics.join(', ')}`);
+  return [`DD - Memory map (${sorted.length}, by domain):`, ...grouped].join('\n');
+}
 
 export function microPack(memories) {
   return memories.map(memory => {
@@ -133,6 +151,8 @@ ${microPack(ambient)}` : null;
   const archiveNote = archivedCount > archiveAt
     ? `DD - The archive holds ${archivedCount} memories (review at ${archiveAt}). Offer the user /dd:clean to restore what is still useful and delete the rest.`
     : null;
+  const live = alreadyPrimed || !activeCount ? [] : await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] }).catch(() => []);
+  const map = live.length ? memoryMap(live) : null;
   const advisory = alreadyPrimed ? null
     : `DD - Project context (advisory): ${JSON.stringify({ ...context, ...(sessionId ? { session_id: sessionId } : {}) })}`;
   return {
@@ -142,7 +162,7 @@ ${microPack(ambient)}` : null;
     ...(uiLive && uiUrl ? { systemMessage: uiPointer(uiUrl) } : {}),
     hookSpecificOutput: {
       hookEventName: 'SessionStart',
-      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, revisions, archiveNote, advisory, knowledge]
+      additionalContext: [banner, residentNotice(resident), alreadyPrimed ? null : PULL_GUIDANCE, revisions, archiveNote, advisory, map, knowledge]
         .filter(Boolean).join('\n\n'),
     },
   };

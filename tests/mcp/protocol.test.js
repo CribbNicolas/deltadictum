@@ -21,7 +21,8 @@ test('actual MCP schema has one compact proposal surface and no self-approval op
   assert.equal(tools.some(t => ['admit', 'resolve', 'delete', 'reject', 'apply'].includes(t.name)), false);
   assert.equal(tools.filter(t => ['propose', 'capture', 'update'].includes(t.name)).length, 1);
   const result = await client.callTool({ name: 'propose', arguments: { session_id: 'test', proposals: [{
-    topic_key: 'test/contract/lesson', trigger: 'when writing tests', behavior_delta: 'Check behavior.', why: 'Prevent regressions.',
+    topic_key: 'test/contract/lesson', trigger: 'when writing contract tests for the MCP server', behavior_delta: 'Check behavior.', why: 'Prevent regressions.',
+    anchors: { keywords: ['contract tests', 'mcp server'] },
     evidence_refs: [{ source_type: 'file', source_ref: 'test.js', summary: 'Test evidence' }],
   }] } });
   assert.equal(result.isError, undefined);
@@ -35,9 +36,11 @@ test('actual MCP schema has one compact proposal surface and no self-approval op
   assert.equal(proposalSchema.properties.capture_source, undefined);
   const mixed = await client.callTool({ name: 'propose', arguments: { session_id: 'test', proposals: [
     { capture_origin: 'user_explicit', topic_key: 'test/contract/requested', trigger: 'when saving requested knowledge',
+      anchors: { keywords: ['requested knowledge', 'saving requested'] },
       behavior_delta: 'Record the request accurately.', why: 'Preserve capture intent.', capture_source: 'local_ui',
       evidence_refs: [{ source_type: 'user_statement', source_ref: 'current-request', summary: 'Please save this rule.' }] },
     { capture_origin: 'model_initiated', topic_key: 'test/contract/discovered', trigger: 'when saving discovered knowledge',
+      anchors: { keywords: ['discovered knowledge', 'observed pattern'] },
       behavior_delta: 'Record the observed pattern.', why: 'Make future work easier.',
       evidence_refs: [{ source_type: 'file', source_ref: 'test.js', summary: 'Test evidence' }] },
   ] } });
@@ -61,6 +64,7 @@ test('actual MCP schema has one compact proposal surface and no self-approval op
   assert.equal(invalid.isError, true);
   const bulk = await client.callTool({ name: 'propose', arguments: { session_id: 'test', proposals: Array.from({ length: 5 }, (_, i) => ({
     topic_key: `test/import/item-${i}`, trigger: `when importing decision ${i}`, behavior_delta: `Preserve decision ${i}.`,
+    anchors: { keywords: ['importing decision', `decision ${i}`] },
     why: 'Keep project decisions reusable.', evidence_refs: [{ source_type: 'file', source_ref: 'decisions.md', summary: 'Source decisions' }],
   })) } });
   assert.equal(bulk.isError, undefined);

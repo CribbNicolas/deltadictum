@@ -1,5 +1,5 @@
 {
-  "id": "54c44c36-6c1e-476a-93d5-6495ac995612",
+  "id": "4af89b28-4026-49fc-89cc-27210243f7a3",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -28,6 +28,18 @@
       "verify"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "DD_RESIDENT_REGISTRY",
+      "DD_RESIDENT",
+      "plugin cache",
+      "npm install",
+      "check-codex",
+      "another DD"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -41,6 +53,11 @@
       "source_type": "file",
       "source_ref": "TODO.md",
       "summary": "Item 4 records the replacement conflict between installs"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -55,7 +72,7 @@
   "confidence": 0.765,
   "registry_key_id": "ae4da163-0e87-4c41-829c-27c590c89123",
   "evidence_state": {
-    "checked_at": "2026-09-24T11:41:56.082Z",
+    "checked_at": "2026-09-27T14:57:14.792Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -63,26 +80,33 @@
         "summary": "ensureResident starts a replacement for any resident whose build differs; registryPath honors DD_RESIDENT_REGISTRY",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "1567ae62564fe8cc55d85a0af51a74ec8229a0e915ccf994605ecdf3e7fb09aa"
+        "hash": "911fd74ce6a54df1f6d1774d21f43bbde4537b7d2389fd810ed5f4657f2efd19"
       },
       {
         "source_type": "file",
         "source_ref": "TODO.md",
         "summary": "Item 4 records the replacement conflict between installs",
-        "status": "verified",
-        "provenance": "filesystem",
-        "hash": "73a0b65fc9885acc6caa93665853fc8faeb7b8687ea112e3d678efd8e3899181"
+        "status": "unavailable",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
-    "verified_count": 2,
+    "verified_count": 1,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-24T02:05:12.258Z",
-  "updated_at": "2026-09-24T11:41:56.097Z",
+  "replaces": "54c44c36-6c1e-476a-93d5-6495ac995612",
+  "created_at": "2026-09-27T02:37:09.207Z",
+  "updated_at": "2026-09-27T14:57:14.798Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-24T11:41:56.083Z",
+    "reviewed_at": "2026-09-27T14:57:14.792Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

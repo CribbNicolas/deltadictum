@@ -1,5 +1,5 @@
 {
-  "id": "31c07973-1037-4544-bb82-610a41d415d5",
+  "id": "11a59098-b095-4b6e-8daa-9b8eec7304bf",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -27,6 +27,20 @@
       "edit"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "grok-plugin",
+      "grok mcp doctor",
+      "GROK_PLUGIN_ROOT",
+      "mcpServers"
+    ],
+    "not_when": [],
+    "files": [
+      ".grok-plugin/plugin.json",
+      ".grok-plugin/marketplace.json",
+      ".grok-plugin/mcp.json"
+    ]
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -40,6 +54,11 @@
       "source_type": "file",
       "source_ref": "tests/hooks/install.test.js",
       "summary": "Test pins the file-path mcpServers, the GROK_PLUGIN_ROOT anchor and the url marketplace source"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -54,7 +73,7 @@
   "confidence": 0.765,
   "registry_key_id": "138fd07f-0080-4912-87ad-c1ffdb8eee84",
   "evidence_state": {
-    "checked_at": "2026-09-24T11:41:56.163Z",
+    "checked_at": "2026-09-27T14:57:14.909Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -62,7 +81,7 @@
         "summary": "Section 'How the manifest is laid out, and why' records each finding from grok mcp doctor on 2026-09-23",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "bbb5cb7537b17fbebc2caf17c48c178d1ffd55b02d73dcd486b7288ec86fffa0"
+        "hash": "0b85d54bb810ebe2a8b418855e2b075043176a8f61b6bba85de7b47cfc90ad23"
       },
       {
         "source_type": "file",
@@ -71,17 +90,25 @@
         "status": "verified",
         "provenance": "filesystem",
         "hash": "6d580cee9a3a84a482adfd32a4a5db33558b8e89e833b34cc434c3491073d9bb"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-24T02:05:12.114Z",
-  "updated_at": "2026-09-24T11:41:56.167Z",
+  "replaces": "31c07973-1037-4544-bb82-610a41d415d5",
+  "created_at": "2026-09-27T02:37:09.177Z",
+  "updated_at": "2026-09-27T14:57:14.915Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-24T11:41:56.163Z",
+    "reviewed_at": "2026-09-27T14:57:14.909Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

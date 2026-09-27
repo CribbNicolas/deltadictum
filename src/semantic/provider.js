@@ -9,10 +9,12 @@ import { RECALL_STATES } from '../store/paths.js';
 // `topK` memories are considered, and a margin below `floor` contributes
 // nothing, which is what lets an unrelated request abstain.
 //
-// Chosen by a grid over the supermem benchmark (2026-09-22): must-recall holds at
-// 0.83 across floor 0.015-0.04; 0.04 is the widest setting that keeps every
-// unrelated task quiet. Lower floor trades silence for orbit recall.
-export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.04, full: 0.07, topK: 5 });
+// Recall comes first: an extra memory costs less than a missing essential one.
+// Re-gridded on the Patriark and supermem benchmarks with the hubness discount
+// (2026-09-26): 0.035 raised Patriark must-recall 0.29 -> 0.32 and orbit recall
+// 0.09 -> 0.15 at the same precision and quiet negatives as 0.04; 0.03 broke
+// the negatives in both projects.
+export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.035, full: 0.065, topK: 5 });
 
 // Tool calls arrive as `Tool {json}`; the keys and punctuation are noise to an
 // embedding model, the paths and strings are the content.
@@ -21,7 +23,8 @@ export function queryText(action) {
     .replace(/[{}"\\[\],]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1000);
 }
 
-export function semanticActivation(sims, { floor, full, topK } = DEFAULT_CALIBRATION) {
+export function semanticActivation(sims, { floor, full, topK } = DEFAULT_CALIBRATION, hub) {
+  if (hub?.size) sims = new Map([...sims].map(([id, sim]) => [id, sim - (hub.get(id) ?? 0)]));
   const values = [...sims.values()];
   if (!values.length) return new Map();
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -34,11 +37,40 @@ export function semanticActivation(sims, { floor, full, topK } = DEFAULT_CALIBRA
   return activation;
 }
 
+// How far each memory's vector sits above the store's average closeness to
+// everything else, centred on zero. A long memory that lists many nouns is
+// near every query ("hub"), and would otherwise top unrelated requests. It is
+// derived from the store alone, never from past requests (L6: no online learning).
+// Chosen on the Patriark and supermem benchmarks (2026-09-26): at the default
+// floor it kept must-recall and quieted every negative task in both.
+export function hubness(vectors) {
+  const ids = [...vectors.keys()];
+  if (ids.length < 3) return new Map();
+  const sums = new Float64Array(ids.length);
+  for (let i = 0; i < ids.length; i += 1) for (let j = i + 1; j < ids.length; j += 1) {
+    const sim = cosine(vectors.get(ids[i]), vectors.get(ids[j]));
+    sums[i] += sim; sums[j] += sim;
+  }
+  const raw = new Map(ids.map((id, i) => [id, sums[i] / (ids.length - 1)]));
+  const mean = [...raw.values()].reduce((a, b) => a + b, 0) / raw.size;
+  return new Map([...raw].map(([id, value]) => [id, value - mean]));
+}
+
 // `blocking: false` is for the resident process answering hooks: until the model
 // has loaded, a request is answered lexically instead of waiting on it (L5).
 export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_CALIBRATION, load = loadEmbedder, blocking = true } = {}) {
   let embedder = given;
   let loading;
+  // Hubness is quadratic in the store; recompute it only when the live vectors change.
+  const hubs = new Map();
+  function hubOf(projectId, vectors) {
+    const signature = [...vectors].map(([id, v]) => `${id}:${v[0]}`).join('|');
+    const cached = hubs.get(projectId);
+    if (cached?.signature === signature) return cached.hub;
+    const hub = hubness(vectors);
+    hubs.set(projectId, { signature, hub });
+    return hub;
+  }
   const start = () => (loading ??= Promise.resolve().then(load).then(ready => { embedder = ready; return ready; }, () => null));
   async function ready() {
     if (embedder !== undefined) return embedder;
@@ -54,7 +86,7 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     // terse memories need a lower floor to be reached at all.
     const floor = Number((await deps.store.loadConfig()).semantic?.floor);
     const tuned = Number.isFinite(floor) && floor >= 0 && floor < 1 ? { ...calibration, floor, full: floor + (calibration.full - calibration.floor) } : calibration;
-    return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned) });
+    return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned, hubOf(request.project_id, vectors)) });
   }
   // Load the model before any project asks, so a fresh resident is ready sooner.
   semanticRetrieve.preload = async () => Boolean(await start());
@@ -62,7 +94,7 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
   // bridged call does not pay for either.
   semanticRetrieve.warm = async ({ store, projectId }) => {
     const active = await start();
-    if (active) await syncVectors({ store, projectId, embedder: active, states: RECALL_STATES });
+    if (active) hubOf(projectId, await syncVectors({ store, projectId, embedder: active, states: RECALL_STATES }));
     return Boolean(active);
   };
   // The memories nearest to one memory or a text, in any state but rejected:

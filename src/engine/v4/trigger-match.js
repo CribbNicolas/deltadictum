@@ -1,7 +1,9 @@
+import { SPANISH_FUNCTION_WORDS } from '../language.js';
+
 const STOPWORDS = new Set([
   'a', 'an', 'the', 'to', 'of', 'in', 'on', 'for', 'and', 'or', 'with',
   'this', 'that', 'when', 'before', 'after', 'from', 'into', 'over',
-  'under', 'at', 'by', 'as', 'is', 'be', 'do',
+  'under', 'at', 'by', 'as', 'is', 'be', 'do', ...SPANISH_FUNCTION_WORDS,
 ]);
 
 function normalize(text) {

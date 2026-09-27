@@ -1,5 +1,5 @@
 {
-  "id": "69a66da2-6d70-4b30-a5f7-c0265c894601",
+  "id": "43b80c35-3f71-4c95-a4c9-c3f3fa15352c",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -29,6 +29,20 @@
       "edit"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "new directory",
+      "operationPath",
+      "invalid_journal_path",
+      "sourceFingerprint",
+      "watcher regex"
+    ],
+    "not_when": [],
+    "files": [
+      "src/store/transactions.js",
+      "src/store/fingerprint.js"
+    ]
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -47,6 +61,11 @@
       "source_type": "file",
       "source_ref": "src/store/fingerprint.js",
       "summary": "sourceFingerprint walks a fixed list of directories to decide when to reindex."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -61,7 +80,7 @@
   "confidence": 0.765,
   "registry_key_id": "dfadf693-87a8-4a1d-9ca8-6c29b71436ab",
   "evidence_state": {
-    "checked_at": "2026-09-24T17:08:30.067Z",
+    "checked_at": "2026-09-27T14:57:33.837Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -69,7 +88,7 @@
         "summary": "operationPath only accepts journal paths under an explicit list of directories.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "281783e2c13a0198c9a8d152d323323b8d42f09043d33af1660fdfa01627f7ae"
+        "hash": "1de1bc86fd6b0aa49be764d12aa56d9b7787618639c547c0eac4bd998a92fa11"
       },
       {
         "source_type": "file",
@@ -77,7 +96,7 @@
         "summary": "The .dd watcher regex names the directories whose changes refresh the index and notify the UI.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "e88f1e6f1d8a280a1fbf9a6a683d50b1531bba2f4e369eb6cf20e0b9ca719b51"
+        "hash": "40f65ee9f648d3d1b842c201418655ee4fbeae3bd9132bfd523430b8ea7cc3c0"
       },
       {
         "source_type": "file",
@@ -85,18 +104,26 @@
         "summary": "sourceFingerprint walks a fixed list of directories to decide when to reindex.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "5cec056ef4ca3e3020df14290e5e709d009dd209999424aea4d7a3ef741cc25d"
+        "hash": "542a9d6c6ae9a5bc90bf5d2ee75a54701bdb8599b64827c20f3f26f94a78ef44"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 3,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-24T17:01:44.100Z",
-  "updated_at": "2026-09-24T17:08:30.074Z",
+  "replaces": "69a66da2-6d70-4b30-a5f7-c0265c894601",
+  "created_at": "2026-09-27T02:37:09.002Z",
+  "updated_at": "2026-09-27T14:57:33.842Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-24T17:08:30.067Z",
+    "reviewed_at": "2026-09-27T14:57:33.837Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }
