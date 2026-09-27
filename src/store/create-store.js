@@ -343,6 +343,7 @@ export async function createMemoryStore({ ddDir, dataDir, repoRoot = dirname(ddD
     saveConfig: config => git.saveConfig(config),
     getAtom: async (id, projectId) => index.getAtom(id, projectId),
     listAtoms: opts => Promise.resolve(index.listAtoms(opts)),
+    listAnchored: opts => Promise.resolve(index.listAnchored(opts)),
     listByTopicLive: (projectId, topicKey) => Promise.resolve(index.listByTopicLive(projectId, topicKey)),
     search: opts => Promise.resolve(index.search(opts)),
     countAtoms: opts => Promise.resolve(index.countAtoms(opts)),
