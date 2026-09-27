@@ -51,8 +51,9 @@ test('a not_when phrase keeps an anchored memory out', async t => {
   assert.deepEqual((await retrieve('calcular la resistencia eléctrica del cable')).memories, []);
 });
 
-test('memories without anchors keep the previous activation', async t => {
-  const { legacy, retrieve } = await fixture(t);
+test('memories without anchors keep the previous activation when the project opts out', async t => {
+  const { store, legacy, retrieve } = await fixture(t);
+  await store.saveConfig({ ...(await store.loadConfig()), anchors: { only: false } });
   assert.deepEqual((await retrieve('when a toolbar select stretches')).memories.map(m => m.id), [legacy.id]);
 });
 
@@ -65,4 +66,40 @@ test('an anchored memory admitted after a retrieval is found by the next one', a
     evidence_refs: [{ source_type: 'file', source_ref: 'GDD-05.md', summary: 'characters' }] }, { store });
   await admitMemory(r.atom.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked.' });
   assert.deepEqual((await retrieve('ajustar la mochila del inventario')).memories.map(m => m.id), [r.atom.id]);
+});
+
+// Once a project anchors its memories, only anchors push: an unanchored memory
+// is listed in the session map and pulled with get, never pushed by similarity.
+test('with anchored memories in the project, an unanchored one is not pushed', async t => {
+  const { retrieve } = await fixture(t);
+  assert.deepEqual((await retrieve('when a toolbar select stretches')).memories, []);
+});
+
+test('a project with no anchored memory keeps the previous activation', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'dd-unanchored-'));
+  await writeFile(join(root, 'GDD-05.md'), '# Characters');
+  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data'), repoRoot: root });
+  t.after(() => store.close());
+  const r = await proposeMemory({ project_id: 'demo', topic_key: 'ui/toolbar/select-width', trigger: 'when a toolbar select stretches',
+    behavior_delta: 'Set width auto on toolbar selects.', why: 'Seen.', evidence_refs: [{ source_type: 'file', source_ref: 'GDD-05.md', summary: 'x' }] }, { store });
+  await admitMemory(r.atom.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked.' });
+  const result = await retrieveMemories({ project_id: 'demo', action: 'when a toolbar select stretches', telemetry: false }, { store });
+  assert.deepEqual(result.memories.map(m => m.id), [r.atom.id]);
+});
+
+test('a folder scope never pushes; an exact file or a component does', async t => {
+  const { store } = await fixture(t);
+  const add = async (topic, files, components = []) => {
+    const r = await proposeMemory({ project_id: 'demo', topic_key: topic, why: 'Agreed.', trigger: `When editing ${topic}.`,
+      behavior_delta: 'Keep the zqxv frobnicator and wlmp gizmo stable.', applies_to: { files, components, operations: [] },
+      anchors: { keywords: ['zqxv frobnicator', 'wlmp gizmo'], not_when: [] },
+      evidence_refs: [{ source_type: 'file', source_ref: 'GDD-05.md', summary: 'x' }] }, { store });
+    assert.ok(r.atom, JSON.stringify(r.reasons));
+    return admitMemory(r.atom.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked.' });
+  };
+  const folder = await add('ui/shell/folder', ['src/client/shell/**']);
+  const exact = await add('ui/shell/exact', ['src/client/shell/Hud.cs']);
+  const result = await retrieveMemories({ project_id: 'demo', action: 'Read src/client/shell/Hud.cs', files: ['src/client/shell/Hud.cs'], telemetry: false }, { store });
+  assert.deepEqual(result.memories.map(m => m.id), [exact.id]);
+  assert.ok(!result.memories.some(m => m.id === folder.id));
 });

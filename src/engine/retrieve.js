@@ -6,7 +6,7 @@ import { ftsQuery } from './v4/fts-query.js';
 import { expandTopicTerms } from './v5/expander.js';
 import { formsList } from './forms-util.js';
 import { RECALL_STATES } from '../store/paths.js';
-import { activationScore, assessApplicability, conceptTokens } from './activation.js';
+import { activationScore, assessApplicability, conceptTokens, matchesGlob } from './activation.js';
 import { checkEvidenceFreshness } from './evidence.js';
 import { isAnchored, matchAnchors } from './anchors.js';
 import { boundedBudget, estimateTokens } from './budget.js';
@@ -69,10 +69,16 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
 
   // An anchored memory is a candidate by its keywords alone: full-text search
   // matches exact tokens and keeps 50, and neither may decide whether it is found.
+  // Once a project anchors its memories only anchors push, by default: an
+  // unanchored memory is in the session map and reached with get. A project
+  // with no anchored memory, or one that sets anchors.only false, keeps the
+  // previous lexical and semantic activation.
+  let anchorsOnly = false;
   {
     const have = new Set(candidates.map(atom => atom.id));
     const anchored = store.listAnchored ? await store.listAnchored({ projectId: request.project_id, lifecycleStates: RECALL_STATES })
       : await store.listAtoms({ projectId: request.project_id, lifecycleStates: RECALL_STATES });
+    anchorsOnly = config.anchors?.only !== false && anchored.some(isAnchored);
     for (const atom of anchored) {
       if (have.has(atom.id) || !isAnchored(atom)) continue;
       if (request.memory_types?.length && !request.memory_types.includes(atom.memory_type)) continue;
@@ -85,12 +91,15 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   const scored = effective.map((atom, index) => {
     const anchor = matchAnchors(atom, activationText);
     const applicability = anchor.blocked.length ? { applies: false } : assessApplicability(atom, request);
-    // Anchored: pushed exactly when a keyword or a specific file or component
-    // scope matched. Similarity only orders what matched. Unanchored memories
-    // keep the lexical and semantic activation they had.
-    const scopeHit = applicability.contextScore >= 0.8;
+    // Anchored: pushed exactly when a keyword matched, or the request names one
+    // of its exact files or components. A folder glob matches every file under
+    // it, so it narrows where a memory applies but never pushes it. Similarity
+    // only orders what matched.
+    const scopeHit = (atom.applies_to?.files ?? []).some(glob => !/[*?[]/.test(glob) && (request.files ?? []).some(file => matchesGlob(file, glob)))
+      || (atom.applies_to?.components ?? []).some(c => (request.components ?? []).some(x => x.toLowerCase() === c.toLowerCase()));
     const activation = !applicability.applies ? 0
       : isAnchored(atom) ? (anchor.hits.length || scopeHit ? 1 : 0)
+      : anchorsOnly ? 0
       : Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0);
     const reason = isAnchored(atom) && activation ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : '[anchor: scope]') : null;
     return { atom, applicability, activation, reason, similarity: semantic?.get(atom.id) ?? 0, floor: requiredActivation(atom, ACTIVATION_FLOOR),
