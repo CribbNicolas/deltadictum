@@ -96,6 +96,8 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
       must_recall: mean(positive.map(t => t.must_recall)), orbit_recall: mean(positive.map(t => t.orbit_recall)),
       precision: mean(positive.map(t => t.precision)),
       negatives_quiet: negative.filter(t => t.returned === 0).length + '/' + negative.length,
+      // Strict: every must delivered and nothing outside the labels; a negative task, nothing at all.
+      task_accuracy: ratio(tasks.filter(t => t.negative ? t.returned === 0 : !t.missed.length && !t.noise.length).length, tasks.length),
       tokens_per_task: mean(tasks.map(t => t.tokens)),
       by_probe: { prompt_en: byKind('prompt_en'), prompt_es: byKind('prompt_es'), tool: byKind('tool') },
     },

@@ -313,6 +313,64 @@
           }
         }
       ]
+    },
+    {
+      "id": "negative-acknowledgements",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "dale"
+        },
+        {
+          "prompt": "continua"
+        },
+        {
+          "prompt": "aprobado, arma el plan"
+        },
+        {
+          "prompt": "seguimos con el plan"
+        }
+      ]
+    },
+    {
+      "id": "negative-git-question",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "¿Cómo configuro git para usar una clave SSH distinta en este repo?"
+        },
+        {
+          "prompt": "Explain how to squash the last three commits."
+        }
+      ]
+    },
+    {
+      "id": "negative-translation",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "Traducí este párrafo al inglés: la reunión se pasa al jueves a las 10."
+        },
+        {
+          "prompt": "Write a short thank-you email to the team for this week."
+        }
+      ]
+    },
+    {
+      "id": "negative-generic-csharp",
+      "must": [],
+      "orbit": [],
+      "probes": [
+        {
+          "prompt": "What is the difference between IEnumerable and IQueryable?"
+        },
+        {
+          "prompt": "¿Qué conviene más en C#, un Dictionary o un switch para 20 casos?"
+        }
+      ]
     }
   ]
 }
