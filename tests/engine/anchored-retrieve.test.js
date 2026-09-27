@@ -87,18 +87,19 @@ test('a project with no anchored memory keeps the previous activation', async t 
   assert.deepEqual(result.memories.map(m => m.id), [r.atom.id]);
 });
 
-test('a folder scope never pushes; an exact file or a component does', async t => {
+test('only an anchor file pushes by file; a scoped file or folder does not', async t => {
   const { store } = await fixture(t);
-  const add = async (topic, files, components = []) => {
+  const add = async (topic, files, anchorFiles = []) => {
     const r = await proposeMemory({ project_id: 'demo', topic_key: topic, why: 'Agreed.', trigger: `When editing ${topic}.`,
-      behavior_delta: 'Keep the zqxv frobnicator and wlmp gizmo stable.', applies_to: { files, components, operations: [] },
-      anchors: { keywords: ['zqxv frobnicator', 'wlmp gizmo'], not_when: [] },
+      behavior_delta: 'Keep the zqxv frobnicator and wlmp gizmo stable.', applies_to: { files, components: [], operations: [] },
+      anchors: { keywords: ['zqxv frobnicator', 'wlmp gizmo'], not_when: [], files: anchorFiles },
       evidence_refs: [{ source_type: 'file', source_ref: 'GDD-05.md', summary: 'x' }] }, { store });
     assert.ok(r.atom, JSON.stringify(r.reasons));
     return admitMemory(r.atom.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked.' });
   };
   const folder = await add('ui/shell/folder', ['src/client/shell/**']);
-  const exact = await add('ui/shell/exact', ['src/client/shell/Hud.cs']);
+  await add('ui/shell/scoped', ['src/client/shell/Hud.cs']);
+  const exact = await add('ui/shell/exact', ['src/client/shell/Hud.cs'], ['src/client/shell/Hud.cs']);
   const result = await retrieveMemories({ project_id: 'demo', action: 'Read src/client/shell/Hud.cs', files: ['src/client/shell/Hud.cs'], telemetry: false }, { store });
   assert.deepEqual(result.memories.map(m => m.id), [exact.id]);
   assert.ok(!result.memories.some(m => m.id === folder.id));

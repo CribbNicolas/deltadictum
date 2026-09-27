@@ -355,6 +355,8 @@
         generic_anchor: 'is a generic term that names most requests (code, fix, test, plan, cambiar...)',
         ungrounded_anchor: "does not appear in the memory's own title, trigger, variants, action or scope; add a trigger variant that uses it",
         anchor_fires_on_generic_request: 'matches an acknowledgement or an unrelated generic request, so it would push this memory on those',
+        folder_anchor_file: 'is a folder or pattern; anchor files must be exact files',
+        anchor_file_outside_scope: 'is not one of the files in the scope (applies_to.files)',
       };
       const [code, label] = clean.split(/:(.*)/s);
       if (ANCHOR_REASONS[code]) return `Anchor "${label}" ${ANCHOR_REASONS[code]}.`;
@@ -558,6 +560,7 @@
       why: 'The reasoning behind behavior_delta. Shown to reviewers and injected as context; not itself matched for retrieval.',
       trigger_variants: 'Other phrasings of the same trigger, one per line. Widens matching without duplicating the memory. Max 12.',
       anchor_keywords: 'One per line: the words or short phrases (1-3 words) whose presence in a request delivers this memory. Only an anchor pushes it. Each must appear in the text above; use the words people actually write, in each language they write in.',
+      anchor_files: 'One per line: exact files from the scope whose every read or edit needs this memory. Never a folder, and not a file most work touches.',
       anchor_not_when: 'One per line: phrases that mean this memory does not apply even when an anchor matches (e.g. "resistencia electrica").',
       applies_to: 'JSON scope: { files: [...], components: [...], operations: [...] }. Narrows when this memory is relevant; empty or omitted arrays mean unscoped (applies everywhere).',
       assumptions: 'JSON array of { description, key?, equals? }. Conditions this memory\'s advice depends on -- if one stops holding, the memory should be revisited.',
@@ -586,7 +589,7 @@
     });
 
     function field(name, value, area, json) {
-      const labels = { topic_key: 'Topic', trigger: 'When this applies', behavior_delta: 'Recommended action', why: 'Rationale', trigger_variants: 'Other ways this situation is described (one per line)', anchor_keywords: 'Anchors: delivered when a request contains', anchor_not_when: 'Anchors: never when a request contains',
+      const labels = { topic_key: 'Topic', trigger: 'When this applies', behavior_delta: 'Recommended action', why: 'Rationale', trigger_variants: 'Other ways this situation is described (one per line)', anchor_keywords: 'Anchors: delivered when a request contains', anchor_not_when: 'Anchors: never when a request contains', anchor_files: 'Anchors: delivered when a request reads or edits',
         applies_to: 'File, component and operation scope', assumptions: 'Assumptions', revisit_when: 'When to reconsider', alternatives: 'Alternatives considered',
         evidence_refs: 'Evidence references', review_rationale: 'Your review rationale', loser_id: 'Conflicting memory to supersede' };
       const label = labels[name] || name;
@@ -646,6 +649,7 @@
         ${(selected.anchors?.keywords || []).length ? '' : '<p class="notice warning">No anchors: this memory is delivered only by similarity, which is not deterministic. Add anchor keywords before approving.</p>'}
         ${field('anchor_keywords', (selected.anchors?.keywords || []).join('\n'), true)}
         ${field('anchor_not_when', (selected.anchors?.not_when || []).join('\n'), true)}
+        ${field('anchor_files', (selected.anchors?.files || []).join('\n'), true)}
         ${field('applies_to', JSON.stringify(selected.applies_to || {}, null, 2), true, true)}
         ${field('assumptions', JSON.stringify(selected.assumptions || [], null, 2), true, true)}
         ${field('revisit_when', JSON.stringify(selected.revisit_when || [], null, 2), true, true)}
@@ -686,8 +690,9 @@
       }
       data.trigger_variants = data.trigger_variants.split('\n').filter(Boolean);
       data.anchors = { keywords: data.anchor_keywords.split('\n').map(s => s.trim()).filter(Boolean),
-        not_when: data.anchor_not_when.split('\n').map(s => s.trim()).filter(Boolean) };
-      delete data.anchor_keywords; delete data.anchor_not_when;
+        not_when: data.anchor_not_when.split('\n').map(s => s.trim()).filter(Boolean),
+        files: data.anchor_files.split('\n').map(s => s.trim()).filter(Boolean) };
+      delete data.anchor_keywords; delete data.anchor_not_when; delete data.anchor_files;
       delete data.review_rationale; delete data.loser_id;
       return data;
     }
