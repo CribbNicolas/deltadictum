@@ -1,5 +1,5 @@
 {
-  "id": "c61d7902-4666-4f8f-9476-00350e982e29",
+  "id": "ac75d10f-88db-42e0-a9e5-8ced26ee77b2",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -38,6 +38,21 @@
       "implementation"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "install plan",
+      "harness-install",
+      "grok-plugin",
+      "cli.js",
+      "server.js"
+    ],
+    "not_when": [],
+    "files": [
+      "src/cli.js",
+      "src/mcp/server.js",
+      ".grok/hooks/dd.json"
+    ]
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -61,6 +76,11 @@
       "source_type": "file",
       "source_ref": "docs/plans/2026-09-19-harness-native-install-plan.md",
       "summary": "Implementation plan where Task 3 (Codex) and Task 4 (OpenCode) were reordered during self-review for this exact dependency."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -75,7 +95,7 @@
   "confidence": 0.765,
   "registry_key_id": "28af3fb1-8877-4563-855f-e35de0270e94",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:35:57.418Z",
+    "checked_at": "2026-09-27T14:57:13.171Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -83,7 +103,7 @@
         "summary": "Pre-existing, wrong-schema marketplace stub from the project's first commit (48ff34e / 23e446e), discovered while confirming ground truth for the install plan.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "3423d69eff71e0d62b84f232f9695afa65ead2d7d8758ad7ae87d4c4f55ee563"
+        "hash": "7c161e5d31a42e5e9cba00597949f429473f8c70ea6519108714f7fdd11c6f5f"
       },
       {
         "source_type": "file",
@@ -99,26 +119,33 @@
         "summary": "Top-level-await script, lines 8-27, no export statement anywhere in the file.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "6d10ce8d49852e84f368d7eeb2c667dab5c66068f630a513ba6f73a17672e905"
+        "hash": "94718a1ef176da285a812b32e9bbf34a9a213f5b207a3151800c2b95b3e0dd49"
       },
       {
         "source_type": "file",
         "source_ref": "docs/plans/2026-09-19-harness-native-install-plan.md",
         "summary": "Implementation plan where Task 3 (Codex) and Task 4 (OpenCode) were reordered during self-review for this exact dependency.",
-        "status": "verified",
-        "provenance": "filesystem",
-        "hash": "afcabb1a457ee145989e823052e54287187f94d6aca032825d6af7fa141d4dd0"
+        "status": "unavailable",
+        "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
-    "verified_count": 4,
+    "verified_count": 3,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T05:31:39.074Z",
-  "updated_at": "2026-09-19T10:35:57.421Z",
+  "replaces": "c61d7902-4666-4f8f-9476-00350e982e29",
+  "created_at": "2026-09-27T02:37:09.889Z",
+  "updated_at": "2026-09-27T14:57:13.178Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:35:57.418Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.171Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

@@ -13,7 +13,7 @@ test('capture has no batch or session quota, including revisions after restart',
   let store = await createMemoryStore(options);
   t.after(() => store.close());
   let handlers = createToolHandlers({ store, projectId: 'demo' });
-  const proposal = i => ({ topic_key: `capture/test/item-${i}`, trigger: `when testing component ${i}`, behavior_delta: `Check component ${i}.`, why: 'Regression protection.', evidence_refs: [{ source_type: 'file', source_ref: 'test.js', summary: 'Test evidence' }] });
+  const proposal = i => ({ topic_key: `capture/test/item-${i}`, trigger: `when testing component ${i}`, anchors: { keywords: ['testing component', `component ${i}`] }, behavior_delta: `Check component ${i}.`, why: 'Regression protection.', evidence_refs: [{ source_type: 'file', source_ref: 'test.js', summary: 'Test evidence' }] });
   const batch = JSON.parse((await handlers.propose({ proposals: Array.from({ length: 8 }, (_, i) => proposal(i)), session_id: 's' })).content[0].text);
   assert.equal(batch.proposals.length, 8);
   assert.ok(batch.proposals.every(p => p.lifecycle_state === 'candidate'));
@@ -124,7 +124,7 @@ test('capture evidence references are bounded, session-scoped, inspectable and e
   assert.equal(observed.metadata.session_id, 'current');
   assert.equal(observed.kind, 'observation');
   const result = JSON.parse((await handlers.propose({ session_id: 'current', proposals: [{
-    topic_key: 'tests/regression/validation', trigger: 'when validating project changes', behavior_delta: 'Run the regression suite.', why: 'Catch broken contracts.',
+    topic_key: 'tests/regression/validation', trigger: 'when validating project changes', anchors: { keywords: ['regression suite', 'validating project'] }, behavior_delta: 'Run the regression suite.', why: 'Catch broken contracts.',
     evidence_refs: [{ source_type: 'tool_output', source_ref: refs[0].id, summary: 'Observed host validation.' }] }] })).content[0].text);
   assert.equal(result.proposals[0].evidence_verified, 1);
   assert.equal(result.proposals[0].lifecycle_state, 'candidate');

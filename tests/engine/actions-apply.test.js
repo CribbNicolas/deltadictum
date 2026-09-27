@@ -133,3 +133,31 @@ test('reject removes the action and logs it', async t => {
   assert.equal((await s.listActionLog('demo'))[0].note, 'Still useful.');
   assert.equal(await state(s, 'g1'), 'active');
 });
+
+// Anchoring an existing memory is an action: the agent proposes the keywords, a
+// person applies them in the audit UI, and the memory keeps its id.
+test('anchor adds validated anchors and grounding variants to the same memory', async t => {
+  const s = await store(t);
+  await s.putAtom(atom('a1', 'active', { title: 'Endurance sets travel range', trigger: 'when designing the Endurance attribute',
+    applies_to: { files: ['doc/GDD-05.md'], components: [], operations: [] } }));
+  const id = await file(s, { kind: 'anchor', targets: ['a1'], trigger_variants: ['Diseñar la Resistencia del personaje'],
+    anchors: { keywords: ['endurance', 'resistencia'], not_when: ['resistencia electrica'], files: ['doc/GDD-05.md'] } });
+  assert.equal((await s.getAtom('a1', 'demo')).anchors, undefined);
+  await apply(s, id);
+  const anchored = await s.getAtom('a1', 'demo');
+  assert.equal(anchored.lifecycle_state, 'active');
+  assert.deepEqual(anchored.anchors, { keywords: ['endurance', 'resistencia'], not_when: ['resistencia electrica'], files: ['doc/GDD-05.md'] });
+  assert.deepEqual(anchored.trigger_variants, ['Diseñar la Resistencia del personaje']);
+  assert.equal(anchored.review.rationale, 'Reviewed.');
+});
+
+test('an anchor action with a bad anchor is refused when filed, with the reasons', async t => {
+  const s = await store(t);
+  await s.putAtom(atom('a2'));
+  const [filed] = await fileActions([{ kind: 'anchor', targets: ['a2'], rationale: 'Anchor it.',
+    anchors: { keywords: ['plan', 'stamina'] } }], { store: s, projectId: 'demo' });
+  assert.match(filed.error, /^anchors_not_admissible:/);
+  assert.match(filed.error, /ungrounded_anchor:stamina/);
+  const [missing] = await fileActions([{ kind: 'anchor', targets: ['a2'], rationale: 'Anchor it.' }], { store: s, projectId: 'demo' });
+  assert.equal(missing.error, 'field_required:anchors');
+});

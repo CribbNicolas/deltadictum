@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { proposeMemory } from '../../src/engine/write.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
-import { createSemanticRetrieve, semanticActivation, queryText } from '../../src/semantic/provider.js';
+import { createSemanticRetrieve, semanticActivation, queryText, hubness } from '../../src/semantic/provider.js';
 
 // A deterministic stand-in for the model: texts mentioning "toolbar" point one
 // way, everything else another, so similarity is controlled by the test.
@@ -69,6 +69,23 @@ test('only memories standing clearly above the query mean activate', () => {
   const activation = semanticActivation(sims, { floor: 0.04, full: 0.07, topK: 5 });
   assert.deepEqual([...activation.keys()], ['a']);
   assert.equal(semanticActivation(new Map([['a', 0.8], ['b', 0.8]])).size, 0);
+});
+
+// A memory close to every other one (a long list of nouns) is close to every
+// query too. Its closeness to the store is discounted, so it no longer outranks
+// the memory the query is actually about.
+test('a memory near everything is discounted by its hubness', () => {
+  const unit = values => { const n = Math.hypot(...values); return Float32Array.from(values, v => v / n); };
+  const vectors = new Map([
+    ['hub', unit([1, 1, 1, 1])], ['a', unit([1, 0, 0, 0.2])], ['b', unit([0, 1, 0, 0.2])], ['c', unit([0, 0, 1, 0.2])]]);
+  const hub = hubness(vectors);
+  assert.ok(hub.get('hub') > 0 && ['a', 'b', 'c'].every(id => hub.get(id) < 0));
+  // The query is about "a", but the hub is marginally closer to it.
+  const sims = new Map([['hub', 0.86], ['a', 0.85], ['b', 0.78], ['c', 0.78]]);
+  const calibration = { floor: 0.01, full: 0.04, topK: 5 };
+  assert.equal([...semanticActivation(sims, calibration)].sort((x, y) => y[1] - x[1])[0][0], 'hub');
+  assert.equal([...semanticActivation(sims, calibration, hub)].sort((x, y) => y[1] - x[1])[0][0], 'a');
+  assert.equal(hubness(new Map([['a', unit([1, 0])], ['b', unit([0, 1])]])).size, 0);
 });
 
 test('tool-call JSON is reduced to its content before embedding', () => {

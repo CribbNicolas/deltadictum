@@ -53,10 +53,13 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   };
   const tasks = [];
   const probeRows = [];
+  // A label whose memory was deleted can never be recalled: it is reported, not scored.
+  const missingLabels = new Set();
+  const resolve = labels => new Set(labels.map(full).filter(id => !id.startsWith('missing:') || (missingLabels.add(id), false)));
   try {
     for (const task of scenarios.tasks) {
-      const must = new Set(task.must.map(full));
-      const orbit = new Set(task.orbit.map(full));
+      const must = resolve(task.must);
+      const orbit = resolve(task.orbit);
       const session = `bench-${provider}-${task.id}-${Date.now()}`;
       const delivered = new Set();
       let tokens = 0;
@@ -76,7 +79,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
       const got = [...delivered];
       const mustHit = got.filter(id => must.has(id)).length;
       const orbitHit = got.filter(id => orbit.has(id)).length;
-      tasks.push({ id: task.id, negative: must.size === 0, must_recall: ratio(mustHit, must.size), orbit_recall: ratio(orbitHit, orbit.size),
+      tasks.push({ id: task.id, negative: task.must.length === 0, must_recall: ratio(mustHit, must.size), orbit_recall: ratio(orbitHit, orbit.size),
         precision: ratio(mustHit + orbitHit, got.length), returned: got.length, tokens,
         missed: [...must].filter(id => !delivered.has(id)).map(id => id.slice(0, 8)),
         noise: got.filter(id => !must.has(id) && !orbit.has(id)).map(id => id.slice(0, 8)) });
@@ -89,9 +92,12 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   return {
     provider,
     summary: {
+      labels_missing: missingLabels.size,
       must_recall: mean(positive.map(t => t.must_recall)), orbit_recall: mean(positive.map(t => t.orbit_recall)),
       precision: mean(positive.map(t => t.precision)),
       negatives_quiet: negative.filter(t => t.returned === 0).length + '/' + negative.length,
+      // Strict: every must delivered and nothing outside the labels; a negative task, nothing at all.
+      task_accuracy: ratio(tasks.filter(t => t.negative ? t.returned === 0 : !t.missed.length && !t.noise.length).length, tasks.length),
       tokens_per_task: mean(tasks.map(t => t.tokens)),
       by_probe: { prompt_en: byKind('prompt_en'), prompt_es: byKind('prompt_es'), tool: byKind('tool') },
     },

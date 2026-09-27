@@ -1,5 +1,5 @@
 {
-  "id": "e82ba814-47e6-4401-b96e-ae01aec268cc",
+  "id": "22827666-d3ee-487c-8339-498f856c0900",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -13,7 +13,9 @@
   "what": "Start a resident first (node src/cli.js ui as a background task) and wait until GET /api/resident reports retrieval semantic. Then, in a scratch git project, run claude -p \"<prompt>\" --plugin-dir <checkout> --allowedTools Bash --output-format stream-json --verbose < /dev/null and read hook_response events and assistant text from the JSONL. Read recorded observations from ~/.claude/plugins/data/dd-inline/<project-key>/index.sqlite (table memory_observations), and delete that directory afterwards (stop the resident first; it holds the file open).",
   "why": "--plugin-dir loads hooks/hooks.json exactly as the marketplace install does, for that run only. A resident that a hook starts inside a Bash tool call dies when the call ends, and while it loads DD is inactive: session start then omits the retrieve/propose guidance and project context, so a probe without a ready resident looks like a regression. Text output mode shows only the reply to the Stop reminder, hiding the rest.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Probar el plugin en una sesion real de Claude Code con plugin-dir"
+  ],
   "applies_to": {
     "files": [
       "hooks/hooks.json",
@@ -29,6 +31,17 @@
       "debug"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "plugin-dir",
+      "real Claude Code",
+      "stream-json",
+      "memory_observations",
+      "sesion real"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -42,6 +55,11 @@
       "source_type": "file",
       "source_ref": "hooks/hooks.json",
       "summary": "Plugin hooks anchored at ${CLAUDE_PLUGIN_ROOT}, including PostToolUseFailure."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -56,7 +74,7 @@
   "confidence": 0.765,
   "registry_key_id": "96e6a47a-deeb-453b-b10b-597a7009b996",
   "evidence_state": {
-    "checked_at": "2026-09-24T22:02:38.108Z",
+    "checked_at": "2026-09-27T14:57:34.592Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -64,7 +82,7 @@
         "summary": "An inactive resident returns only the banner and residentNotice; PULL_GUIDANCE and advisory context are added only when active.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "8937610f618d0768b368825347f73b8302cc9d6e74b3db50b568d3ceb0c5bda4"
+        "hash": "66e53a0fecd256a9aff0bfd94f736c7fb307bc3e30ecfc7668b9827da091675e"
       },
       {
         "source_type": "file",
@@ -73,17 +91,25 @@
         "status": "verified",
         "provenance": "filesystem",
         "hash": "db8153d7734b88de66c5ea16db597ae77885dd9a83fffa24e7d564b4ce78a6f1"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-24T21:56:28.258Z",
-  "updated_at": "2026-09-24T22:02:38.115Z",
+  "replaces": "e82ba814-47e6-4401-b96e-ae01aec268cc",
+  "created_at": "2026-09-27T02:37:08.722Z",
+  "updated_at": "2026-09-27T14:57:34.597Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-24T22:02:38.108Z",
+    "reviewed_at": "2026-09-27T14:57:34.592Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

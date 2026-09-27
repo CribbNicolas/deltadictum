@@ -1,0 +1,104 @@
+{
+  "id": "354338bf-10ee-40df-998c-744c227affd4",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "Claude Code reports tool outcomes by event, not exit code",
+  "topic_key": "hooks/observe/claude-code-outcomes",
+  "trigger": "when changing how observe classifies tool results, or when registering DD hooks for Claude Code by hand",
+  "behavior_delta": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
+  "what": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
+  "why": "Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
+  "tags": [],
+  "trigger_variants": [],
+  "applies_to": {
+    "files": [
+      "src/hooks/observe.js",
+      "src/hooks/run.js",
+      "hooks/hooks.json",
+      "docs/integrations/grok-build.md"
+    ],
+    "components": [
+      "hooks",
+      "capture"
+    ],
+    "operations": [
+      "edit"
+    ]
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/observe.js",
+      "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "hooks/hooks.json",
+      "summary": "PostToolUseFailure is registered to the observe command."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "tests/hooks/stop.test.js",
+      "summary": "Stop asks after a PostToolUseFailure or an exit-code-less PostToolUse under CLAUDECODE=1 only."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "superseded",
+  "valid_from": "2026-09-24T12:07:09.545Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
+    "short": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded. Why: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
+    "full": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded. Why: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "d98e5105-0f3d-4554-a06b-6427152bab69",
+  "evidence_state": {
+    "checked_at": "2026-09-24T16:49:24.575Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/observe.js",
+        "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "50a54ff3d463c4dacf9283a1f5073378f44f1a69576f873dcfecb8ab83a6023f"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "hooks/hooks.json",
+        "summary": "PostToolUseFailure is registered to the observe command.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "db8153d7734b88de66c5ea16db597ae77885dd9a83fffa24e7d564b4ce78a6f1"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "tests/hooks/stop.test.js",
+        "summary": "Stop asks after a PostToolUseFailure or an exit-code-less PostToolUse under CLAUDECODE=1 only.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "8d7b6559fed4f25b19fde69a3bb1d48033064ca02c1eb55a25f9b6f8925b4cec"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "replaces": "a02d4640-9e2a-4c2d-b252-f67610c0819d",
+  "created_at": "2026-09-24T12:07:09.557Z",
+  "updated_at": "2026-09-27T14:57:33.657Z",
+  "activation_count": 3,
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-09-24T16:49:24.575Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  },
+  "superseded_by": "7143dacb-38b1-4506-ac68-1d94f1ad1bcb"
+}

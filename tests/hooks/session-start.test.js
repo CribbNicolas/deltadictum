@@ -4,10 +4,37 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMemoryStore } from '../../src/store/create-store.js';
-import { buildSessionStartContext } from '../../src/hooks/session-start.js';
+import { buildSessionStartContext, memoryMap } from '../../src/hooks/session-start.js';
 import { PROVENANCE } from '../helpers/atom.js';
 
 describe('SessionStart context', () => {
+  // Every host can take session context, so the map is how an agent on any host
+  // sees every memory it could pull, in any language it reads.
+  test('the memory map lists every live memory by topic and title, once per session', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    await store.putAtom({ id: 'atom-1', project_id: 'demo', memory_type: 'lesson', scope: 'project', title: 'Require trigger',
+      trigger: 'before writing durable memory', behavior_delta: 'validate trigger first', what: 'x', why: 'y', authority: 'inferred',
+      confidence: 0.8, valid_from: '2026-09-09T00:00:00.000Z', topic_key: 'memory/admission/required-fields', tags: [],
+      ...PROVENANCE, lifecycle_state: 'active', retrieval_forms: { micro: 'Require trigger.' } });
+    const first = (await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://x', sessionId: 's1' })).hookSpecificOutput.additionalContext;
+    assert.match(first, /DD - Memory map \(1\)/);
+    assert.ok(first.includes('memory/admission/required-fields — Require trigger'));
+    const again = (await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://x', sessionId: 's1' })).hookSpecificOutput.additionalContext;
+    assert.doesNotMatch(again, /Memory map/);
+    const compacted = (await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://x', sessionId: 's1', source: 'compact' })).hookSpecificOutput.additionalContext;
+    assert.match(compacted, /Memory map/);
+    store.close();
+  });
+
+  test('a map over its budget groups topics by domain instead of dropping any', () => {
+    const atoms = Array.from({ length: 300 }, (_, i) => ({ topic_key: `area${i % 3}/part/topic-${i}`, title: `A fairly long title for memory number ${i} here` }));
+    const map = memoryMap(atoms, { budget: 800 });
+    for (let i = 0; i < 300; i += 1) assert.ok(map.includes(`topic-${i}`), `topic-${i} missing`);
+    assert.match(map, /^DD - Memory map \(300, by domain\)/);
+    assert.match(map, /area0 \(100\): /);
+  });
+
   test('announces DD loaded and audit URL even with no memories', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
     const store = await createMemoryStore({
@@ -26,7 +53,7 @@ describe('SessionStart context', () => {
     store.close();
   });
 
-  test('counts active atoms without listing the corpus', async () => {
+  test('counts active atoms', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dd-session-'));
     const store = await createMemoryStore({
       ddDir: join(root, '.dd'),
@@ -81,11 +108,11 @@ describe('SessionStart context', () => {
     const first = await buildSessionStartContext(opts);
     assert.match(first.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
     // Pushed knowledge made pulling look redundant; the start says when to pull.
-    assert.match(first.hookSpecificOutput.additionalContext, /`retrieve` tool before changing an area.*`propose`.*load them first/s);
+    assert.match(first.hookSpecificOutput.additionalContext, /memory map.*`get` tool with its topic_key.*`propose`.*load them first/s);
 
     const second = await buildSessionStartContext(opts);
     assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /DD - Project context \(advisory\)/);
-    assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /`retrieve` tool/);
+    assert.doesNotMatch(second.hookSpecificOutput.additionalContext, /`get` tool/);
     assert.match(second.hookSpecificOutput.additionalContext, /DD - loaded for `demo`/);
     store.close();
   });

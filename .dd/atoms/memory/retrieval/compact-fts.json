@@ -1,5 +1,5 @@
 {
-  "id": "297bd600-5cd3-4ba2-a067-3636e5145ea3",
+  "id": "013639b3-d412-44fe-aac9-e7c217b070c2",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -22,6 +22,16 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "retrieve",
+      "orient",
+      "vpt_threshold",
+      "600-token"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -35,6 +45,11 @@
       "source_type": "file",
       "source_ref": "tests/engine/cognition/retrieval-reach.test.js",
       "summary": "reach and headline tests"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -49,7 +64,7 @@
   "confidence": 0.765,
   "registry_key_id": "31cc69c0-05cd-4cba-b211-4f1ff318d0fa",
   "evidence_state": {
-    "checked_at": "2026-09-23T16:46:46.982Z",
+    "checked_at": "2026-09-27T14:57:14.574Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -57,7 +72,7 @@
         "summary": "value floor, half-budget cap, headline fallback",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "70cf2bb28c96fbf5777238a9141bbc3685509ab75aa960ff6d7e475fdfec0920"
+        "hash": "1f7522c43efd6ca9f6e13b185b434eecde92f294deb92029f86b726a6197e0a6"
       },
       {
         "source_type": "file",
@@ -66,18 +81,25 @@
         "status": "verified",
         "provenance": "filesystem",
         "hash": "3d2475bb672c6bcef78c2ef774d115dc8c5ffd64413b9a3b047e7669939798ae"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "replaces": "0775e2e0-a142-443d-9615-a90c9e05bd9c",
-  "created_at": "2026-09-23T00:08:35.870Z",
-  "updated_at": "2026-09-23T16:46:46.986Z",
+  "replaces": "297bd600-5cd3-4ba2-a067-3636e5145ea3",
+  "created_at": "2026-09-27T02:37:09.265Z",
+  "updated_at": "2026-09-27T14:57:14.580Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-23T16:46:46.982Z",
+    "reviewed_at": "2026-09-27T14:57:14.574Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createToolHandlers } from './tools.js';
 import { CAPTURE_ORIGINS } from '../engine/contract.js';
 import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
+import { ANCHOR_HINT } from '../engine/anchors.js';
 
 const text = z.string().max(2000);
 const fact = z.union([z.string().max(200), z.boolean(), z.number().finite()]);
@@ -16,6 +17,9 @@ const proposal = z.object({
   evidence_refs: z.array(evidence).min(1).max(12), title: z.string().max(150).optional(),
   scope: z.enum(['project', 'user', 'agent', 'workflow', 'file', 'service']).optional(),
   trigger_variants: z.array(z.string().max(250)).max(8).optional(),
+  anchors: z.object({ keywords: z.array(z.string().max(60)).min(2).max(16), not_when: z.array(z.string().max(60)).max(16).optional(),
+    files: z.array(z.string().max(200)).max(16).optional() })
+    .describe(ANCHOR_HINT),
   applies_to: z.object({ files: z.array(z.string().max(200)).max(12).optional(),
     components: z.array(z.string().max(100)).max(12).optional(), operations: z.array(z.string().max(50)).max(8).optional() }).optional(),
   assumptions: z.array(z.object({ description: z.string().max(300), key: z.string().max(100).optional(), equals: fact.optional() })).max(8).optional(),
@@ -28,7 +32,7 @@ const proposal = z.object({
   revises: z.string().max(150).optional().describe('Id of a candidate this corrects after the reviewer requested a revision.'),
 });
 const action = z.object({
-  kind: z.enum(['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve']),
+  kind: z.enum(['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve', 'anchor']),
   targets: z.array(z.string().max(150)).min(1).max(50), rationale: text,
   evidence_refs: z.array(evidence).max(12).optional(),
   archived_reason: text.optional().describe('archive: why these memories stopped being useful.'),
@@ -38,6 +42,10 @@ const action = z.object({
   results: z.array(proposal).min(2).max(5).optional().describe('split: the memories the target becomes.'),
   topic_key: z.string().max(150).optional().describe(`retopic: the new topic. ${KEY_FORMAT_HINT}`),
   winner: z.string().max(150).optional(), loser_state: z.enum(['superseded', 'legacy']).optional(),
+  anchors: z.object({ keywords: z.array(z.string().max(60)).min(2).max(16), not_when: z.array(z.string().max(60)).max(16).optional(),
+    files: z.array(z.string().max(200)).max(16).optional() }).optional().describe(`anchor: the anchors the target gets. ${ANCHOR_HINT}`),
+  trigger_variants: z.array(z.string().max(250)).max(8).optional()
+    .describe('anchor: variants to add, e.g. one in the language the user writes in that contains a keyword.'),
   revises: z.string().max(150).optional().describe('Id of a pending action this corrects after the reviewer requested a revision.'),
 });
 const retrieval = {
@@ -58,7 +66,7 @@ export function createMcpServer(options) {
     retrieve: ['Recall applicable decisions and lessons within a total estimated payload budget.', retrieval],
     get: ['Expand a memory with current evidence freshness, or inspect a host evidence ID supplied at capture. verbose=true returns the raw stored atom.',
       { id: z.string(), verbose: z.boolean().optional() }],
-    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Keep only what an agent reading the code would miss: why not the obvious approach, traps, values that look valid but are not, steps nothing enforces. Same topic_key proposes a replacement; never implies approval.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
+    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Keep only what an agent reading the code would miss: why not the obvious approach, traps, values that look valid but are not, steps nothing enforces. Same topic_key proposes a replacement; never implies approval. Every proposal needs anchors: the keywords that decide when it is delivered, grounded in its own text; add a trigger_variant in the language the user writes in to anchor on their words.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
     feedback: ['Record task outcome and supporting references; frequency and claimed success do not raise authority.', {
       id: z.string(), task_id: z.string().min(1).max(200), outcome: z.enum(['helped', 'failed', 'refuted', 'not_applicable']),
       summary: z.string().min(1).max(800), evidence_refs: z.array(evidence).max(12).optional(),
@@ -67,8 +75,9 @@ export function createMcpServer(options) {
       capture_origin: z.enum(CAPTURE_ORIGINS).optional(),
       offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(50).optional() }],
     contradict: ['Flag two effective memories as disputed; this does not select a winner.', { id: z.string(), contradicts: z.string() }],
-    act: ['Request store changes for the user to review in the audit UI: archive, restore, delete, legacy, merge, split, retopic, resolve. '
+    act: ['Request store changes for the user to review in the audit UI: archive, restore, delete, legacy, merge, split, retopic, resolve, anchor. '
       + 'Nothing changes until the user applies it; never say it was applied. Write the rationale and reasons in English. '
+      + 'anchor gives one memory the keywords that deliver it (health lists memories without them); add trigger_variants to ground a keyword in the user’s language. '
       + 'Merge moves active sources to superseded and superseded or legacy sources to archived. Use revises=<id> to answer a revision request.',
       { actions: z.array(action).min(1).max(20), session_id: z.string().max(150).optional() }],
     similar: ['Find the memories nearest to a memory id or a text, in any state but rejected, to spot overlaps before proposing or merging.',

@@ -96,6 +96,7 @@ export function createSqliteIndex(dbPath) {
   }
 
   function upsertAtom(atom) {
+    localWrites += 1;
     const cols = atomColumns(atom);
     db.prepare(`
       INSERT INTO memory_atoms (
@@ -153,6 +154,7 @@ export function createSqliteIndex(dbPath) {
   }
 
   function removeAtom(id) {
+    localWrites += 1;
     db.prepare('DELETE FROM memory_atoms_fts WHERE atom_id = ?').run(id);
     db.prepare('DELETE FROM memory_atoms WHERE id = ?').run(id);
   }
@@ -167,6 +169,24 @@ export function createSqliteIndex(dbPath) {
       ? db.prepare("SELECT payload FROM memory_atoms WHERE topic_key = ? AND project_id = ? ORDER BY lifecycle_state IN ('active','contested') DESC, updated_at DESC LIMIT 1").get(idOrKey, projectId)
       : db.prepare("SELECT payload FROM memory_atoms WHERE topic_key = ? ORDER BY lifecycle_state IN ('active','contested') DESC, updated_at DESC LIMIT 1").get(idOrKey);
     return row ? parseAtom(row.payload) : null;
+  }
+
+  // Anchored memories are scanned on every retrieval (the hot path), so the parsed
+  // list is kept until this connection writes or PRAGMA data_version says another
+  // connection did.
+  let localWrites = 0;
+  let anchoredCache = null;
+  function listAnchored({ projectId, lifecycleStates = [] } = {}) {
+    const key = `${db.prepare('PRAGMA data_version').get().data_version}:${localWrites}:${projectId}:${lifecycleStates.join(',')}`;
+    if (anchoredCache?.key === key) return anchoredCache.atoms;
+    const states = lifecycleStates.map((_, i) => `@ls${i}`).join(',');
+    const params = { projectId: projectId ?? null };
+    lifecycleStates.forEach((state, i) => { params[`ls${i}`] = state; });
+    const rows = db.prepare(`SELECT payload FROM memory_atoms WHERE (@projectId IS NULL OR project_id = @projectId)
+      ${states ? `AND lifecycle_state IN (${states})` : ''} AND json_array_length(json_extract(payload, '$.anchors.keywords')) > 0
+      ORDER BY updated_at DESC`).all(params);
+    anchoredCache = { key, atoms: rows.map(row => parseAtom(row.payload)) };
+    return anchoredCache.atoms;
   }
 
   function listAtoms({ projectId, lifecycleStates, memoryTypes } = {}) {
@@ -474,6 +494,7 @@ export function createSqliteIndex(dbPath) {
     removeAtom,
     getAtom,
     listAtoms,
+    listAnchored,
     listByTopicLive,
     search,
     countAtoms,

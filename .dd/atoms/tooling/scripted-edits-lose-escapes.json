@@ -1,5 +1,5 @@
 {
-  "id": "6abc175a-4533-4aba-81f1-b372af7ef21c",
+  "id": "f8b4e16b-680b-459c-8bb6-c988d2b34022",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -19,6 +19,16 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "heredoc",
+      "backslashes",
+      "escapes",
+      "regular expressions"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -32,6 +42,11 @@
       "source_type": "file",
       "source_ref": "src/eval/bench/supermem.scenarios.json",
       "summary": "benchmark where the src/** scope made this memory noise in every task"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -46,7 +61,7 @@
   "confidence": 0.765,
   "registry_key_id": "a411a2da-9649-4b01-9627-e1754afcea08",
   "evidence_state": {
-    "checked_at": "2026-09-23T16:46:46.827Z",
+    "checked_at": "2026-09-27T14:57:14.382Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -54,7 +69,7 @@
         "summary": "headline() regexes that were corrupted and then fixed",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "70cf2bb28c96fbf5777238a9141bbc3685509ab75aa960ff6d7e475fdfec0920"
+        "hash": "1f7522c43efd6ca9f6e13b185b434eecde92f294deb92029f86b726a6197e0a6"
       },
       {
         "source_type": "file",
@@ -63,18 +78,25 @@
         "status": "verified",
         "provenance": "filesystem",
         "hash": "747e60fa9ba5997b4f17580bafb6f7267acd52dcf9a350505ae98f02aacb2939"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "replaces": "7fd28959-7e91-4bea-acd6-872f5f2380e5",
-  "created_at": "2026-09-23T00:19:02.666Z",
-  "updated_at": "2026-09-23T16:46:46.832Z",
+  "replaces": "6abc175a-4533-4aba-81f1-b372af7ef21c",
+  "created_at": "2026-09-27T02:37:09.325Z",
+  "updated_at": "2026-09-27T14:57:14.388Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-23T16:46:46.828Z",
+    "reviewed_at": "2026-09-27T14:57:14.382Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

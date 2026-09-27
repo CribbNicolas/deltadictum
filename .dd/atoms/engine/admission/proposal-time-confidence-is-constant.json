@@ -1,5 +1,5 @@
 {
-  "id": "1e9d44c6-288e-450b-bc0c-d64b29dddc73",
+  "id": "a335fc03-6cfa-4bb1-8314-f36539d064d8",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -24,6 +24,17 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "candidate confidence",
+      "cappedConfidence",
+      "auto-triage",
+      "reliabilityCeiling",
+      "evidence quality"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -47,6 +58,11 @@
       "source_type": "tool_output",
       "source_ref": "mcp__dd__get on this project's own pending candidates, 2026-09-19",
       "summary": "Three candidates with different evidence quality (verified filesystem refs, an unavailable diff, unverified tool_output) all report confidence: 0.45, empirically confirming the constant."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -61,7 +77,7 @@
   "confidence": 0.765,
   "registry_key_id": "6c29f5d5-1555-4771-84d9-974749b64149",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:36:13.898Z",
+    "checked_at": "2026-09-27T14:57:13.542Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -69,7 +85,7 @@
         "summary": "normalizeProposal line ~53, computes atom.confidence before evidence_state exists on the atom.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "8f5e170df962bd4bd03ad7179c5491b00a7c60f3538c5b63cf74d51c50967106"
+        "hash": "2f5a6dd83153ab51b295d5b656612868d0239fa0bf657f4c7101abbaf7004536"
       },
       {
         "source_type": "file",
@@ -77,7 +93,7 @@
         "summary": "sourceProvenance reads atom.evidence_state.artifacts; cappedConfidence/reliabilityCeiling define the RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR tables the constant derives from.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "007cdf50d7489c3c87c609d78517145f02308253370e4f892b201be211d699dc"
+        "hash": "36d430dd2bbbc6316feba36e398a543de5164810ea6e216706078db704aebdec"
       },
       {
         "source_type": "file",
@@ -85,7 +101,7 @@
         "summary": "admitMemory line ~47: the real evidence-based confidence is only computed here, at review time, via verifyReferences + cappedConfidence.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "a4aea73de519652380927af08c3239edd34f534a2bc587032886231bece929f1"
+        "hash": "38aa9757e8743646ed44f422324e85c4010f4a3e35cde9285cdc5f8fb9d29376"
       },
       {
         "source_type": "tool_output",
@@ -93,17 +109,25 @@
         "summary": "Three candidates with different evidence quality (verified filesystem refs, an unavailable diff, unverified tool_output) all report confidence: 0.45, empirically confirming the constant.",
         "status": "unverified",
         "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 3,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T08:24:51.241Z",
-  "updated_at": "2026-09-19T10:36:13.900Z",
+  "replaces": "1e9d44c6-288e-450b-bc0c-d64b29dddc73",
+  "created_at": "2026-09-27T02:37:09.733Z",
+  "updated_at": "2026-09-27T14:57:13.548Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:36:13.898Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.542Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }
