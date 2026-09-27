@@ -131,7 +131,10 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
       return { ...(await store.assessDeterioration(projectId)), anchors: {
         live: live.length, unanchored: live.filter(atom => !isAnchored(atom)).map(atom => atom.topic_key),
         invalid: live.filter(isAnchored).map(atom => ({ topic_key: atom.topic_key, reasons: validateAnchors(atom) })).filter(r => r.reasons.length),
-        shared_keywords: [...collisions].map(([keyword, memories]) => ({ keyword, memories })) } };
+        shared_keywords: [...collisions].map(([keyword, memories]) => ({ keyword, memories })),
+        // A file anchoring several memories pushes all of them on every read or edit of it.
+        shared_files: Object.entries(live.flatMap(atom => atom.anchors?.files ?? []).reduce((n, f) => ({ ...n, [f]: (n[f] ?? 0) + 1 }), {}))
+          .filter(([, memories]) => memories >= 3).map(([file, memories]) => ({ file, memories })) } };
     },
   };
   return Object.fromEntries(Object.entries(handlers).map(([name, handler]) => [name, async args => {

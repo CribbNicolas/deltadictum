@@ -89,19 +89,19 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   const effective = candidates.filter(a => a.authority !== 'deprecated');
   const usage = usageFactors(effective);
   const scored = effective.map((atom, index) => {
-    const anchor = matchAnchors(atom, activationText);
+    const anchor = matchAnchors(atom, activationText, request.files ?? []);
     const applicability = anchor.blocked.length ? { applies: false } : assessApplicability(atom, request);
-    // Anchored: pushed exactly when a keyword matched, or the request names one
-    // of its exact files or components. A folder glob matches every file under
-    // it, so it narrows where a memory applies but never pushes it. Similarity
-    // only orders what matched.
-    const scopeHit = (atom.applies_to?.files ?? []).some(glob => !/[*?[]/.test(glob) && (request.files ?? []).some(file => matchesGlob(file, glob)))
+    // Anchored: pushed exactly when a keyword matched, the request names one of
+    // its anchor files, or one of its components. Its applies_to scope only
+    // narrows where it applies: a file listed there may be one most work
+    // touches, so it never pushes by itself. Similarity only orders what matched.
+    const scopeHit = anchor.files.length > 0
       || (atom.applies_to?.components ?? []).some(c => (request.components ?? []).some(x => x.toLowerCase() === c.toLowerCase()));
     const activation = !applicability.applies ? 0
       : isAnchored(atom) ? (anchor.hits.length || scopeHit ? 1 : 0)
       : anchorsOnly ? 0
       : Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0);
-    const reason = isAnchored(atom) && activation ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : '[anchor: scope]') : null;
+    const reason = isAnchored(atom) && activation ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
     return { atom, applicability, activation, reason, similarity: semantic?.get(atom.id) ?? 0, floor: requiredActivation(atom, ACTIVATION_FLOOR),
       value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
   }).filter(c => c.activation >= c.floor)

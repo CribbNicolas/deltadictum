@@ -76,3 +76,19 @@ test('a keyword that fails validation never matches, even when stored', () => {
   assert.deepEqual(matchAnchors(atom, 'seguimos con el plan').hits, []);
   assert.deepEqual(matchAnchors(atom, 'the endurance plan').hits, ['endurance']);
 });
+
+test('anchor files must be exact paths from the memory scope, and are refused when they are folders', () => {
+  const scoped = { files: ['src/domain/world/WorldState.cs', 'doc/GDD-05.md'], components: ['character'], operations: [] };
+  assert.deepEqual(validateAnchors(memory({ keywords: ['resistencia', 'endurance'], files: ['doc/GDD-05.md'] }, { applies_to: scoped })), []);
+  assert.ok(validateAnchors(memory({ keywords: ['resistencia', 'endurance'], files: ['src/domain/**'] }, { applies_to: scoped }))
+    .includes('folder_anchor_file:src/domain/**'));
+  assert.ok(validateAnchors(memory({ keywords: ['resistencia', 'endurance'], files: ['src/Other.cs'] }, { applies_to: scoped }))
+    .includes('anchor_file_outside_scope:src/Other.cs'));
+});
+
+test('an anchor file matches the request files exactly', () => {
+  const atom = memory({ keywords: ['resistencia', 'endurance'], files: ['doc/GDD-05.md'] },
+    { applies_to: { files: ['doc/GDD-05.md'], components: [], operations: [] } });
+  assert.deepEqual(matchAnchors(atom, 'Read', ['doc/GDD-05.md']).files, ['doc/GDD-05.md']);
+  assert.deepEqual(matchAnchors(atom, 'Read', ['doc/GDD-06.md']).files, []);
+});

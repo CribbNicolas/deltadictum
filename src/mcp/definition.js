@@ -17,7 +17,8 @@ const proposal = z.object({
   evidence_refs: z.array(evidence).min(1).max(12), title: z.string().max(150).optional(),
   scope: z.enum(['project', 'user', 'agent', 'workflow', 'file', 'service']).optional(),
   trigger_variants: z.array(z.string().max(250)).max(8).optional(),
-  anchors: z.object({ keywords: z.array(z.string().max(60)).min(2).max(16), not_when: z.array(z.string().max(60)).max(16).optional() })
+  anchors: z.object({ keywords: z.array(z.string().max(60)).min(2).max(16), not_when: z.array(z.string().max(60)).max(16).optional(),
+    files: z.array(z.string().max(200)).max(16).optional() })
     .describe(ANCHOR_HINT),
   applies_to: z.object({ files: z.array(z.string().max(200)).max(12).optional(),
     components: z.array(z.string().max(100)).max(12).optional(), operations: z.array(z.string().max(50)).max(8).optional() }).optional(),

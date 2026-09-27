@@ -39,7 +39,8 @@ export const GENERIC_REQUESTS = [
 export const ANCHOR_HINT = 'anchors.keywords: 2-16 words or short phrases (1-3 words) whose presence in a request means this memory applies. '
   + "Each must appear in the memory's own title, trigger, trigger_variants, behavior_delta or scope; to anchor on the user's language, "
   + 'add a trigger_variant in that language containing the keyword. Use specific domain terms (resistencia, endurance, inventory grid), '
-  + 'never function words or lone generic terms (code, fix, test, plan, cambiar). anchors.not_when: phrases that mean it does not apply.';
+  + 'never function words or lone generic terms (code, fix, test, plan, cambiar). anchors.not_when: phrases that mean it does not apply. '
+  + 'anchors.files: exact files from applies_to.files whose every read or edit needs this memory; never a folder, and not a file most work touches.';
 
 const MIN_KEYWORDS = 2;
 const MAX_KEYWORDS = 16;
@@ -65,7 +66,7 @@ function containsPhrase(haystack, phrase) {
 }
 
 export function anchorsOf(atom) {
-  return { keywords: atom?.anchors?.keywords ?? [], not_when: atom?.anchors?.not_when ?? [] };
+  return { keywords: atom?.anchors?.keywords ?? [], not_when: atom?.anchors?.not_when ?? [], files: atom?.anchors?.files ?? [] };
 }
 export const isAnchored = atom => anchorsOf(atom).keywords.length > 0;
 
@@ -81,19 +82,31 @@ export function anchorTerms(atom) {
 const usable = new WeakMap();
 function usableAnchors(atom) {
   if (atom && typeof atom === 'object' && usable.has(atom)) return usable.get(atom);
-  const { keywords, not_when } = anchorsOf(atom);
+  const { keywords, not_when, files } = anchorsOf(atom);
   const grounding = groundingText(atom ?? {});
   const result = { keywords: keywords.filter(entry => !entryProblems(entry, true, grounding).length),
-    not_when: not_when.filter(entry => !entryProblems(entry, false, grounding).length) };
+    not_when: not_when.filter(entry => !entryProblems(entry, false, grounding).length),
+    files: files.filter(file => !fileProblems(atom ?? {}, file).length).map(slashed) };
   if (atom && typeof atom === 'object') usable.set(atom, result);
   return result;
 }
 
-export function matchAnchors(atom, text) {
+// Files the request names (project-relative) that are anchor files of the memory.
+export function matchAnchors(atom, text, requestFiles = []) {
   const haystack = words(text);
-  const { keywords, not_when } = usableAnchors(atom);
+  const { keywords, not_when, files } = usableAnchors(atom);
   const find = list => list.filter(entry => containsPhrase(haystack, words(entry)));
-  return { hits: find(keywords).map(normalizeText), blocked: find(not_when).map(normalizeText) };
+  const named = new Set(requestFiles.map(slashed));
+  return { hits: find(keywords).map(normalizeText), blocked: find(not_when).map(normalizeText), files: files.filter(file => named.has(file)) };
+}
+
+const slashed = path => String(path).replaceAll('\\', '/').replace(/^\.\//, '');
+// An anchor file pushes on every request that names it, so it must be one exact
+// file the memory is scoped to, never a folder.
+function fileProblems(atom, file) {
+  if (/[*?[\]{}]/.test(file)) return [`folder_anchor_file:${file}`];
+  if (!(atom.applies_to?.files ?? []).map(slashed).includes(slashed(file))) return [`anchor_file_outside_scope:${file}`];
+  return [];
 }
 
 // Where a keyword must come from: the memory's own reviewed text.
@@ -112,6 +125,8 @@ export function validateAnchors(atom) {
   const grounding = groundingText(atom);
   for (const entry of keywords) reasons.push(...entryProblems(entry, true, grounding));
   for (const entry of not_when) reasons.push(...entryProblems(entry, false, grounding));
+  for (const file of anchorsOf(atom).files) reasons.push(...fileProblems(atom, file));
+  if (anchorsOf(atom).files.length > MAX_KEYWORDS) reasons.push('too_many_anchor_files');
   return [...new Set(reasons)];
 }
 

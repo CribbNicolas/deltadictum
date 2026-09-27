@@ -53,7 +53,8 @@ export function normalizeProposal(raw = {}, projectId = raw.project_id, { captur
       files: strings(raw.applies_to?.files).map(p => p.replaceAll('\\', '/')),
       components: strings(raw.applies_to?.components), operations: strings(raw.applies_to?.operations),
     },
-    anchors: { keywords: strings(raw.anchors?.keywords), not_when: strings(raw.anchors?.not_when) },
+    anchors: { keywords: strings(raw.anchors?.keywords), not_when: strings(raw.anchors?.not_when),
+      files: strings(raw.anchors?.files).map(p => p.replaceAll('\\', '/')) },
     assumptions: (Array.isArray(raw.assumptions) ? raw.assumptions : []).map(a => typeof a === 'string'
       ? { description: text(a) } : { key: text(a.key), equals: a.equals, description: text(a.description) }),
     revisit_when: (Array.isArray(raw.revisit_when) ? raw.revisit_when : []).map(c => typeof c === 'string'
@@ -104,7 +105,7 @@ export function validateContract(atom) {
   }
   // Anchors are optional to the engine (the agent's MCP path requires them), but
   // any that are given must pass, so a bad one is refused before it is stored.
-  if (atom.anchors?.keywords?.length || atom.anchors?.not_when?.length) reasons.push(...validateAnchors(atom));
+  if (atom.anchors?.keywords?.length || atom.anchors?.not_when?.length || atom.anchors?.files?.length) reasons.push(...validateAnchors(atom));
   for (const glob of atom.applies_to.files) {
     if (glob.startsWith('/') || glob.includes(':') || glob.split('/').includes('..') || glob.length > 200) reasons.push('invalid_file_scope');
   }
@@ -115,6 +116,6 @@ export function sameKnowledge(a, b) {
   // valid_from defaults to capture time; it is not evidence of material change.
   // A memory stored before anchors existed has none, which is what an empty pair says.
   const authored = (atom, key) => key === 'revisit_when' ? (atom[key] ?? []).map(({ hash, ...rule }) => rule)
-    : key === 'anchors' ? { keywords: atom.anchors?.keywords ?? [], not_when: atom.anchors?.not_when ?? [] } : atom[key] ?? null;
+    : key === 'anchors' ? { keywords: atom.anchors?.keywords ?? [], not_when: atom.anchors?.not_when ?? [], files: atom.anchors?.files ?? [] } : atom[key] ?? null;
   return MATERIAL_FIELDS.filter(k => k !== 'valid_from').every(key => JSON.stringify(authored(a, key)) === JSON.stringify(authored(b, key)));
 }
