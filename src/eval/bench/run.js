@@ -46,6 +46,8 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   // Labels name the memory that was live when the scenario was written. A revised
   // memory keeps its topic_key, so a label follows its topic to the live version.
   const full = prefix => {
+    // A golden set is labeled by topic_key: a person reads topics, not ids.
+    if (prefix.includes('/')) return atoms.find(atom => atom.topic_key === prefix)?.id ?? `missing:${prefix}`;
     const live = atoms.find(atom => atom.id.startsWith(prefix));
     if (live) return live.id;
     const topic = history.find(atom => atom.id.startsWith(prefix))?.topic_key;
@@ -57,7 +59,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   const missingLabels = new Set();
   const resolve = labels => new Set(labels.map(full).filter(id => !id.startsWith('missing:') || (missingLabels.add(id), false)));
   try {
-    for (const task of scenarios.tasks) {
+    for (const task of scenarios.tasks.filter(task => !task.unlabeled)) {
       const must = resolve(task.must);
       const orbit = resolve(task.orbit);
       const session = `bench-${provider}-${task.id}-${Date.now()}`;
@@ -93,6 +95,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
     provider,
     summary: {
       labels_missing: missingLabels.size,
+      unlabeled: scenarios.tasks.filter(task => task.unlabeled).length,
       must_recall: mean(positive.map(t => t.must_recall)), orbit_recall: mean(positive.map(t => t.orbit_recall)),
       precision: mean(positive.map(t => t.precision)),
       negatives_quiet: negative.filter(t => t.returned === 0).length + '/' + negative.length,

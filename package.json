@@ -27,7 +27,8 @@
     "start": "node src/cli.js",
     "mcp": "node src/mcp/server.js",
     "bench": "node src/eval/bench/run.js --project=.",
-    "bench:semantic": "node src/eval/bench/run.js --project=. --provider=semantic"
+    "bench:semantic": "node src/eval/bench/run.js --project=. --provider=semantic",
+    "golden": "node src/eval/golden/extract.js"
   },
   "files": [
     "src",
