@@ -73,3 +73,23 @@ test('the OpenCode adapter imports nothing Bun cannot load, exports only the plu
   const pkg = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.exports['./server'], './adapters/opencode/index.js');
 });
+
+// OpenCode cannot inject per tool call, so the session memory map is how its
+// agent sees every memory it can pull.
+test('OpenCode receives the memory map in its system prompt', async t => {
+  const root = await fixture(t);
+  process.env.DD_RETRIEVAL = 'lexical';
+  t.after(() => { delete process.env.DD_RETRIEVAL; });
+  const { openStore } = await import('../../src/project.js');
+  const { PROVENANCE } = await import('../helpers/atom.js');
+  const { store, projectId } = await openStore({ cwd: root });
+  await store.putAtom({ id: 'map-1', project_id: projectId, memory_type: 'lesson', scope: 'project', title: 'Keep the tray stable',
+    trigger: 'when changing the dice tray', behavior_delta: 'Keep it stable.', what: 'x', why: 'y', authority: 'validated', confidence: 0.8,
+    valid_from: '2026-09-01T00:00:00.000Z', topic_key: 'dice/tray/stable', tags: [], ...PROVENANCE, lifecycle_state: 'active',
+    retrieval_forms: { micro: 'Keep it stable.' } });
+  store.close();
+  const hooks = await DeltaDictum({ directory: root });
+  const [context] = await turn(hooks, 's1');
+  assert.match(context, /DD - Memory map \(1\)/);
+  assert.ok(context.includes('dice/tray/stable — Keep the tray stable'));
+});
