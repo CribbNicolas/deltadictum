@@ -113,7 +113,7 @@ test('an observed correction verifies as evidence at the ladder provenance', asy
   assert.equal(refs[0].source_type, 'user_correction');
   const handlers = createToolHandlers({ store, projectId: 'demo' });
   const proposed = JSON.parse((await handlers.propose({ session_id: 'current', proposals: [{
-    topic_key: 'retrieval/scope/project-first', trigger: 'when retrieving project knowledge', behavior_delta: 'Scope retrieval to the project first.',
+    topic_key: 'retrieval/scope/project-first', trigger: 'when retrieving project knowledge', anchors: { keywords: ['project knowledge', 'retrieving project'] }, behavior_delta: 'Scope retrieval to the project first.',
     why: 'The user corrected a cross-project fallback.', capture_origin: 'user_explicit',
     evidence_refs: [{ source_type: 'tool_output', source_ref: refs[0].id, summary: 'Observed user correction.' }] }] })).content[0].text);
   assert.equal(proposed.proposals[0].evidence_verified, 1);

@@ -9,13 +9,16 @@ import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { callRunningStore } from '../hooks/bridge.js';
 import { lexicalMode, residentNotice } from '../hooks/session-start.js';
 import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
+import { ANCHOR_HINT, anchorCollisions } from '../engine/anchors.js';
 
 const jsonResult = data => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 const errorResult = message => ({ isError: true, content: [{ type: 'text', text: message }] });
 function proposalResult(result) {
   const keyRejected = result.reasons?.some(reason => reason === 'invalid_key_format' || reason === 'empty_key');
+  const anchorRejected = result.reasons?.some(reason => /anchor/.test(reason));
   return { decision: result.decision, reasons: result.reasons,
-    ...(keyRejected ? { hint: KEY_FORMAT_HINT } : {}),
+    ...(keyRejected || anchorRejected ? { hint: [keyRejected && KEY_FORMAT_HINT, anchorRejected && ANCHOR_HINT].filter(Boolean).join(' ') } : {}),
+    ...(result.anchor_warnings?.length ? { anchor_warnings: result.anchor_warnings } : {}),
     ...(result.atom ? { id: result.atom.id, lifecycle_state: result.atom.lifecycle_state,
       capture_origin: result.atom.capture_origin, capture_source: result.atom.capture_source,
       evidence_verified: result.atom.evidence_state?.verified_count ?? 0,
@@ -78,7 +81,15 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
     async propose({ proposals }) {
       if (!Array.isArray(proposals) || !proposals.length) throw new Error('nonempty_proposals_required');
       const results = [];
-      for (const proposal of proposals) results.push(proposalResult(await proposeMemory({ ...proposal, project_id: projectId }, { store })));
+      const live = await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested', 'candidate'] });
+      for (const proposal of proposals) {
+        // The agent's path requires anchors: without them a memory can only be
+        // reached by similarity, which is what anchors exist to replace.
+        if (!proposal?.anchors?.keywords?.length) { results.push(proposalResult({ decision: 'block', reasons: ['anchors_required'] })); continue; }
+        const result = await proposeMemory({ ...proposal, project_id: projectId }, { store });
+        const warnings = result.atom ? anchorCollisions(result.atom, live).map(c => `keyword "${c.keyword}" also anchors ${c.memories} other memories`) : [];
+        results.push(proposalResult({ ...result, anchor_warnings: warnings }));
+      }
       return { proposals: results };
     },
     async feedback(request) { return recordOutcome(request, { store, projectId }); },

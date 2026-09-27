@@ -15,7 +15,7 @@ async function setup(t) {
   const options = { ddDir: join(root, '.dd'), dataDir: join(root, 'data') };
   const f = { options, store: await createMemoryStore(options) };
   t.after(() => f.store.close());
-  f.payload = { project_id: 'demo', capture_origin: 'model_initiated', topic_key: 'payments/retry/keys', trigger: 'when retrying payments',
+  f.payload = { project_id: 'demo', capture_origin: 'model_initiated', topic_key: 'payments/retry/keys', trigger: 'when retrying payments', anchors: { keywords: ['retrying payments', 'idempotency key'] },
     behavior_delta: 'Reuse the original idempotency key.', why: 'Avoid duplicate charges.',
     evidence_refs: [{ source_type: 'file', source_ref: 'decision.md', summary: 'Retry contract' }] };
   f.review = () => ({ store: f.store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked against the retry contract.' });
