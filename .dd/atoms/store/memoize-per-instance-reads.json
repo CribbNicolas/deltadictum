@@ -1,5 +1,5 @@
 {
-  "id": "f1d79d20-3aa7-428c-94dc-e15dd9b29693",
+  "id": "5b0f8a49-097e-4a15-b515-29d4d7caf388",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -24,6 +24,19 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "loadConfig",
+      "memoize",
+      "hot-path cost",
+      "store instance",
+      "saveConfig"
+    ],
+    "not_when": [],
+    "files": [
+      "src/store/git-file-store.js"
+    ]
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -42,6 +55,11 @@
       "source_type": "file",
       "source_ref": "src/engine/retrieve.js",
       "summary": "retrieveMemories calls store.loadConfig() again, a second independent call site within the same PreToolUse invocation."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -56,7 +74,7 @@
   "confidence": 0.765,
   "registry_key_id": "7b7a9fae-684a-4831-badd-53c4fd4c2138",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:36:21.062Z",
+    "checked_at": "2026-09-27T14:57:13.725Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -64,7 +82,7 @@
         "summary": "loadConfig/saveConfig/recover now memoize config.json per store instance, invalidated on both write and recover.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "2dcd49a7d3d94f933b59f7973082c829da52d5425341fff0e24e254c1c468cea"
+        "hash": "d3f647435af9f3b1c703d62ca1ebcd8923700e5be1d0a168e40407ed1081baad"
       },
       {
         "source_type": "file",
@@ -72,7 +90,7 @@
         "summary": "prune() holds its own reference to the git object and calls loadConfig independently of the store-level wrapper.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "d0c1641acbb89d922194ee6dc02b069dd5fd2e3582cee70ff5d6a6273fa76619"
+        "hash": "4758947f7a68db11978216841b28745f9b772b159f88a0c18ce5be66ba5bc0dc"
       },
       {
         "source_type": "file",
@@ -80,18 +98,26 @@
         "summary": "retrieveMemories calls store.loadConfig() again, a second independent call site within the same PreToolUse invocation.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "8671f5d1e28c7c27059fa736aba0e3dd38bb017900de41dab7d2902ead9629bc"
+        "hash": "1f7522c43efd6ca9f6e13b185b434eecde92f294deb92029f86b726a6197e0a6"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 3,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T10:06:32.935Z",
-  "updated_at": "2026-09-19T10:36:21.065Z",
+  "replaces": "f1d79d20-3aa7-428c-94dc-e15dd9b29693",
+  "created_at": "2026-09-27T02:37:09.668Z",
+  "updated_at": "2026-09-27T14:57:13.729Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:36:21.062Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.725Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

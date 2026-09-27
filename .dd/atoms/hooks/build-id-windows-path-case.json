@@ -1,5 +1,5 @@
 {
-  "id": "ad3fdaa9-6571-4812-a5d1-9f1714723442",
+  "id": "ee8ae98a-c6f6-4598-a3b1-79ff38d1f552",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -25,6 +25,18 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "samePath",
+      "normalizePath",
+      "projectRelative",
+      "build id"
+    ],
+    "not_when": [],
+    "files": [
+      "src/paths.js"
+    ]
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -38,6 +50,11 @@
       "source_type": "file",
       "source_ref": "tests/hooks/paths.test.js",
       "summary": "symlink and case tests"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -52,7 +69,7 @@
   "confidence": 0.765,
   "registry_key_id": "190b0807-19f4-400b-aba9-d20cb1bb021d",
   "evidence_state": {
-    "checked_at": "2026-09-23T16:46:46.884Z",
+    "checked_at": "2026-09-27T14:57:14.476Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -68,19 +85,26 @@
         "summary": "symlink and case tests",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "518e73ea3438a5b79db1da32e9ec7686906ab5b91be81bb22911528e40586fd3"
+        "hash": "6ab0ffd3f58fbd7f8178d956a6390fd6f2cc2c6b05ba643b167f5861d098943e"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "replaces": "ad43c074-a750-4935-9773-b66a416088fd",
-  "created_at": "2026-09-23T00:08:35.943Z",
-  "updated_at": "2026-09-23T16:46:46.888Z",
+  "replaces": "ad3fdaa9-6571-4812-a5d1-9f1714723442",
+  "created_at": "2026-09-27T02:37:09.295Z",
+  "updated_at": "2026-09-27T14:57:14.481Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-23T16:46:46.884Z",
+    "reviewed_at": "2026-09-27T14:57:14.476Z",
     "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

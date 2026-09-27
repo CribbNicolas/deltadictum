@@ -1,5 +1,5 @@
 {
-  "id": "d3d5bf57-a811-4a48-b183-c1601c0886f8",
+  "id": "19a1686f-66d6-4d5f-88f9-cfe3b46d6f1b",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -15,7 +15,8 @@
   "tags": [],
   "trigger_variants": [
     "Choosing a confidence threshold value for auto-accept",
-    "Debugging why auto-accept never fires for a given source"
+    "Debugging why auto-accept never fires for a given source",
+    "Cambiar el umbral de auto-accept o el threshold de confianza"
   ],
   "applies_to": {
     "files": [
@@ -30,6 +31,19 @@
       "audit UI"
     ],
     "operations": []
+  },
+  "anchors": {
+    "keywords": [
+      "auto_accept",
+      "auto-accept",
+      "confidence_threshold",
+      "autoAcceptThresholdLevels",
+      "threshold"
+    ],
+    "not_when": [],
+    "files": [
+      "src/engine/reliability.js"
+    ]
   },
   "assumptions": [],
   "revisit_when": [],
@@ -54,6 +68,11 @@
       "source_type": "test_log",
       "source_ref": "tests/ui/server.test.js",
       "summary": "Updated default-threshold assertion from 0.8 to 0.85 and reran tests/ui/server.test.js plus tests/ui/form.test.js: 14 pass, 0 fail"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -68,7 +87,7 @@
   "confidence": 0.765,
   "registry_key_id": "5d333234-daf7-4d04-a927-c5051f9e5ab9",
   "evidence_state": {
-    "checked_at": "2026-09-19T16:22:37.801Z",
+    "checked_at": "2026-09-27T14:57:14.090Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -76,7 +95,7 @@
         "summary": "DEFAULT_CONFIG.auto_accept.confidence_threshold changed from 0.8 (dead zone) to 0.85 (reachable ceiling: filesystem cap x user_explicit factor)",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "2774b25d13974981a9022ede995365c5f28b3c94bc02b8754b4674606bf31425"
+        "hash": "a9caf37868475dc236d24376bab2c1626312268a607b1727506063eac6cc8050"
       },
       {
         "source_type": "file",
@@ -84,7 +103,7 @@
         "summary": "autoAcceptThresholdLevels() computes the exact reachable set (cross of RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR) and documents in-code that any value between two levels is a dead zone",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "d2f90a8a08c00dfbbec9dc6b11267c4c7b287abca625cb8ea3263fb62dc3ad3b"
+        "hash": "36d430dd2bbbc6316feba36e398a543de5164810ea6e216706078db704aebdec"
       },
       {
         "source_type": "file",
@@ -92,7 +111,7 @@
         "summary": "Line 628: UI already labels a stored threshold not in the reachable set as 'Not one of the reachable ceilings -- pick a step to replace it'",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "3990ccfcd7a2f2daee4537816534ce764e913c6939afd169ab6fec49779aeec4"
+        "hash": "79a54d422fec81f03249bfa627f3c44ed998262413247329e85d9484607a787d"
       },
       {
         "source_type": "test_log",
@@ -100,17 +119,26 @@
         "summary": "Updated default-threshold assertion from 0.8 to 0.85 and reran tests/ui/server.test.js plus tests/ui/form.test.js: 14 pass, 0 fail",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "2e3edfc6e065a731694d5165cdcc435c1f1783462ac591bea678696f8547e18b"
+        "hash": "27b229aa606f20c753d692257d2b102523ebd78d02bd315461a4edabb777d2c4"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 4,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T16:11:44.248Z",
-  "updated_at": "2026-09-19T16:22:37.805Z",
+  "replaces": "d3d5bf57-a811-4a48-b183-c1601c0886f8",
+  "created_at": "2026-09-27T02:37:09.422Z",
+  "updated_at": "2026-09-27T14:57:14.095Z",
+  "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T16:22:37.801Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:14.090Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

@@ -1,5 +1,5 @@
 {
-  "id": "61bc43e7-196f-4f2b-a11c-3f3cf2ddf9c9",
+  "id": "3a840cef-bce7-4b05-87be-3b91f9710b8b",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -25,13 +25,24 @@
       "edit"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "HIT_FIELDS",
+      "ENGINE_FIELDS",
+      "retrieve results",
+      "model-facing",
+      "MCP retrieve"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [
     {
       "kind": "file_changed",
       "description": "model-facing view definitions change",
       "path": "src/mcp/tools.js",
-      "hash": "b7e1d1295ff7d4766136e041f5594161aaca0fa36cf447ce82f42b952889a6be"
+      "hash": "98ad7b141269480573ba4ad123d94aa585feb57a34d7ba3a4efcbae3df3e84c8"
     }
   ],
   "alternatives": [],
@@ -45,6 +56,11 @@
       "source_type": "file",
       "source_ref": "tests/mcp/tools.test.js",
       "summary": "asserts exact retrieve keys, compact get fields, evidence status and verbose raw atom"
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -59,7 +75,7 @@
   "confidence": 0.765,
   "registry_key_id": "500ae241-bc26-4340-901c-6be56df212c0",
   "evidence_state": {
-    "checked_at": "2026-09-22T19:59:37.563Z",
+    "checked_at": "2026-09-27T14:57:14.197Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -67,7 +83,7 @@
         "summary": "retrieveView/atomView with HIT_FIELDS and ENGINE_FIELDS; get accepts verbose",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "b7e1d1295ff7d4766136e041f5594161aaca0fa36cf447ce82f42b952889a6be"
+        "hash": "98ad7b141269480573ba4ad123d94aa585feb57a34d7ba3a4efcbae3df3e84c8"
       },
       {
         "source_type": "file",
@@ -75,19 +91,26 @@
         "summary": "asserts exact retrieve keys, compact get fields, evidence status and verbose raw atom",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "92ca90f8b6a84e28366cb4f4d03f483b29a3dbadce6611529206387935d1e62f"
+        "hash": "f37d2282840a34e9b214f98a71ba4d64fa6b9fbfa6fa664f283a4882f66bbb14"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "replaces": "9ecd7282-056a-4612-b8b7-5cf7129488c6",
-  "created_at": "2026-09-22T19:46:25.435Z",
-  "updated_at": "2026-09-22T19:59:37.568Z",
+  "replaces": "61bc43e7-196f-4f2b-a11c-3f3cf2ddf9c9",
+  "created_at": "2026-09-27T02:37:09.391Z",
+  "updated_at": "2026-09-27T14:57:14.203Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-22T19:59:37.563Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:14.197Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

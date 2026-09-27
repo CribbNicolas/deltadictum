@@ -1,5 +1,5 @@
 {
-  "id": "8724c2f2-f06c-42c2-a178-ec99672aa7ad",
+  "id": "cf2e7440-b0ac-4b04-a2b3-f6881fb744dd",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -33,6 +33,17 @@
       "review"
     ]
   },
+  "anchors": {
+    "keywords": [
+      "require.resolve",
+      "createRequire",
+      "hoisting",
+      "hoists",
+      "node_modules"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -46,6 +57,11 @@
       "source_type": "diff",
       "source_ref": "commit 39af05c",
       "summary": "fix: resolve the SDK dependency check through node_modules hoisting -- includes the require.resolve replacement and the commit message documenting the reproduction steps."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -60,7 +76,7 @@
   "confidence": 0.765,
   "registry_key_id": "7fc5abdd-799a-4e9a-a790-1d38cad70181",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:36:02.706Z",
+    "checked_at": "2026-09-27T14:57:13.366Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -68,7 +84,7 @@
         "summary": "planCodexInstall's dependency-presence check, fixed from fs.access on a literal path to require.resolve.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "eebc27c9f305d0dd950ee861a9609ec747ca17e21e7ea2410a1c4fe4fddf5728"
+        "hash": "c0ad094e3e7b31d948076846b5e9ac03698e3953356312ae56a00f793ff64319"
       },
       {
         "source_type": "diff",
@@ -76,17 +92,25 @@
         "summary": "fix: resolve the SDK dependency check through node_modules hoisting -- includes the require.resolve replacement and the commit message documenting the reproduction steps.",
         "status": "unavailable",
         "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 1,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T06:24:22.817Z",
-  "updated_at": "2026-09-19T10:36:02.709Z",
+  "replaces": "8724c2f2-f06c-42c2-a178-ec99672aa7ad",
+  "created_at": "2026-09-27T02:37:09.825Z",
+  "updated_at": "2026-09-27T14:57:13.371Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:36:02.706Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.366Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

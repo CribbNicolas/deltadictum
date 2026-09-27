@@ -1,5 +1,5 @@
 {
-  "id": "7db33256-a35d-4d83-bcdf-39cc54ce1742",
+  "id": "de0b9377-ce49-42b3-9f4a-7fbf3c05cd47",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -23,6 +23,19 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "in-memory cache",
+      "projectContextCache",
+      "hook cost",
+      "ephemeral",
+      "cache"
+    ],
+    "not_when": [],
+    "files": [
+      "src/engine/project-context.js"
+    ]
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -41,6 +54,11 @@
       "source_type": "file",
       "source_ref": "src/hooks/run.js",
       "summary": "openStore is called fresh inside each hook invocation for the non-bridged path, so any per-store in-memory cache is discarded when the process exits."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -55,7 +73,7 @@
   "confidence": 0.765,
   "registry_key_id": "54badd13-064c-44d8-be07-5f67089f4ffb",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:36:17.487Z",
+    "checked_at": "2026-09-27T14:57:13.633Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -63,7 +81,7 @@
         "summary": "projectContextCache is a plain property on the store object, set/read at lines 23 and 54, with no persistence layer.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "62de98509a6cff96a6de77a0375bccae9a0a065b0cc1a3b76efd7f8cac9eee71"
+        "hash": "d091d16bda81e0f73f7d0b6003eb1d9e96c42feeb99ff95a1ffcfcd8c582220e"
       },
       {
         "source_type": "file",
@@ -71,7 +89,7 @@
         "summary": "L1 states hooks are ephemeral Node processes, one per event, and forbids amortizing cost after the first call since there is no second call in the same process.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "1bd13abc032a15387561c0ab45e963e41c14e3332b4dd281d373964d93bb45ec"
+        "hash": "b38b832e3ec27da205e46749a5a8fcd4218319c495a820e6f3bc79f5bd51415c"
       },
       {
         "source_type": "file",
@@ -79,18 +97,26 @@
         "summary": "openStore is called fresh inside each hook invocation for the non-bridged path, so any per-store in-memory cache is discarded when the process exits.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "e175635fc60747ffb0bfb5a7e3d4631754b7a5b79b5e3a133d5bf8042fb36713"
+        "hash": "d897af3475bfbbc7d2a349576a56937648b83fde67c2dd30bb1cca1d99396ea8"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 3,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T09:29:15.203Z",
-  "updated_at": "2026-09-19T10:36:17.490Z",
+  "replaces": "7db33256-a35d-4d83-bcdf-39cc54ce1742",
+  "created_at": "2026-09-27T02:37:09.701Z",
+  "updated_at": "2026-09-27T14:57:13.638Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:36:17.487Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.633Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }
