@@ -352,7 +352,7 @@
         long_anchor: 'is longer than three words; anchor on a short term or phrase',
         stopword_anchor: 'is only function words (the, de, la...)',
         short_anchor: 'is too short to be specific',
-        single_letter_anchor: 'contains a one-letter word (a flag such as -e), which matches whatever word follows',
+        flag_anchor: 'is written with a command-line flag (-e, --x), which matches whatever word follows once normalized',
         generic_anchor: 'is a generic term that names most requests (code, fix, test, plan, cambiar...)',
         ungrounded_anchor: "does not appear in the memory's own title, trigger, variants, action or scope; add a trigger variant that uses it",
         anchor_fires_on_generic_request: 'matches an acknowledgement or an unrelated generic request, so it would push this memory on those',

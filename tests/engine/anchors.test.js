@@ -94,12 +94,14 @@ test('an anchor file matches the request files exactly', () => {
 });
 
 // Found in use: "node -e" normalizes to "node e", which matches any "node e..." text.
-test('a keyword with a one-letter word is refused', () => {
+test('a keyword written with a command-line flag is refused; other lone letters are fine', () => {
   const atom = memory({ keywords: ['endurance', 'node -e'], not_when: [] }, { behavior_delta: 'Keep Endurance separate; avoid node -e edits.' });
-  assert.ok(validateAnchors(atom).includes('single_letter_anchor:node e'));
+  assert.ok(validateAnchors(atom).includes('flag_anchor:node e'));
   assert.deepEqual(matchAnchors(atom, 'node export.js').hits, []);
   const numbered = memory({ keywords: ['endurance', 'snapshot 4'], not_when: [] }, { behavior_delta: 'Keep Endurance separate in snapshot 4.' });
   assert.deepEqual(validateAnchors(numbered), []);
+  const lettered = memory({ keywords: ['endurance', 'agua y alimento', 'H-13'], not_when: [] }, { behavior_delta: 'Keep Endurance separate; agua y alimento; see H-13.' });
+  assert.deepEqual(validateAnchors(lettered), []);
 });
 
 test('an anchor file that already anchors several other memories is reported at filing', async () => {

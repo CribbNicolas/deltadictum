@@ -139,10 +139,10 @@ function entryProblems(entry, isKeyword, grounding) {
   if (w.length > MAX_WORDS) return [`long_anchor:${label}`];
   if (w.every(functionWord)) return [`stopword_anchor:${label}`];
   if (w.length === 1 && w[0].length < 3) return [`short_anchor:${label}`];
-  // A flag such as -e survives normalization as one letter, which then matches
-  // whatever word follows the other one ("node -e" matches "node export").
-  // A lone digit is meaningful ("snapshot 4"), so only letters count.
-  if (w.length > 1 && w.some(word => /^[a-z]$/.test(word))) return [`single_letter_anchor:${label}`];
+  // A command-line flag (-e, --x) survives normalization as a bare letter that
+  // matches whatever word follows ("node -e" matches "node export"). Other lone
+  // letters are words or identifiers ("agua y alimento", "H-13"), and are fine.
+  if (/(^|\s)--?[a-z](\s|$)/i.test(String(entry))) return [`flag_anchor:${label}`];
   if (!isKeyword) return []; // Exclusions only need to be well formed.
   const problems = [];
   if (w.length === 1 && GENERIC_TERMS.has(w[0])) problems.push(`generic_anchor:${label}`);
