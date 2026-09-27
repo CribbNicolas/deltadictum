@@ -68,7 +68,8 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}`;
     const args = [slash(process.execPath), slash(join(pluginRoot, 'src/hooks/run.js')), command, '--codex', '--data', slash(dataDir)];
     const handler = { type: 'command', command: args.map(quote).join(' '),
       commandWindows: `& ${args.map(psQuote).join(' ')}`, timeout: 10,
-      ...(event === 'PostToolUse' ? { async: true } : event === 'Stop' ? {} : { additionalContextLimit: 800 }) };
+      // SessionStart carries the memory map (up to MAP_BUDGET tokens, grouped past it), so its limit is wider.
+      ...(event === 'PostToolUse' ? { async: true } : event === 'Stop' ? {} : { additionalContextLimit: event === 'SessionStart' ? 16000 : 800 }) };
     const groups = hooks.hooks[event] ??= [];
     if (!groups.some(g => g.hooks?.some(h => h.command === handler.command && h.commandWindows === handler.commandWindows))) {
       groups.push({ ...(event === 'PreToolUse' || event === 'PostToolUse' ? { matcher: '*' } : {}), hooks: [handler] });
