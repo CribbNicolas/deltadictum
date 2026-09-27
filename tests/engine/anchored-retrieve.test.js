@@ -36,14 +36,17 @@ test('an anchored memory is pushed when its keyword is in the request, whatever 
   assert.match(result.memories[0].content, /^\[anchor: resistencia\] /);
 });
 
-test('an anchored memory is never pushed by similarity alone', async t => {
-  const { store, endurance, retrieve } = await fixture(t);
+// Recall first: missing an essential memory costs more than an extra one, so an
+// anchor guarantees delivery and never takes away what similarity would bring.
+test('an anchored memory is also pushed by strong similarity, unless the project is strict', async t => {
+  const { store, endurance } = await fixture(t);
   const semantic = new Map([[endurance.id, 1]]);
-  const result = await retrieveMemories({ project_id: 'demo', action: 'how far can the character walk before resting', telemetry: false },
-    { store, semantic });
-  assert.deepEqual(result.memories, []);
-  // Its own trigger words without an anchor keyword do not push it either.
-  assert.deepEqual((await retrieve('When designing the attribute.')).memories, []);
+  const ask = () => retrieveMemories({ project_id: 'demo', action: 'how far can the character walk before resting', telemetry: false }, { store, semantic });
+  const result = await ask();
+  assert.deepEqual(result.memories.map(m => m.id), [endurance.id]);
+  assert.ok(!result.memories[0].content.startsWith('[anchor:'));
+  await store.saveConfig({ ...(await store.loadConfig()), anchors: { only: true } });
+  assert.deepEqual((await ask()).memories, []);
 });
 
 test('a not_when phrase keeps an anchored memory out', async t => {
@@ -51,9 +54,8 @@ test('a not_when phrase keeps an anchored memory out', async t => {
   assert.deepEqual((await retrieve('calcular la resistencia eléctrica del cable')).memories, []);
 });
 
-test('memories without anchors keep the previous activation when the project opts out', async t => {
-  const { store, legacy, retrieve } = await fixture(t);
-  await store.saveConfig({ ...(await store.loadConfig()), anchors: { only: false } });
+test('memories without anchors keep the previous activation beside anchored ones', async t => {
+  const { legacy, retrieve } = await fixture(t);
   assert.deepEqual((await retrieve('when a toolbar select stretches')).memories.map(m => m.id), [legacy.id]);
 });
 
@@ -68,10 +70,11 @@ test('an anchored memory admitted after a retrieval is found by the next one', a
   assert.deepEqual((await retrieve('ajustar la mochila del inventario')).memories.map(m => m.id), [r.atom.id]);
 });
 
-// Once a project anchors its memories, only anchors push: an unanchored memory
-// is listed in the session map and pulled with get, never pushed by similarity.
-test('with anchored memories in the project, an unanchored one is not pushed', async t => {
-  const { retrieve } = await fixture(t);
+// A strict project (anchors.only) trades recall for determinism: only anchors
+// push, and an unanchored memory is reached through the session map and get.
+test('in a strict project an unanchored memory is not pushed', async t => {
+  const { store, retrieve } = await fixture(t);
+  await store.saveConfig({ ...(await store.loadConfig()), anchors: { only: true } });
   assert.deepEqual((await retrieve('when a toolbar select stretches')).memories, []);
 });
 
@@ -87,7 +90,7 @@ test('a project with no anchored memory keeps the previous activation', async t 
   assert.deepEqual(result.memories.map(m => m.id), [r.atom.id]);
 });
 
-test('only an anchor file pushes by file; a scoped file or folder does not', async t => {
+test('an anchor file always pushes; in a strict project a scoped file or folder does not', async t => {
   const { store } = await fixture(t);
   const add = async (topic, files, anchorFiles = []) => {
     const r = await proposeMemory({ project_id: 'demo', topic_key: topic, why: 'Agreed.', trigger: `When editing ${topic}.`,
@@ -100,7 +103,11 @@ test('only an anchor file pushes by file; a scoped file or folder does not', asy
   const folder = await add('ui/shell/folder', ['src/client/shell/**']);
   await add('ui/shell/scoped', ['src/client/shell/Hud.cs']);
   const exact = await add('ui/shell/exact', ['src/client/shell/Hud.cs'], ['src/client/shell/Hud.cs']);
-  const result = await retrieveMemories({ project_id: 'demo', action: 'Read src/client/shell/Hud.cs', files: ['src/client/shell/Hud.cs'], telemetry: false }, { store });
-  assert.deepEqual(result.memories.map(m => m.id), [exact.id]);
-  assert.ok(!result.memories.some(m => m.id === folder.id));
+  const ask = () => retrieveMemories({ project_id: 'demo', action: 'Read src/client/shell/Hud.cs', files: ['src/client/shell/Hud.cs'], telemetry: false }, { store });
+  const loose = await ask();
+  assert.ok(loose.memories.some(m => m.id === exact.id && m.content.startsWith('[anchor: src/client/shell/Hud.cs]')));
+  await store.saveConfig({ ...(await store.loadConfig()), anchors: { only: true } });
+  const strict = await ask();
+  assert.deepEqual(strict.memories.map(m => m.id), [exact.id]);
+  assert.ok(!strict.memories.some(m => m.id === folder.id));
 });

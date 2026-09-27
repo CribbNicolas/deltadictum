@@ -32,7 +32,7 @@ const proposal = z.object({
   revises: z.string().max(150).optional().describe('Id of a candidate this corrects after the reviewer requested a revision.'),
 });
 const action = z.object({
-  kind: z.enum(['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve']),
+  kind: z.enum(['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve', 'anchor']),
   targets: z.array(z.string().max(150)).min(1).max(50), rationale: text,
   evidence_refs: z.array(evidence).max(12).optional(),
   archived_reason: text.optional().describe('archive: why these memories stopped being useful.'),
@@ -42,6 +42,10 @@ const action = z.object({
   results: z.array(proposal).min(2).max(5).optional().describe('split: the memories the target becomes.'),
   topic_key: z.string().max(150).optional().describe(`retopic: the new topic. ${KEY_FORMAT_HINT}`),
   winner: z.string().max(150).optional(), loser_state: z.enum(['superseded', 'legacy']).optional(),
+  anchors: z.object({ keywords: z.array(z.string().max(60)).min(2).max(16), not_when: z.array(z.string().max(60)).max(16).optional(),
+    files: z.array(z.string().max(200)).max(16).optional() }).optional().describe(`anchor: the anchors the target gets. ${ANCHOR_HINT}`),
+  trigger_variants: z.array(z.string().max(250)).max(8).optional()
+    .describe('anchor: variants to add, e.g. one in the language the user writes in that contains a keyword.'),
   revises: z.string().max(150).optional().describe('Id of a pending action this corrects after the reviewer requested a revision.'),
 });
 const retrieval = {
@@ -71,8 +75,9 @@ export function createMcpServer(options) {
       capture_origin: z.enum(CAPTURE_ORIGINS).optional(),
       offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(50).optional() }],
     contradict: ['Flag two effective memories as disputed; this does not select a winner.', { id: z.string(), contradicts: z.string() }],
-    act: ['Request store changes for the user to review in the audit UI: archive, restore, delete, legacy, merge, split, retopic, resolve. '
+    act: ['Request store changes for the user to review in the audit UI: archive, restore, delete, legacy, merge, split, retopic, resolve, anchor. '
       + 'Nothing changes until the user applies it; never say it was applied. Write the rationale and reasons in English. '
+      + 'anchor gives one memory the keywords that deliver it (health lists memories without them); add trigger_variants to ground a keyword in the user’s language. '
       + 'Merge moves active sources to superseded and superseded or legacy sources to archived. Use revises=<id> to answer a revision request.',
       { actions: z.array(action).min(1).max(20), session_id: z.string().max(150).optional() }],
     similar: ['Find the memories nearest to a memory id or a text, in any state but rejected, to spot overlaps before proposing or merging.',

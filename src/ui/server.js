@@ -332,7 +332,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
         const seen = await readSeen();
         return send(res, 200, await Promise.all((await store.listActions(projectId)).map(async action => ({ ...action, seen: isSeen(action.id, seen),
           target_atoms: (await Promise.all(action.targets.map(id => store.getAtom(id, projectId)))).map((a, i) => a
-            ? { id: a.id, title: a.title, topic_key: a.topic_key, lifecycle_state: a.lifecycle_state }
+            ? { id: a.id, title: a.title, topic_key: a.topic_key, lifecycle_state: a.lifecycle_state, anchors: a.anchors }
             : { id: action.targets[i], missing: true }) }))));
       }
       if (req.method === 'POST' && url.pathname === '/api/actions/seen') {

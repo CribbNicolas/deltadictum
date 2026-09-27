@@ -69,16 +69,15 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
 
   // An anchored memory is a candidate by its keywords alone: full-text search
   // matches exact tokens and keeps 50, and neither may decide whether it is found.
-  // Once a project anchors its memories only anchors push, by default: an
-  // unanchored memory is in the session map and reached with get. A project
-  // with no anchored memory, or one that sets anchors.only false, keeps the
-  // previous lexical and semantic activation.
+  // Recall comes first: missing an essential memory costs more than an extra one,
+  // so anchors guarantee delivery and similarity may still add. A project that
+  // sets anchors.only trades that recall for determinism: only anchors push.
   let anchorsOnly = false;
   {
     const have = new Set(candidates.map(atom => atom.id));
     const anchored = store.listAnchored ? await store.listAnchored({ projectId: request.project_id, lifecycleStates: RECALL_STATES })
       : await store.listAtoms({ projectId: request.project_id, lifecycleStates: RECALL_STATES });
-    anchorsOnly = config.anchors?.only !== false && anchored.some(isAnchored);
+    anchorsOnly = config.anchors?.only === true;
     for (const atom of anchored) {
       if (have.has(atom.id) || !isAnchored(atom)) continue;
       if (request.memory_types?.length && !request.memory_types.includes(atom.memory_type)) continue;
@@ -91,17 +90,17 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   const scored = effective.map((atom, index) => {
     const anchor = matchAnchors(atom, activationText, request.files ?? []);
     const applicability = anchor.blocked.length ? { applies: false } : assessApplicability(atom, request);
-    // Anchored: pushed exactly when a keyword matched, the request names one of
-    // its anchor files, or one of its components. Its applies_to scope only
-    // narrows where it applies: a file listed there may be one most work
-    // touches, so it never pushes by itself. Similarity only orders what matched.
+    // An anchor hit (a keyword, one of its anchor files, or one of its components)
+    // delivers it at full activation. Otherwise it keeps the lexical and semantic
+    // activation every memory has, unless the project is strict (anchors.only).
     const scopeHit = anchor.files.length > 0
       || (atom.applies_to?.components ?? []).some(c => (request.components ?? []).some(x => x.toLowerCase() === c.toLowerCase()));
+    const anchorHit = isAnchored(atom) && (anchor.hits.length > 0 || scopeHit);
     const activation = !applicability.applies ? 0
-      : isAnchored(atom) ? (anchor.hits.length || scopeHit ? 1 : 0)
+      : anchorHit ? 1
       : anchorsOnly ? 0
       : Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0);
-    const reason = isAnchored(atom) && activation ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
+    const reason = anchorHit ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
     return { atom, applicability, activation, reason, similarity: semantic?.get(atom.id) ?? 0, floor: requiredActivation(atom, ACTIVATION_FLOOR),
       value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
   }).filter(c => c.activation >= c.floor)
