@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createToolHandlers } from './tools.js';
 import { CAPTURE_ORIGINS } from '../engine/contract.js';
 import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
+import { ANCHOR_HINT } from '../engine/anchors.js';
 
 const text = z.string().max(2000);
 const fact = z.union([z.string().max(200), z.boolean(), z.number().finite()]);
@@ -16,6 +17,8 @@ const proposal = z.object({
   evidence_refs: z.array(evidence).min(1).max(12), title: z.string().max(150).optional(),
   scope: z.enum(['project', 'user', 'agent', 'workflow', 'file', 'service']).optional(),
   trigger_variants: z.array(z.string().max(250)).max(8).optional(),
+  anchors: z.object({ keywords: z.array(z.string().max(60)).min(2).max(16), not_when: z.array(z.string().max(60)).max(16).optional() })
+    .describe(ANCHOR_HINT),
   applies_to: z.object({ files: z.array(z.string().max(200)).max(12).optional(),
     components: z.array(z.string().max(100)).max(12).optional(), operations: z.array(z.string().max(50)).max(8).optional() }).optional(),
   assumptions: z.array(z.object({ description: z.string().max(300), key: z.string().max(100).optional(), equals: fact.optional() })).max(8).optional(),
@@ -58,7 +61,7 @@ export function createMcpServer(options) {
     retrieve: ['Recall applicable decisions and lessons within a total estimated payload budget.', retrieval],
     get: ['Expand a memory with current evidence freshness, or inspect a host evidence ID supplied at capture. verbose=true returns the raw stored atom.',
       { id: z.string(), verbose: z.boolean().optional() }],
-    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Keep only what an agent reading the code would miss: why not the obvious approach, traps, values that look valid but are not, steps nothing enforces. Same topic_key proposes a replacement; never implies approval.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
+    propose: ['Propose reusable lessons or revisions for review, with no count limit per call or session. Write trigger, behavior_delta and why in English whatever the conversation language; other languages are refused. Keep only what an agent reading the code would miss: why not the obvious approach, traps, values that look valid but are not, steps nothing enforces. Same topic_key proposes a replacement; never implies approval. Every proposal needs anchors: the keywords that decide when it is delivered, grounded in its own text; add a trigger_variant in the language the user writes in to anchor on their words.', { proposals: z.array(proposal).min(1), session_id: z.string().max(150).optional() }],
     feedback: ['Record task outcome and supporting references; frequency and claimed success do not raise authority.', {
       id: z.string(), task_id: z.string().min(1).max(200), outcome: z.enum(['helped', 'failed', 'refuted', 'not_applicable']),
       summary: z.string().min(1).max(800), evidence_refs: z.array(evidence).max(12).optional(),

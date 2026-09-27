@@ -23,6 +23,7 @@ function proposal() {
     what: 'Durable memory needs a trigger.',
     why: 'Stops unstructured dumps.',
     topic_key: 'memory/admission/required-fields',
+    anchors: { keywords: ['durable memory', 'require trigger'] },
     evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
     retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
   };
@@ -153,5 +154,21 @@ describe('MCP propose key format', () => {
     }
     const [ok] = JSON.parse((await tools.propose({ proposals: [proposal()] })).content[0].text).proposals;
     assert.equal(ok.hint, undefined);
+  });
+
+  // The agent's path requires anchors, and a bad one is refused with the rules it broke.
+  test('a proposal without anchors, or with a bad one, is blocked with the anchor rules', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'dd-mcp-anchor-'));
+    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
+    t.after(() => store.close());
+    const tools = createToolHandlers({ store, projectId: 'demo', uiPort: 7733 });
+    const { anchors, ...bare } = proposal();
+    const [missing] = JSON.parse((await tools.propose({ proposals: [bare] })).content[0].text).proposals;
+    assert.equal(missing.decision, 'block');
+    assert.deepEqual(missing.reasons, ['anchors_required']);
+    assert.match(missing.hint, /anchors.keywords/);
+    const [bad] = JSON.parse((await tools.propose({ proposals: [{ ...proposal(), anchors: { keywords: ['durable memory', 'stamina'] } }] })).content[0].text).proposals;
+    assert.ok(bad.reasons.includes('ungrounded_anchor:stamina'));
+    assert.match(bad.hint, /must appear in the memory's own/);
   });
 });
