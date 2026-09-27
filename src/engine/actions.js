@@ -7,11 +7,12 @@ import { assertTopicKeyPath } from '../store/paths.js';
 import { HUMAN_REVIEW, planResolution } from './lifecycle.js';
 import { stampRevisionFiles, verifyReferences } from './evidence.js';
 import { cappedConfidence } from './reliability.js';
+import { validateAnchors } from './anchors.js';
 
 // An action is a request to change the store, filed by the agent (the MCP `act`
 // tool) and applied only by a person in the audit UI. Filing never changes a
 // memory: it validates, records a snapshot of every target and waits.
-export const ACTION_KINDS = ['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve'];
+export const ACTION_KINDS = ['archive', 'restore', 'delete', 'legacy', 'merge', 'split', 'retopic', 'resolve', 'anchor'];
 
 // Which states each kind may act on, how many targets and which fields it needs.
 const RULES = {
@@ -23,8 +24,19 @@ const RULES = {
   split: { states: ['active', 'contested'], min: 1, max: 1, fields: ['results'] },
   retopic: { states: ['active', 'contested'], min: 1, max: 1, fields: ['topic_key'] },
   resolve: { states: ['contested'], min: 2, max: 2, fields: ['winner', 'loser_state'] },
+  anchor: { states: ['active', 'contested'], min: 1, max: 1, fields: ['anchors'] },
 };
-const FIELDS = ['archived_reason', 'legacy_reason', 'replaced_by', 'result', 'results', 'topic_key', 'winner', 'loser_state'];
+const FIELDS = ['archived_reason', 'legacy_reason', 'replaced_by', 'result', 'results', 'topic_key', 'winner', 'loser_state',
+  'anchors', 'trigger_variants'];
+
+// What an anchor action makes of its target: the anchors it gives, and the
+// trigger variants it adds so a keyword in another language is grounded.
+function anchoredVersion(atom, fields) {
+  const clean = list => [...new Set((Array.isArray(list) ? list : []).map(text).filter(Boolean))];
+  return { ...atom, trigger_variants: clean([...(atom.trigger_variants ?? []), ...clean(fields.trigger_variants)]),
+    anchors: { keywords: clean(fields.anchors?.keywords), not_when: clean(fields.anchors?.not_when),
+      files: clean(fields.anchors?.files).map(file => file.replaceAll('\\', '/')) } };
+}
 const text = value => sanitizeText(value ?? '').trim();
 
 // What a target looked like when the action was filed; applying refuses any change.
@@ -82,6 +94,13 @@ async function validate(raw, { store, projectId }) {
     if (raw.loser_state === 'legacy' && !text(raw.legacy_reason)) return 'field_required:legacy_reason';
   }
   if (raw.kind === 'legacy' && raw.replaced_by && !(await store.getAtom(String(raw.replaced_by), projectId))) return `target_not_found:${raw.replaced_by}`;
+  if (raw.kind === 'anchor') {
+    // The same rules a proposal's anchors meet, checked against the memory they would anchor.
+    const anchored = anchoredVersion(atoms[0], raw);
+    if (anchored.trigger_variants.length > 12) return 'too_many_trigger_variants';
+    const reasons = validateAnchors(anchored);
+    if (reasons.length) return `anchors_not_admissible:${reasons.join(',')}`;
+  }
   return { targets, atoms, rationale };
 }
 
@@ -181,6 +200,11 @@ const BUILD = {
       lifecycle_state: 'active', contested_at: null, review: { source: 'local_ui', reviewed_at: new Date().toISOString(), rationale } };
     return { atoms: [{ ...source, lifecycle_state: 'superseded', superseded_by: moved.id, contested_at: null }, moved],
       relations: [{ source_atom_id: moved.id, relation_type: 'supersedes', target_atom_id: source.id }] };
+  },
+  // Anchors decide delivery, not what the memory says: it keeps its id, content,
+  // authority and evidence, so deliveries and references to it stay valid.
+  async anchor({ atoms: [source], fields, rationale, now }) {
+    return { atoms: [{ ...anchoredVersion(source, fields), review: { source: 'local_ui', reviewed_at: now, rationale } }] };
   },
   async resolve({ fields, targets, store, projectId, rationale, now }) {
     const loser = targets.find(t => t !== fields.winner);

@@ -9,10 +9,12 @@ import { RECALL_STATES } from '../store/paths.js';
 // `topK` memories are considered, and a margin below `floor` contributes
 // nothing, which is what lets an unrelated request abstain.
 //
-// Chosen by a grid over the supermem benchmark (2026-09-22): must-recall holds at
-// 0.83 across floor 0.015-0.04; 0.04 is the widest setting that keeps every
-// unrelated task quiet. Lower floor trades silence for orbit recall.
-export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.04, full: 0.07, topK: 5 });
+// Recall comes first: an extra memory costs less than a missing essential one.
+// Re-gridded on the Patriark and supermem benchmarks with the hubness discount
+// (2026-09-26): 0.035 raised Patriark must-recall 0.29 -> 0.32 and orbit recall
+// 0.09 -> 0.15 at the same precision and quiet negatives as 0.04; 0.03 broke
+// the negatives in both projects.
+export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.035, full: 0.065, topK: 5 });
 
 // Tool calls arrive as `Tool {json}`; the keys and punctuation are noise to an
 // embedding model, the paths and strings are the content.
