@@ -1,5 +1,5 @@
 {
-  "id": "a6d05274-6b25-4a62-9c5a-d7ac9739bdd8",
+  "id": "fcd59425-020d-4cde-86f2-65c15b4c1032",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -22,6 +22,17 @@
     "components": [],
     "operations": []
   },
+  "anchors": {
+    "keywords": [
+      "sentinel key",
+      "session_deliveries",
+      "__session_context__",
+      "deduplicate",
+      "new table"
+    ],
+    "not_when": [],
+    "files": []
+  },
   "assumptions": [],
   "revisit_when": [],
   "alternatives": [],
@@ -35,6 +46,11 @@
       "source_type": "file",
       "source_ref": "src/store/telemetry.js",
       "summary": "session_deliveries's wasDelivered/markDelivered/clearSessionDeliveries have no foreign key on atom_id, so a sentinel string is a safe reuse."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -49,7 +65,7 @@
   "confidence": 0.765,
   "registry_key_id": "3bd3efaa-811d-4cfa-999e-f6a51d7a4b34",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:36:28.817Z",
+    "checked_at": "2026-09-27T14:57:13.816Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -57,7 +73,7 @@
         "summary": "buildSessionStartContext uses SESSION_CONTEXT_ATOM_ID as a sentinel row in session_deliveries to dedupe the advisory blob across reconnects.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "6df9db99e7a1a5fd44756d70117441527152deb42722f274d8ee5c1b1c955594"
+        "hash": "66e53a0fecd256a9aff0bfd94f736c7fb307bc3e30ecfc7668b9827da091675e"
       },
       {
         "source_type": "file",
@@ -65,18 +81,26 @@
         "summary": "session_deliveries's wasDelivered/markDelivered/clearSessionDeliveries have no foreign key on atom_id, so a sentinel string is a safe reuse.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "d0c1641acbb89d922194ee6dc02b069dd5fd2e3582cee70ff5d6a6273fa76619"
+        "hash": "4758947f7a68db11978216841b28745f9b772b159f88a0c18ce5be66ba5bc0dc"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 2,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T10:14:26.360Z",
-  "updated_at": "2026-09-19T10:36:28.820Z",
+  "replaces": "a6d05274-6b25-4a62-9c5a-d7ac9739bdd8",
+  "created_at": "2026-09-27T02:37:09.635Z",
+  "updated_at": "2026-09-27T14:57:13.821Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:36:28.817Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.816Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

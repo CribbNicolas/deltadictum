@@ -1,5 +1,5 @@
 {
-  "id": "4cc886b4-d79a-46a1-85bb-b68c944fcf5c",
+  "id": "694679b9-3851-4395-a426-b298f7c7ba96",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
@@ -18,11 +18,23 @@
     "dead-code",
     "auto-accept"
   ],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Cambiar la politica de admision o auto_admit"
+  ],
   "applies_to": {
     "files": [],
     "components": [],
     "operations": []
+  },
+  "anchors": {
+    "keywords": [
+      "auto_admit",
+      "admission policy",
+      "auto-promotion",
+      "politica de admision"
+    ],
+    "not_when": [],
+    "files": []
   },
   "assumptions": [],
   "revisit_when": [],
@@ -37,6 +49,11 @@
       "source_type": "tool_output",
       "source_ref": "grep -rn auto_admit --include=*.js --include=*.md . (excluding node_modules, .dd)",
       "summary": "Only match is the declaration itself in src/store/paths.js -- no consumer anywhere."
+    },
+    {
+      "source_type": "tool_output",
+      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
     }
   ],
   "authority": "validated",
@@ -51,7 +68,7 @@
   "confidence": 0.765,
   "registry_key_id": "0e53a905-c884-47a6-b2f4-e6d80ceb357b",
   "evidence_state": {
-    "checked_at": "2026-09-19T10:36:10.016Z",
+    "checked_at": "2026-09-27T14:57:13.448Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -59,7 +76,7 @@
         "summary": "DEFAULT_CONFIG.auto_admit declaration, lines ~70-76.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "d9b172b29abd2183117567b67789605f2312554abc6ebf5bf63375d2264a57c1"
+        "hash": "a9caf37868475dc236d24376bab2c1626312268a607b1727506063eac6cc8050"
       },
       {
         "source_type": "tool_output",
@@ -67,17 +84,25 @@
         "summary": "Only match is the declaration itself in src/store/paths.js -- no consumer anywhere.",
         "status": "unverified",
         "provenance": "agent_claim"
+      },
+      {
+        "source_type": "tool_output",
+        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
+        "status": "unverified",
+        "provenance": "agent_claim"
       }
     ],
     "verified_count": 1,
     "support": "human_reviewed"
   },
-  "created_at": "2026-09-19T08:06:39.323Z",
-  "updated_at": "2026-09-19T10:36:10.019Z",
+  "replaces": "4cc886b4-d79a-46a1-85bb-b68c944fcf5c",
+  "created_at": "2026-09-27T02:37:09.764Z",
+  "updated_at": "2026-09-27T14:57:13.455Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-19T10:36:10.016Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-27T14:57:13.448Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }
