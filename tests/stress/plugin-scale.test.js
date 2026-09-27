@@ -232,6 +232,7 @@ describe(`plugin stress (${CORPUS} atoms)`, { timeout: 120000 }, () => {
       what: 'The collision check precedes the write.',
       why: 'A decision cannot be routed on a value the write produces.',
       topic_key: 'memory/demo/collision-cost',
+      anchors: { keywords: ['collision cost', 'large store'] },
       evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/write.js', summary: 'Write path' }],
       retrieval_forms: { micro: 'Check collisions first.', short: 'Route the write on the collision result.' },
     }] }));
