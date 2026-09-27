@@ -75,9 +75,23 @@ export function anchorTerms(atom) {
   return [...new Set(anchorsOf(atom).keywords.map(normalizeText).filter(Boolean))];
 }
 
+// A knowledge file can be edited by hand, past validation, so delivery uses only
+// the entries that would pass it. Checked once per atom object: the store's
+// anchored list is cached, so the hot path pays for this once per change.
+const usable = new WeakMap();
+function usableAnchors(atom) {
+  if (atom && typeof atom === 'object' && usable.has(atom)) return usable.get(atom);
+  const { keywords, not_when } = anchorsOf(atom);
+  const grounding = groundingText(atom ?? {});
+  const result = { keywords: keywords.filter(entry => !entryProblems(entry, true, grounding).length),
+    not_when: not_when.filter(entry => !entryProblems(entry, false, grounding).length) };
+  if (atom && typeof atom === 'object') usable.set(atom, result);
+  return result;
+}
+
 export function matchAnchors(atom, text) {
   const haystack = words(text);
-  const { keywords, not_when } = anchorsOf(atom);
+  const { keywords, not_when } = usableAnchors(atom);
   const find = list => list.filter(entry => containsPhrase(haystack, words(entry)));
   return { hits: find(keywords).map(normalizeText), blocked: find(not_when).map(normalizeText) };
 }
@@ -96,20 +110,26 @@ export function validateAnchors(atom) {
   if (keywords.length > MAX_KEYWORDS) reasons.push('too_many_anchor_keywords');
   if (not_when.length > MAX_KEYWORDS) reasons.push('too_many_anchor_exclusions');
   const grounding = groundingText(atom);
-  const probes = GENERIC_REQUESTS.map(words);
-  for (const entry of [...keywords, ...not_when]) {
-    const w = words(entry);
-    const label = normalizeText(entry);
-    if (w.length > MAX_WORDS) { reasons.push(`long_anchor:${label}`); continue; }
-    if (w.every(functionWord)) { reasons.push(`stopword_anchor:${label}`); continue; }
-    if (w.length === 1 && w[0].length < 3) { reasons.push(`short_anchor:${label}`); continue; }
-    if (!keywords.includes(entry)) continue; // Exclusions only need to be well formed.
-    if (w.length === 1 && GENERIC_TERMS.has(w[0])) reasons.push(`generic_anchor:${label}`);
-    if (!containsPhrase(grounding, w)) reasons.push(`ungrounded_anchor:${label}`);
-    const fired = probes.find(probe => containsPhrase(probe, w));
-    if (fired) reasons.push(`anchor_fires_on_generic_request:${label}`);
-  }
+  for (const entry of keywords) reasons.push(...entryProblems(entry, true, grounding));
+  for (const entry of not_when) reasons.push(...entryProblems(entry, false, grounding));
   return [...new Set(reasons)];
+}
+
+const PROBES = GENERIC_REQUESTS.map(words);
+// What is wrong with one keyword (isKeyword) or one not_when phrase.
+function entryProblems(entry, isKeyword, grounding) {
+  const w = words(entry);
+  const label = normalizeText(entry);
+  if (!w.length) return [`stopword_anchor:${label}`];
+  if (w.length > MAX_WORDS) return [`long_anchor:${label}`];
+  if (w.every(functionWord)) return [`stopword_anchor:${label}`];
+  if (w.length === 1 && w[0].length < 3) return [`short_anchor:${label}`];
+  if (!isKeyword) return []; // Exclusions only need to be well formed.
+  const problems = [];
+  if (w.length === 1 && GENERIC_TERMS.has(w[0])) problems.push(`generic_anchor:${label}`);
+  if (!containsPhrase(grounding, w)) problems.push(`ungrounded_anchor:${label}`);
+  if (PROBES.some(probe => containsPhrase(probe, w))) problems.push(`anchor_fires_on_generic_request:${label}`);
+  return problems;
 }
 
 // Keywords this memory shares with COLLISION_AT or more other live memories.

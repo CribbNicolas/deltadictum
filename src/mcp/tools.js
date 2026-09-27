@@ -9,7 +9,7 @@ import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { callRunningStore } from '../hooks/bridge.js';
 import { lexicalMode, residentNotice } from '../hooks/session-start.js';
 import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
-import { ANCHOR_HINT, anchorCollisions } from '../engine/anchors.js';
+import { ANCHOR_HINT, anchorCollisions, isAnchored, validateAnchors } from '../engine/anchors.js';
 
 const jsonResult = data => ({ content: [{ type: 'text', text: JSON.stringify(data) }] });
 const errorResult = message => ({ isError: true, content: [{ type: 'text', text: message }] });
@@ -122,7 +122,17 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
         revision_requests: await openRevisionRequests(store, projectId),
         archive_review: { archived, threshold: config.archive_review_at, due: archived > config.archive_review_at } };
     },
-    async health() { return store.assessDeterioration(projectId); },
+    async health() {
+      const live = await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] });
+      // Unanchored memories are reached by similarity alone; anchors that no longer
+      // pass validation (the rules tightened, or a file was edited by hand) are named.
+      const collisions = new Map();
+      for (const atom of live) for (const c of anchorCollisions(atom, live)) collisions.set(c.keyword, c.memories + 1);
+      return { ...(await store.assessDeterioration(projectId)), anchors: {
+        live: live.length, unanchored: live.filter(atom => !isAnchored(atom)).map(atom => atom.topic_key),
+        invalid: live.filter(isAnchored).map(atom => ({ topic_key: atom.topic_key, reasons: validateAnchors(atom) })).filter(r => r.reasons.length),
+        shared_keywords: [...collisions].map(([keyword, memories]) => ({ keyword, memories })) } };
+    },
   };
   return Object.fromEntries(Object.entries(handlers).map(([name, handler]) => [name, async args => {
     try {
