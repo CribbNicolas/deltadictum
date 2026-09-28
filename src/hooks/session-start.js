@@ -44,7 +44,8 @@ const SESSION_CONTEXT_ATOM_ID = '__session_context__';
 // never called retrieve or propose unasked. Claude Code also defers MCP tools
 // to names only, so the line says they may need loading first.
 export const PULL_GUIDANCE = 'DD - Pushed knowledge covers what an anchor or similarity matched in the prompt or tool call. The memory map '
-  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key and this session_id. Call `propose` '
+  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key and this session_id. When a request in '
+  + 'another language brings nothing, call `retrieve` with the task described in English. Call `propose` '
   + 'when you learn something an agent reading the code would miss. If the dd tools are listed by name only, load them first.';
 
 // The map is the one delivery every host supports (session context), and the

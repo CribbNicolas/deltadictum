@@ -128,7 +128,16 @@ export async function fileActions(rawActions, { store, projectId, sessionId, cap
     const warnings = action.kind === 'anchor'
       ? anchorWarnings(anchoredVersion(checked.atoms[0], raw), await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] }))
       : [];
-    results.push({ id: action.id, kind: action.kind, status: 'pending', ...(warnings.length ? { warnings } : {}) });
+    // INV-04's one exception: anchors and trigger variants decide when a memory is
+    // delivered, not what it says, and have passed validation above. Unless the
+    // project turns it off, an anchor action applies itself; the log says so.
+    let status = 'pending';
+    if (action.kind === 'anchor' && (await store.loadConfig()).auto_apply_retrieval_metadata !== false) {
+      await applyAction(action.id, { store, projectId, actor: HUMAN_REVIEW, actorRef: 'auto:retrieval-metadata',
+        rationale: 'Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged.' });
+      status = 'applied';
+    }
+    results.push({ id: action.id, kind: action.kind, status, ...(warnings.length ? { warnings } : {}) });
   }
   return results;
 }
@@ -247,7 +256,7 @@ async function settledPeers(before, written, { store, projectId }) {
   return settled;
 }
 
-export async function applyAction(id, { store, projectId, actor, rationale } = {}) {
+export async function applyAction(id, { store, projectId, actor, rationale, actorRef = 'local_ui' } = {}) {
   requireReview(actor);
   return store.withWriteLock(async () => {
     const action = await store.getAction(id);
@@ -272,7 +281,7 @@ export async function applyAction(id, { store, projectId, actor, rationale } = {
         winner_atom_id: action.fields.winner, reasons: ['human_reviewed'] });
     }
     await store.logAction({ project_id: projectId, action_id: id, kind: action.kind, targets: action.targets,
-      outcome: 'applied', actor_ref: 'local_ui' });
+      outcome: 'applied', actor_ref: actorRef });
     return { applied: true, kind: action.kind, changed: action.targets };
   });
 }
