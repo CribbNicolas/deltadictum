@@ -35,7 +35,8 @@
       "tool outcomes",
       "tool_response",
       "interrupted",
-      "hook_event_name"
+      "hook_event_name",
+      "PostToolUse"
     ],
     "not_when": [],
     "files": []
@@ -116,11 +117,11 @@
   },
   "replaces": "354338bf-10ee-40df-998c-744c227affd4",
   "created_at": "2026-09-27T02:37:09.061Z",
-  "updated_at": "2026-09-27T14:57:33.657Z",
+  "updated_at": "2026-09-28T02:21:32.810Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:33.649Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.803Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }

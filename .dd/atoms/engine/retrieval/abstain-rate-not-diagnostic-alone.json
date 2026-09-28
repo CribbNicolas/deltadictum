@@ -19,7 +19,8 @@
     "diagnostic-methodology"
   ],
   "trigger_variants": [
-    "Investigar una tasa de abstencion alta en la telemetria"
+    "Investigar una tasa de abstencion alta en la telemetria",
+    "El agente no parece estar llamando a DD ni pedir memorias durante el trabajo"
   ],
   "applies_to": {
     "files": [],
@@ -38,7 +39,9 @@
       "abstention rate",
       "abstention",
       "abstained",
-      "abstencion"
+      "abstencion",
+      "pedir memorias",
+      "llamando a dd"
     ],
     "not_when": [],
     "files": []
@@ -93,11 +96,11 @@
   },
   "replaces": "6829e2af-b30e-4434-bcc6-23d2af753f73",
   "created_at": "2026-09-27T02:37:09.451Z",
-  "updated_at": "2026-09-27T14:57:13.985Z",
+  "updated_at": "2026-09-28T02:21:32.776Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:13.981Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.769Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }

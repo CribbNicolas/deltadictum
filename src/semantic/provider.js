@@ -15,6 +15,7 @@ import { RECALL_STATES } from '../store/paths.js';
 // 0.09 -> 0.15 at the same precision and quiet negatives as 0.04; 0.03 broke
 // the negatives in both projects.
 export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.035, full: 0.065, topK: 5 });
+export const PROMPT_FLOOR_OFFSET = 0.01;
 
 // Tool calls arrive as `Tool {json}`; the keys and punctuation are noise to an
 // embedding model, the paths and strings are the content.
@@ -84,8 +85,15 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     const sims = new Map([...vectors].map(([id, vector]) => [id, cosine(query, vector)]));
     // semantic.floor in .dd/config.json trades silence for recall per project:
     // terse memories need a lower floor to be reached at all.
-    const floor = Number((await deps.store.loadConfig()).semantic?.floor);
-    const tuned = Number.isFinite(floor) && floor >= 0 && floor < 1 ? { ...calibration, floor, full: floor + (calibration.full - calibration.floor) } : calibration;
+    let floor = Number((await deps.store.loadConfig()).semantic?.floor);
+    if (!Number.isFinite(floor) || floor < 0 || floor >= 1) floor = calibration.floor;
+    // A prompt says what the person is after; a tool call is mostly paths and
+    // code. On the golden sets' tuning halves (2026-09-28), a floor 0.01 lower for
+    // prompts raised must-recall in both projects (0.54 -> 0.57, 0.43 -> 0.53);
+    // raising it for tool calls cost supermem recall, and adding the previous
+    // prompt as context helped one project and hurt the other.
+    if (request.source === 'prompt') floor = Math.max(0, floor - PROMPT_FLOOR_OFFSET);
+    const tuned = { ...calibration, floor, full: floor + (calibration.full - calibration.floor) };
     return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned, hubOf(request.project_id, vectors)) });
   }
   // Load the model before any project asks, so a fresh resident is ready sooner.

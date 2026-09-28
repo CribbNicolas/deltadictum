@@ -3,33 +3,49 @@
 Open work on delivery. Delivery favours recall: an extra memory is cheaper than a missing essential
 one, so every item is judged first by what it adds to recall.
 
-## Golden set
+## Golden sets
 
-Project-Patriark's golden set is `C:\dev\Project-Patriark\.dd\golden.json`: 100 real events (57
-with expected memories, 43 where nothing should be delivered), labeled 2026-09-27 by the agent at
-the user's request from the event text and the memory catalogue, without looking at what DD
-delivered. A person should spot-check it; the agent that labeled it also wrote the anchors.
+Both projects have a golden set of 100 real events, kept outside git in the project's local data
+directory (`npm run golden` writes `<data dir>/golden.json`; the prompts are real and this repository
+is public):
 
-With the defaults of 0.5.1 (semantic floor 0.035 now actually applied, budget 800):
+- Project-Patriark: `~/.claude/plugins/data/dd-deltadictum/project-patriark-<key>/golden.json`
+- supermem: `~/.dd-data/supermem-<key>/golden.json`
+
+Labeled 2026-09-27/28 by the agent at the user's request, from the event text and the memory
+catalogue, without looking at what DD delivered. A person should spot-check them. Each is split by
+task number: odd tasks (dev) tune, even tasks (test) measure. Changes and anchor updates were chosen
+on dev only; the test half is the honest number.
+
+Test half, 0.5.1 -> 0.6.0 (prompt floor, content-free prompts, meta tools, anchor updates):
 
 | | must-recall | events with every must | negatives quiet | strict |
 |---|---|---|---|---|
-| 0.5.0 defaults (0.04, 600) | 0.45 | 21/57 | 27/43 | 34% |
-| 0.5.1 defaults (0.035, 800) | 0.59 | 29/57 | 26/43 | 33% |
+| Patriark 0.5.1 | 0.57 | 13/28 | 12/22 | 28% |
+| Patriark 0.6.0 | 0.68 | 16/28 | 15/22 | 38% |
+| supermem 0.5.1 | 0.36 | 9/29 | 18/21 | 44% |
+| supermem 0.6.0 | 0.45 | 10/29 | 15/21 | 38% |
 
-## Next, measured on the golden set
+The dev half reached 0.91 (Patriark) and 0.80 (supermem): anchors fix what they target, and
+generalise only partly. Extending the golden sets with fresh events, labeled the same way, keeps the
+test half honest as anchors grow.
 
-- **Prompts miss; tool calls add noise.** 19 of the 28 events with a missed memory are prompts
-  (design conversations in Spanish naming no anchor: the map generator, randomness, dice), and 15
-  of the 17 noisy negatives are tool calls on central files (`architecture/core/engine-independent`,
-  `ui/player-menu/sections`, `gameplay/core/dice-resolution-plan`). Candidates: session context in
-  the query for prompts (the last prompts with content), and a stricter semantic floor for tool
-  calls than for prompts.
+## Next
+
+- **Spot-check the labels.** Both sets were labeled by the agent that wrote the anchors.
 - **Measure the pull path.** The bench scores only what is pushed. Replay golden events with a model
   that reads the session memory map and calls `get`, and score what it pulls.
-- **Embedding model benchmark.** Bench e5-small against larger models on the golden set. A first
-  pass (2026-09-26) found e5-base slightly better (Patriark AUC 0.28 -> 0.36) and e5-large and
+- **Embedding model benchmark.** Bench e5-small against larger models on the golden sets' test halves.
+  A first pass (2026-09-26) found e5-base slightly better (Patriark AUC 0.28 -> 0.36) and e5-large and
   bge-m3 worse at separating off-topic requests, at 1.7x the resident memory.
+- **Session context, again.** Adding the previous prompt to a prompt's query helped Patriark (+2
+  complete events on dev) and hurt supermem (-1), with more noise in both; revisit with a better way
+  to weigh it (for example, only when the prompt itself is short).
+- **Old test data.** Tests now write under a temporary data base (`tests/helpers/isolate-data.js`),
+  but earlier runs left about 260 `alpha-*`, `beta-*`, `prompt-*`, `dd-mcp-*`, `dd-stress-*` and
+  `tmp-*` directories in `~/.dd-data`. Delete them once the user confirms. Earlier ad-hoc scripts also
+  wrote synthetic prompts into supermem's real telemetry; golden extraction treats requests that
+  differ only in numbers as one.
 
 ## Needs the user
 

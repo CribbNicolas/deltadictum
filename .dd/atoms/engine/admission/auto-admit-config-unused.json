@@ -19,7 +19,8 @@
     "auto-accept"
   ],
   "trigger_variants": [
-    "Cambiar la politica de admision o auto_admit"
+    "Cambiar la politica de admision o auto_admit",
+    "Por que las memorias activas o candidatas no dependen de auto_admit"
   ],
   "applies_to": {
     "files": [],
@@ -31,7 +32,8 @@
       "auto_admit",
       "admission policy",
       "auto-promotion",
-      "politica de admision"
+      "politica de admision",
+      "memorias activas"
     ],
     "not_when": [],
     "files": []
@@ -98,11 +100,11 @@
   },
   "replaces": "4cc886b4-d79a-46a1-85bb-b68c944fcf5c",
   "created_at": "2026-09-27T02:37:09.764Z",
-  "updated_at": "2026-09-27T14:57:13.455Z",
+  "updated_at": "2026-09-28T02:21:32.671Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:13.448Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.665Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }
