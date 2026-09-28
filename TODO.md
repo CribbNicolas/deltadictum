@@ -86,11 +86,10 @@ test half honest as anchors grow.
   revisit it.
 - **Rejected: a cross-encoder reranker.** `bge-reranker-v2-m3` took 2.7 s per event and 778 MB, and
   moved AUC in opposite directions on the two sets (recorded in `plugin-constraints.md`, L3).
-- **Old test data.** Tests now write under a temporary data base (`tests/helpers/isolate-data.js`),
-  but earlier runs left about 260 `alpha-*`, `beta-*`, `prompt-*`, `dd-mcp-*`, `dd-stress-*` and
-  `tmp-*` directories in `~/.dd-data`. Delete them once the user confirms. Earlier ad-hoc scripts also
-  wrote synthetic prompts into supermem's real telemetry; golden extraction treats requests that
-  differ only in numbers as one.
+- **Old test data: deleted 2026-09-28.** The 259 `alpha-*`, `beta-*`, `prompt-*`, `dd-mcp-*`,
+  `dd-stress-*` and `tmp-*` directories left in `~/.dd-data` by earlier test runs are gone. Earlier
+  ad-hoc scripts also wrote synthetic prompts into supermem's real telemetry; golden extraction treats
+  requests that differ only in numbers as one.
 
 ## Needs the user
 
