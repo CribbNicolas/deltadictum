@@ -256,7 +256,9 @@ When the first message says DD is inactive, check in this order:
    port range 7733-7742 or a read-only `~/.dd-data` are the usual causes.
 
 `DD_RESIDENT=0` never starts one, which leaves DD inactive. `DD_RETRIEVAL=lexical` runs retrieval without
-the model and exists only for tests and evaluation.
+the model and exists only for tests and evaluation. `DD_EMBED_MODEL=multilingual-e5-base`, set where the
+resident starts, loads the larger e5 model instead: it tied e5-small on the golden sets for about 175 MB
+more memory, so it is an option, not the default. Restart the resident after changing it.
 
 ## Security boundary
 
