@@ -14,7 +14,9 @@
   "why": "Measured 2026-09-22: the old value-per-token gate capped every memory near 50 tokens, so reviewed advice longer than a sentence never injected; one ~470-token micro form filled the pack alone. The headline fallback and the value floor fixed both, verified by tests/engine/cognition/retrieval-reach.test.js and the task benchmark.",
   "tags": [],
   "trigger_variants": [
-    "Cuanto trae retrieve: el token budget o budget de tokens y los umbrales"
+    "Cuanto trae retrieve: el token budget o budget de tokens y los umbrales",
+    "How many memories does retrieve return",
+    "Cuantas memorias devuelve retrieve"
   ],
   "applies_to": {
     "files": [
@@ -99,11 +101,11 @@
   },
   "replaces": "297bd600-5cd3-4ba2-a067-3636e5145ea3",
   "created_at": "2026-09-27T02:37:09.265Z",
-  "updated_at": "2026-09-28T02:21:32.916Z",
+  "updated_at": "2026-09-28T06:47:11.407Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T02:21:32.910Z",
-    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
+    "reviewed_at": "2026-09-28T06:47:11.402Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

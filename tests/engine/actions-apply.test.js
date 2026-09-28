@@ -138,6 +138,7 @@ test('reject removes the action and logs it', async t => {
 // person applies them in the audit UI, and the memory keeps its id.
 test('anchor adds validated anchors and grounding variants to the same memory', async t => {
   const s = await store(t);
+  await s.saveConfig({ ...(await s.loadConfig()), auto_apply_retrieval_metadata: false });
   await s.putAtom(atom('a1', 'active', { title: 'Endurance sets travel range', trigger: 'when designing the Endurance attribute',
     applies_to: { files: ['doc/GDD-05.md'], components: [], operations: [] } }));
   const id = await file(s, { kind: 'anchor', targets: ['a1'], trigger_variants: ['Diseñar la Resistencia del personaje'],
@@ -164,6 +165,7 @@ test('an anchor action with a bad anchor is refused when filed, with the reasons
 
 test('filing an anchor action warns when its file already anchors several memories', async t => {
   const s = await store(t);
+  await s.saveConfig({ ...(await s.loadConfig()), auto_apply_retrieval_metadata: false });
   const shared = 'src/domain/world/WorldState.cs';
   for (const i of [1, 2, 3]) await s.putAtom(atom(`w${i}`, 'active', { applies_to: { files: [shared], components: [], operations: [] },
     anchors: { keywords: [`kw${i}a`, `kw${i}b`], not_when: [], files: [shared] } }));
@@ -200,4 +202,23 @@ test('an action whose target has no live revision cannot be retargeted', async t
   const id = await file(s, { kind: 'archive', targets: ['gone'], archived_reason: 'Fixed.' });
   await s.putAtom(atom('gone', 'archived'));
   await assert.rejects(retargetAction(id, { store: s, projectId: 'demo', actor: HUMAN_REVIEW }), /no_live_revision:gone/);
+});
+
+// INV-04's one exception: anchors and trigger variants decide delivery, not what
+// a memory says, so a valid anchor action applies itself unless the project opts
+// out. The action log names it as automatic.
+test('an anchor action applies itself unless the project turns that off', async t => {
+  const s = await store(t);
+  await s.putAtom(atom('m1', 'active', { title: 'Endurance sets travel range', trigger: 'when designing the Endurance attribute' }));
+  const config = await s.loadConfig();
+  await s.saveConfig({ ...config, auto_apply_retrieval_metadata: true });
+  const [auto] = await fileActions([{ kind: 'anchor', targets: ['m1'], rationale: 'Anchor it.', trigger_variants: ['Diseñar la Resistencia'],
+    anchors: { keywords: ['endurance', 'resistencia'] } }], { store: s, projectId: 'demo' });
+  assert.equal(auto.status, 'applied');
+  assert.deepEqual((await s.getAtom('m1', 'demo')).anchors.keywords, ['endurance', 'resistencia']);
+  assert.equal((await s.listActionLog('demo'))[0].actor_ref, 'auto:retrieval-metadata');
+  await s.saveConfig({ ...(await s.loadConfig()), auto_apply_retrieval_metadata: false });
+  const [held] = await fileActions([{ kind: 'anchor', targets: ['m1'], rationale: 'Anchor it.', anchors: { keywords: ['endurance', 'travel range'] } }],
+    { store: s, projectId: 'demo' });
+  assert.equal(held.status, 'pending');
 });

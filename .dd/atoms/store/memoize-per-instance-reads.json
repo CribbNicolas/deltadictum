@@ -13,7 +13,10 @@
   "what": "Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes.",
   "why": "Found while auditing PreToolUse cost: reading src/engine/project-context.js and src/hooks/pre-tool.js alone made loadConfig look like a single cheap read, but src/project.js's openStore, src/engine/retrieve.js, and src/store/telemetry.js's prune() each called it independently, so one PreToolUse invocation re-read and re-merged .dd/config.json from disk 3+ times before this was fixed.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Make the hooks faster by reading config once",
+    "Hacer los hooks mas rapidos leyendo la config una vez"
+  ],
   "applies_to": {
     "files": [
       "src/store/git-file-store.js",
@@ -113,11 +116,11 @@
   },
   "replaces": "f1d79d20-3aa7-428c-94dc-e15dd9b29693",
   "created_at": "2026-09-27T02:37:09.668Z",
-  "updated_at": "2026-09-27T14:57:13.729Z",
+  "updated_at": "2026-09-28T06:47:11.640Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:13.725Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.635Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

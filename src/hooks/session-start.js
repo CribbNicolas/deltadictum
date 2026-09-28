@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { INSTALL_LOG, manualInstallCommand } from '../deps.js';
 import { sessionBanner, uiPointer } from './banner.js';
 import { orientProject } from '../engine/project-context.js';
-import { AMBIENT_TAG, ambientRevision } from '../engine/retrieve.js';
+import { AMBIENT_TAG, ambientRevision, whenLine } from '../engine/retrieve.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { AUTHORITY_WEIGHT } from '../engine/ranking.js';
 import { estimateTokens } from '../engine/budget.js';
@@ -44,16 +44,20 @@ const SESSION_CONTEXT_ATOM_ID = '__session_context__';
 // never called retrieve or propose unasked. Claude Code also defers MCP tools
 // to names only, so the line says they may need loading first.
 export const PULL_GUIDANCE = 'DD - Pushed knowledge covers what an anchor or similarity matched in the prompt or tool call. The memory map '
-  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key and this session_id. Call `propose` '
+  + 'below lists every memory: before acting on anything a line covers, call the dd `get` tool with its topic_key and this session_id. When a request in '
+  + 'another language brings nothing, call `retrieve` with the task described in English. Call `propose` '
   + 'when you learn something an agent reading the code would miss. If the dd tools are listed by name only, load them first.';
 
 // The map is the one delivery every host supports (session context), and the
 // agent reading it matches meaning and language far better than any threshold.
 // Over budget it groups by domain rather than dropping a memory.
-export const MAP_BUDGET = 3000;
+export const MAP_BUDGET = 5000;
+const MAP_LINE_CHARS = 100;
 export function memoryMap(atoms, { budget = MAP_BUDGET } = {}) {
   const sorted = [...atoms].sort((a, b) => a.topic_key.localeCompare(b.topic_key));
-  const lines = sorted.map(a => `${a.topic_key} — ${a.title}`);
+  // A line says when the memory applies, as a skill's description does: the agent
+  // decides from it whether to pull the memory, and a title rarely says when.
+  const lines = sorted.map(a => `${a.topic_key} — ${whenLine(a, MAP_LINE_CHARS)}`);
   const flat = [`DD - Memory map (${sorted.length}):`, ...lines].join('\n');
   if (estimateTokens(flat) <= budget) return flat;
   const domains = new Map();
@@ -63,6 +67,13 @@ export function memoryMap(atoms, { budget = MAP_BUDGET } = {}) {
   }
   const grouped = [...domains].map(([domain, topics]) => `${domain} (${topics.length}): ${topics.join(', ')}`);
   return [`DD - Memory map (${sorted.length}, by domain):`, ...grouped].join('\n');
+}
+
+// Near misses the agent may pull: one line each, after the pushed memories.
+export function pointerPack(pointers) {
+  if (!pointers?.length) return null;
+  return ['DD - Possibly relevant, not pushed (call the dd `get` tool with the topic_key if one applies):',
+    ...pointers.map(p => `- ${p.line}`)].join('\n');
 }
 
 export function microPack(memories) {

@@ -13,7 +13,10 @@
   "what": "Before trusting an in-memory cache (e.g. a property set on the `store` object) to save work across hook invocations, check whether the code path is reached only through an ephemeral per-event process (PreToolUse, UserPromptSubmit, PostToolUse, Stop via run.js) or through a long-lived process (the MCP server in src/mcp/server.js, or the audit UI). A cache written on `store` only pays off in the long-lived case; in the ephemeral case a fresh store is constructed every hook event, so the cache always misses and the guarded work (stat/readdir/readFile, hashing, etc.) still runs every time. Concretely: `projectContext()` in src/engine/project-context.js sets `store.projectContextCache` (lines 23, 54), but every PreToolUse call reopens a new store in a new Node process, so it never hits outside the MCP/UI process — every tool call still pays 6 stat() + 1 readdir() + up to 5 readFile() calls. If a cache needs to survive across ephemeral hook processes, it has to be persisted in the SQLite derived index (already the pattern used by loadConfig), not just kept as a JS object property.",
   "why": "L1 in docs/architecture/plugin-constraints.md states one Node process is spawned per hook event and explicitly forbids 'amortising a cost after the first call' because there is no second call in the same process. Reading src/engine/project-context.js and src/hooks/run.js together shows an in-memory cache that silently violates this: it looks like an optimization but only ever activates in the two processes (MCP server, audit UI) that persist, not in the default single-developer path with no UI/MCP server running.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Cache something to speed up the hooks",
+    "Cachear algo para acelerar los hooks"
+  ],
   "applies_to": {
     "files": [
       "src/engine/project-context.js",
@@ -112,11 +115,11 @@
   },
   "replaces": "7db33256-a35d-4d83-bcdf-39cc54ce1742",
   "created_at": "2026-09-27T02:37:09.701Z",
-  "updated_at": "2026-09-27T14:57:13.638Z",
+  "updated_at": "2026-09-28T06:47:11.086Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:13.633Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.081Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

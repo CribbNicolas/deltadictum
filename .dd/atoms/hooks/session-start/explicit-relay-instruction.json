@@ -22,7 +22,9 @@
   "trigger_variants": [
     "Why does the DD banner say 'tell the user this URL' instead of just stating the URL?",
     "Should SessionStart advisory text be phrased as fact or instruction?",
-    "El usuario pide una url que funciona para abrir la audit UI URL"
+    "El usuario pide una url que funciona para abrir la audit UI URL",
+    "Show the audit UI link to the user",
+    "Mostrarle al usuario el link de la audit UI"
   ],
   "applies_to": {
     "files": [
@@ -125,11 +127,11 @@
   },
   "replaces": "bfacc975-ab7a-4731-9aec-5f5ed579225f",
   "created_at": "2026-09-27T02:37:09.574Z",
-  "updated_at": "2026-09-28T02:21:32.741Z",
+  "updated_at": "2026-09-28T06:47:11.168Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T02:21:32.734Z",
-    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
+    "reviewed_at": "2026-09-28T06:47:11.163Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

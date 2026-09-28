@@ -13,7 +13,10 @@
   "what": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.",
   "why": "OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Change the OpenCode adapter",
+    "Cambiar el adaptador de OpenCode"
+  ],
   "applies_to": {
     "files": [
       "adapters/opencode/index.js",
@@ -103,11 +106,11 @@
   },
   "replaces": "0647b0f0-25eb-40ef-9fe7-ad3d2fc5b903",
   "created_at": "2026-09-27T02:37:09.148Z",
-  "updated_at": "2026-09-27T14:57:33.366Z",
+  "updated_at": "2026-09-28T06:47:11.369Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:33.360Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.364Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

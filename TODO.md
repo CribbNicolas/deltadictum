@@ -26,7 +26,15 @@ Test half, 0.5.1 -> 0.6.0 (prompt floor, content-free prompts, meta tools, ancho
 | supermem 0.5.1 | 0.36 | 9/29 | 18/21 | 44% |
 | supermem 0.6.0 | 0.45 | 10/29 | 15/21 | 38% |
 
-The dev half reached 0.91 (Patriark) and 0.80 (supermem): anchors fix what they target, and
+0.7.0 (hybrid RRF ranking, agreement gate on prompts, pointer tier, trigger-led memory map, and
+English and Spanish request phrasings backfilled into every memory's trigger variants):
+
+| | must-recall | events with every must | negatives quiet | reach (with pointers) |
+|---|---|---|---|---|
+| Patriark 0.7.0 | 0.69 | 16/28 | 14/22 | 0.82 |
+| supermem 0.7.0 | 0.52 | 13/29 | 13/21 | 0.62 |
+
+The dev half reached 0.94 (Patriark) and 0.80 (supermem): anchors fix what they target, and
 generalise only partly. Extending the golden sets with fresh events, labeled the same way, keeps the
 test half honest as anchors grow.
 
@@ -41,6 +49,8 @@ test half honest as anchors grow.
 - **Session context, again.** Adding the previous prompt to a prompt's query helped Patriark (+2
   complete events on dev) and hurt supermem (-1), with more noise in both; revisit with a better way
   to weigh it (for example, only when the prompt itself is short).
+- **Rejected: a cross-encoder reranker.** `bge-reranker-v2-m3` took 2.7 s per event and 778 MB, and
+  moved AUC in opposite directions on the two sets (recorded in `plugin-constraints.md`, L3).
 - **Old test data.** Tests now write under a temporary data base (`tests/helpers/isolate-data.js`),
   but earlier runs left about 260 `alpha-*`, `beta-*`, `prompt-*`, `dd-mcp-*`, `dd-stress-*` and
   `tmp-*` directories in `~/.dd-data`. Delete them once the user confirms. Earlier ad-hoc scripts also
@@ -49,6 +59,6 @@ test half honest as anchors grow.
 
 ## Needs the user
 
-- **Codex SessionStart limit.** `additionalContextLimit` for SessionStart was raised to 16000 so the
+- **Codex SessionStart limit.** `additionalContextLimit` for SessionStart was raised to 24000 so the
   memory map fits; confirm its unit and effect with `scripts/check-codex.mjs` in a project trusted in
   an interactive Codex session.

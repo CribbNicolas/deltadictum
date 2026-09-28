@@ -34,7 +34,8 @@ function proposalResult(result) {
 const HIT_FIELDS = ['id', 'memory_type', 'content', 'lifecycle_state', 'contested', 'contradicts'];
 function retrieveView(result) {
   return { abstained: result.abstained, memories: result.memories.map(hit =>
-    Object.fromEntries(HIT_FIELDS.filter(key => hit[key] !== undefined).map(key => [key, hit[key]]))) };
+    Object.fromEntries(HIT_FIELDS.filter(key => hit[key] !== undefined).map(key => [key, hit[key]]))),
+    ...(result.pointers?.length ? { pointers: result.pointers.map(p => p.line) } : {}) };
 }
 // retrieval_forms and what repeat behavior_delta/why; evidence_state repeats
 // evidence_refs plus hashes. Only each reference's verification status is new.
@@ -66,7 +67,8 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
       if (bridged && !bridged.error) return retrieveView(bridged);
       if (!lexicalMode()) return { error: { code: 503, message: bridged?.error?.message ?? residentNotice({ state: 'unreachable' }) } };
       const map = await projectContext(store);
-      const result = await retrieveMemories({ ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
+      // An explicit retrieve states what the agent is after, as a prompt does.
+      const result = await retrieveMemories({ source: 'prompt', ...request, project_id: projectId, facts: { ...request.facts, ...map.facts } }, { store });
       return result.error ? result : retrieveView(result);
     },
     async get({ id, verbose = false, session_id: sessionId }) {

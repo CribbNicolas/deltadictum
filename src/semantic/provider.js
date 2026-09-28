@@ -14,7 +14,7 @@ import { RECALL_STATES } from '../store/paths.js';
 // (2026-09-26): 0.035 raised Patriark must-recall 0.29 -> 0.32 and orbit recall
 // 0.09 -> 0.15 at the same precision and quiet negatives as 0.04; 0.03 broke
 // the negatives in both projects.
-export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.035, full: 0.065, topK: 5 });
+export const DEFAULT_CALIBRATION = Object.freeze({ floor: 0.035, full: 0.065, topK: 20 });
 export const PROMPT_FLOOR_OFFSET = 0.01;
 
 // Tool calls arrive as `Tool {json}`; the keys and punctuation are noise to an
@@ -36,6 +36,13 @@ export function semanticActivation(sims, { floor, full, topK } = DEFAULT_CALIBRA
     if (value > 0) activation.set(id, value);
   }
   return activation;
+}
+
+// Every memory's position (1 = nearest) by hub-discounted similarity: the dense
+// ranked list that retrieval fuses with the full-text one.
+export function semanticRanks(sims, hub) {
+  const adjusted = [...sims].map(([id, sim]) => [id, sim - (hub?.get(id) ?? 0)]).sort((a, b) => b[1] - a[1]);
+  return new Map(adjusted.map(([id], i) => [id, i + 1]));
 }
 
 // How far each memory's vector sits above the store's average closeness to
@@ -94,7 +101,8 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     // prompt as context helped one project and hurt the other.
     if (request.source === 'prompt') floor = Math.max(0, floor - PROMPT_FLOOR_OFFSET);
     const tuned = { ...calibration, floor, full: floor + (calibration.full - calibration.floor) };
-    return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned, hubOf(request.project_id, vectors)) });
+    const hub = hubOf(request.project_id, vectors);
+    return retrieveMemories(request, { ...deps, semantic: semanticActivation(sims, tuned, hub), semanticRank: semanticRanks(sims, hub) });
   }
   // Load the model before any project asks, so a fresh resident is ready sooner.
   semanticRetrieve.preload = async () => Boolean(await start());

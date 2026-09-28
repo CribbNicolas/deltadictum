@@ -61,6 +61,12 @@ Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings out
 embeddings were assumed to be a separate service; an in-process runtime is a package, not a service.
 Still forbidden: a hosted or remote model, an inference server, a GPU requirement.
 
+The limit is on packages, not on local models: another ONNX model on the same runtime (a reranker, a
+larger embedding model) is allowed in the resident when it earns its memory and latency. Measured
+2026-09-28: the only multilingual cross-encoder transformers.js loads (`bge-reranker-v2-m3`) took 2.7 s
+to rerank 20 candidates and 778 MB of memory, and moved the golden sets' AUC in opposite directions
+(0.60 -> 0.56, 0.34 -> 0.53), so DD does not load it.
+
 A host may copy the plugin without these packages (Grok Build does). The first session or MCP server to
 find them missing installs them into the plugin directory in a detached process (`src/deps.js`,
 `scripts/install-deps.mjs`, `npm ci --omit=dev --ignore-scripts`); DD is inactive and says so until then

@@ -13,7 +13,10 @@
   "what": "Call store.reindex() after the backdated putAtom. upsertAtom's ON CONFLICT clause updates every column except created_at, so a memory that already has an index row keeps its original date and loadHealthSnapshot reports the wrong age. The rebuild reads the git file, which is where the truth is.",
   "why": "created_at is immutable identity and the index enforces that. Without the rebuild an age test passes or fails for a reason unrelated to what it claims to measure.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Write a test for memory age",
+    "Escribir un test sobre la antiguedad de una memoria"
+  ],
   "applies_to": {
     "files": [
       "src/store/sqlite-index.js",
@@ -98,11 +101,11 @@
   },
   "replaces": "e03da901-94fb-4df3-8dd4-925b768fb5e4",
   "created_at": "2026-09-27T02:37:09.953Z",
-  "updated_at": "2026-09-27T14:57:12.988Z",
+  "updated_at": "2026-09-28T06:47:10.511Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:12.983Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:10.506Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

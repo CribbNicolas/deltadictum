@@ -14,7 +14,9 @@
   "why": "A failing assertion before store.close() kept tests/mcp/tools.test.js alive past the 120 s timeout with no output (2026-09-22); --test-force-exit revealed it, but the same flag crashed the resident tests on Windows, so it is not a safe default.",
   "tags": [],
   "trigger_variants": [
-    "El test de node se cuelga y nunca termina"
+    "El test de node se cuelga y nunca termina",
+    "The test run never finishes",
+    "La corrida de tests nunca termina"
   ],
   "applies_to": {
     "files": [
@@ -102,11 +104,11 @@
   },
   "replaces": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
   "created_at": "2026-09-27T02:37:09.031Z",
-  "updated_at": "2026-09-27T14:57:33.755Z",
+  "updated_at": "2026-09-28T06:47:11.755Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:33.750Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.750Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

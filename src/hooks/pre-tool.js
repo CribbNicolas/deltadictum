@@ -5,7 +5,10 @@ import { projectContext } from '../engine/project-context.js';
 // Host tools that load skills, find tools, report on subagents, wait or ask carry
 // no project work; on the golden sets, retrieving on them only added noise.
 const HOST_META_TOOLS = new Set(['Skill', 'ToolSearch', 'SubagentHandback', 'Monitor', 'TaskStop', 'TaskOutput',
-  'AskUserQuestion', 'ScheduleWakeup', 'SendMessage', 'ListAgents', 'EnterPlanMode', 'ExitPlanMode', 'TodoWrite']);
+  'AskUserQuestion', 'ScheduleWakeup', 'SendMessage', 'ListAgents', 'EnterPlanMode', 'ExitPlanMode', 'TodoWrite',
+  // Research outside the project: a search about Cursor's globs pushed the
+  // project's glob-quoting memory (seen 2026-09-28).
+  'WebSearch', 'WebFetch']);
 
 // The retrieval request a tool call becomes. Shared with the benchmark so a
 // simulated tool call is shaped exactly like a real one.

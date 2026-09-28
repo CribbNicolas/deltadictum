@@ -105,6 +105,8 @@ export const DEFAULT_CONFIG = {
     claim: 'candidate',
   },
   auto_accept: { enabled: true, confidence_threshold: 0.765 },
+  // INV-04's exception: an anchor action (anchors and trigger variants only) applies itself.
+  auto_apply_retrieval_metadata: true,
   health: DEFAULT_HEALTH_THRESHOLDS,
   capture: { retention_days: 14, max_observations: 200 },
   telemetry: { retention_days: 90, max_events: 2000 },
