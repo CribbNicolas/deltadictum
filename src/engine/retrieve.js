@@ -116,6 +116,8 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   // the warning redundant. It is filtered here, never boosted.
   const current = scored.filter(c => c.atom.lifecycle_state !== 'legacy').map(c => c.atom);
   const covered = atom => current.some(a => a.id === atom.replaced_by || a.topic_key === atom.topic_key);
+  const fits = memories => estimateTokens({ ...result, memories, injected: true, abstained: false,
+    budget: { requested: budget, used: budget } }) <= budget;
   for (const candidate of scored) {
     if (result.memories.length >= 8) break;
     const { atom, applicability, value, reason } = candidate;
@@ -158,46 +160,54 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
         && await store.wasDelivered(request.project_id, request.session_id, atom.id, revision)) continue;
 
     const micro = formsList(atom).find(f => f.form_type === 'micro')?.content ?? atom.behavior_delta;
+    // Every kind keeps a headline form last, with the same flag, so a long memory
+    // can always shrink to make room for the others (recall first).
+    const abandoned = what => `No longer done: ${what} Abandoned because: ${String(atom.legacy_reason ?? '').replace(/\.$/, '')}. `
+      + `Now: ${atom.replaced_by ?? 'no replacement recorded'}.`;
+    const changed = what => `EVIDENCE CHANGED since review (${freshness.slice(0, 2).join('; ')}); verify before relying on it. ${what}`;
     const options = legacy
-      ? [{ form_type: 'micro', content: `No longer done: ${micro} Abandoned because: ${String(atom.legacy_reason ?? '').replace(/\.$/, '')}. `
-        + `Now: ${atom.replaced_by ?? 'no replacement recorded'}.` }]
+      ? [{ form_type: 'micro', content: abandoned(micro) }, { form_type: 'headline', content: abandoned(headline(atom)) }]
       : withheld
       ? [{ form_type: 'micro', content: `Review ${atom.topic_key}: ${revisionReasons.join('; ')}. Fetch this memory before applying its advice.` }]
       : reviewRequired
-        ? formsList(atom).filter(f => f.form_type === 'micro').map(f => ({ ...f,
-          content: `EVIDENCE CHANGED since review (${freshness.slice(0, 2).join('; ')}); verify before relying on it. ${f.content}` }))
+        ? [...formsList(atom).filter(f => f.form_type === 'micro').map(f => ({ ...f, content: changed(f.content) })),
+          { form_type: 'headline', content: changed(headline(atom)) }]
         : [...(ORDER[request.form_type ?? profile.form_type] ?? ORDER.short)
           .map(type => formsList(atom).find(f => f.form_type === type)).filter(Boolean),
           { form_type: 'headline', content: headline(atom) }];
-    for (const form of options) {
-      // Try a smaller form when the preferred form is too expensive OR too dilute.
-      // Compact forms cannot remove the scope/assumptions that make advice valid.
+    // Every form this memory can take, fullest first. Compact forms cannot remove
+    // the scope/assumptions that make advice valid.
+    const hits = options.map(form => {
       let content = form.content;
       if (contested) content = `DISPUTED; do not treat as settled. ${content}`;
       // Says which anchor pushed it, so the person and the agent can see why.
       if (reason) content = `${reason} ${content}`;
       if (!withheld && applicability.constraints?.length) content += ` Only within: ${applicability.constraints.join('; ')}.`;
       if (!withheld && applicability.warnings?.length) content += ` Check: ${applicability.warnings.join('; ')}.`;
-      const contentTokens = estimateTokens(content);
-      // One memory may not take more than half the pack in a larger form, so a
-      // long rationale falls back to micro instead of crowding out the rest.
-      if (form.form_type !== 'micro' && contentTokens > budget / 2) continue;
-      const hit = { id: atom.id, topic_key: atom.topic_key, memory_type: atom.memory_type,
-        form_type: form.form_type, content, token_estimate: contentTokens,
+      return { id: atom.id, topic_key: atom.topic_key, memory_type: atom.memory_type,
+        form_type: form.form_type, content, token_estimate: estimateTokens(content),
         ...(state !== 'active' ? { lifecycle_state: state } : {}),
         ...(contested ? { contested: true, contradicts } : {}) };
-      const trial = { ...result, memories: [...result.memories, hit], injected: true, abstained: false,
-        budget: { requested: budget, used: budget } };
-      if (estimateTokens(trial) > budget) continue;
-      // Another hook process may have delivered it since the check above.
-      if (request.session_id && !request.repeat && store.claimDelivery
-          && !await store.claimDelivery(request.project_id, request.session_id, atom.id, revision)) break;
-      result.memories.push(hit);
-      selected.push({ atom, revision });
-      for (const id of contradicts) excluded.add(id);
-      break;
-    }
+    });
+    // Recall first: a matching memory joins in its most compact form that fits,
+    // so a long one never crowds out the rest. Room left is spent below.
+    const hit = [...hits].reverse().find(h => fits([...result.memories, h]));
+    if (!hit) continue;
+    // Another hook process may have delivered it since the check above.
+    if (request.session_id && !request.repeat && store.claimDelivery
+        && !await store.claimDelivery(request.project_id, request.session_id, atom.id, revision)) continue;
+    result.memories.push(hit);
+    selected.push({ atom, revision, hits });
+    for (const id of contradicts) excluded.add(id);
   }
+  // Then, in order of value, each memory takes its fullest form the room allows.
+  selected.forEach(({ hits }, i) => {
+    for (const fuller of hits) {
+      if (fuller.form_type === result.memories[i].form_type) break;
+      const trial = result.memories.map((m, j) => j === i ? fuller : m);
+      if (fits(trial)) { result.memories[i] = fuller; break; }
+    }
+  });
   result.injected = result.memories.length > 0;
   result.abstained = !result.injected;
   // The empty envelope is a fixed protocol cost, including when the caller asks

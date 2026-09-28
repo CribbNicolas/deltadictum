@@ -4,7 +4,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createMemoryStore } from '../../src/store/create-store.js';
-import { fileActions, applyAction, rejectAction } from '../../src/engine/actions.js';
+import { fileActions, applyAction, rejectAction, retargetAction } from '../../src/engine/actions.js';
 import { HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 import { PROVENANCE } from '../helpers/atom.js';
 
@@ -160,4 +160,44 @@ test('an anchor action with a bad anchor is refused when filed, with the reasons
   assert.match(filed.error, /ungrounded_anchor:stamina/);
   const [missing] = await fileActions([{ kind: 'anchor', targets: ['a2'], rationale: 'Anchor it.' }], { store: s, projectId: 'demo' });
   assert.equal(missing.error, 'field_required:anchors');
+});
+
+test('filing an anchor action warns when its file already anchors several memories', async t => {
+  const s = await store(t);
+  const shared = 'src/domain/world/WorldState.cs';
+  for (const i of [1, 2, 3]) await s.putAtom(atom(`w${i}`, 'active', { applies_to: { files: [shared], components: [], operations: [] },
+    anchors: { keywords: [`kw${i}a`, `kw${i}b`], not_when: [], files: [shared] } }));
+  await s.putAtom(atom('w4', 'active', { title: 'World state rule', trigger: 'when changing the world state',
+    applies_to: { files: [shared], components: [], operations: [] } }));
+  const [filed] = await fileActions([{ kind: 'anchor', targets: ['w4'], rationale: 'Anchor it.',
+    anchors: { keywords: ['world state', 'state rule'], files: [shared] } }], { store: s, projectId: 'demo' });
+  assert.equal(filed.status, 'pending');
+  assert.match(filed.warnings[0], /already anchors 3 other memories/);
+});
+
+// A pending action goes stale when its target is revised (an anchor proposal
+// auto-accepted, say). The reviewer can move it to the live revision of the same
+// topic instead of rejecting it and asking the agent to file it again.
+test('a stale action can be retargeted to the live revision of its topic, then applied', async t => {
+  const s = await store(t);
+  await s.putAtom(atom('old'));
+  const id = await file(s, { kind: 'archive', targets: ['old'], archived_reason: 'Fixed.' });
+  await s.putAtom(atom('old', 'superseded', { superseded_by: 'new' }));
+  await s.putAtom(atom('new', 'active', { topic_key: 'demo/area/old', replaces: 'old' }));
+  await assert.rejects(apply(s, id), /action_stale/);
+  await assert.rejects(retargetAction(id, { store: s, projectId: 'demo' }), /human_review_required/);
+  const moved = await retargetAction(id, { store: s, projectId: 'demo', actor: HUMAN_REVIEW });
+  assert.deepEqual(moved.targets, ['new']);
+  assert.equal((await s.getAction(id)).status, 'pending');
+  await apply(s, id);
+  assert.equal(await state(s, 'new'), 'archived');
+  assert.equal(await state(s, 'old'), 'superseded');
+});
+
+test('an action whose target has no live revision cannot be retargeted', async t => {
+  const s = await store(t);
+  await s.putAtom(atom('gone'));
+  const id = await file(s, { kind: 'archive', targets: ['gone'], archived_reason: 'Fixed.' });
+  await s.putAtom(atom('gone', 'archived'));
+  await assert.rejects(retargetAction(id, { store: s, projectId: 'demo', actor: HUMAN_REVIEW }), /no_live_revision:gone/);
 });

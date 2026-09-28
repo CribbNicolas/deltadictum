@@ -103,3 +103,24 @@ test('with several candidates on one topic, only the newest is auto-accepted', a
   assert.equal((await store.getAtom(newer.atom.id, 'demo')).lifecycle_state, 'active');
   assert.equal((await store.getAtom(older.atom.id, 'demo')).lifecycle_state, 'candidate');
 });
+
+// Admitting a replacement makes every pending action on the memory it replaces
+// stale, so that choice is left to the person reviewing both.
+test('a replacement whose target has a pending action is left for review', async t => {
+  const { admitMemory, HUMAN_REVIEW } = await import('../../src/engine/lifecycle.js');
+  const { fileActions } = await import('../../src/engine/actions.js');
+  const store = await fixtureStore();
+  t.after(() => store.close());
+  const first = (await proposeMemory(proposal(), { store })).atom;
+  await admitMemory(first.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Reviewed.' });
+  const [action] = await fileActions([{ kind: 'archive', targets: [first.id], rationale: 'No longer true.', archived_reason: 'Fixed.' }],
+    { store, projectId: 'demo' });
+  assert.equal(action.status, 'pending');
+  const revision = (await proposeMemory(proposal({ why: 'Stops unstructured dumps, confirmed again.' }), { store })).atom;
+  assert.equal(revision.lifecycle_state, 'candidate');
+  const config = await store.loadConfig();
+  config.auto_accept = { enabled: true, confidence_threshold: 0 };
+  await store.saveConfig(config);
+  assert.deepEqual((await sweepAutoAccept({ store, projectId: 'demo' })).admitted, []);
+  assert.equal((await store.getAtom(revision.id, 'demo')).lifecycle_state, 'candidate');
+});

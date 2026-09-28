@@ -352,6 +352,7 @@
         long_anchor: 'is longer than three words; anchor on a short term or phrase',
         stopword_anchor: 'is only function words (the, de, la...)',
         short_anchor: 'is too short to be specific',
+        flag_anchor: 'is written with a command-line flag (-e, --x), which matches whatever word follows once normalized',
         generic_anchor: 'is a generic term that names most requests (code, fix, test, plan, cambiar...)',
         ungrounded_anchor: "does not appear in the memory's own title, trigger, variants, action or scope; add a trigger variant that uses it",
         anchor_fires_on_generic_request: 'matches an acknowledgement or an unrelated generic request, so it would push this memory on those',
@@ -360,6 +361,8 @@
       };
       const [code, label] = clean.split(/:(.*)/s);
       if (ANCHOR_REASONS[code]) return `Anchor "${label}" ${ANCHOR_REASONS[code]}.`;
+      if (code === 'no_live_revision') return `The memory ${label} has no current version to move this action to (it was archived or deleted). Reject the action.`;
+      if (code === 'cannot_retarget') return `The current version does not admit this action: ${tokenHint(label) || label}`;
       if (clean === 'too_few_anchor_keywords') return 'Give at least two anchor keywords.';
       if (clean === 'too_many_anchor_keywords' || clean === 'too_many_anchor_exclusions') return 'At most 16 anchor keywords and 16 exclusions.';
       if (clean === 'anchors_required') return 'Anchors are required: the keywords that decide when this memory is delivered.';
@@ -525,7 +528,9 @@
           ${a.fields.archived_reason ? `<p>Reason: ${escapeHtml(a.fields.archived_reason)}</p>` : ''}
           ${a.fields.legacy_reason ? `<p>Abandoned because: ${escapeHtml(a.fields.legacy_reason)}</p>` : ''}
           <textarea name="action_note" placeholder="Note, or the reason for a revision">${escapeHtml(drafts.get(a.id) ?? '')}</textarea>
-          <div class="row"><button class="ok" data-action-act="apply">Apply</button><button data-action-act="revise">Request revision</button><button class="danger" data-action-act="reject">Reject</button></div>
+          ${a.status === 'stale' ? '<p class="notice warning">A target changed after this was filed, so it cannot be applied as is. Move it to the current version of the same memory to review it again, or reject it.</p>' : ''}
+          ${(a.retargeted ?? []).length ? `<p>Moved to the current version: ${a.retargeted.map(m => `${escapeHtml(m.from.slice(0, 8))} → ${escapeHtml(m.to.slice(0, 8))}`).join(', ')}</p>` : ''}
+          <div class="row">${a.status === 'stale' ? '<button class="ok" data-action-act="retarget">Move to current version</button>' : '<button class="ok" data-action-act="apply">Apply</button>'}<button data-action-act="revise">Request revision</button><button class="danger" data-action-act="reject">Reject</button></div>
         </div>`).join('') || '<p>No pending actions. The agent files them with the dd act tool.</p>';
     }
     document.getElementById('actions-list').addEventListener('click', async (ev) => {
@@ -537,7 +542,7 @@
         if (act === 'revise' && !note) throw new Error('revision_reason_required');
         if (act === 'apply' && card.dataset.kind === 'delete' && !confirm('Delete these memories permanently?')) return;
         await api(`/api/actions/${encodeURIComponent(card.dataset.action)}/${act}`, { method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(act === 'apply' ? { rationale: note || DEFAULT_REVIEW_RATIONALE } : act === 'reject' ? { note } : { reason: note }) });
+          body: JSON.stringify(act === 'apply' ? { rationale: note || DEFAULT_REVIEW_RATIONALE } : act === 'reject' ? { note } : act === 'retarget' ? {} : { reason: note }) });
         await load();
       } catch (err) { card.querySelector('.action-msg').textContent = friendlyError(err.message); }
     });
