@@ -27,6 +27,15 @@ export const SPANISH_FUNCTION_WORDS = new Set([
   'pero', 'porque', 'si', 'ya', 'muy', 'mas', 'tambien', 'donde', 'cual', 'cuales',
 ]);
 
+// A prompt with something to say: at least three words that are neither Spanish
+// function words nor short fillers. "dale", "seguimos con el plan" and "A" are not.
+const FILLERS = new Set(['ok', 'okay', 'yes', 'yeah', 'go', 'on', 'the', 'and', 'dale', 'si', 'seguimos', 'segui', 'continua',
+  'continue', 'aprobado', 'approved', 'plan', 'listo', 'joya', 'bien', 'vamos', 'thanks', 'gracias']);
+export function substantive(text, min = 3) {
+  const words = String(text ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').match(/[a-z0-9]+/g) ?? [];
+  return words.filter(w => w.length > 2 && !SPANISH_FUNCTION_WORDS.has(w) && !FILLERS.has(w)).length >= min;
+}
+
 function prose(text) {
   // Strip what is not prose: inline code, paths, dotted and snake/camel identifiers, flags.
   return String(text ?? '').replace(/`[^`]*`/g, ' ').replace(/\S*[/\\._]\S*/g, ' ').replace(/--?\w[\w-]*/g, ' ');

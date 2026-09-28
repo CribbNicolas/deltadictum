@@ -30,15 +30,27 @@ export async function openBenchStore(projectRoot) {
   return { store, projectId, close: async () => { store.close(); await rm(scratch, { recursive: true, force: true }); } };
 }
 
-function probeRequest(probe) {
-  if (probe.prompt) return { kind: looksNonEnglish(probe.prompt) ? 'prompt_es' : 'prompt_en', request: { action: probe.prompt } };
-  return { kind: 'tool', request: preToolRequest({ tool_name: probe.tool, tool_input: probe.input }) };
+// Shaped as the hooks shape them: the source, and the conversation it happened in
+// (a golden task's context: the last prompt with content before it).
+function probeRequest(probe, context) {
+  const extra = context ? { context } : {};
+  if (probe.prompt) return { kind: looksNonEnglish(probe.prompt) ? 'prompt_es' : 'prompt_en', request: { action: probe.prompt, source: 'prompt', ...extra } };
+  const request = preToolRequest({ tool_name: probe.tool, tool_input: probe.input });
+  return { kind: 'tool', request: request && { ...request, source: 'tool', ...extra } };
+}
+
+// A golden set is split by task number: odd tasks tune, even tasks measure, so a
+// change is never judged on the events it was fitted to.
+export function inSplit(task, split) {
+  if (!split) return true;
+  const n = Number(/(\d+)$/.exec(task.id)?.[1]);
+  return split === 'dev' ? n % 2 === 1 : n % 2 === 0;
 }
 
 const ratio = (num, den) => den ? num / den : null;
 const mean = values => { const known = values.filter(v => v !== null); return known.length ? known.reduce((a, b) => a + b, 0) / known.length : null; };
 
-export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemories, provider = 'lexical', store: given } = {}) {
+export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemories, provider = 'lexical', store: given, split } = {}) {
   const opened = given ? { ...given, close: async () => {} } : await openBenchStore(projectRoot);
   const { store, projectId } = opened;
   const atoms = await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] });
@@ -59,14 +71,14 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
   const missingLabels = new Set();
   const resolve = labels => new Set(labels.map(full).filter(id => !id.startsWith('missing:') || (missingLabels.add(id), false)));
   try {
-    for (const task of scenarios.tasks.filter(task => !task.unlabeled)) {
+    for (const task of scenarios.tasks.filter(task => !task.unlabeled && inSplit(task, split))) {
       const must = resolve(task.must);
       const orbit = resolve(task.orbit);
       const session = `bench-${provider}-${task.id}-${Date.now()}`;
       const delivered = new Set();
       let tokens = 0;
       for (const probe of task.probes) {
-        const { kind, request } = probeRequest(probe);
+        const { kind, request } = probeRequest(probe, task.context);
         if (!request) continue;
         const result = await retrieve({ project_id: projectId, ...request, session_id: session, telemetry: false }, { store });
         const ids = (result.memories ?? []).map(m => m.id);
@@ -114,7 +126,7 @@ if (process.argv[1] && samePath(fileURLToPath(import.meta.url), process.argv[1])
   const scenarios = JSON.parse(await readFile(args.scenarios ?? new URL('./supermem.scenarios.json', import.meta.url), 'utf8'));
   let retrieve = retrieveMemories;
   if (args.provider === 'semantic') retrieve = (await import('../../semantic/provider.js')).createSemanticRetrieve();
-  const report = await runBench({ projectRoot, scenarios, retrieve, provider: args.provider ?? 'lexical' });
+  const report = await runBench({ projectRoot, scenarios, retrieve, provider: args.provider ?? 'lexical', split: args.split });
   console.log(JSON.stringify(args.full ? report : report.summary, null, 1));
   if (!args.full) for (const t of report.tasks) console.log(t.id.padEnd(36), 'must', t.must_recall?.toFixed(2) ?? '-', 'orbit', t.orbit_recall?.toFixed(2) ?? '-',
     'prec', t.precision?.toFixed(2) ?? '-', 'n', t.returned, 'tok', t.tokens, t.missed.length ? 'MISSED ' + t.missed.join(',') : '', t.noise.length ? 'noise ' + t.noise.join(',') : '');
