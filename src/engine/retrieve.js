@@ -16,6 +16,12 @@ import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, r
 const ORDER = { full: ['full', 'short', 'micro'], short: ['short', 'micro'], micro: ['micro'] };
 const ACTIVATION_FLOOR = 0.35;
 const AGREE_WINDOW = 3;
+const TOP_AGREE_WINDOW = 5;
+// A pack's cost as the agent reads it: each memory with its widest flag and id,
+// each pointer line, and a fixed envelope.
+const PACK_ENVELOPE = 40;
+const packCost = (memories, pointers = []) => PACK_ENVELOPE + estimateTokens([
+  ...memories.map(m => `[REVIEW REQUIRED ${m.id}] ${m.content}`), ...pointers.map(p => p.line)].join('\n'));
 const POINTER_WINDOW = 8;
 const MAX_POINTERS = 4;
 const POINTER_REVISION = 'pointer';
@@ -129,12 +135,27 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     if (AGREE && applicability.applies && !anchorsOnly && activation < floor && lex <= AGREE && dense <= AGREE) activation = floor;
     const rrf = (Number.isFinite(lex) ? 1 / (60 + lex) : 0) + (Number.isFinite(dense) ? 1 / (60 + dense) : 0) + (anchorHit ? 1 / 60 : 0);
     const reason = anchorHit ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
+    const weight = Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index];
     return { atom, applicability, activation, reason, rrf, lex, dense, similarity: semantic?.get(atom.id) ?? 0, floor,
-      value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
+      weight, value: activation * weight };
   // Order by reciprocal rank fusion of the full-text and dense rankings (and anchor
   // hits): robust without tuning, and on the tuning halves it raised Patriark's
   // must-recall 0.91 -> 0.94 at no cost in noise. Value breaks ties.
   });
+  // The fused leader of a prompt clears its floor when both rankings place it
+  // within TOP_AGREE_WINDOW: a wider agreement window, for one memory only. On the
+  // golden sets (2026-09-28) cutting by fused rank instead of by floor could not
+  // abstain (supermem kept 2/25 tuning negatives quiet). This narrow form gained
+  // one event with every must memory in supermem's tuning half and one in
+  // Patriark's measuring half, for one noisy negative in supermem's measuring half.
+  if (AGREE && !anchorsOnly) {
+    const leader = ranked.filter(c => c.applicability.applies)
+      .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id))[0];
+    if (leader && leader.activation < leader.floor && leader.lex <= TOP_AGREE_WINDOW && leader.dense <= TOP_AGREE_WINDOW) {
+      leader.activation = leader.floor;
+      leader.value = leader.floor * leader.weight;
+    }
+  }
   const scored = ranked.filter(c => c.activation >= c.floor)
     .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id));
 
@@ -148,8 +169,12 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   // the warning redundant. It is filtered here, never boosted.
   const current = scored.filter(c => c.atom.lifecycle_state !== 'legacy').map(c => c.atom);
   const covered = atom => current.some(a => a.id === atom.replaced_by || a.topic_key === atom.topic_key);
-  const fits = memories => estimateTokens({ ...result, memories, injected: true, abstained: false,
-    budget: { requested: budget, used: budget } }) <= budget;
+  // The budget is spent on what the agent reads: each memory as a hook renders it
+  // (its widest flag, id and content), plus a fixed envelope. Counting the result's
+  // JSON keys instead cost each memory ~50 tokens the agent never sees; on the
+  // golden sets' tuning halves (2026-09-28) the change gained an event with every
+  // must memory in each project, at no cost in quiet negatives.
+  const fits = memories => packCost(memories) <= budget;
   for (const candidate of scored) {
     if (result.memories.length >= 8) break;
     const { atom, applicability, value, reason } = candidate;
@@ -196,7 +221,9 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     // can always shrink to make room for the others (recall first).
     const abandoned = what => `No longer done: ${what} Abandoned because: ${String(atom.legacy_reason ?? '').replace(/\.$/, '')}. `
       + `Now: ${atom.replaced_by ?? 'no replacement recorded'}.`;
-    const changed = what => `EVIDENCE CHANGED since review (${freshness.slice(0, 2).join('; ')}); verify before relying on it. ${what}`;
+    // Which evidence changed is in get; listing it here cost each flagged memory
+    // about 50 tokens of paths.
+    const changed = what => `EVIDENCE CHANGED since review; verify before relying on it. ${what}`;
     const options = legacy
       ? [{ form_type: 'micro', content: abandoned(micro) }, { form_type: 'headline', content: abandoned(headline(atom)) }]
       : withheld
@@ -260,9 +287,9 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   }
   result.injected = result.memories.length > 0;
   result.abstained = !result.injected;
-  // The empty envelope is a fixed protocol cost, including when the caller asks
-  // for less than that cost. No memory content is emitted in that case.
-  result.budget.used = estimateTokens({ ...result, budget: { requested: budget, used: budget } });
+  // What was delivered, pointers included. They take no share of the budget: a
+  // pointer is one line, and there are at most MAX_POINTERS.
+  result.budget.used = packCost(result.memories, result.pointers);
   // Claimed deliveries are already recorded; a repeat request refreshes the mark.
   if (request.session_id && store.markDelivered && (request.repeat || !store.claimDelivery)) for (const item of selected) {
     await store.markDelivered(request.project_id, request.session_id, item.atom.id, item.revision);

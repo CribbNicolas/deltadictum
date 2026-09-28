@@ -9,9 +9,12 @@ import { buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { estimateTokens as payloadEstimate } from '../../src/engine/budget.js';
 import { DEFAULT_CONFIG } from '../../src/store/paths.js';
 import { PROVENANCE } from '../helpers/atom.js';
+import { useTempRegistry } from '../helpers/resident.js';
 
 // No resident here: these tests measure retrieval in the explicit lexical mode.
+// The temporary registry keeps the machine's running resident from answering.
 process.env.DD_RETRIEVAL = 'lexical';
+await useTempRegistry();
 
 const CORPUS = Math.max(200, Number(process.env.DD_STRESS_ATOMS ?? 2000));
 const ROUNDS = Math.max(10, Number(process.env.DD_STRESS_ROUNDS ?? 40));
