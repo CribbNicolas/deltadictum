@@ -16,6 +16,9 @@ import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, r
 const ORDER = { full: ['full', 'short', 'micro'], short: ['short', 'micro'], micro: ['micro'] };
 const ACTIVATION_FLOOR = 0.35;
 const AGREE_WINDOW = 3;
+const POINTER_WINDOW = 8;
+const MAX_POINTERS = 4;
+const POINTER_REVISION = 'pointer';
 // Revision of a memory as delivered at session start, independent of any
 // request: ambient memories are marked with it so tool calls do not repeat them.
 export const AMBIENT_TAG = 'ambient';
@@ -24,6 +27,12 @@ export const ambientRevision = atom => `ambient:${revisionOf(atom)}`;
 // authored forms no longer fit the pack. It names the rule and where to read the
 // rest, so a long memory costs the pack a line instead of being dropped.
 const HEADLINE_CHARS = 200;
+// When a memory applies, in one line: its trigger, trimmed. The memory map and
+// pointers use it as a skill's description is used, to decide whether to pull.
+export function whenLine(atom, chars = 100) {
+  const text = String(atom.trigger || atom.title || '').replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+  return text.length > chars ? `${text.slice(0, chars).replace(/\s+\S*$/, '')}...` : text;
+}
 export function headline(atom) {
   const text = String(atom.behavior_delta ?? '').replace(/\s+/g, ' ').trim();
   const first = text.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? text;
@@ -99,7 +108,7 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
 
   const effective = candidates.filter(a => a.authority !== 'deprecated');
   const usage = usageFactors(effective);
-  const scored = effective.map((atom, index) => {
+  const ranked = effective.map((atom, index) => {
     const anchor = matchAnchors(atom, activationText, request.files ?? []);
     const applicability = anchor.blocked.length ? { applies: false } : assessApplicability(atom, request);
     // An anchor hit (a keyword, one of its anchor files, or one of its components)
@@ -120,12 +129,13 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     if (AGREE && applicability.applies && !anchorsOnly && activation < floor && lex <= AGREE && dense <= AGREE) activation = floor;
     const rrf = (Number.isFinite(lex) ? 1 / (60 + lex) : 0) + (Number.isFinite(dense) ? 1 / (60 + dense) : 0) + (anchorHit ? 1 / 60 : 0);
     const reason = anchorHit ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
-    return { atom, applicability, activation, reason, rrf, similarity: semantic?.get(atom.id) ?? 0, floor,
+    return { atom, applicability, activation, reason, rrf, lex, dense, similarity: semantic?.get(atom.id) ?? 0, floor,
       value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
   // Order by reciprocal rank fusion of the full-text and dense rankings (and anchor
   // hits): robust without tuning, and on the tuning halves it raised Patriark's
   // must-recall 0.91 -> 0.94 at no cost in noise. Value breaks ties.
-  }).filter(c => c.activation >= c.floor)
+  });
+  const scored = ranked.filter(c => c.activation >= c.floor)
     .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id));
 
   const selected = [];
@@ -230,6 +240,24 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       if (fits(trial)) { result.memories[i] = fuller; break; }
     }
   });
+  // Near misses on a prompt arrive as one-line pointers the agent can pull with
+  // get, as skill descriptions do: a memory both rankings place near the top that
+  // cleared no floor. Recall first: a pointer costs a line, a missing memory more.
+  // Once per session each, and never on tool calls, where the noise was.
+  result.pointers = [];
+  if (request.source === 'prompt' && !anchorsOnly) {
+    const delivered = new Set(result.memories.map(m => m.id));
+    const near = ranked.filter(c => !delivered.has(c.atom.id) && !excluded.has(c.atom.id) && c.applicability.applies
+      && ['active', 'contested'].includes(c.atom.lifecycle_state) && (c.lex <= POINTER_WINDOW || c.dense <= POINTER_WINDOW))
+      .sort((a, b) => b.rrf - a.rrf || a.atom.id.localeCompare(b.atom.id));
+    for (const { atom } of near) {
+      if (result.pointers.length >= MAX_POINTERS) break;
+      if (request.session_id && !request.repeat && store.wasDelivered
+          && await store.wasDelivered(request.project_id, request.session_id, atom.id, POINTER_REVISION)) continue;
+      result.pointers.push({ id: atom.id, topic_key: atom.topic_key, line: `${atom.topic_key} — ${whenLine(atom)} (get ${atom.id.slice(0, 8)})` });
+      if (request.session_id && !request.repeat && store.markDelivered) await store.markDelivered(request.project_id, request.session_id, atom.id, POINTER_REVISION);
+    }
+  }
   result.injected = result.memories.length > 0;
   result.abstained = !result.injected;
   // The empty envelope is a fixed protocol cost, including when the caller asks

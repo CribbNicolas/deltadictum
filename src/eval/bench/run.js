@@ -76,6 +76,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
       const orbit = resolve(task.orbit);
       const session = `bench-${provider}-${task.id}-${Date.now()}`;
       const delivered = new Set();
+      const pointed = new Set();
       let tokens = 0;
       for (const probe of task.probes) {
         const { kind, request } = probeRequest(probe, task.context);
@@ -83,6 +84,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
         const result = await retrieve({ project_id: projectId, ...request, session_id: session, telemetry: false }, { store });
         const ids = (result.memories ?? []).map(m => m.id);
         ids.forEach(id => delivered.add(id));
+        (result.pointers ?? []).forEach(p => pointed.add(p.id));
         if (ids.length) tokens += estimateTokens(microPack(result.memories));
         // Per-probe view, without session dedup: what this probe alone recalls.
         const alone = await retrieve({ project_id: projectId, ...request, telemetry: false, repeat: true }, { store });
@@ -91,9 +93,12 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
           relevant: [...aloneIds].filter(id => must.has(id) || orbit.has(id)).length, returned: aloneIds.size });
       }
       const got = [...delivered];
+      const reachable = new Set([...delivered, ...pointed]);
       const mustHit = got.filter(id => must.has(id)).length;
       const orbitHit = got.filter(id => orbit.has(id)).length;
-      tasks.push({ id: task.id, negative: task.must.length === 0, must_recall: ratio(mustHit, must.size), orbit_recall: ratio(orbitHit, orbit.size),
+      tasks.push({ id: task.id, negative: task.must.length === 0, must_recall: ratio(mustHit, must.size),
+        // Pushed or pointed at: within one get of the agent.
+        reach_recall: ratio([...must].filter(id => reachable.has(id)).length, must.size), pointers: pointed.size, orbit_recall: ratio(orbitHit, orbit.size),
         precision: ratio(mustHit + orbitHit, got.length), returned: got.length, tokens,
         missed: [...must].filter(id => !delivered.has(id)).map(id => id.slice(0, 8)),
         noise: got.filter(id => !must.has(id) && !orbit.has(id)).map(id => id.slice(0, 8)) });
@@ -108,7 +113,7 @@ export async function runBench({ projectRoot, scenarios, retrieve = retrieveMemo
     summary: {
       labels_missing: missingLabels.size,
       unlabeled: scenarios.tasks.filter(task => task.unlabeled).length,
-      must_recall: mean(positive.map(t => t.must_recall)), orbit_recall: mean(positive.map(t => t.orbit_recall)),
+      must_recall: mean(positive.map(t => t.must_recall)), reach_recall: mean(positive.map(t => t.reach_recall)), orbit_recall: mean(positive.map(t => t.orbit_recall)),
       precision: mean(positive.map(t => t.precision)),
       negatives_quiet: negative.filter(t => t.returned === 0).length + '/' + negative.length,
       // Strict: every must delivered and nothing outside the labels; a negative task, nothing at all.
