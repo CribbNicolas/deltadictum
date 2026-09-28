@@ -57,6 +57,9 @@ test half honest as anchors grow.
   about 9 sit in the dense top 3 below their floor (supermem's `environment/dev-machine-harness-clis`
   three times on tool calls); about 12 are far down both rankings, where only phrasings, anchors or a
   label review can help. Many of the rest already arrive as pointers.
+- **Rejected: admitting the dense top 1 or 2 below its floor (2026-09-28).** On prompts, tool calls or
+  both, with or without a minimum similarity, it added no dev-half event and cost 1 to 12 quiet
+  negatives.
 - **More request phrasings per memory.** The 0.7.0 backfill added 2 phrasings per memory (one English,
   one Spanish); document expansion usually uses 5 to 8. Extend them, written from the memory's own
   content, never from golden events.
@@ -68,9 +71,12 @@ test half honest as anchors grow.
 - **Measure the pull path.** The bench scores only what is pushed. Replay golden events with a model
   that reads the session memory map and calls `get`, and score what it pulls. Push alone is unlikely
   to reach 90% must-recall; pull is where the rest has to come from.
-- **Embedding model benchmark.** Bench e5-small against larger models on the golden sets' test halves.
-  A first pass (2026-09-26) found e5-base slightly better (Patriark AUC 0.28 -> 0.36) and e5-large and
-  bge-m3 worse at separating off-topic requests, at 1.7x the resident memory.
+- **Embedding model: e5-base is an option, e5-small stays the default (2026-09-28).** On the golden
+  sets at the default floor, e5-base tied: dev 44 vs 45 events with every must memory and 26 vs 27
+  quiet negatives; test 35 vs 33 and 25 vs 26. Spanish prompts went both ways (supermem test 0.35 ->
+  0.45, dev 0.87 -> 0.78). It costs +175 MB resident memory, 0.7 s vs 0.5 s to load and about 30%
+  more per query. `DD_EMBED_MODEL=multilingual-e5-base` selects it; `npm run bench -- --model=...`
+  compares. Revisit with larger golden sets. e5-large and bge-m3 were worse in the 2026-09-26 pass.
 - **Rejected: session context in the dense query (2026-09-28).** Blending the previous prompt's
   vector into the query (weights 0.3 to 2; always, tool calls only, or prompts under 8 words only)
   never raised dev-half recall; weights of 1 and above cost recall and quiet negatives.

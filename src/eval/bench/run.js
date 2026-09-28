@@ -130,6 +130,8 @@ if (process.argv[1] && samePath(fileURLToPath(import.meta.url), process.argv[1])
   const projectRoot = args.project ?? process.cwd();
   const scenarios = JSON.parse(await readFile(args.scenarios ?? new URL('./supermem.scenarios.json', import.meta.url), 'utf8'));
   let retrieve = retrieveMemories;
+  // --model=multilingual-e5-base compares embedding models (see src/semantic/embedder.js).
+  if (args.model) process.env.DD_EMBED_MODEL = args.model;
   if (args.provider === 'semantic') retrieve = (await import('../../semantic/provider.js')).createSemanticRetrieve();
   const report = await runBench({ projectRoot, scenarios, retrieve, provider: args.provider ?? 'lexical', split: args.split });
   console.log(JSON.stringify(args.full ? report : report.summary, null, 1));
