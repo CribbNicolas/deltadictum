@@ -140,3 +140,28 @@ test('a prompt with almost no content pushes by anchors only', async t => {
   assert.deepEqual((await ask('si dale')).memories, []);
   assert.deepEqual((await ask('dale, resistencia')).memories.map(m => m.id), [endurance.id]);
 });
+
+// Full-text and meaning both placing a memory near the top of a prompt's
+// rankings is evidence neither gives alone; on tool calls it only added noise.
+test('a prompt delivers a memory both rankings agree on, a tool call does not', async t => {
+  const { store, legacy } = await fixture(t);
+  const semanticRank = new Map([[legacy.id, 1]]);
+  const ask = source => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false },
+    { store, semantic: new Map(), semanticRank });
+  assert.ok((await ask('prompt')).memories.some(m => m.id === legacy.id));
+  assert.ok(!(await ask('tool')).memories.some(m => m.id === legacy.id));
+});
+
+// A near miss on a prompt arrives as a one-line pointer the agent can pull,
+// not as advice: the pattern of skill descriptions and progressive disclosure.
+test('a prompt lists near misses as pointers; a tool call does not', async t => {
+  const { store, legacy } = await fixture(t);
+  const semanticRank = new Map([[legacy.id, 4]]);
+  const ask = source => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false },
+    { store, semantic: new Map(), semanticRank });
+  const prompt = await ask('prompt');
+  assert.ok(!prompt.memories.some(m => m.id === legacy.id));
+  assert.deepEqual(prompt.pointers.map(p => p.id), [legacy.id]);
+  assert.match(prompt.pointers[0].line, /^ui\/toolbar\/select-width — when a toolbar select stretches \(get [0-9a-f]{8}\)$/);
+  assert.deepEqual((await ask('tool')).pointers, []);
+});

@@ -13,7 +13,10 @@
   "what": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
   "why": "npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Publish a new version to npm",
+    "Publicar una version nueva en npm"
+  ],
   "applies_to": {
     "files": [
       "package.json"
@@ -87,11 +90,11 @@
   },
   "replaces": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
   "created_at": "2026-09-27T02:37:09.235Z",
-  "updated_at": "2026-09-27T14:57:14.675Z",
+  "updated_at": "2026-09-28T06:47:11.485Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:14.671Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.480Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

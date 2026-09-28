@@ -15,7 +15,9 @@
   "tags": [],
   "trigger_variants": [
     "El residente tiene codigo viejo o stale despues de editar src",
-    "La UI tira TypeError o los cambios no tomaron efecto porque el resident tiene codigo viejo (BUILD_ID distinto)"
+    "La UI tira TypeError o los cambios no tomaron efecto porque el resident tiene codigo viejo (BUILD_ID distinto)",
+    "My change to src does not show up",
+    "Mi cambio en src no aparece"
   ],
   "applies_to": {
     "files": [
@@ -122,11 +124,11 @@
   },
   "replaces": "a723154d-3652-46ff-8fcb-6c6f3b510dd3",
   "created_at": "2026-09-27T02:37:08.912Z",
-  "updated_at": "2026-09-28T02:21:32.600Z",
+  "updated_at": "2026-09-28T06:47:10.662Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T02:21:32.593Z",
-    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
+    "reviewed_at": "2026-09-28T06:47:10.657Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }
