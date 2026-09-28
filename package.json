@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
