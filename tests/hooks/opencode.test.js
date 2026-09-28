@@ -91,5 +91,5 @@ test('OpenCode receives the memory map in its system prompt', async t => {
   const hooks = await DeltaDictum({ directory: root });
   const [context] = await turn(hooks, 's1');
   assert.match(context, /DD - Memory map \(1\)/);
-  assert.ok(context.includes('dice/tray/stable — Keep the tray stable'));
+  assert.ok(context.includes('dice/tray/stable — when changing the dice tray'));
 });

@@ -50,10 +50,17 @@ export const PULL_GUIDANCE = 'DD - Pushed knowledge covers what an anchor or sim
 // The map is the one delivery every host supports (session context), and the
 // agent reading it matches meaning and language far better than any threshold.
 // Over budget it groups by domain rather than dropping a memory.
-export const MAP_BUDGET = 3000;
+export const MAP_BUDGET = 5000;
+const MAP_LINE_CHARS = 100;
 export function memoryMap(atoms, { budget = MAP_BUDGET } = {}) {
   const sorted = [...atoms].sort((a, b) => a.topic_key.localeCompare(b.topic_key));
-  const lines = sorted.map(a => `${a.topic_key} — ${a.title}`);
+  // A line says when the memory applies, as a skill's description does: the agent
+  // decides from it whether to pull the memory, and a title rarely says when.
+  const when = atom => {
+    const text = String(atom.trigger || atom.title || '').replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+    return text.length > MAP_LINE_CHARS ? `${text.slice(0, MAP_LINE_CHARS).replace(/\s+\S*$/, '')}...` : text;
+  };
+  const lines = sorted.map(a => `${a.topic_key} — ${when(a)}`);
   const flat = [`DD - Memory map (${sorted.length}):`, ...lines].join('\n');
   if (estimateTokens(flat) <= budget) return flat;
   const domains = new Map();

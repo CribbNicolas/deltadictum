@@ -140,3 +140,14 @@ test('a prompt with almost no content pushes by anchors only', async t => {
   assert.deepEqual((await ask('si dale')).memories, []);
   assert.deepEqual((await ask('dale, resistencia')).memories.map(m => m.id), [endurance.id]);
 });
+
+// Full-text and meaning both placing a memory near the top of a prompt's
+// rankings is evidence neither gives alone; on tool calls it only added noise.
+test('a prompt delivers a memory both rankings agree on, a tool call does not', async t => {
+  const { store, legacy } = await fixture(t);
+  const semanticRank = new Map([[legacy.id, 1]]);
+  const ask = source => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false },
+    { store, semantic: new Map(), semanticRank });
+  assert.ok((await ask('prompt')).memories.some(m => m.id === legacy.id));
+  assert.ok(!(await ask('tool')).memories.some(m => m.id === legacy.id));
+});

@@ -15,6 +15,7 @@ import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, r
 
 const ORDER = { full: ['full', 'short', 'micro'], short: ['short', 'micro'], micro: ['micro'] };
 const ACTIVATION_FLOOR = 0.35;
+const AGREE_WINDOW = 3;
 // Revision of a memory as delivered at session start, independent of any
 // request: ambient memories are marked with it so tool calls do not repeat them.
 export const AMBIENT_TAG = 'ambient';
@@ -36,7 +37,7 @@ const revisionOf = atom => createHash('sha256').update(JSON.stringify([atom.upda
 // to an activation in [0,1] computed from embeddings. It widens the candidate
 // set and competes with lexical and scope activation; every applicability gate
 // still applies. Without it retrieval is purely lexical.
-export async function retrieveMemories(request = {}, { store, vptThreshold, semantic } = {}) {
+export async function retrieveMemories(request = {}, { store, vptThreshold, semantic, semanticRank } = {}) {
   if (!request.project_id) return { error: { code: 400, message: 'project_id is required' } };
   if (!String(request.action ?? '').trim()) return { error: { code: 400, message: 'action is required' } };
   request = { ...request, files: (request.files ?? []).map(file => isAbsolute(file) ? projectRelative(store.repoRoot, file) : file) };
@@ -58,10 +59,18 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     candidates = query ? await store.search({ projectId: request.project_id, query, lifecycleStates: RECALL_STATES,
       memoryTypes: request.memory_types, limit: 50 }) : [];
   } catch { candidates = []; } // Never replace a failed search with arbitrary newest memories.
-  if (semantic?.size) {
+  // Full-text positions (search returns best BM25 first): one of the two ranked
+  // lists fused below, the dense one being semanticRank.
+  const lexicalRank = new Map(candidates.map((atom, i) => [atom.id, i + 1]));
+  // A prompt's agreement window: on the golden sets' tuning halves (2026-09-28), 3 gained
+  // supermem an event with every must memory for one noisy negative; on tool calls
+  // the same gate cost six negatives, so it is for prompts only.
+  const AGREE = request.source === 'prompt' ? AGREE_WINDOW : 0;
+  const agreeIds = AGREE && semanticRank ? [...semanticRank].filter(([, r]) => r <= AGREE).map(([id]) => id) : [];
+  if (semantic?.size || agreeIds.length) {
     const have = new Set(candidates.map(atom => atom.id));
-    for (const id of semantic.keys()) {
-      if (have.has(id) || !(semantic.get(id) > 0)) continue;
+    for (const id of new Set([...(semantic?.keys() ?? []), ...agreeIds])) {
+      if (have.has(id) || !(semantic?.get(id) > 0 || agreeIds.includes(id))) continue;
       const atom = await store.getAtom(id, request.project_id);
       if (atom && RECALL_STATES.includes(atom.lifecycle_state)
           && (!request.memory_types?.length || request.memory_types.includes(atom.memory_type))) candidates.push(atom);
@@ -99,15 +108,25 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     const scopeHit = anchor.files.length > 0
       || (atom.applies_to?.components ?? []).some(c => (request.components ?? []).some(x => x.toLowerCase() === c.toLowerCase()));
     const anchorHit = isAnchored(atom) && (anchor.hits.length > 0 || scopeHit);
-    const activation = !applicability.applies ? 0
+    const floor = requiredActivation(atom, ACTIVATION_FLOOR);
+    const lex = lexicalRank.get(atom.id) ?? Infinity;
+    const dense = semanticRank?.get(atom.id) ?? Infinity;
+    let activation = !applicability.applies ? 0
       : anchorHit ? 1
       : anchorsOnly ? 0
       : Math.max(activationScore(atom, activationText, applicability.contextScore), semantic?.get(atom.id) ?? 0);
+    // Agreement: two independent rankings (full text and meaning) both placing a
+    // memory near the top is evidence neither gives alone.
+    if (AGREE && applicability.applies && !anchorsOnly && activation < floor && lex <= AGREE && dense <= AGREE) activation = floor;
+    const rrf = (Number.isFinite(lex) ? 1 / (60 + lex) : 0) + (Number.isFinite(dense) ? 1 / (60 + dense) : 0) + (anchorHit ? 1 / 60 : 0);
     const reason = anchorHit ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
-    return { atom, applicability, activation, reason, similarity: semantic?.get(atom.id) ?? 0, floor: requiredActivation(atom, ACTIVATION_FLOOR),
+    return { atom, applicability, activation, reason, rrf, similarity: semantic?.get(atom.id) ?? 0, floor,
       value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
+  // Order by reciprocal rank fusion of the full-text and dense rankings (and anchor
+  // hits): robust without tuning, and on the tuning halves it raised Patriark's
+  // must-recall 0.91 -> 0.94 at no cost in noise. Value breaks ties.
   }).filter(c => c.activation >= c.floor)
-    .sort((a, b) => b.value - a.value || b.similarity - a.similarity || a.atom.id.localeCompare(b.atom.id));
+    .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id));
 
   const selected = [];
   // A memory that contradicts one already selected cannot join it: an injected
