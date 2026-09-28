@@ -212,7 +212,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
           const revisions = await revisionNotices({ store, projectId, sessionId }).catch(() => null);
           if (!active) return send(res, 200, { ...shown, ...contextPayload('UserPromptSubmit', revisions) });
           const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
-            session_id: sessionId, budget_tokens: payload.budget_tokens }, { store });
+            source: 'prompt', session_id: sessionId, budget_tokens: payload.budget_tokens }, { store });
           return send(res, 200, { ...shown,
             ...contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? [])].filter(Boolean).join('\n')) });
         }

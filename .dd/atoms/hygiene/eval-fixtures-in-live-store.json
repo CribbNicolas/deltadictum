@@ -13,7 +13,9 @@
   "what": "Do not treat a memory as retrievable real advice when its evidence_refs point at a file under tests/ combined with a `why` mentioning 'eval fixture' or 'safe to delete' — that combination is a strong signal it is leftover test content mistakenly promoted into a real project's live store. Reject or flag it for deletion in the audit UI instead. A full audit of this project's own store (2026-09-19) found 10 such memories sitting `active` under project_id 'supermem' with content copied from tests/engine/health/abstention-eval.test.js, several already delivered as real advisory context in real sessions (activation_count > 0). The eval harness's own fixtures (src/eval/replay.js's evaluationStore()) are correctly isolated in a separate temp store under project_id 'eval' and never touch a real project's store — the contamination found came from fixture content copied into the real store some other way (manual proposal or exploratory testing), not a bug in the eval harness itself.",
   "why": "Ten memories with identical boilerplate (`why: 'Eval fixture for retrieve quality. Safe to delete later.'`) were live and retrievable in this project's real store, spending real retrieval budget and occasionally getting injected into real coding sessions as if they were genuine lessons about this codebase.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Todas las memorias activas: buscar eval fixtures en el store real"
+  ],
   "applies_to": {
     "files": [],
     "components": [],
@@ -27,7 +29,9 @@
       "live store",
       "safe to delete",
       "test content",
-      "audit"
+      "audit",
+      "memorias activas",
+      "eval fixtures"
     ],
     "not_when": [
       "audit ui"
@@ -97,10 +101,10 @@
   },
   "replaces": "4714630f-2317-4326-adf5-be31e78b9587",
   "created_at": "2026-09-27T02:37:09.985Z",
-  "updated_at": "2026-09-27T14:57:12.852Z",
+  "updated_at": "2026-09-28T02:21:32.951Z",
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:12.846Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.944Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }

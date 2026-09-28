@@ -45,3 +45,18 @@ test('the bench reads topic_key labels and skips tasks still unlabeled', async t
   assert.deepEqual(report.tasks.map(task => task.id), ['labeled', 'quiet']);
   assert.equal(report.summary.task_accuracy, 1);
 });
+
+test('each golden event keeps the last prompt with content before it, within half an hour', async () => {
+  const { priorPrompt } = await import('../../src/eval/golden/extract.js');
+  const events = [
+    { probe: { prompt: 'Diseñemos la Resistencia del personaje' }, at: '2026-09-26T15:00:00Z' },
+    { probe: { prompt: 'dale' }, at: '2026-09-26T15:01:00Z' },
+    { probe: { tool: 'Read', input: {} }, at: '2026-09-26T15:02:00Z' },
+    { probe: { prompt: 'seguimos con el plan' }, at: '2026-09-26T15:05:00Z' },
+    { probe: { prompt: 'otra cosa' }, at: '2026-09-26T17:00:00Z' },
+  ];
+  assert.equal(priorPrompt(events, 2), 'Diseñemos la Resistencia del personaje');
+  assert.equal(priorPrompt(events, 3), 'Diseñemos la Resistencia del personaje');
+  assert.equal(priorPrompt(events, 4), null);
+  assert.equal(priorPrompt(events, 0), null);
+});

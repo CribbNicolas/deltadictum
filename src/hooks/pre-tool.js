@@ -2,11 +2,16 @@ import { retrieveMemories } from '../engine/retrieve.js';
 import { microPack } from './session-start.js';
 import { projectContext } from '../engine/project-context.js';
 
+// Host tools that load skills, find tools, report on subagents, wait or ask carry
+// no project work; on the golden sets, retrieving on them only added noise.
+const HOST_META_TOOLS = new Set(['Skill', 'ToolSearch', 'SubagentHandback', 'Monitor', 'TaskStop', 'TaskOutput',
+  'AskUserQuestion', 'ScheduleWakeup', 'SendMessage', 'ListAgents', 'EnterPlanMode', 'ExitPlanMode', 'TodoWrite']);
+
 // The retrieval request a tool call becomes. Shared with the benchmark so a
 // simulated tool call is shaped exactly like a real one.
 export function preToolRequest(payload) {
   const tool = String(payload.toolName || payload.tool_name || '');
-  if (!tool || /(^|__)(dd|deltadictum)(__|_)/i.test(tool)) return null;
+  if (!tool || /(^|__)(dd|deltadictum)(__|_)/i.test(tool) || HOST_META_TOOLS.has(tool)) return null;
 
   const input = payload.toolInput ?? payload.tool_input ?? {};
   const serialized = typeof input === 'string' ? input : JSON.stringify(input);
@@ -20,7 +25,7 @@ export function preToolRequest(payload) {
   const operation = /edit|write|replace|patch/i.test(tool) ? 'edit' : /read|search|grep/i.test(tool) ? 'read'
     : /\b(test|pytest|jest|vitest)\b/i.test(serialized) ? 'test'
     : /\b(deploy|deployment)\b/i.test(serialized) ? 'deploy' : undefined;
-  return { action, files, operation };
+  return { action, files, operation, source: 'tool' };
 }
 
 export async function buildPreToolContext(payload, { store, projectId, retrieve = retrieveMemories }) {

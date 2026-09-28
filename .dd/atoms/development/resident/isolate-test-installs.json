@@ -13,7 +13,9 @@
   "what": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards.",
   "why": "There is one resident per machine and a resident from another build is retired and replaced at session start, so a test copy kills the user's working resident and invalidates the audit UI address they were given (seen 2026-09-23 when a Grok test copy's installer replaced it).",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Calling ensureResident from a script or test starts or replaces the machine resident"
+  ],
   "applies_to": {
     "files": [
       "src/resident.js",
@@ -35,7 +37,8 @@
       "plugin cache",
       "npm install",
       "check-codex",
-      "another DD"
+      "another DD",
+      "ensureResident"
     ],
     "not_when": [],
     "files": []
@@ -102,11 +105,11 @@
   },
   "replaces": "54c44c36-6c1e-476a-93d5-6495ac995612",
   "created_at": "2026-09-27T02:37:09.207Z",
-  "updated_at": "2026-09-27T14:57:14.798Z",
+  "updated_at": "2026-09-28T02:21:32.638Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:14.792Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.629Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }

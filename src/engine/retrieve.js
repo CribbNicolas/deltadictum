@@ -9,6 +9,7 @@ import { RECALL_STATES } from '../store/paths.js';
 import { activationScore, assessApplicability, conceptTokens, matchesGlob } from './activation.js';
 import { checkEvidenceFreshness } from './evidence.js';
 import { isAnchored, matchAnchors } from './anchors.js';
+import { substantive } from './language.js';
 import { boundedBudget, estimateTokens } from './budget.js';
 import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, requiredActivation, usageFactors } from './ranking.js';
 
@@ -77,7 +78,9 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     const have = new Set(candidates.map(atom => atom.id));
     const anchored = store.listAnchored ? await store.listAnchored({ projectId: request.project_id, lifecycleStates: RECALL_STATES })
       : await store.listAtoms({ projectId: request.project_id, lifecycleStates: RECALL_STATES });
-    anchorsOnly = config.anchors?.only === true;
+    // A prompt with almost no content ("si dale", "seguimos con el plan") gives
+    // similarity nothing to go on: only an anchor it names pushes a memory.
+    anchorsOnly = config.anchors?.only === true || (request.source === 'prompt' && !substantive(request.action, 2));
     for (const atom of anchored) {
       if (have.has(atom.id) || !isAnchored(atom)) continue;
       if (request.memory_types?.length && !request.memory_types.includes(atom.memory_type)) continue;

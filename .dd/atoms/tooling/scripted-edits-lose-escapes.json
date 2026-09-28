@@ -13,7 +13,9 @@
   "what": "Use the Edit tool for any replacement whose new text contains backslashes (regex classes like \\s, \\n literals, Windows paths). String-replacement scripts written in heredocs and template literals drop one level of escaping silently, and CRLF files make exact-match replacements fail.",
   "why": "On 2026-09-22 heredoc-generated edits turned /\\s+/ into /s+/ in src/engine/retrieve.js and broke two other regexes; the previous version of this memory carried a project-wide src/** scope, which injected it into every task in the benchmark, so this version has no file scope.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Editing files through a node or python script in a heredoc (<<'EOF')"
+  ],
   "applies_to": {
     "files": [],
     "components": [],
@@ -24,7 +26,8 @@
       "heredoc",
       "backslashes",
       "escapes",
-      "regular expressions"
+      "regular expressions",
+      "eof"
     ],
     "not_when": [],
     "files": []
@@ -92,11 +95,11 @@
   },
   "replaces": "6abc175a-4533-4aba-81f1-b372af7ef21c",
   "created_at": "2026-09-27T02:37:09.325Z",
-  "updated_at": "2026-09-27T14:57:14.388Z",
+  "updated_at": "2026-09-28T02:21:32.706Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:14.382Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.700Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }
