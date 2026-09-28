@@ -22,7 +22,9 @@
   "trigger_variants": [
     "Can DD have its own status line separate from other plugins?",
     "statusLine conflicts with another plugin's badge",
-    "how to show multiple plugin indicators in Claude Code's status bar"
+    "how to show multiple plugin indicators in Claude Code's status bar",
+    "Show DD status in the status line",
+    "Mostrar el estado de DD en la barra de estado"
   ],
   "applies_to": {
     "files": [
@@ -103,11 +105,11 @@
   },
   "replaces": "028493e6-c885-4b05-897d-596a2086412d",
   "created_at": "2026-09-27T02:37:09.605Z",
-  "updated_at": "2026-09-27T20:38:35.750Z",
+  "updated_at": "2026-09-28T06:47:11.208Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T20:38:35.744Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-28T06:47:11.203Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

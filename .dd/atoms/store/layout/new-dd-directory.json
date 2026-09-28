@@ -13,7 +13,10 @@
   "what": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
   "why": "Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Add a new kind of file under .dd",
+    "Agregar un tipo de archivo nuevo dentro de .dd"
+  ],
   "applies_to": {
     "files": [
       "src/store/transactions.js",
@@ -119,11 +122,11 @@
   },
   "replaces": "69a66da2-6d70-4b30-a5f7-c0265c894601",
   "created_at": "2026-09-27T02:37:09.002Z",
-  "updated_at": "2026-09-27T14:57:33.842Z",
+  "updated_at": "2026-09-28T06:47:11.602Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:33.837Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.597Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

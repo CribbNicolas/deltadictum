@@ -14,7 +14,9 @@
   "why": "On 2026-09-24 this captured Claude Code's real PostToolUse Bash shape ({stdout, stderr, interrupted, ...}, no exit code) and CLAUDECODE=1 in hook env, while a docs-derived summary claimed tool_response was {type, text}. Adding PostToolUseFailure to settings.local.json was denied by the permission classifier.",
   "tags": [],
   "trigger_variants": [
-    "Capturar el payload real de un hook del host"
+    "Capturar el payload real de un hook del host",
+    "See what the host sends to a hook",
+    "Ver que manda el host a un hook"
   ],
   "applies_to": {
     "files": [
@@ -118,11 +120,11 @@
   },
   "replaces": "f825dc49-09aa-4842-8fec-6a0842f87966",
   "created_at": "2026-09-27T02:37:09.091Z",
-  "updated_at": "2026-09-27T14:57:33.546Z",
+  "updated_at": "2026-09-28T06:47:10.588Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:33.541Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:10.583Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

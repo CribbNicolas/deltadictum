@@ -13,7 +13,10 @@
   "what": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project.",
   "why": "On 2026-09-24 tests/mcp/tools.test.js passed for weeks, then failed right after the resident was restarted from this checkout; the failure left a SQLite store open and npm test hung past 10 minutes instead of reporting it.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "A test fails only when the resident is running",
+    "Un test falla solo cuando el resident esta corriendo"
+  ],
   "applies_to": {
     "files": [
       "tests/",
@@ -118,11 +121,11 @@
   },
   "replaces": "741f0f52-cec7-414b-b0e7-fbb5c79b9a1f",
   "created_at": "2026-09-27T02:37:08.972Z",
-  "updated_at": "2026-09-27T14:57:33.941Z",
+  "updated_at": "2026-09-28T06:47:11.716Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:33.936Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.711Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

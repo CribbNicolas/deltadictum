@@ -21,7 +21,9 @@
   "trigger_variants": [
     "Adding a new validation error in the admission/lifecycle engine",
     "Audit UI shows a raw error code instead of a readable message",
-    "The #msg red hint in the audit UI is unhelpful / just shows a code"
+    "The #msg red hint in the audit UI is unhelpful / just shows a code",
+    "Add a new error to the engine",
+    "Agregar un error nuevo al motor"
   ],
   "applies_to": {
     "files": [
@@ -111,11 +113,11 @@
   },
   "replaces": "0e23ff13-fee9-4c0c-8abe-ef2ce26ae10d",
   "created_at": "2026-09-27T02:37:09.513Z",
-  "updated_at": "2026-09-27T20:38:41.746Z",
+  "updated_at": "2026-09-28T06:47:11.916Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T20:38:41.740Z",
-    "rationale": "Reviewed as proposed."
+    "reviewed_at": "2026-09-28T06:47:11.911Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

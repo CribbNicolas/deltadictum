@@ -13,7 +13,10 @@
   "what": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.",
   "why": "Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Record whether a tool call failed",
+    "Registrar si una llamada a una herramienta fallo"
+  ],
   "applies_to": {
     "files": [
       "src/hooks/observe.js",
@@ -117,11 +120,11 @@
   },
   "replaces": "354338bf-10ee-40df-998c-744c227affd4",
   "created_at": "2026-09-27T02:37:09.061Z",
-  "updated_at": "2026-09-28T02:21:32.810Z",
+  "updated_at": "2026-09-28T06:47:11.126Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T02:21:32.803Z",
-    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
+    "reviewed_at": "2026-09-28T06:47:11.121Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }
