@@ -139,12 +139,30 @@ function entryProblems(entry, isKeyword, grounding) {
   if (w.length > MAX_WORDS) return [`long_anchor:${label}`];
   if (w.every(functionWord)) return [`stopword_anchor:${label}`];
   if (w.length === 1 && w[0].length < 3) return [`short_anchor:${label}`];
+  // A command-line flag (-e, --x) survives normalization as a bare letter that
+  // matches whatever word follows ("node -e" matches "node export"). Other lone
+  // letters are words or identifiers ("agua y alimento", "H-13"), and are fine.
+  if (/(^|\s)--?[a-z](\s|$)/i.test(String(entry))) return [`flag_anchor:${label}`];
   if (!isKeyword) return []; // Exclusions only need to be well formed.
   const problems = [];
   if (w.length === 1 && GENERIC_TERMS.has(w[0])) problems.push(`generic_anchor:${label}`);
   if (!containsPhrase(grounding, w)) problems.push(`ungrounded_anchor:${label}`);
   if (PROBES.some(probe => containsPhrase(probe, w))) problems.push(`anchor_fires_on_generic_request:${label}`);
   return problems;
+}
+
+// What the agent is told at filing: keywords and files that already anchor several memories.
+export function anchorWarnings(atom, others) {
+  return [...anchorCollisions(atom, others).map(c => `keyword "${c.keyword}" also anchors ${c.memories} other memories`),
+    ...anchorFileCollisions(atom, others).map(c => `file ${c.file} already anchors ${c.memories} other memories; every read or edit of it would push all of them`)];
+}
+
+// Anchor files this memory shares with COLLISION_AT or more other live memories:
+// a file most work touches, which would push all of them on every read or edit.
+export function anchorFileCollisions(atom, others) {
+  return anchorsOf(atom).files.map(slashed).map(file => ({ file,
+    memories: others.filter(other => other.id !== atom.id && anchorsOf(other).files.map(slashed).includes(file)).length }))
+    .filter(c => c.memories >= COLLISION_AT);
 }
 
 // Keywords this memory shares with COLLISION_AT or more other live memories.

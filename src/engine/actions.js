@@ -7,7 +7,7 @@ import { assertTopicKeyPath } from '../store/paths.js';
 import { HUMAN_REVIEW, planResolution } from './lifecycle.js';
 import { stampRevisionFiles, verifyReferences } from './evidence.js';
 import { cappedConfidence } from './reliability.js';
-import { validateAnchors } from './anchors.js';
+import { anchorWarnings, validateAnchors } from './anchors.js';
 
 // An action is a request to change the store, filed by the agent (the MCP `act`
 // tool) and applied only by a person in the audit UI. Filing never changes a
@@ -125,7 +125,10 @@ export async function fileActions(rawActions, { store, projectId, sessionId, cap
       await store.logAction({ project_id: projectId, action_id: revised.id, kind: revised.kind, targets: revised.targets,
         outcome: 'revised', note: `revised by ${action.id}`, actor_ref: 'agent' });
     }
-    results.push({ id: action.id, kind: action.kind, status: 'pending' });
+    const warnings = action.kind === 'anchor'
+      ? anchorWarnings(anchoredVersion(checked.atoms[0], raw), await store.listAtoms({ projectId, lifecycleStates: ['active', 'contested'] }))
+      : [];
+    results.push({ id: action.id, kind: action.kind, status: 'pending', ...(warnings.length ? { warnings } : {}) });
   }
   return results;
 }
@@ -271,6 +274,34 @@ export async function applyAction(id, { store, projectId, actor, rationale } = {
     await store.logAction({ project_id: projectId, action_id: id, kind: action.kind, targets: action.targets,
       outcome: 'applied', actor_ref: 'local_ui' });
     return { applied: true, kind: action.kind, changed: action.targets };
+  });
+}
+
+// A target revised since filing (an anchor proposal auto-accepted, say) makes the
+// action stale. A reviewer can move it to the live revision of the same topic:
+// it is validated again against what it now targets and waits for review again.
+// The move is recorded on the action itself, which is a file under git.
+export async function retargetAction(id, { store, projectId, actor } = {}) {
+  requireReview(actor);
+  return store.withWriteLock(async () => {
+    const action = await store.getAction(id);
+    if (!action || action.project_id !== projectId) throw new Error('action_not_found');
+    const targets = [];
+    for (const target of action.targets) {
+      const atom = await store.getAtom(target, projectId);
+      const live = atom ? (await store.listByTopicLive(projectId, atom.topic_key))[0] : null;
+      if (!live) throw new Error(`no_live_revision:${target}`);
+      targets.push(live.id);
+    }
+    const checked = await validate({ ...action.fields, kind: action.kind, targets, rationale: action.rationale }, { store, projectId });
+    if (typeof checked === 'string') throw new Error(`cannot_retarget:${checked}`);
+    const now = new Date().toISOString();
+    const moved = { ...action, targets: checked.targets, status: 'pending',
+      snapshot: Object.fromEntries(checked.atoms.map(a => [a.id, snapshotOf(a)])),
+      retargeted: [...(action.retargeted ?? []), ...action.targets.map((from, i) => ({ from, to: checked.targets[i], at: now }))
+        .filter(m => m.from !== m.to)] };
+    await store.putAction(moved);
+    return { retargeted: true, targets: moved.targets };
   });
 }
 

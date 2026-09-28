@@ -15,8 +15,12 @@ export async function sweepAutoAccept({ store, projectId }) {
     if (!current || String(atom.created_at) > String(current.created_at)) newest.set(atom.topic_key, atom);
   }
   const candidates = [...newest.values()];
+  // Admitting a replacement makes every pending action on the memory it replaces
+  // stale, silently. That choice is left to the person, who sees both.
+  const held = new Set((await store.listActions(projectId)).filter(a => a.status !== 'stale').flatMap(a => a.targets));
   const admitted = [];
   for (const candidate of candidates) {
+    if (candidate.replaces && held.has(candidate.replaces)) continue;
     // candidate.confidence (stamped at proposal time) is not usable here -- it's
     // a constant, since evidence isn't verified until review. Compute the real,
     // evidence-based projection ourselves: the same two calls admitMemory makes

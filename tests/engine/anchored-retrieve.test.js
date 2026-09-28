@@ -111,3 +111,22 @@ test('an anchor file always pushes; in a strict project a scoped file or folder 
   assert.deepEqual(strict.memories.map(m => m.id), [exact.id]);
   assert.ok(!strict.memories.some(m => m.id === folder.id));
 });
+
+// Recall first: when several memories match, each gets a share of the budget, so a
+// long first one falls back to a compact form instead of crowding out the rest.
+test('several matching memories all arrive, in compact forms when the budget is tight', async t => {
+  const { store } = await fixture(t);
+  const long = i => `Keep the zqxv frobnicator number ${i} stable. ${'The frobnicator carries state that other parts read later, so a change here ripples. '.repeat(6)}`;
+  const ids = [];
+  const situations = { 1: 'When renaming the cache keys', 2: 'When changing how state is flushed to disk', 3: 'When adding a new consumer of the output' };
+  for (const i of [1, 2, 3]) {
+    const r = await proposeMemory({ project_id: 'demo', topic_key: `tools/frobnicator/rule-${i}`, why: 'Agreed.',
+      trigger: `${situations[i]} of the zqxv frobnicator.`, behavior_delta: long(i),
+      anchors: { keywords: ['zqxv frobnicator', `number ${i}`] }, evidence_refs: [{ source_type: 'file', source_ref: 'GDD-05.md', summary: 'x' }] }, { store });
+    assert.ok(r.atom, JSON.stringify(r.reasons));
+    ids.push((await admitMemory(r.atom.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked.' })).id ?? r.atom.id);
+  }
+  const result = await retrieveMemories({ project_id: 'demo', action: 'refactor the zqxv frobnicator', telemetry: false }, { store });
+  assert.equal(result.memories.length, 3);
+  assert.ok(result.budget.used <= 600);
+});
