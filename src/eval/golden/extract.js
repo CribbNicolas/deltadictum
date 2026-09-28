@@ -9,7 +9,7 @@
 // apply, or leaves `must` empty for an event where nothing should be delivered,
 // and removes `unlabeled`. The bench skips tasks still marked unlabeled.
 //
-//   node src/eval/golden/extract.js --project=<repo> [--data=<data dir>] [--n=100] [--out=<file>]
+//   node src/eval/golden/extract.js --project=<repo> [--data=<data dir>] [--n=100] [--out=<file>]   (default: <data dir>/golden.json)
 //   node src/eval/bench/run.js --project=<repo> --scenarios=<file> --provider=semantic
 import { DatabaseSync } from 'node:sqlite';
 import { writeFile } from 'node:fs/promises';
@@ -17,6 +17,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { projectDataDir } from '../../project.js';
 import { samePath } from '../../paths.js';
+import { substantive } from '../../engine/language.js';
 
 const TOOL_CALL = /^([A-Za-z_][\w.-]*) (\{[\s\S]*)$/;
 const HOST_CHATTER = /^(<task-notification|<agent-message|Your claude\.ai usage limit)/;
@@ -34,24 +35,62 @@ export function goldenEvent(action) {
   catch { return { tool: call[1], input: call[2] }; } // stored actions are truncated
 }
 
+// The last prompt with something to say before event i, within half an hour:
+// what the conversation was about when the event happened.
+const CONTEXT_WINDOW_MS = 30 * 60 * 1000;
+export function priorPrompt(events, i) {
+  const at = Date.parse(events[i].at);
+  for (let j = i - 1; j >= 0; j -= 1) {
+    if (at - Date.parse(events[j].at) > CONTEXT_WINDOW_MS) return null;
+    const prompt = events[j].probe.prompt;
+    if (prompt && substantive(prompt)) return prompt;
+  }
+  return null;
+}
+
 // Evenly spaced picks, first included: the same history always gives the same set.
 export function sampleEvenly(items, n) {
   if (items.length <= n) return [...items];
   return Array.from({ length: n }, (_, i) => items[Math.floor(i * items.length / n)]);
 }
 
-export async function extractGolden({ projectRoot, dataDir, n = 100 }) {
-  const db = new DatabaseSync(join(dataDir ?? projectDataDir(projectRoot), 'index.sqlite'), { readOnly: true });
+// Every request in the project's telemetry, in order, each with the prompt that
+// preceded it (the conversation it happened in).
+export function loadEvents(dataDir) {
+  const db = new DatabaseSync(join(dataDir, 'index.sqlite'), { readOnly: true });
   try {
     const topics = new Map(db.prepare('SELECT id, topic_key FROM memory_atoms').all().map(row => [row.id, row.topic_key]));
-    const seen = new Set();
-    const events = [];
+    const stream = [];
     for (const row of db.prepare('SELECT action, returned_atom_ids, created_at FROM memory_retrieval_events ORDER BY created_at').all()) {
       const probe = goldenEvent(row.action);
-      const key = JSON.stringify(probe);
-      if (!probe || seen.has(key)) continue;
+      if (probe) stream.push({ probe, at: row.created_at, delivered: JSON.parse(row.returned_atom_ids || '[]').map(id => topics.get(id) ?? id) });
+    }
+    stream.forEach((event, i) => { event.context = priorPrompt(stream, i); });
+    return stream;
+  } finally { db.close(); }
+}
+
+// Adds the conversation context to a golden set already labeled, matching each
+// task to its event by time and request.
+export function annotateContext(golden, stream) {
+  for (const task of golden.tasks) {
+    const event = stream.find(e => e.at === task.at && JSON.stringify(e.probe) === JSON.stringify(task.probes[0]));
+    task.context = event?.context ?? null;
+  }
+  return golden;
+}
+
+export async function extractGolden({ projectRoot, dataDir, n = 100 }) {
+  {
+    const seen = new Set();
+    const events = [];
+    for (const event of loadEvents(dataDir ?? projectDataDir(projectRoot))) {
+      // Requests that differ only in numbers are one request: a generated series
+      // (a stress run's "filter number 2, 8, 14...") must not fill the sample.
+      const key = JSON.stringify(event.probe).replace(/\d+/g, '#');
+      if (seen.has(key)) continue;
       seen.add(key);
-      events.push({ probe, at: row.created_at, delivered: JSON.parse(row.returned_atom_ids || '[]').map(id => topics.get(id) ?? id) });
+      events.push(event);
     }
     const prompts = events.filter(e => e.probe.prompt);
     const tools = events.filter(e => e.probe.tool);
@@ -64,16 +103,24 @@ export async function extractGolden({ projectRoot, dataDir, n = 100 }) {
         + 'Label each task: set must (and orbit) to the topic_keys that apply, or leave must empty when nothing should be delivered, '
         + 'then delete unlabeled. delivered_then is what DD delivered at the time, only as a hint.',
       tasks: picked.map((e, i) => ({ id: `golden-${String(i + 1).padStart(3, '0')}`, unlabeled: true, must: [], orbit: [],
-        probes: [e.probe], delivered_then: e.delivered, at: e.at })),
+        probes: [e.probe], context: e.context, delivered_then: e.delivered, at: e.at })),
     };
-  } finally { db.close(); }
+  }
 }
 
 if (process.argv[1] && samePath(fileURLToPath(import.meta.url), process.argv[1])) {
   const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split(/=(.*)/s)));
   const projectRoot = resolve(args.project ?? process.cwd());
+  if (args.annotate) {
+    const { readFile } = await import('node:fs/promises');
+    const golden = annotateContext(JSON.parse(await readFile(args.annotate, 'utf8')), loadEvents(args.data ?? projectDataDir(projectRoot)));
+    await writeFile(args.annotate, `${JSON.stringify(golden, null, 2)}\n`);
+    console.log(`${golden.tasks.filter(t => t.context).length}/${golden.tasks.length} tasks have context -> ${args.annotate}`);
+    process.exit(0);
+  }
   const golden = await extractGolden({ projectRoot, dataDir: args.data, n: Number(args.n ?? 100) });
-  const out = args.out ?? join(projectRoot, '.dd', 'golden.json');
+  // Real prompts and paths: kept in the local data directory, never under .dd/, which git shares.
+  const out = args.out ?? join(args.data ?? projectDataDir(projectRoot), 'golden.json');
   await writeFile(out, `${JSON.stringify(golden, null, 2)}\n`);
   console.log(`${golden.tasks.length} events to label -> ${out}`);
   process.exit(0);
