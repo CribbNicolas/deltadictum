@@ -13,7 +13,10 @@
   "what": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.",
   "why": "Measured 2026-09-22: ~4.2 KB of the ~7 KB get payload was exact duplication of authored text plus evidence hashes. The compact view cut get by 60.9% (7158 to 2796 B avg over 35 active atoms) with no authored content removed. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Add a field to what retrieve returns",
+    "Agregar un campo a lo que devuelve retrieve"
+  ],
   "applies_to": {
     "files": [
       "src/mcp/tools.js",
@@ -106,11 +109,11 @@
   },
   "replaces": "61bc43e7-196f-4f2b-a11c-3f3cf2ddf9c9",
   "created_at": "2026-09-27T02:37:09.391Z",
-  "updated_at": "2026-09-27T14:57:14.203Z",
+  "updated_at": "2026-09-28T06:47:10.967Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:14.197Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:10.962Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

@@ -15,7 +15,9 @@
   "tags": [],
   "trigger_variants": [
     "Mover o borrar el directorio de datos viejo de DD",
-    "Open an old index.sqlite with DatabaseSync read-only before deleting its directory"
+    "Open an old index.sqlite with DatabaseSync read-only before deleting its directory",
+    "Delete an old data directory",
+    "Borrar un directorio de datos viejo"
   ],
   "applies_to": {
     "files": [
@@ -108,11 +110,11 @@
   },
   "replaces": "134c931e-6f04-46c3-8370-b7a8cfca0207",
   "created_at": "2026-09-27T02:37:08.882Z",
-  "updated_at": "2026-09-28T02:21:32.564Z",
+  "updated_at": "2026-09-28T06:47:10.473Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T02:21:32.557Z",
-    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
+    "reviewed_at": "2026-09-28T06:47:10.468Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

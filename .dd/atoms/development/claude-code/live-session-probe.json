@@ -14,7 +14,9 @@
   "why": "--plugin-dir loads hooks/hooks.json exactly as the marketplace install does, for that run only. A resident that a hook starts inside a Bash tool call dies when the call ends, and while it loads DD is inactive: session start then omits the retrieve/propose guidance and project context, so a probe without a ready resident looks like a regression. Text output mode shows only the reply to the Stop reminder, hiding the rest.",
   "tags": [],
   "trigger_variants": [
-    "Probar el plugin en una sesion real de Claude Code con plugin-dir"
+    "Probar el plugin en una sesion real de Claude Code con plugin-dir",
+    "Check the plugin in a real Claude Code session",
+    "Probar el plugin en una sesion real de Claude Code"
   ],
   "applies_to": {
     "files": [
@@ -105,11 +107,11 @@
   },
   "replaces": "e82ba814-47e6-4401-b96e-ae01aec268cc",
   "created_at": "2026-09-27T02:37:08.722Z",
-  "updated_at": "2026-09-27T14:57:34.597Z",
+  "updated_at": "2026-09-28T06:47:10.550Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:34.592Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:10.545Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

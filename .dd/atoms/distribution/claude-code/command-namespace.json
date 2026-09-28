@@ -13,7 +13,10 @@
   "what": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate.",
   "why": "The prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it. The previous version of this memory predated the rename and said the plugin was named deltadictum.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Rename a plugin command",
+    "Renombrar un comando del plugin"
+  ],
   "applies_to": {
     "files": [
       ".claude-plugin/plugin.json",
@@ -105,11 +108,11 @@
   },
   "replaces": "27c7fd7f-027b-4a2c-ac4f-507496faf3d0",
   "created_at": "2026-09-27T02:37:08.691Z",
-  "updated_at": "2026-09-27T14:57:34.686Z",
+  "updated_at": "2026-09-28T06:47:10.701Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:34.682Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:10.695Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

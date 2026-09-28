@@ -13,7 +13,10 @@
   "what": "Wrap each glob in escaped double quotes in package.json so node --test expands it itself. Unquoted, sh on Linux and macOS expands ** without globstar as a single level and silently skips nested test files, while Windows passes the pattern through and runs them all.",
   "why": "On 2026-09-22 the same suite ran 323 tests on Windows and 245 on Linux with no error; quoting the globs brought Linux to the full count.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Some tests do not run on Linux",
+    "Algunos tests no corren en Linux"
+  ],
   "applies_to": {
     "files": [
       "package.json"
@@ -81,11 +84,11 @@
   },
   "replaces": "7b5d2510-a33e-4d28-8793-4c031292f51f",
   "created_at": "2026-09-27T02:37:09.360Z",
-  "updated_at": "2026-09-27T14:57:14.290Z",
+  "updated_at": "2026-09-28T06:47:11.678Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:14.285Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.673Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

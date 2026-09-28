@@ -20,7 +20,9 @@
   ],
   "trigger_variants": [
     "Investigar una tasa de abstencion alta en la telemetria",
-    "El agente no parece estar llamando a DD ni pedir memorias durante el trabajo"
+    "El agente no parece estar llamando a DD ni pedir memorias durante el trabajo",
+    "Retrieval seems to return nothing most of the time",
+    "El retrieval parece no devolver nada casi nunca"
   ],
   "applies_to": {
     "files": [],
@@ -96,11 +98,11 @@
   },
   "replaces": "6829e2af-b30e-4434-bcc6-23d2af753f73",
   "created_at": "2026-09-27T02:37:09.451Z",
-  "updated_at": "2026-09-28T02:21:32.776Z",
+  "updated_at": "2026-09-28T06:47:10.928Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T02:21:32.769Z",
-    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
+    "reviewed_at": "2026-09-28T06:47:10.923Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

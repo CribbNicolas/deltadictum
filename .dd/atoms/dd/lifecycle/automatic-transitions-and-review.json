@@ -13,7 +13,10 @@
   "what": "Exclude every memory a reviewer is currently holding: contested ones, and any memory a pending candidate names in replaces. Put the exclusion in the selector the health report reads, not in the driver, so the report cannot name a memory the sweep would decline to touch.",
   "why": "admitMemory refuses a replacement that is no longer effective, so retiring a revision target leaves a candidate review can never approve. The write path proposes revisions and sweeps in the same call, so this is reachable in one operation rather than by a race, and the candidate looks normal until someone presses Admit.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Add an automatic archive of unused memories",
+    "Agregar un archivado automatico de memorias sin uso"
+  ],
   "applies_to": {
     "files": [
       "src/engine/lifecycle.js",
@@ -112,11 +115,11 @@
   },
   "replaces": "9dc49d33-f37e-4fa7-90ac-ae3e1e7cc841",
   "created_at": "2026-09-27T02:37:09.921Z",
-  "updated_at": "2026-09-27T14:57:13.078Z",
+  "updated_at": "2026-09-28T06:47:10.435Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:13.073Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:10.429Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }

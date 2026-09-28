@@ -13,7 +13,10 @@
   "what": "Expect the dd MCP server and hooks to be absent until the user trusts the project in an interactive Codex session and trusts the hooks in /hooks; project skills in .agents/skills still load. Do not try to force trust from the agent: a -c projects.'<path>'.trust_level=\"trusted\" override did not make codex exec or codex mcp list load the project layer. Ask the user to open the project in codex once, accept trust, approve the hooks, then run the live check.",
   "why": "On 2026-09-24 (codex-cli 0.154.0) a scratch project with a correct DD block in .codex/config.toml ran codex exec with a working model, loaded the dd-* skills, but reported the dd MCP tools unavailable and no DD lines, with and without the -c trust override. Trusted project keys in ~/.codex/config.toml are lowercase Windows paths.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "DD does not load in Codex",
+    "DD no carga en Codex"
+  ],
   "applies_to": {
     "files": [
       "scripts/install-codex.mjs",
@@ -102,11 +105,11 @@
   },
   "replaces": "f2ba3a65-0f71-4ac4-8bb6-384203348702",
   "created_at": "2026-09-27T02:37:08.753Z",
-  "updated_at": "2026-09-27T14:57:34.513Z",
+  "updated_at": "2026-09-28T06:47:11.290Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:34.508Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T06:47:11.285Z",
+    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
   }
 }
