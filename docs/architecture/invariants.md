@@ -50,6 +50,13 @@ A store change the model asks for (archive, restore, delete, legacy, merge, spli
 an action: a pending request that changes nothing until a person applies it in the audit UI. Applying it
 first checks every target against the snapshot taken when it was filed, and writes all of it or none.
 
+**One exception (2026-09-28):** an `anchor` action changes only retrieval metadata (anchors and trigger
+variants): when a memory is delivered, never what it advises, its authority or its confidence. Once it
+passes anchor validation it applies itself, logged as `auto:retrieval-metadata`, unless the project sets
+`auto_apply_retrieval_metadata: false`. It exists because recall improves by enriching how memories are
+found (contextual indexing, document expansion), and a review round per keyword stalled that work. Git
+keeps every version, so a bad anchor is reverted like any other change.
+
 **Enforced by:** `normalizeProposal` overwrites every epistemic field; `admitMemory`, `applyAction`,
 `rejectAction` and `requestRevision` require a capability that no transport can construct; the MCP `act`
 tool only writes a pending file (`fileActions`); `recordOutcome` writes telemetry only.
