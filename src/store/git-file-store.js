@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { ARCHIVE_STATES, actionFilePath, archiveFilePath, atomFilePath, candidateFilePath, configPath,
-  DEFAULT_CONFIG, legacyFilePath, registryPath, relationsPath } from './paths.js';
+  DEFAULT_CONFIG, DEFAULTS_VERSION, LEGACY_DEFAULTS, legacyFilePath, registryPath, relationsPath } from './paths.js';
 import { commitTransaction, createWriteLock, readJson, recoverTransaction, writeJson } from './transactions.js';
 import { SCHEMA_VERSION, deriveForms, unsupportedReason } from '../engine/contract.js';
 
@@ -122,6 +122,10 @@ export function createGitFileStore(ddDir) {
   async function loadConfig() {
     if (configCache) return configCache;
     const stored = await readJson(configPath(ddDir), {});
+    if ((stored.defaults_version ?? 1) < DEFAULTS_VERSION) {
+      if (stored.budget_tokens === LEGACY_DEFAULTS.budget_tokens) delete stored.budget_tokens;
+      if (stored.semantic?.floor === LEGACY_DEFAULTS.semantic.floor) { const { floor, ...rest } = stored.semantic; stored.semantic = rest; }
+    }
     return configCache = Object.fromEntries(Object.entries({ ...DEFAULT_CONFIG, ...stored }).map(([key, value]) =>
       [key, value && typeof value === 'object' && !Array.isArray(value) ? { ...DEFAULT_CONFIG[key], ...value } : value]));
   }
