@@ -130,6 +130,7 @@ try {
     const result = await retrieveMemories({
       project_id: projectId,
       action,
+      source: 'prompt',
       budget_tokens: payload.budget_tokens,
       session_id: payload.session_id ?? payload.sessionId,
     }, { store });

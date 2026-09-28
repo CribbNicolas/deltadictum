@@ -130,3 +130,13 @@ test('several matching memories all arrive, in compact forms when the budget is 
   assert.equal(result.memories.length, 3);
   assert.ok(result.budget.used <= 600);
 });
+
+// A bare acknowledgement gives similarity nothing to work with, so only an
+// anchor it names can push a memory.
+test('a prompt with almost no content pushes by anchors only', async t => {
+  const { store, endurance, legacy } = await fixture(t);
+  const semantic = new Map([[endurance.id, 1], [legacy.id, 1]]);
+  const ask = action => retrieveMemories({ project_id: 'demo', action, source: 'prompt', telemetry: false }, { store, semantic });
+  assert.deepEqual((await ask('si dale')).memories, []);
+  assert.deepEqual((await ask('dale, resistencia')).memories.map(m => m.id), [endurance.id]);
+});
