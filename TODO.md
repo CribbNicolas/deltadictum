@@ -3,30 +3,36 @@
 Open work on delivery. Delivery favours recall: an extra memory is cheaper than a missing essential
 one, so every item is judged first by what it adds to recall.
 
-## Needs the user
+## Golden set
 
-- **Label the golden set.** `npm run golden -- --project=<repo> --data=<data dir>` writes about 100
-  real events as unlabeled bench tasks (`.dd/golden.json` by default). Set `must`/`orbit` to the
-  topic_keys that apply (or leave `must` empty), delete `unlabeled`, then run the bench on it. This
-  is the only measure of the target (90% of events delivered correctly): the bench scenarios were
-  written by the agent that wrote the anchors. Project-Patriark's plugin data lives under
-  `~/.claude/plugins/data/dd-deltadictum/<project key>`.
-- **Codex SessionStart limit.** `additionalContextLimit` for SessionStart was raised to 16000 so the
-  memory map fits; confirm its unit and effect with `scripts/check-codex.mjs` in a project trusted in
-  an interactive Codex session.
-- **Patriark review.** Update its plugin to 0.4.x, then review the pending actions: six `anchor`
-  actions for memories created without anchors, one archive of the test memory
-  `project-patriark/scenic-preview-weight` (delete it afterwards), and 19 proposals adding
-  `anchors.files`.
+Project-Patriark's golden set is `C:\dev\Project-Patriark\.dd\golden.json`: 100 real events (57
+with expected memories, 43 where nothing should be delivered), labeled 2026-09-27 by the agent at
+the user's request from the event text and the memory catalogue, without looking at what DD
+delivered. A person should spot-check it; the agent that labeled it also wrote the anchors.
 
-## After the golden set
+With the defaults of 0.5.1 (semantic floor 0.035 now actually applied, budget 800):
 
+| | must-recall | events with every must | negatives quiet | strict |
+|---|---|---|---|---|
+| 0.5.0 defaults (0.04, 600) | 0.45 | 21/57 | 27/43 | 34% |
+| 0.5.1 defaults (0.035, 800) | 0.59 | 29/57 | 26/43 | 33% |
+
+## Next, measured on the golden set
+
+- **Prompts miss; tool calls add noise.** 19 of the 28 events with a missed memory are prompts
+  (design conversations in Spanish naming no anchor: the map generator, randomness, dice), and 15
+  of the 17 noisy negatives are tool calls on central files (`architecture/core/engine-independent`,
+  `ui/player-menu/sections`, `gameplay/core/dice-resolution-plan`). Candidates: session context in
+  the query for prompts (the last prompts with content), and a stricter semantic floor for tool
+  calls than for prompts.
 - **Measure the pull path.** The bench scores only what is pushed. Replay golden events with a model
   that reads the session memory map and calls `get`, and score what it pulls.
 - **Embedding model benchmark.** Bench e5-small against larger models on the golden set. A first
   pass (2026-09-26) found e5-base slightly better (Patriark AUC 0.28 -> 0.36) and e5-large and
   bge-m3 worse at separating off-topic requests, at 1.7x the resident memory.
-- **Budget against recall.** With breadth-first packing, supermem's `telemetry-looks-empty` still
-  misses `dd/store/data-directory-renames`: four relevant memories match one tool call and even
-  their headlines exceed 600 tokens (a legacy headline alone is 161). Decide on the golden set
-  whether the default budget should grow, or headlines drop the restated scope.
+
+## Needs the user
+
+- **Codex SessionStart limit.** `additionalContextLimit` for SessionStart was raised to 16000 so the
+  memory map fits; confirm its unit and effect with `scripts/check-codex.mjs` in a project trusted in
+  an interactive Codex session.
