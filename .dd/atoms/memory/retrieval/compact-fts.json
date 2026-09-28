@@ -13,7 +13,9 @@
   "what": "Expect at most 8 memories within a 600-token estimated budget: candidates come from FTS plus, when the resident process runs, nearest embeddings; the top memory arrives in its short form if that takes at most half the budget, and further applicable memories fall back to micro or to a one-sentence headline with the id to fetch. vpt_threshold is a floor on marginal value, not a per-token ratio. Use get only when one memory's full rationale, evidence or relations are needed.",
   "why": "Measured 2026-09-22: the old value-per-token gate capped every memory near 50 tokens, so reviewed advice longer than a sentence never injected; one ~470-token micro form filled the pack alone. The headline fallback and the value floor fixed both, verified by tests/engine/cognition/retrieval-reach.test.js and the task benchmark.",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Cuanto trae retrieve: el token budget o budget de tokens y los umbrales"
+  ],
   "applies_to": {
     "files": [
       "src/engine/retrieve.js",
@@ -27,7 +29,9 @@
       "retrieve",
       "orient",
       "vpt_threshold",
-      "600-token"
+      "600-token",
+      "budget de tokens",
+      "token budget"
     ],
     "not_when": [],
     "files": []
@@ -95,11 +99,11 @@
   },
   "replaces": "297bd600-5cd3-4ba2-a067-3636e5145ea3",
   "created_at": "2026-09-27T02:37:09.265Z",
-  "updated_at": "2026-09-27T14:57:14.580Z",
+  "updated_at": "2026-09-28T02:21:32.916Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:14.574Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.910Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }

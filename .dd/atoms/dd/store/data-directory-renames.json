@@ -14,7 +14,8 @@
   "why": "The data directory moved three times (~/.supermem, ~/.dd, ~/.dd-data). Adoption is list-driven, so a move without updating the list silently abandons telemetry, observations and the contradiction log while atoms return from git and the store still looks complete. The 2026-09-19 cleanup confirmed the topic_key comparison is enough to tell an old directory holds nothing unmigrated.",
   "tags": [],
   "trigger_variants": [
-    "Mover o borrar el directorio de datos viejo de DD"
+    "Mover o borrar el directorio de datos viejo de DD",
+    "Open an old index.sqlite with DatabaseSync read-only before deleting its directory"
   ],
   "applies_to": {
     "files": [
@@ -35,7 +36,9 @@
       "data directory",
       "adoptHistory",
       "old data",
-      "directorio de datos"
+      "directorio de datos",
+      "index.sqlite",
+      "DatabaseSync"
     ],
     "not_when": [],
     "files": [
@@ -105,11 +108,11 @@
   },
   "replaces": "134c931e-6f04-46c3-8370-b7a8cfca0207",
   "created_at": "2026-09-27T02:37:08.882Z",
-  "updated_at": "2026-09-27T14:57:34.227Z",
+  "updated_at": "2026-09-28T02:21:32.564Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:34.223Z",
-    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.557Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }

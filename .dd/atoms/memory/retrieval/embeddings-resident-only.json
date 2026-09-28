@@ -13,7 +13,9 @@
   "what": "Load embedding models only in the resident DD process (the audit UI started by src/resident.js), never in a hook process, and keep lexical FTS retrieval working on its own as the fallback. Store vectors in the SQLite index, not an external vector store. Keep trigger activation, applicability gates and abstention; embeddings only widen candidates and add a calibrated activation.",
   "why": "The earlier ban came from removing the Orquesta system, whose embeddings were a separate service. An in-process ONNX runtime (@huggingface/transformers, optional dependency) measured 0.5 s cached load and 3 ms per query, so it cannot run per hook (L1) but works in a long-lived process. On the supermem benchmark semantic retrieval beat lexical on every metric (must recall 0.83 vs 0.67, precision 0.86 vs 0.80, all negatives quiet).",
   "tags": [],
-  "trigger_variants": [],
+  "trigger_variants": [
+    "Ajustar el floor semantico (semantic floor) o la calibracion de los embeddings"
+  ],
   "applies_to": {
     "files": [
       "src/semantic/**",
@@ -29,7 +31,9 @@
       "embedding",
       "vector search",
       "model runtime",
-      "vectors"
+      "vectors",
+      "semantic floor",
+      "floor semantico"
     ],
     "not_when": [],
     "files": []
@@ -116,11 +120,11 @@
   },
   "replaces": "43053f0a-e4cd-49c4-816b-fa643229d887",
   "created_at": "2026-09-27T02:37:08.853Z",
-  "updated_at": "2026-09-27T14:57:34.314Z",
+  "updated_at": "2026-09-28T02:21:32.881Z",
   "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-27T14:57:34.308Z",
-    "rationale": "Auto-accepted: confidence 0.855 >= threshold 0.765."
+    "reviewed_at": "2026-09-28T02:21:32.873Z",
+    "rationale": "Reviewed by the agent at the user's request (2026-09-28), not by a person: vocabulary generalised from the golden set's tuning half, validated against the memory's own text."
   }
 }
