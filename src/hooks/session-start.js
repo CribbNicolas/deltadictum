@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { INSTALL_LOG, manualInstallCommand } from '../deps.js';
 import { sessionBanner, uiPointer } from './banner.js';
 import { orientProject } from '../engine/project-context.js';
-import { AMBIENT_TAG, ambientRevision } from '../engine/retrieve.js';
+import { AMBIENT_TAG, ambientRevision, whenLine } from '../engine/retrieve.js';
 import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { AUTHORITY_WEIGHT } from '../engine/ranking.js';
 import { estimateTokens } from '../engine/budget.js';
@@ -56,11 +56,7 @@ export function memoryMap(atoms, { budget = MAP_BUDGET } = {}) {
   const sorted = [...atoms].sort((a, b) => a.topic_key.localeCompare(b.topic_key));
   // A line says when the memory applies, as a skill's description does: the agent
   // decides from it whether to pull the memory, and a title rarely says when.
-  const when = atom => {
-    const text = String(atom.trigger || atom.title || '').replace(/\s+/g, ' ').trim().replace(/\.$/, '');
-    return text.length > MAP_LINE_CHARS ? `${text.slice(0, MAP_LINE_CHARS).replace(/\s+\S*$/, '')}...` : text;
-  };
-  const lines = sorted.map(a => `${a.topic_key} — ${when(a)}`);
+  const lines = sorted.map(a => `${a.topic_key} — ${whenLine(a, MAP_LINE_CHARS)}`);
   const flat = [`DD - Memory map (${sorted.length}):`, ...lines].join('\n');
   if (estimateTokens(flat) <= budget) return flat;
   const domains = new Map();
@@ -70,6 +66,13 @@ export function memoryMap(atoms, { budget = MAP_BUDGET } = {}) {
   }
   const grouped = [...domains].map(([domain, topics]) => `${domain} (${topics.length}): ${topics.join(', ')}`);
   return [`DD - Memory map (${sorted.length}, by domain):`, ...grouped].join('\n');
+}
+
+// Near misses the agent may pull: one line each, after the pushed memories.
+export function pointerPack(pointers) {
+  if (!pointers?.length) return null;
+  return ['DD - Possibly relevant, not pushed (call the dd `get` tool with the topic_key if one applies):',
+    ...pointers.map(p => `- ${p.line}`)].join('\n');
 }
 
 export function microPack(memories) {
