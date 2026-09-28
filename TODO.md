@@ -40,14 +40,30 @@ test half honest as anchors grow.
 
 ## Next
 
-- **Cut by rank, not by floor.** Candidates are ordered by reciprocal rank fusion, but what is
-  delivered is still cut by each signal's absolute floor. Try delivering the top N after fusion
-  instead, and measure it on both test halves.
+- **Cut by rank, not by floor: tried 2026-09-28, mostly refuted.** Delivering the top N after fusion
+  cannot abstain: at N=1 supermem kept 2/25 dev negatives quiet (11/25 before). Capping at N among
+  those clearing the floor lost recall. Floors or partial gates on top N gained recall only by
+  breaking negatives, on tool calls most of all. What stayed: on prompts, the fused leader clears its
+  floor when both rankings place it within 5 (`TOP_AGREE_WINDOW`). Test half: Patriark must-recall
+  0.69 -> 0.73 (17/28 complete, negatives unchanged), supermem 0.52 unchanged with one more noisy
+  negative (12/21); dev half: supermem 0.80 -> 0.84 at no cost.
+- **Budget spent on what the agent reads: done 2026-09-28.** Every test-half miss that cleared its
+  floor was dropped by the budget with only 3 or 4 memories packed: the budget counted the engine's
+  JSON (~50 tokens of keys per memory) and each flagged memory's list of changed files. Counting the
+  rendered pack and dropping the file list: test half Patriark 0.73 -> 0.77 (19/28 complete),
+  supermem 0.52 -> 0.55 (14/29), negatives unchanged, about 17% more visible tokens per task. A
+  larger JSON budget (1100) reached the same recall at about 10% more tokens than this.
+- **Where the remaining test-half misses are (2026-09-28, 36 musts).** 5 were the budget drops above;
+  about 9 sit in the dense top 3 below their floor (supermem's `environment/dev-machine-harness-clis`
+  three times on tool calls); about 12 are far down both rankings, where only phrasings, anchors or a
+  label review can help. Many of the rest already arrive as pointers.
 - **More request phrasings per memory.** The 0.7.0 backfill added 2 phrasings per memory (one English,
   one Spanish); document expansion usually uses 5 to 8. Extend them, written from the memory's own
   content, never from golden events.
-- **Contextual indexing.** Prefix each memory's indexed and embedded text with its domain and project
-  context before indexing (Anthropic's contextual retrieval). Not tried yet.
+- **Rejected: contextual indexing (2026-09-28).** Prefixing the embedded text with the topic path,
+  components, files or anchor keywords raised no dev-half recall; topic plus components only
+  raised precision slightly, and on the test half cost Patriark 0.73 -> 0.69 and a quiet negative in
+  supermem. FTS already indexes topic_key.
 - **Spot-check the labels.** Both sets were labeled by the agent that wrote the anchors.
 - **Measure the pull path.** The bench scores only what is pushed. Replay golden events with a model
   that reads the session memory map and calls `get`, and score what it pulls. Push alone is unlikely
@@ -55,10 +71,11 @@ test half honest as anchors grow.
 - **Embedding model benchmark.** Bench e5-small against larger models on the golden sets' test halves.
   A first pass (2026-09-26) found e5-base slightly better (Patriark AUC 0.28 -> 0.36) and e5-large and
   bge-m3 worse at separating off-topic requests, at 1.7x the resident memory.
-- **Session context, again.** Adding the previous prompt to a prompt's query helped Patriark (+2
-  complete events on dev) and hurt supermem (-1), with more noise in both; revisit with a better way
-  to weigh it (for example, only when the prompt itself is short).
-- **Semantic topK 20 had no measured effect.** Kept at 20; revisit if the fusion cut changes.
+- **Rejected: session context in the dense query (2026-09-28).** Blending the previous prompt's
+  vector into the query (weights 0.3 to 2; always, tool calls only, or prompts under 8 words only)
+  never raised dev-half recall; weights of 1 and above cost recall and quiet negatives.
+- **Semantic topK 20 had no measured effect.** Kept at 20; the fusion cut did not change enough to
+  revisit it.
 - **Rejected: a cross-encoder reranker.** `bge-reranker-v2-m3` took 2.7 s per event and 778 MB, and
   moved AUC in opposite directions on the two sets (recorded in `plugin-constraints.md`, L3).
 - **Old test data.** Tests now write under a temporary data base (`tests/helpers/isolate-data.js`),

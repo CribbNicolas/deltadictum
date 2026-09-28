@@ -22,7 +22,7 @@ Version 0.2 / schema 7 is defined by [project cognition](architecture/project-co
 - Source reliability caps attainable confidence. One declared ordinal ladder ranks unverified agent claim below host observation below repository artifact below observed user correction; the cap is applied at admission, evidence volume does not exceed it, and `capture_origin` can only lower it. A reviewer granting `canonical` is not clamped; nothing else rises above the ladder.
 - Advice remains subordinate to host instructions, user intent and current project evidence.
 - Every compact form preserves applicability. Disputed or stale knowledge remains explicitly qualified.
-- Context budgets account for the serialized result, using a documented model-independent estimate. A pack fills breadth first: every memory that matched joins in its most compact form that fits, down to a flagged headline with its id, and only then does each, in order of value, take the fullest form the remaining budget allows.
+- Context budgets account for what the agent reads: each memory with its flag and id, each pointer line and a fixed envelope, using a documented model-independent estimate. A pack fills breadth first: every memory that matched joins in its most compact form that fits, down to a flagged headline with its id, and only then does each, in order of value, take the fullest form the remaining budget allows.
 - Local telemetry distinguishes retrieval, outcomes and evidence. Frequency is not correctness.
 - Mutations are serialized and recoverable. Git is knowledge authority; SQLite is derived indexing plus local telemetry.
 
