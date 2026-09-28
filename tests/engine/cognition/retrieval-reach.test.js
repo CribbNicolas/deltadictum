@@ -84,7 +84,7 @@ test('when full forms do not fit, the remaining applicable memories still arrive
     behavior_delta: long('Route every player action through a command handler.'), why: 'Commands are the only mutation path.',
     evidence_refs: [{ source_type: 'file', source_ref: 'ARCHITECTURE.md', summary: 'Documented layers' }] }, { store: f.store });
   await admitMemory(second.atom.id, { store: f.store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Documented.' });
-  const recalled = await f.retrieve({ action: 'when adding game logic, commands or presentation so a player action changes game state' });
+  const recalled = await f.retrieve({ action: 'when adding game logic, commands or presentation so a player action changes game state', budget_tokens: 600 });
   assert.equal(recalled.memories.length, 2);
   const headline = recalled.memories.find(m => m.form_type === 'headline');
   assert.ok(headline);

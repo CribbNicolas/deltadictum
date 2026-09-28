@@ -79,13 +79,24 @@ export function sqlitePath(dataDir) {
   return join(dataDir, 'index.sqlite');
 }
 
+// Every project writes the defaults of its day into config.json. A config
+// written before defaults were versioned reads a value equal to one of these
+// old defaults as unset, so a better default reaches it; a versioned config
+// keeps every value it states.
+export const DEFAULTS_VERSION = 2;
+export const LEGACY_DEFAULTS = { budget_tokens: 600, semantic: { floor: 0.04 } };
+
 export const DEFAULT_CONFIG = {
   project_id: null,
-  budget_tokens: 600,
+  defaults_version: DEFAULTS_VERSION,
+  // Recall first. On Project-Patriark's golden set (100 real events, 2026-09-27)
+  // must-recall went 0.45 at 600 tokens, 0.56 at 800, 0.59 at 1000, 0.60 at 1200.
+  budget_tokens: 800,
   vpt_threshold: 0.02,
   // Semantic retrieval in the resident process: how far above the query's mean
   // similarity a memory must stand. Lower reaches terser memories, less quietly.
-  semantic: { floor: 0.04 },
+  // Kept equal to DEFAULT_CALIBRATION.floor in src/semantic/provider.js.
+  semantic: { floor: 0.035 },
   auto_admit: {
     lesson: 'candidate',
     anti_memory: 'candidate',

@@ -126,7 +126,7 @@ test('several matching memories all arrive, in compact forms when the budget is 
     assert.ok(r.atom, JSON.stringify(r.reasons));
     ids.push((await admitMemory(r.atom.id, { store, projectId: 'demo', actor: HUMAN_REVIEW, rationale: 'Checked.' })).id ?? r.atom.id);
   }
-  const result = await retrieveMemories({ project_id: 'demo', action: 'refactor the zqxv frobnicator', telemetry: false }, { store });
+  const result = await retrieveMemories({ project_id: 'demo', action: 'refactor the zqxv frobnicator', budget_tokens: 600, telemetry: false }, { store });
   assert.equal(result.memories.length, 3);
   assert.ok(result.budget.used <= 600);
 });
