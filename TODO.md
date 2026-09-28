@@ -60,9 +60,11 @@ test half honest as anchors grow.
 - **Rejected: admitting the dense top 1 or 2 below its floor (2026-09-28).** On prompts, tool calls or
   both, with or without a minimum similarity, it added no dev-half event and cost 1 to 12 quiet
   negatives.
-- **More request phrasings per memory.** The 0.7.0 backfill added 2 phrasings per memory (one English,
-  one Spanish); document expansion usually uses 5 to 8. Extend them, written from the memory's own
-  content, never from golden events.
+- **More request phrasings per memory: first try hurt (2026-09-28).** Adding 4 more per supermem
+  memory (2 English, 2 Spanish, written from each memory's content) and applying them to the bench's
+  copy of the store took the dev half from 0.86 to 0.80 must-recall (19 -> 17 complete) and 11 -> 7
+  quiet negatives: generic request wording matches more requests, adds noise and displaces the
+  right memories. Not filed. If retried, measure fewer and more specific phrasings first.
 - **Rejected: contextual indexing (2026-09-28).** Prefixing the embedded text with the topic path,
   components, files or anchor keywords raised no dev-half recall; topic plus components only
   raised precision slightly, and on the test half cost Patriark 0.73 -> 0.69 and a quiet negative in
