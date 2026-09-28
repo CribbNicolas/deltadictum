@@ -19,7 +19,8 @@ describe('SessionStart context', () => {
       ...PROVENANCE, lifecycle_state: 'active', retrieval_forms: { micro: 'Require trigger.' } });
     const first = (await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://x', sessionId: 's1' })).hookSpecificOutput.additionalContext;
     assert.match(first, /DD - Memory map \(1\)/);
-    assert.ok(first.includes('memory/admission/required-fields — Require trigger'));
+    // Each line says when the memory applies (its trigger), as a skill's description does.
+    assert.ok(first.includes('memory/admission/required-fields — before writing durable memory'));
     const again = (await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://x', sessionId: 's1' })).hookSpecificOutput.additionalContext;
     assert.doesNotMatch(again, /Memory map/);
     const compacted = (await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://x', sessionId: 's1', source: 'compact' })).hookSpecificOutput.additionalContext;
