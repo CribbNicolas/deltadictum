@@ -1,5 +1,5 @@
 import { retrieveMemories } from '../engine/retrieve.js';
-import { microPack } from './session-start.js';
+import { microPack, pointerPack } from './session-start.js';
 import { projectContext } from '../engine/project-context.js';
 
 // Host tools that load skills, find tools, report on subagents, wait or ask carry
@@ -40,13 +40,19 @@ export async function buildPreToolContext(payload, { store, projectId, retrieve 
     ...request, facts: context.facts,
     session_id: payload.session_id ?? payload.sessionId,
   }, { store });
-  const pack = microPack(result.memories ?? []);
+  const pack = preToolPack(result);
   if (!pack) return { decision: 'allow' };
   return {
     decision: 'allow',
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
-      additionalContext: `DD - Project knowledge (advisory):\n${pack}`,
+      additionalContext: pack,
     },
   };
+}
+
+// What a tool-call hook adds: the pushed pack and the pointers the agent may pull.
+export function preToolPack(result) {
+  const pack = microPack(result.memories ?? []);
+  return [pack ? `DD - Project knowledge (advisory):\n${pack}` : null, pointerPack(result.pointers)].filter(Boolean).join('\n');
 }

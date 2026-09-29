@@ -170,14 +170,28 @@ test('a prompt delivers its fused leader when both rankings place it within five
 
 // A near miss on a prompt arrives as a one-line pointer the agent can pull,
 // not as advice: the pattern of skill descriptions and progressive disclosure.
-test('a prompt lists near misses as pointers; a tool call does not', async t => {
+// The agent reranks pointers better than a threshold, on prompts and tool calls
+// alike; each is shown once per session.
+test('prompts and tool calls list near misses as pointers, once per session', async t => {
   const { store, legacy } = await fixture(t);
   const semanticRank = new Map([[legacy.id, 6]]);
-  const ask = source => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false },
+  const ask = (source, extra = {}) => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false, ...extra },
     { store, semantic: new Map(), semanticRank });
   const prompt = await ask('prompt');
   assert.ok(!prompt.memories.some(m => m.id === legacy.id));
   assert.deepEqual(prompt.pointers.map(p => p.id), [legacy.id]);
   assert.match(prompt.pointers[0].line, /^ui\/toolbar\/select-width — when a toolbar select stretches \(get [0-9a-f]{8}\)$/);
-  assert.deepEqual((await ask('tool')).pointers, []);
+  assert.deepEqual((await ask('tool')).pointers.map(p => p.id), [legacy.id]);
+  assert.deepEqual((await ask('tool', { session_id: 's1' })).pointers.map(p => p.id), [legacy.id]);
+  assert.deepEqual((await ask('prompt', { session_id: 's1' })).pointers, []);
+});
+
+// An explicit retrieve is a pull: the fused top memories clear their floors.
+test('an explicit retrieve returns what a pushed one leaves as a pointer', async t => {
+  const { store, legacy } = await fixture(t);
+  const semanticRank = new Map([[legacy.id, 6]]);
+  const ask = extra => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source: 'prompt', telemetry: false, ...extra },
+    { store, semantic: new Map(), semanticRank });
+  assert.ok(!(await ask({})).memories.some(m => m.id === legacy.id));
+  assert.ok((await ask({ explicit: true })).memories.some(m => m.id === legacy.id));
 });

@@ -22,8 +22,9 @@ const TOP_AGREE_WINDOW = 5;
 const PACK_ENVELOPE = 40;
 const packCost = (memories, pointers = []) => PACK_ENVELOPE + estimateTokens([
   ...memories.map(m => `[REVIEW REQUIRED ${m.id}] ${m.content}`), ...pointers.map(p => p.line)].join('\n'));
-const POINTER_WINDOW = 8;
-const MAX_POINTERS = 4;
+const POINTER_WINDOW = 20;
+const MAX_POINTERS = 8;
+const EXPLICIT_TOP = 5;
 const POINTER_REVISION = 'pointer';
 // Revision of a memory as delivered at session start, independent of any
 // request: ambient memories are marked with it so tool calls do not repeat them.
@@ -156,6 +157,19 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       leader.value = leader.floor * leader.weight;
     }
   }
+  // An explicit retrieve (the agent called the tool) is a pull: the agent reads
+  // what comes back and keeps what applies, so there is no negative to keep quiet
+  // and the fused top EXPLICIT_TOP clear their floors (the rest arrive as its
+  // pointers). With the English-retrieve nudge (src/hooks/session-start.js),
+  // bench:pull (2026-09-29, measuring halves, no memory map, two runs) went from
+  // 0.83 with pointers alone to 0.94-0.96 must-recall in supermem, whose requests
+  // are Spanish and memories English; Patriark stayed at 0.90-0.92. Top 8 recalled
+  // no more than top 5.
+  if (request.explicit && !anchorsOnly) {
+    const top = ranked.filter(c => c.applicability.applies)
+      .sort((a, b) => b.rrf - a.rrf || a.atom.id.localeCompare(b.atom.id)).slice(0, EXPLICIT_TOP);
+    for (const c of top) if (c.activation < c.floor) { c.activation = c.floor; c.value = c.floor * c.weight; }
+  }
   const scored = ranked.filter(c => c.activation >= c.floor)
     .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id));
 
@@ -267,20 +281,27 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       if (fits(trial)) { result.memories[i] = fuller; break; }
     }
   });
-  // Near misses on a prompt arrive as one-line pointers the agent can pull with
-  // get, as skill descriptions do: a memory both rankings place near the top that
-  // cleared no floor. Recall first: a pointer costs a line, a missing memory more.
-  // Once per session each, and never on tool calls, where the noise was.
+  // Near misses arrive as one-line pointers the agent can pull with get, as skill
+  // descriptions do: the agent reranks them far better than any threshold. On
+  // bench:pull (2026-09-29, measuring halves, no memory map), every must memory a
+  // pointer showed was pulled, and 8 pointers from each list's top 20 on prompts
+  // and tool calls raised must-recall 0.66 -> 0.83 (supermem) and 0.85 -> 0.92
+  // (Patriark) for under one memory pulled per event outside the labels. 12 from
+  // 30 added nothing. Once per session each, so a session's pointer lines are
+  // bounded by the store, however many tool calls it makes.
   result.pointers = [];
-  if (request.source === 'prompt' && !anchorsOnly) {
+  if (!anchorsOnly) {
     const delivered = new Set(result.memories.map(m => m.id));
     const near = ranked.filter(c => !delivered.has(c.atom.id) && !excluded.has(c.atom.id) && c.applicability.applies
       && ['active', 'contested'].includes(c.atom.lifecycle_state) && (c.lex <= POINTER_WINDOW || c.dense <= POINTER_WINDOW))
       .sort((a, b) => b.rrf - a.rrf || a.atom.id.localeCompare(b.atom.id));
     for (const { atom } of near) {
       if (result.pointers.length >= MAX_POINTERS) break;
-      if (request.session_id && !request.repeat && store.wasDelivered
-          && await store.wasDelivered(request.project_id, request.session_id, atom.id, POINTER_REVISION)) continue;
+      // Never for a memory this session already has in any form: a pointer to it
+      // is noise, and its mark would overwrite the delivery row and let the
+      // memory be claimed again.
+      if (request.session_id && !request.repeat && store.deliveredInSession
+          && await store.deliveredInSession(request.project_id, request.session_id, atom.id)) continue;
       result.pointers.push({ id: atom.id, topic_key: atom.topic_key, line: `${atom.topic_key} — ${whenLine(atom)} (get ${atom.id.slice(0, 8)})` });
       if (request.session_id && !request.repeat && store.markDelivered) await store.markDelivered(request.project_id, request.session_id, atom.id, POINTER_REVISION);
     }

@@ -6,7 +6,7 @@ import { buildSessionStartContext, contextPayload, lexicalMode, residentNotice }
 import { STOP_CAPTURE_PROMPT } from './capture.js';
 import { buildPreToolContext } from './pre-tool.js';
 import { observationFromTool, recordPromptObservation } from './observe.js';
-import { microPack, pointerPack } from './session-start.js';
+import { promptPack } from './session-start.js';
 import { callRunningStore } from './bridge.js';
 import { ensureResident, projectUiUrl, sessionUiUrl } from '../resident.js';
 import { ensureDependencies } from '../deps.js';
@@ -135,7 +135,7 @@ try {
       session_id: payload.session_id ?? payload.sessionId,
     }, { store });
     store.close();
-    ok(contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? []), pointerPack(result.pointers)].filter(Boolean).join('\n')));
+    ok(contextPayload('UserPromptSubmit', [revisions, promptPack(result, action)].filter(Boolean).join('\n')));
   }
 
   if (command === 'observe') {

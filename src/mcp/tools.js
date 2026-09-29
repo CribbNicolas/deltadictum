@@ -61,6 +61,9 @@ export function createToolHandlers({ store, projectId, repoRoot, uiPort = 7733, 
       return action ? { ...map, dd: recalled?.error?.message ?? residentNotice({ state: 'unreachable' }) } : map;
     },
     async retrieve(request) {
+      // The agent called the tool: a pull, answered with the fused top memories
+      // (src/engine/retrieve.js, EXPLICIT_TOP) rather than only those clearing a floor.
+      request = { ...request, explicit: true };
       // The resident process answers with semantic retrieval. Embeddings are
       // required, so without it DD is inactive (lexical only as an explicit mode).
       const bridged = await callRunningStore('retrieve', request, repoRoot ?? store.repoRoot);

@@ -10,7 +10,7 @@ import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { recommendResolution } from '../engine/v6/predominance.js';
 import { buildPreToolContext } from '../hooks/pre-tool.js';
 import { recordPromptObservation } from '../hooks/observe.js';
-import { buildSessionStartContext, contextPayload, microPack, pointerPack } from '../hooks/session-start.js';
+import { buildSessionStartContext, contextPayload, promptPack } from '../hooks/session-start.js';
 import { uiPointer } from '../hooks/banner.js';
 import { retrieveMemories } from '../engine/retrieve.js';
 import { sweepAutoAccept } from '../engine/auto-accept.js';
@@ -214,7 +214,7 @@ export async function startResidentServer({ projects: initial = [], openProject,
           const result = await retrieve({ project_id: projectId, action: payload.prompt || payload.text || payload.user_prompt,
             source: 'prompt', session_id: sessionId, budget_tokens: payload.budget_tokens }, { store });
           return send(res, 200, { ...shown,
-            ...contextPayload('UserPromptSubmit', [revisions, microPack(result.memories ?? []), pointerPack(result.pointers)].filter(Boolean).join('\n')) });
+            ...contextPayload('UserPromptSubmit', [revisions, promptPack(result, payload.prompt || payload.text || payload.user_prompt)].filter(Boolean).join('\n')) });
         }
         if (url.pathname.endsWith('/pre-tool')) return send(res, 200, active ? await buildPreToolContext(payload, { store, projectId, retrieve }) : {});
         if (url.pathname.endsWith('/similar')) {
