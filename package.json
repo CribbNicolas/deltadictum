@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
@@ -28,7 +28,8 @@
     "mcp": "node src/mcp/server.js",
     "bench": "node src/eval/bench/run.js --project=.",
     "bench:semantic": "node src/eval/bench/run.js --project=. --provider=semantic",
-    "golden": "node src/eval/golden/extract.js"
+    "golden": "node src/eval/golden/extract.js",
+    "bench:pull": "node src/eval/bench/pull.js --project=."
   },
   "files": [
     "src",

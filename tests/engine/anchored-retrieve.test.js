@@ -152,16 +152,46 @@ test('a prompt delivers a memory both rankings agree on, a tool call does not', 
   assert.ok(!(await ask('tool')).memories.some(m => m.id === legacy.id));
 });
 
+// The fused leader gets a wider agreement window than the rest (5, not 3), and
+// only on prompts; any other memory at that rank needs the ordinary window.
+test('a prompt delivers its fused leader when both rankings place it within five', async t => {
+  const { store, endurance, legacy } = await fixture(t);
+  const ask = (rank, source = 'prompt') => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false },
+    { store, semantic: new Map(), semanticRank: new Map(rank) });
+  assert.ok((await ask([[legacy.id, 5]])).memories.some(m => m.id === legacy.id));
+  assert.ok(!(await ask([[legacy.id, 5]], 'tool')).memories.some(m => m.id === legacy.id));
+  assert.ok(!(await ask([[legacy.id, 6]])).memories.some(m => m.id === legacy.id));
+  // A memory only the dense list ranks first does not lead: fusion prefers the
+  // one both lists place.
+  const both = await ask([[endurance.id, 1], [legacy.id, 5]]);
+  assert.ok(both.memories.some(m => m.id === legacy.id));
+  assert.ok(!both.memories.some(m => m.id === endurance.id));
+});
+
 // A near miss on a prompt arrives as a one-line pointer the agent can pull,
 // not as advice: the pattern of skill descriptions and progressive disclosure.
-test('a prompt lists near misses as pointers; a tool call does not', async t => {
+// The agent reranks pointers better than a threshold, on prompts and tool calls
+// alike; each is shown once per session.
+test('prompts and tool calls list near misses as pointers, once per session', async t => {
   const { store, legacy } = await fixture(t);
-  const semanticRank = new Map([[legacy.id, 4]]);
-  const ask = source => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false },
+  const semanticRank = new Map([[legacy.id, 6]]);
+  const ask = (source, extra = {}) => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source, telemetry: false, ...extra },
     { store, semantic: new Map(), semanticRank });
   const prompt = await ask('prompt');
   assert.ok(!prompt.memories.some(m => m.id === legacy.id));
   assert.deepEqual(prompt.pointers.map(p => p.id), [legacy.id]);
   assert.match(prompt.pointers[0].line, /^ui\/toolbar\/select-width — when a toolbar select stretches \(get [0-9a-f]{8}\)$/);
-  assert.deepEqual((await ask('tool')).pointers, []);
+  assert.deepEqual((await ask('tool')).pointers.map(p => p.id), [legacy.id]);
+  assert.deepEqual((await ask('tool', { session_id: 's1' })).pointers.map(p => p.id), [legacy.id]);
+  assert.deepEqual((await ask('prompt', { session_id: 's1' })).pointers, []);
+});
+
+// An explicit retrieve is a pull: the fused top memories clear their floors.
+test('an explicit retrieve returns what a pushed one leaves as a pointer', async t => {
+  const { store, legacy } = await fixture(t);
+  const semanticRank = new Map([[legacy.id, 6]]);
+  const ask = extra => retrieveMemories({ project_id: 'demo', action: 'the toolbar looks odd on narrow screens today', source: 'prompt', telemetry: false, ...extra },
+    { store, semantic: new Map(), semanticRank });
+  assert.ok(!(await ask({})).memories.some(m => m.id === legacy.id));
+  assert.ok((await ask({ explicit: true })).memories.some(m => m.id === legacy.id));
 });

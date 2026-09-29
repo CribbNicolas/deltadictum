@@ -32,6 +32,15 @@ export function matchesGlob(file, glob) {
   return new RegExp(`^${escaped}$`, 'i').test(normalized);
 }
 
+// Whether two files share a folder, reading tests/ as the mirror of src/. Files at
+// the top of src/, tests/ or the repository share none: that is most of a project.
+const folderOf = file => String(file).replaceAll('\\', '/').replace(/^\.\//, '').replace(/^(src|tests)\//, '')
+  .split('/').slice(0, -1).join('/');
+export function sameFolder(file, glob) {
+  const folder = folderOf(file);
+  return folder !== '' && !/[*?[]/.test(folderOf(glob)) && folder.toLowerCase() === folderOf(glob).toLowerCase();
+}
+
 // A file scope that fixes at most one directory (src/**, **/*.js, docs/*) covers
 // most of a project: matching it says nothing about the task, so it admits the
 // memory without activating it. Deeper scopes activate as before. Measured on two
@@ -56,7 +65,12 @@ export function assessApplicability(atom, request, now = Date.now()) {
     // Operations are authored free-form (implement, review, design) while hosts
     // report a handful (edit, read, test). A mismatch there is vocabulary, not
     // scope, so it never excludes; files and components still do.
-    if (incoming.length && !matches && kind !== 'operations') return { applies: false };
+    // A file beside a scoped one (its test, a sibling module) is the same work:
+    // tests/hooks/banner.test.js belongs to a memory scoped to src/hooks/banner.js.
+    // On the golden sets' tuning halves (2026-09-28) excluding it cost two events
+    // their must memories, ranked first by both lists; the wider rule cost no quiet negative.
+    const beside = kind === 'files' && incoming.some(value => scope.files.some(expected => sameFolder(value, expected)));
+    if (incoming.length && !matches && kind !== 'operations' && !beside) return { applies: false };
     // A matching file or component places the request inside the memory's scope.
     // A matching operation does not: "test" or "edit" names most of a session,
     // so it would activate the memory on every such call.

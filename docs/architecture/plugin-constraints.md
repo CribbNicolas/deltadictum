@@ -55,7 +55,9 @@ means inactive and said so, nothing more. `DD_RETRIEVAL=lexical` exists only for
 
 `@modelcontextprotocol/sdk`, `zod` and `@huggingface/transformers` (ONNX, `Xenova/multilingual-e5-small`),
 on Node ≥ 22 (`package.json`). The model is loaded only by the resident process (L2), once per machine,
-never on the hot path (L1): a cached model takes about 0.5 s to load.
+never on the hot path (L1): a cached model takes about 0.5 s to load. `DD_EMBED_MODEL` can pick
+`Xenova/multilingual-e5-base` instead (about 0.7 s to load, +175 MB resident; it tied e5-small on the
+golden sets on 2026-09-28).
 
 Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings outright, because
 embeddings were assumed to be a separate service; an in-process runtime is a package, not a service.

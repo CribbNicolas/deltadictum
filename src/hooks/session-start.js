@@ -8,6 +8,7 @@ import { checkEvidenceFreshness } from '../engine/evidence.js';
 import { AUTHORITY_WEIGHT } from '../engine/ranking.js';
 import { estimateTokens } from '../engine/budget.js';
 import { revisionNotices } from '../engine/revisions.js';
+import { looksNonEnglish, substantive } from '../engine/language.js';
 
 // Memories a reviewer tagged `ambient` apply to nearly every task (architecture,
 // project-wide conventions), which no single tool call names. They are sent once
@@ -74,6 +75,19 @@ export function pointerPack(pointers) {
   if (!pointers?.length) return null;
   return ['DD - Possibly relevant, not pushed (call the dd `get` tool with the topic_key if one applies):',
     ...pointers.map(p => `- ${p.line}`)].join('\n');
+}
+
+// A request not in English reaches memories written in English poorly: neither
+// full text nor e5-small bridges "adaptadores de los harnesses" to "OpenCode
+// adapter". The agent restates it; said next to the request, where it is acted on.
+export const RETRIEVE_NUDGE = 'DD - This request is not in English and DD matches memories written in English: '
+  + 'call the dd `retrieve` tool with the task described in English before acting.';
+
+// What a prompt hook adds to the conversation: the pushed pack, its pointers and,
+// for a request in another language, the nudge to retrieve it in English.
+export function promptPack(result, prompt) {
+  const nudge = looksNonEnglish(prompt) && substantive(prompt, 2) ? RETRIEVE_NUDGE : null;
+  return [microPack(result.memories ?? []), pointerPack(result.pointers), nudge].filter(Boolean).join('\n');
 }
 
 export function microPack(memories) {

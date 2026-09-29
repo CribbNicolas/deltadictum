@@ -75,13 +75,13 @@ test('session deduplication emits changed conditions even when the memory itself
   assert.equal((await f.retrieve({ session_id: 'conditions' })).memories.length, 0);
 });
 
-test('a preferred form over half the budget falls back to micro; full payload is charged', async t => {
+test('a preferred form over the budget falls back to micro; the delivered pack is charged', async t => {
   const f = await fixture(t, { why: 'A detailed rationale about network timing and duplicate charges. '.repeat(8) });
-  for (const [budget, form] of [[180, 'micro'], [600, 'short']]) {
+  for (const [budget, form] of [[100, 'micro'], [600, 'short']]) {
     const recalled = await f.retrieve({ budget_tokens: budget });
     assert.equal(recalled.memories[0]?.form_type, form);
-    assert.ok(estimateTokens(recalled) <= budget);
-    assert.ok(recalled.budget.used >= estimateTokens(recalled));
+    assert.ok(recalled.budget.used <= budget);
+    assert.ok(recalled.budget.used > estimateTokens(recalled.memories.map(m => m.content).join('\n')));
   }
 });
 
