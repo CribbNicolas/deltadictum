@@ -50,6 +50,18 @@ test('an operation outside the declared ones does not exclude a file-scoped memo
   assert.match(byTrigger.memories[0].content, /Only within: files: src\/domain\/\*\*/);
 });
 
+// A file beside a scoped one (its test mirror, a sibling) is the same work, so it
+// does not exclude the memory; a file elsewhere still does.
+test('a file beside a scoped file keeps the memory applicable', async t => {
+  const f = await fixture(t, { applies_to: { files: ['src/hooks/banner.js'] } });
+  const action = 'when adding game logic, commands or presentation';
+  const test = await f.retrieve({ action, files: ['tests/hooks/banner.test.js'] });
+  assert.equal(test.memories[0]?.id, f.atom.id);
+  assert.match(test.memories[0].content, /Only within: files: src\/hooks\/banner\.js/);
+  assert.equal((await f.retrieve({ action, files: ['src/ui/server.js'] })).memories.length, 0);
+  assert.equal((await f.retrieve({ action, files: ['src/cli.js'] })).memories.length, 0);
+});
+
 test('changed evidence keeps the advice visible, flagged for review', async t => {
   const f = await fixture(t);
   await writeFile(join(f.root, 'ARCHITECTURE.md'), 'Layers were reorganised.');

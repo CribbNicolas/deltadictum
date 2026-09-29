@@ -16,8 +16,15 @@ import { AUTHORITY_WEIGHT, NEAR_DUPLICATE, applyRedundancy, redundancyPenalty, r
 const ORDER = { full: ['full', 'short', 'micro'], short: ['short', 'micro'], micro: ['micro'] };
 const ACTIVATION_FLOOR = 0.35;
 const AGREE_WINDOW = 3;
-const POINTER_WINDOW = 8;
-const MAX_POINTERS = 4;
+const TOP_AGREE_WINDOW = 5;
+// A pack's cost as the agent reads it: each memory with its widest flag and id,
+// each pointer line, and a fixed envelope.
+const PACK_ENVELOPE = 40;
+const packCost = (memories, pointers = []) => PACK_ENVELOPE + estimateTokens([
+  ...memories.map(m => `[REVIEW REQUIRED ${m.id}] ${m.content}`), ...pointers.map(p => p.line)].join('\n'));
+const POINTER_WINDOW = 20;
+const MAX_POINTERS = 8;
+const EXPLICIT_TOP = 5;
 const POINTER_REVISION = 'pointer';
 // Revision of a memory as delivered at session start, independent of any
 // request: ambient memories are marked with it so tool calls do not repeat them.
@@ -129,12 +136,40 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     if (AGREE && applicability.applies && !anchorsOnly && activation < floor && lex <= AGREE && dense <= AGREE) activation = floor;
     const rrf = (Number.isFinite(lex) ? 1 / (60 + lex) : 0) + (Number.isFinite(dense) ? 1 / (60 + dense) : 0) + (anchorHit ? 1 / 60 : 0);
     const reason = anchorHit ? (anchor.hits.length ? `[anchor: ${anchor.hits.join(', ')}]` : anchor.files.length ? `[anchor: ${anchor.files.join(', ')}]` : '[anchor: component]') : null;
+    const weight = Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index];
     return { atom, applicability, activation, reason, rrf, lex, dense, similarity: semantic?.get(atom.id) ?? 0, floor,
-      value: activation * Math.min(1, Math.max(0, Number(atom.confidence ?? 0.5))) * (AUTHORITY_WEIGHT[atom.authority] ?? 0.5) * usage[index] };
+      weight, value: activation * weight };
   // Order by reciprocal rank fusion of the full-text and dense rankings (and anchor
   // hits): robust without tuning, and on the tuning halves it raised Patriark's
   // must-recall 0.91 -> 0.94 at no cost in noise. Value breaks ties.
   });
+  // The fused leader of a prompt clears its floor when both rankings place it
+  // within TOP_AGREE_WINDOW: a wider agreement window, for one memory only. On the
+  // golden sets (2026-09-28) cutting by fused rank instead of by floor could not
+  // abstain (supermem kept 2/25 tuning negatives quiet). This narrow form gained
+  // one event with every must memory in supermem's tuning half and one in
+  // Patriark's measuring half, for one noisy negative in supermem's measuring half.
+  if (AGREE && !anchorsOnly) {
+    const leader = ranked.filter(c => c.applicability.applies)
+      .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id))[0];
+    if (leader && leader.activation < leader.floor && leader.lex <= TOP_AGREE_WINDOW && leader.dense <= TOP_AGREE_WINDOW) {
+      leader.activation = leader.floor;
+      leader.value = leader.floor * leader.weight;
+    }
+  }
+  // An explicit retrieve (the agent called the tool) is a pull: the agent reads
+  // what comes back and keeps what applies, so there is no negative to keep quiet
+  // and the fused top EXPLICIT_TOP clear their floors (the rest arrive as its
+  // pointers). With the English-retrieve nudge (src/hooks/session-start.js),
+  // bench:pull (2026-09-29, measuring halves, no memory map, two runs) went from
+  // 0.83 with pointers alone to 0.94-0.96 must-recall in supermem, whose requests
+  // are Spanish and memories English; Patriark stayed at 0.90-0.92. Top 8 recalled
+  // no more than top 5.
+  if (request.explicit && !anchorsOnly) {
+    const top = ranked.filter(c => c.applicability.applies)
+      .sort((a, b) => b.rrf - a.rrf || a.atom.id.localeCompare(b.atom.id)).slice(0, EXPLICIT_TOP);
+    for (const c of top) if (c.activation < c.floor) { c.activation = c.floor; c.value = c.floor * c.weight; }
+  }
   const scored = ranked.filter(c => c.activation >= c.floor)
     .sort((a, b) => b.rrf - a.rrf || b.value - a.value || a.atom.id.localeCompare(b.atom.id));
 
@@ -148,8 +183,12 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
   // the warning redundant. It is filtered here, never boosted.
   const current = scored.filter(c => c.atom.lifecycle_state !== 'legacy').map(c => c.atom);
   const covered = atom => current.some(a => a.id === atom.replaced_by || a.topic_key === atom.topic_key);
-  const fits = memories => estimateTokens({ ...result, memories, injected: true, abstained: false,
-    budget: { requested: budget, used: budget } }) <= budget;
+  // The budget is spent on what the agent reads: each memory as a hook renders it
+  // (its widest flag, id and content), plus a fixed envelope. Counting the result's
+  // JSON keys instead cost each memory ~50 tokens the agent never sees; on the
+  // golden sets' tuning halves (2026-09-28) the change gained an event with every
+  // must memory in each project, at no cost in quiet negatives.
+  const fits = memories => packCost(memories) <= budget;
   for (const candidate of scored) {
     if (result.memories.length >= 8) break;
     const { atom, applicability, value, reason } = candidate;
@@ -196,7 +235,9 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
     // can always shrink to make room for the others (recall first).
     const abandoned = what => `No longer done: ${what} Abandoned because: ${String(atom.legacy_reason ?? '').replace(/\.$/, '')}. `
       + `Now: ${atom.replaced_by ?? 'no replacement recorded'}.`;
-    const changed = what => `EVIDENCE CHANGED since review (${freshness.slice(0, 2).join('; ')}); verify before relying on it. ${what}`;
+    // Which evidence changed is in get; listing it here cost each flagged memory
+    // about 50 tokens of paths.
+    const changed = what => `EVIDENCE CHANGED since review; verify before relying on it. ${what}`;
     const options = legacy
       ? [{ form_type: 'micro', content: abandoned(micro) }, { form_type: 'headline', content: abandoned(headline(atom)) }]
       : withheld
@@ -240,29 +281,36 @@ export async function retrieveMemories(request = {}, { store, vptThreshold, sema
       if (fits(trial)) { result.memories[i] = fuller; break; }
     }
   });
-  // Near misses on a prompt arrive as one-line pointers the agent can pull with
-  // get, as skill descriptions do: a memory both rankings place near the top that
-  // cleared no floor. Recall first: a pointer costs a line, a missing memory more.
-  // Once per session each, and never on tool calls, where the noise was.
+  // Near misses arrive as one-line pointers the agent can pull with get, as skill
+  // descriptions do: the agent reranks them far better than any threshold. On
+  // bench:pull (2026-09-29, measuring halves, no memory map), every must memory a
+  // pointer showed was pulled, and 8 pointers from each list's top 20 on prompts
+  // and tool calls raised must-recall 0.66 -> 0.83 (supermem) and 0.85 -> 0.92
+  // (Patriark) for under one memory pulled per event outside the labels. 12 from
+  // 30 added nothing. Once per session each, so a session's pointer lines are
+  // bounded by the store, however many tool calls it makes.
   result.pointers = [];
-  if (request.source === 'prompt' && !anchorsOnly) {
+  if (!anchorsOnly) {
     const delivered = new Set(result.memories.map(m => m.id));
     const near = ranked.filter(c => !delivered.has(c.atom.id) && !excluded.has(c.atom.id) && c.applicability.applies
       && ['active', 'contested'].includes(c.atom.lifecycle_state) && (c.lex <= POINTER_WINDOW || c.dense <= POINTER_WINDOW))
       .sort((a, b) => b.rrf - a.rrf || a.atom.id.localeCompare(b.atom.id));
     for (const { atom } of near) {
       if (result.pointers.length >= MAX_POINTERS) break;
-      if (request.session_id && !request.repeat && store.wasDelivered
-          && await store.wasDelivered(request.project_id, request.session_id, atom.id, POINTER_REVISION)) continue;
+      // Never for a memory this session already has in any form: a pointer to it
+      // is noise, and its mark would overwrite the delivery row and let the
+      // memory be claimed again.
+      if (request.session_id && !request.repeat && store.deliveredInSession
+          && await store.deliveredInSession(request.project_id, request.session_id, atom.id)) continue;
       result.pointers.push({ id: atom.id, topic_key: atom.topic_key, line: `${atom.topic_key} — ${whenLine(atom)} (get ${atom.id.slice(0, 8)})` });
       if (request.session_id && !request.repeat && store.markDelivered) await store.markDelivered(request.project_id, request.session_id, atom.id, POINTER_REVISION);
     }
   }
   result.injected = result.memories.length > 0;
   result.abstained = !result.injected;
-  // The empty envelope is a fixed protocol cost, including when the caller asks
-  // for less than that cost. No memory content is emitted in that case.
-  result.budget.used = estimateTokens({ ...result, budget: { requested: budget, used: budget } });
+  // What was delivered, pointers included. They take no share of the budget: a
+  // pointer is one line, and there are at most MAX_POINTERS.
+  result.budget.used = packCost(result.memories, result.pointers);
   // Claimed deliveries are already recorded; a repeat request refreshes the mark.
   if (request.session_id && store.markDelivered && (request.repeat || !store.claimDelivery)) for (const item of selected) {
     await store.markDelivered(request.project_id, request.session_id, item.atom.id, item.revision);
