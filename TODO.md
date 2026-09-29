@@ -70,6 +70,20 @@ test half honest as anchors grow.
   raised precision slightly, and on the test half cost Patriark 0.73 -> 0.69 and a quiet negative in
   supermem. FTS already indexes topic_key.
 - **Spot-check the labels.** Both sets were labeled by the agent that wrote the anchors.
+- **90% reached with pull (2026-09-29).** `bench:pull` with Sonnet, no memory map (it is far back in a
+  real session: the realistic bound; with the map next to each event is the upper bound), measuring
+  halves, two runs each: supermem 0.94 and 0.96 must-recall (25-26/29 complete), Patriark 0.90 in both
+  (24/28). Push alone is 0.55 and 0.75. What did it: 8 pointers from each ranking's top 20 on prompts
+  and tool calls (every must a pointer showed was pulled), an explicit MCP `retrieve` that returns
+  its fused top 5 below their floors plus its pointers, and a line on non-English prompts asking for
+  a `retrieve` in English. Costs: 6-7 pointer lines per event (once per memory per session), a
+  retrieve on about half the events in the bench, and 2.9-3.3 memories pulled per event outside the
+  labels. Haiku reaches less (0.66-0.79 in supermem): the pull depends on the agent's model.
+- **Open after 90%.** The bench scores each event alone: in a session a memory is pointed at once, so
+  a later event where it matters relies on the earlier line still being in context. Replay whole
+  sessions to measure that. Pull noise (about 3 memories per event) is the next cost to cut. Rejected
+  on the way: widening pointer candidates beyond the fused lists or the scope gate (no gain), 12
+  pointers from each top 30 (no gain over 8/20), per-sentence prompt embeddings (no change).
 - **Pull path measured (2026-09-28, `npm run bench:pull`).** Haiku, given the pull guidance, the
   memory map, the event and the pushed pack, lists what it would `get`. Test halves: Patriark
   must-recall 0.77 pushed -> 0.92 with pull (24/28 complete); supermem 0.55 -> 0.66-0.79 over three
