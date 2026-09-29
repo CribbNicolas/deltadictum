@@ -9,8 +9,8 @@
   "title": "A new directory under .dd needs four places updated",
   "topic_key": "store/layout/new-dd-directory",
   "trigger": "when adding a new directory or file kind under .dd/ that the store writes (like legacy/ or actions/)",
-  "behavior_delta": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
-  "what": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
+  "behavior_delta": "Register a new .dd/ directory in four places at once. Update the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
+  "what": "Register a new .dd/ directory in four places at once. Update the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
   "why": "Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
   "tags": [],
   "trigger_variants": [
@@ -76,9 +76,9 @@
   "valid_from": "2026-09-24T17:01:44.027Z",
   "valid_until": null,
   "retrieval_forms": {
-    "micro": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
-    "short": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error. Why: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
-    "full": "Update all four together: the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error. Why: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently."
+    "micro": "Register a new .dd/ directory in four places at once. Update the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.",
+    "short": "Register a new .dd/ directory in four places at once. Update the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error. Why: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
+    "full": "Register a new .dd/ directory in four places at once. Update the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error. Why: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently."
   },
   "confidence": 0.765,
   "registry_key_id": "dfadf693-87a8-4a1d-9ca8-6c29b71436ab",
@@ -122,11 +122,11 @@
   },
   "replaces": "69a66da2-6d70-4b30-a5f7-c0265c894601",
   "created_at": "2026-09-27T02:37:09.002Z",
-  "updated_at": "2026-09-28T06:47:11.602Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-29T19:41:35.499Z",
+  "activation_count": 4,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T06:47:11.597Z",
-    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
+    "reviewed_at": "2026-09-29T19:41:34.750Z",
+    "rationale": "Format revised to the 0.8.0 standard: the advice opens with its action, so the one-line headline a full pack shows says what to do; the advice is unchanged. Authorized by the user on 2026-09-29."
   }
 }

@@ -11,7 +11,7 @@ Call `propose` with a `proposals` array and the host `session_id`. Each item con
 
 - `topic_key`: stable domain/area/topic; reuse it to propose a revision.
 - `trigger`: when this becomes relevant.
-- `behavior_delta`: what to do.
+- `behavior_delta`: what to do. Open with the action in one sentence under 200 characters: when a pack is full the memory arrives as that sentence alone, a headline with its id. Put the story (what broke, how it was found) in `why`, not first.
 - `why`: why the evidence supports it.
 - `evidence_refs`: source_type, source_ref and summary.
 - `anchors`: `keywords` (2-16) whose presence in a request means the memory applies, and optional `not_when` phrases that mean it does not. They decide delivery, so choose them with care.
