@@ -9,8 +9,8 @@
   "title": "install-codex.mjs regen wipes custom fields inside managed block",
   "topic_key": "tooling/install-codex/managed-block-drops-manual-fields",
   "trigger": "Before re-running scripts/install-codex.mjs (or dd install --host codex) against a project whose .codex/config.toml managed DD block was hand-edited",
-  "behavior_delta": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
-  "what": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
+  "behavior_delta": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
+  "what": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
   "why": "Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
   "tags": [
     "codex",
@@ -67,9 +67,9 @@
   "valid_from": "2026-09-19T15:12:52.690Z",
   "valid_until": null,
   "retrieval_forms": {
-    "micro": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
-    "short": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
-    "full": "Warn the user and diff the existing managed block against the template before applying: fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change."
+    "micro": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
+    "short": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
+    "full": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change."
   },
   "confidence": 0.765,
   "registry_key_id": "536868de-8fac-4983-94dd-2a894a825509",
@@ -104,11 +104,11 @@
   },
   "replaces": "ccf342a4-8a20-4fff-83ed-e0722cbe3650",
   "created_at": "2026-09-27T02:37:09.483Z",
-  "updated_at": "2026-09-28T06:47:11.838Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-29T19:41:35.499Z",
+  "activation_count": 2,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T06:47:11.833Z",
-    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
+    "reviewed_at": "2026-09-29T19:41:34.750Z",
+    "rationale": "Format revised to the 0.8.0 standard: the advice opens with its action, so the one-line headline a full pack shows says what to do; the advice is unchanged. Authorized by the user on 2026-09-29."
   }
 }
