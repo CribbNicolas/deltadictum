@@ -70,9 +70,25 @@ test half honest as anchors grow.
   raised precision slightly, and on the test half cost Patriark 0.73 -> 0.69 and a quiet negative in
   supermem. FTS already indexes topic_key.
 - **Spot-check the labels.** Both sets were labeled by the agent that wrote the anchors.
-- **Measure the pull path.** The bench scores only what is pushed. Replay golden events with a model
-  that reads the session memory map and calls `get`, and score what it pulls. Push alone is unlikely
-  to reach 90% must-recall; pull is where the rest has to come from.
+- **Pull path measured (2026-09-28, `npm run bench:pull`).** Haiku, given the pull guidance, the
+  memory map, the event and the pushed pack, lists what it would `get`. Test halves: Patriark
+  must-recall 0.77 pushed -> 0.92 with pull (24/28 complete); supermem 0.55 -> 0.66-0.79 over three
+  runs (18-22/29). Cost: 1.2-1.8 memories pulled per event outside the labels, and a pull on most
+  Patriark negatives (4/20 pulled nothing). Runs of the same map differ by up to 4 events of 29, so
+  judge any map change over several runs.
+- **Map lines with anchor keywords: no measurable effect.** Keyword-only lines (caveman style) and a
+  60-character trigger plus keywords each looked better than the current map in one run (45 vs 42
+  complete events) and within noise in a second. Adding keywords to the full trigger pushes
+  Patriark's map past its budget into the grouped form. Kept as is.
+- **Rejected (2026-09-28): multi-vector embeddings, FTS stemming, BM25 column weights, compacted
+  pack text.** One vector per trigger variant with max similarity lost 1 to 3 dev events at every
+  floor. Porter or trigram tokenizers and column weights moved nothing. Dropping filler words,
+  operations, the evidence-changed wording and repeated paths fitted more memories per pack but no
+  more must memories: the remaining misses are not budget-bound.
+- **Where to look next.** Push misses in the measuring halves are mostly conversational prompts
+  whose wording shares nothing with any trigger ("arreglemos todo y despues publicamos" ->
+  `release/npm/bin-path`). Pull covers part of them; pull noise and the labels (spot-check) are
+  now the larger questions.
 - **Embedding model: e5-base is an option, e5-small stays the default (2026-09-28).** On the golden
   sets at the default floor, e5-base tied: dev 44 vs 45 events with every must memory and 26 vs 27
   quiet negatives; test 35 vs 33 and 25 vs 26. Spanish prompts went both ways (supermem test 0.35 ->
