@@ -9,8 +9,8 @@
   "title": "npm 11 drops a bin path written with ./",
   "topic_key": "release/npm/bin-path",
   "trigger": "Before publishing deltadictum or editing bin in package.json",
-  "behavior_delta": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
-  "what": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
+  "behavior_delta": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output.",
+  "what": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output.",
   "why": "npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
   "tags": [],
   "trigger_variants": [
@@ -60,9 +60,9 @@
   "valid_from": "2026-09-24T02:05:12.277Z",
   "valid_until": null,
   "retrieval_forms": {
-    "micro": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.",
-    "short": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
-    "full": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install."
+    "micro": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output.",
+    "short": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
+    "full": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install."
   },
   "confidence": 0.765,
   "registry_key_id": "f6b8aa47-3168-4536-990a-f504d0c316b4",
@@ -90,11 +90,11 @@
   },
   "replaces": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
   "created_at": "2026-09-27T02:37:09.235Z",
-  "updated_at": "2026-09-28T06:47:11.485Z",
-  "activation_count": 0,
+  "updated_at": "2026-09-29T19:41:35.499Z",
+  "activation_count": 4,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-28T06:47:11.480Z",
-    "rationale": "Applied automatically: retrieval metadata only (anchors, trigger variants); the advice is unchanged."
+    "reviewed_at": "2026-09-29T19:41:34.750Z",
+    "rationale": "Format revised to the 0.8.0 standard: the advice opens with its action, so the one-line headline a full pack shows says what to do; the advice is unchanged. Authorized by the user on 2026-09-29."
   }
 }
