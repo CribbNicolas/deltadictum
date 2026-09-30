@@ -32,7 +32,8 @@ federation, multi-tenancy or RBAC. Vectors live in the SQLite index. Documents d
 
 ## Non-negotiable properties
 
-- Model output never mutates state. Promotion happens only through local human review.
+- Model output never mutates state. Promotion happens through local human review, or through auto-accept
+  when evidence DD verified itself reaches the project's threshold (on by default, configurable per project).
 - A reported success is telemetry. It never raises authority, confidence or promotion status.
 - Evidence verification establishes integrity, never that a claim follows from it.
 - Retrieval is project-scoped first, always. There is no global search and no cross-project fallback.
