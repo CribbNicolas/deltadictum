@@ -124,3 +124,19 @@ test('a replacement whose target has a pending action is left for review', async
   assert.deepEqual((await sweepAutoAccept({ store, projectId: 'demo' })).admitted, []);
   assert.equal((await store.getAtom(revision.id, 'demo')).lifecycle_state, 'candidate');
 });
+
+// A suspected pair is flagged for a person to read both; the sweep used to admit
+// it unread, putting two memories on one trigger with no dispute recorded.
+test('a candidate flagged as a suspected duplicate is left for review', async t => {
+  const store = await fixtureStore();
+  t.after(() => store.close());
+  const first = (await proposeMemory(proposal({ topic_key: 'memory/admission/trigger-first' }), { store })).atom;
+  const second = (await proposeMemory(proposal({ topic_key: 'memory/admission/trigger-again',
+    behavior_delta: 'never write durable memory without a trigger' }), { store })).atom;
+  assert.deepEqual(second.suspected_pair, [first.id]);
+  const config = await store.loadConfig();
+  config.auto_accept = { enabled: true, confidence_threshold: 0 };
+  await store.saveConfig(config);
+  assert.deepEqual((await sweepAutoAccept({ store, projectId: 'demo' })).admitted, [first.id]);
+  assert.equal((await store.getAtom(second.id, 'demo')).lifecycle_state, 'candidate');
+});
