@@ -72,7 +72,7 @@ try {
   // lexical mode (tests, evaluation) DD is inactive: nothing is recalled here.
   const lexical = lexicalMode();
   if (command === 'pre-tool' && !lexical) skip();
-  const { store, projectId, ddDir } = await openStore({ cwd });
+  const { store, projectId } = await openStore({ cwd });
   const sessionId = payload.session_id ?? payload.sessionId;
 
   if (command === 'session-start') {
