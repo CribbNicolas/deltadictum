@@ -12,7 +12,7 @@ fails one of them is rejected on that basis alone, however good the idea is:
 |---|---|
 | L1 | Hooks are ephemeral Node processes; `PreToolUse` runs on every tool call |
 | L2 | DD requires one resident process per machine, shared by all projects; without it DD is inactive (never blocking) and says why |
-| L3 | Three required dependencies (`@modelcontextprotocol/sdk`, `zod`, `@huggingface/transformers`) on Node ≥ 22; the model loads only in the resident, never on the hot path |
+| L3 | Three required dependencies (`@modelcontextprotocol/sdk`, `zod`, `@huggingface/transformers`) on Node ≥ 22.16 (node:sqlite with FTS5); the model loads only in the resident, never on the hot path |
 | L4 | The hook contract differs per harness; a veto is not portable |
 | L5 | A hook failure must never block the host |
 | L6 | Single-developer data volumes (90 days or 2000 telemetry rows) — no online learning |

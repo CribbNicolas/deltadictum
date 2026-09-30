@@ -17,7 +17,7 @@
         "deltadictum": "src/cli.js"
       },
       "engines": {
-        "node": ">=22"
+        "node": ">=22.16.0"
       }
     },
     "node_modules/@emnapi/runtime": {
