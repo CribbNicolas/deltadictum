@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: architecture
 artifact_type: reference
 stability: stable
-last_validated: 2026-09-18
+last_validated: 2026-09-30
 depends_on:
   - architecture/plugin-constraints.md
 do_not_co_load_with: []
@@ -56,6 +56,15 @@ passes anchor validation it applies itself, logged as `auto:retrieval-metadata`,
 `auto_apply_retrieval_metadata: false`. It exists because recall improves by enriching how memories are
 found (contextual indexing, document expansion), and a review round per keyword stalled that work. Git
 keeps every version, so a bad anchor is reverted like any other change.
+
+**A second exception, by configuration:** the auto-accept sweep (`src/engine/auto-accept.js`) admits a
+candidate without a person when the evidence DD verifies for it at that moment earns a reliability
+ceiling at or above the project's `auto_accept.confidence_threshold`. It is on by default at 0.765 (a
+repository file DD hashed, behind a model-initiated proposal) and a reviewer turns it off in the audit
+UI. It takes only the newest candidate per topic, never admits one a reviewer sent back, one flagged as
+a suspected duplicate, or a replacement whose target has a pending action, and records an
+`Auto-accepted` rationale on each memory it admits. Model output still sets nothing: the decision rests
+on evidence DD hashed itself, never on a field the model supplied.
 
 **Enforced by:** `normalizeProposal` overwrites every epistemic field; `admitMemory`, `applyAction`,
 `rejectAction` and `requestRevision` require a capability that no transport can construct; the MCP `act`

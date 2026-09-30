@@ -12,7 +12,7 @@ fails one of them is rejected on that basis alone, however good the idea is:
 |---|---|
 | L1 | Hooks are ephemeral Node processes; `PreToolUse` runs on every tool call |
 | L2 | DD requires one resident process per machine, shared by all projects; without it DD is inactive (never blocking) and says why |
-| L3 | Three required dependencies (`@modelcontextprotocol/sdk`, `zod`, `@huggingface/transformers`) on Node ≥ 22; the model loads only in the resident, never on the hot path |
+| L3 | Three required dependencies (`@modelcontextprotocol/sdk`, `zod`, `@huggingface/transformers`) on Node ≥ 22.16 (node:sqlite with FTS5); the model loads only in the resident, never on the hot path |
 | L4 | The hook contract differs per harness; a veto is not portable |
 | L5 | A hook failure must never block the host |
 | L6 | Single-developer data volumes (90 days or 2000 telemetry rows) — no online learning |
@@ -32,7 +32,8 @@ federation, multi-tenancy or RBAC. Vectors live in the SQLite index. Documents d
 
 ## Non-negotiable properties
 
-- Model output never mutates state. Promotion happens only through local human review.
+- Model output never mutates state. Promotion happens through local human review, or through auto-accept
+  when evidence DD verified itself reaches the project's threshold (on by default, configurable per project).
 - A reported success is telemetry. It never raises authority, confidence or promotion status.
 - Evidence verification establishes integrity, never that a claim follows from it.
 - Retrieval is project-scoped first, always. There is no global search and no cross-project fallback.

@@ -24,6 +24,10 @@ function invoke(adapter, input) {
   });
 }
 
+// Every decision a scenario expects is offered, so each case can be answered
+// correctly; a fixed list once left out two of the expected decisions.
+const CHOICES = [...new Set([...CASES.map(scenario => scenario.decision), 'review_decision', 'inspect_project'])];
+
 const adapter = argument('--adapter');
 const model = argument('--model');
 const limit = Number(argument('--limit') ?? CASES.length);
@@ -41,7 +45,7 @@ if (!adapter || !model || !Number.isInteger(limit) || limit < 1 || limit > CASES
       // Expected answers are never sent to the model adapter.
       const { expected, decision, review, ...task } = scenario;
       const result = await invoke(resolve(adapter), { model, mode, task, context,
-        choices: ['reuse_key', 'new_migration', 'inject_clock', 'sqlite', 'request_id', 'delivery_id', 'review_decision', 'inspect_project'],
+        choices: CHOICES,
         instruction: 'Choose the next action supported by current project knowledge. Respect applicability and changed assumptions. If no applicable project guidance is supplied, choose inspect_project. Return JSON with decision and actual provider usage if available.' });
       rows.push({ case: scenario.id, mode, model, decision: result.decision, correct: result.decision === decision,
         elapsed_ms: Math.round(performance.now() - started), usage: result.usage ?? null });

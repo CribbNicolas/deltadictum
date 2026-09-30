@@ -1,7 +1,8 @@
 # TODO
 
-Open work on delivery. Delivery favours recall: an extra memory is cheaper than a missing essential
-one, so every item is judged first by what it adds to recall.
+Open work on delivery, then what needs the user and the follow-ups from the 0.8.3 project review.
+Delivery favours recall: an extra memory is cheaper than a missing essential one, so every item is
+judged first by what it adds to recall.
 
 ## Golden sets
 
@@ -73,3 +74,61 @@ Each was tried on the golden sets and moved nothing, or bought recall with quiet
 - **Codex SessionStart limit.** `additionalContextLimit` for SessionStart was raised to 24000 so the
   memory map fits; confirm its unit and effect with `scripts/check-codex.mjs` in a project trusted in
   an interactive Codex session.
+- **GitHub repository settings** (only an admin can change them):
+  - Require the checks added in 0.8.3 in the `main` branch protection: `lint`, `test (node 22.16.0)`,
+    `test (node 24)` and `package`, beside the existing `test (ubuntu-latest)`, `test (windows-latest)` and
+    `version`. `test (macos-latest, advisory)` reports without blocking and should stay optional.
+  - Enable private vulnerability reporting (Settings > Security), which `SECURITY.md` points to.
+  - Enable CodeQL default setup (Settings > Code security) for JavaScript.
+  - Add a description, the homepage (the npm page) and topics (`claude-code`, `mcp`, `coding-agents`,
+    `agent-memory`) so the repository reads well when shared.
+- **Merging publishes.** Every version reaching `main` goes to npm and gets its tag and GitHub release, with
+  notes taken from its `CHANGELOG.md` section.
+
+## Review follow-ups (0.8.3)
+
+### Proposals
+
+Each needs a decision or a measurement before it is done:
+
+- **Word boundaries in lexical activation.** `triggerActivationScore` (`src/engine/v4/trigger-match.js`)
+  treats a trigger or request contained in the other as a full match with plain `includes`, so "test"
+  matches inside "latest". Compare against padded, whole-word containment on the golden sets'
+  dev halves before changing it: plural forms ("request" in "requests") currently match that way on purpose
+  or by accident.
+- **Name the engine directories by domain.** `src/engine/v2`, `v4`, `v5` and `v6` are named after old phases
+  and read like versions of the contract (admission, query, registry, resolution would say what they hold).
+  The project's own memories cite these paths as evidence, so rename in one change and refresh their
+  evidence with `node scripts/reverify-evidence.mjs`.
+- **Wire or delete the topic-registry proposals.** `src/engine/v5/proposals.js` (aliases, renames, promote,
+  deprecate) is tested but no transport reaches it, so aliases exist only if `registry/topics.json` is edited
+  by hand. A `retopic` action could record the old key as a rename alias, or the module can go.
+- **`.grok/hooks/dd.json`.** It registers the hooks with paths relative to the hooks directory
+  (`../../hooks/run.cjs`) and would run them twice beside the Grok plugin, which registers its own. Check in
+  a live Grok session and remove it if the plugin covers this checkout.
+- **Prune telemetry less often.** `telemetry.prune()` runs a dozen DELETEs on every logged retrieval, which
+  the resident does on every tool call. Once a minute per store would do; measure on the hot path first.
+- **Drop vectors of deleted memories.** `memory_vectors` rows outlive the memories they embed; clear them
+  on reindex.
+- **Presentation.** A short GIF of the audit UI and a "quickstart in 60 seconds" in the README, with the
+  numbers already measured: 84% fewer tokens than static instructions on the replay, and 0.90-0.96
+  must-recall with push and pull on the golden sets' test halves.
+
+### Not verified in the review
+
+- The new workflows ran only as local scripts: YAML parsed, `check-pack.mjs`, `check-version.mjs` and
+  `release-notes.mjs` ran, but GitHub Actions did not. Watch the first PR and the first release.
+- `npm audit signatures` in the `package` job could not run in the review sandbox (Sigstore's TUF CDN was
+  blocked). If it fails on GitHub for a reason other than a bad signature, make that step advisory.
+- macOS: the advisory job is the first run DD gets there.
+
+### Project memories to review
+
+The review changed files that 14 of this project's memories cite as evidence, so the audit UI flags them
+`EVIDENCE CHANGED`; run `/dd:review` on them. Two are stale in substance:
+
+- `engine/admission/auto-admit-config-unused`: `auto_admit` is gone from the defaults; archive it or mark
+  it legacy.
+- `hooks/hot-path-cache-lifetime`: `projectContext()` now caches in the SQLite index, and the tool-call hook
+  answers through the resident; revise it.
+

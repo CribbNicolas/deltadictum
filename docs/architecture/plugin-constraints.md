@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: architecture
 artifact_type: reference
 stability: stable
-last_validated: 2026-09-17
+last_validated: 2026-09-30
 used_by:
   - DD.md
   - architecture/project-cognition.md
@@ -54,7 +54,9 @@ means inactive and said so, nothing more. `DD_RETRIEVAL=lexical` exists only for
 ### L3 — Three required dependencies, one of them a local model runtime
 
 `@modelcontextprotocol/sdk`, `zod` and `@huggingface/transformers` (ONNX, `Xenova/multilingual-e5-small`),
-on Node ≥ 22 (`package.json`). The model is loaded only by the resident process (L2), once per machine,
+on Node ≥ 22.16 (`package.json`): the store is `node:sqlite` with FTS5, which earlier 22.x releases lack
+(measured 2026-09-30: 22.12 has no `node:sqlite`, 22.13-22.15 have it without FTS5). On an older Node the
+session start says so (`hooks/node-support.cjs`). The model is loaded only by the resident process (L2), once per machine,
 never on the hot path (L1): a cached model takes about 0.5 s to load. `DD_EMBED_MODEL` can pick
 `Xenova/multilingual-e5-base` instead (about 0.7 s to load, +175 MB resident; it tied e5-small on the
 golden sets on 2026-09-28).
@@ -121,7 +123,7 @@ These are the directions the constraints open rather than close. Each is tracked
 
 | Direction | Why the plugin shape favours it |
 |---|---|
-| Make lexical and structural matching carry more weight — trigger variants, alias expansion, concept grouping, near-duplicate suppression | L3 removes the dense arm, so the signals that remain have to be sharper. They are also deterministic, auditable and free at the hot path |
+| Make deterministic matching carry more weight — anchors, trigger variants, alias expansion, concept grouping, near-duplicate suppression | The dense arm lives only in the resident (L2, L3) and similarity measures topic, not applicability, so exact signals decide delivery. They are also deterministic, auditable and free at the hot path |
 | Move cost off the hot path and into review time | L1 charges per tool call; the audit UI (L2) is where an expensive computation is affordable and where a human is present anyway |
 | Evaluate offline against recorded decisions rather than learning online | L6 forbids online policies, but the recorded events are enough to *compare* two deterministic rankings |
 | Prefer provenance and structure over statistics | Source reliability, scope, evidence and authority are available on the first observation; statistical signal needs volume DD will never have |
