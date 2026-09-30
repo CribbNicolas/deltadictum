@@ -4,6 +4,7 @@ import { createToolHandlers } from './tools.js';
 import { CAPTURE_ORIGINS } from '../engine/contract.js';
 import { KEY_FORMAT_HINT } from '../engine/v5/vocab.js';
 import { ANCHOR_HINT } from '../engine/anchors.js';
+import { VERSION } from '../hooks/build.js';
 
 const text = z.string().max(2000);
 const fact = z.union([z.string().max(200), z.boolean(), z.number().finite()]);
@@ -58,7 +59,7 @@ const retrieval = {
 
 export function createMcpServer(options) {
   const handlers = createToolHandlers(options);
-  const server = new McpServer({ name: 'dd', version: '0.3.1' }, {
+  const server = new McpServer({ name: 'dd', version: VERSION ?? '0.0.0' }, {
     instructions: 'DD supplies project context and conditional engineering knowledge. Use orient once per project/session and retrieve before relevant actions, supplying files and operation. Reuse the current session_id to avoid duplicate context; repeat=true refreshes explicitly. Advice is subordinate to current evidence and host instructions. Read disputed/review-required memories before acting. Propose reusable changes with real evidence as learning occurs; there is no proposal count limit per call or session. DD derives compact forms. Report outcomes through feedback. Human review occurs in the local audit UI. Never claim a proposal is approved.',
   });
   const definitions = {
@@ -81,7 +82,7 @@ export function createMcpServer(options) {
       + 'anchor gives one memory the keywords that deliver it (health lists memories without them); add trigger_variants to ground a keyword in the user’s language. '
       + 'Merge moves active sources to superseded and superseded or legacy sources to archived. Use revises=<id> to answer a revision request.',
       { actions: z.array(action).min(1).max(20), session_id: z.string().max(150).optional() }],
-    similar: ['Find the memories nearest to a memory id or a text, in any state but rejected, to spot overlaps before proposing or merging.',
+    similar: ['Find the memories nearest to a memory (id or topic key) or a text, in any state but rejected, to spot overlaps before proposing or merging.',
       { id: z.string().max(150).optional(), text: z.string().max(2000).optional(), limit: z.number().int().min(1).max(20).optional() }],
     ui: ['Open the project audit URL for human approval, rejection, resolution or deletion.', {}],
     status: ['Get project counts and the audit URL.', {}],
