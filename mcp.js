@@ -1,4 +1,11 @@
+import { createRequire } from 'node:module';
 import { ensureDependencies, manualInstallCommand } from './src/deps.js';
+
+const { MINIMUM_NODE, supportedNode } = createRequire(import.meta.url)('./hooks/node-support.cjs');
+if (!supportedNode()) {
+  process.stderr.write(`DD: the MCP server needs Node.js ${MINIMUM_NODE} or later (node:sqlite with FTS5); this is ${process.version}.\n`);
+  process.exit(1);
+}
 
 // A host that copied the plugin without its packages (src/deps.js) would see the
 // server exit on its first import. Say why on stderr, which hosts log, and start

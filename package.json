@@ -4,7 +4,7 @@
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.16.0"
   },
   "bin": {
     "deltadictum": "src/cli.js"
