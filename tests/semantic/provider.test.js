@@ -112,5 +112,7 @@ test('similar ranks memories nearest to a memory or a text, excluding the probe'
   const byId = await retrieve.similar({ store, projectId: 'demo', id: toolbar.id, limit: 20 });
   assert.ok(byId.similar.every(m => m.id !== toolbar.id));
   assert.equal(byId.similar.length, 6);
+  const byTopic = await retrieve.similar({ store, projectId: 'demo', id: toolbar.topic_key, limit: 20 });
+  assert.deepEqual(byTopic.similar.map(m => m.id), byId.similar.map(m => m.id));
   assert.equal((await retrieve.similar({ store, projectId: 'demo', id: 'missing' })).error.code, 404);
 });

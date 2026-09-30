@@ -10,7 +10,10 @@ import { fileURLToPath } from 'node:url';
 test('model evaluation transports identical tasks without exposing answers and preserves supplied usage', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-model-eval-'));
   const adapter = join(root, 'fixture-adapter.mjs');
-  await writeFile(adapter, `let input=''; for await(const c of process.stdin) input+=c; const r=JSON.parse(input);
+  const offered = join(root, 'choices.json');
+  await writeFile(adapter, `import { writeFileSync } from 'node:fs';
+    let input=''; for await(const c of process.stdin) input+=c; const r=JSON.parse(input);
+    writeFileSync(${JSON.stringify(offered)}, JSON.stringify(r.choices));
     if ('expected' in r.task || 'decision' in r.task || 'review' in r.task) process.exit(4);
     process.stdout.write(JSON.stringify({decision:'inspect_project',usage:{input_tokens:12,output_tokens:3}}));`);
   const out = join(root, 'report.json');
@@ -21,4 +24,8 @@ test('model evaluation transports identical tasks without exposing answers and p
   assert.equal(report.summary.dd.input_tokens, 24);
   assert.equal(report.summary.none.total, report.summary.dd.total);
   assert.equal(report.model, 'fixture-only');
+  // Every scenario's answer is among the choices the model is offered.
+  const { CASES } = await import('../../../src/eval/cases.js');
+  const choices = JSON.parse(await readFile(offered, 'utf8'));
+  for (const scenario of CASES) assert.ok(choices.includes(scenario.decision), scenario.decision);
 });

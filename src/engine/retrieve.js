@@ -6,7 +6,7 @@ import { ftsQuery } from './v4/fts-query.js';
 import { expandTopicTerms } from './v5/expander.js';
 import { formsList } from './forms-util.js';
 import { RECALL_STATES } from '../store/paths.js';
-import { activationScore, assessApplicability, conceptTokens, matchesGlob } from './activation.js';
+import { activationScore, assessApplicability, conceptTokens } from './activation.js';
 import { checkEvidenceFreshness } from './evidence.js';
 import { isAnchored, matchAnchors } from './anchors.js';
 import { substantive } from './language.js';

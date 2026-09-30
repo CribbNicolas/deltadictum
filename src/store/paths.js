@@ -1,4 +1,4 @@
-import { join, relative, sep } from 'node:path';
+import { join } from 'node:path';
 import { DEFAULT_HEALTH_THRESHOLDS } from '../engine/health/deterioration.js';
 
 const KEY_SEGMENT = /^[a-z0-9_-]+$/;
@@ -29,13 +29,11 @@ export function archiveFilePath(ddDir, id) {
   return join(ddDir, 'archive', `${id}.json`);
 }
 
-export const LIVE_STATES = ['candidate', 'active', 'contested'];
 export function candidateFilePath(ddDir, id) {
   archiveFilePath(ddDir, id);
   return join(ddDir, 'candidates', `${id}.json`);
 }
 export const ARCHIVE_STATES = ['superseded', 'archived', 'rejected'];
-export const EFFECTIVE_STATES = ['active', 'contested'];
 // Legacy knowledge is recalled as a warning; see src/engine/retrieve.js.
 export const RECALL_STATES = ['active', 'contested', 'legacy'];
 
@@ -50,15 +48,6 @@ export function actionFilePath(ddDir, id) {
   return join(ddDir, 'actions', `${id}.json`);
 }
 
-export function topicKeyFromAtomFile(ddDir, filePath) {
-  const rel = relative(join(ddDir, 'atoms'), filePath).replaceAll('\\', '/');
-  if (!rel.endsWith('.json')) return null;
-  const key = rel.slice(0, -'.json'.length);
-  assertTopicKeyPath(key);
-  if (rel.split(sep).includes('..')) throw new Error('path_traversal');
-  return key;
-}
-
 export function registryPath(ddDir) {
   return join(ddDir, 'registry', 'topics.json');
 }
@@ -69,10 +58,6 @@ export function relationsPath(ddDir) {
 
 export function configPath(ddDir) {
   return join(ddDir, 'config.json');
-}
-
-export function observationsPath(dataDir) {
-  return join(dataDir, 'observations.jsonl');
 }
 
 export function sqlitePath(dataDir) {
@@ -97,13 +82,10 @@ export const DEFAULT_CONFIG = {
   // similarity a memory must stand. Lower reaches terser memories, less quietly.
   // Kept equal to DEFAULT_CALIBRATION.floor in src/semantic/provider.js.
   semantic: { floor: 0.035 },
-  auto_admit: {
-    lesson: 'candidate',
-    anti_memory: 'candidate',
-    procedure: 'candidate',
-    decision: 'candidate',
-    claim: 'candidate',
-  },
+  // Candidates whose verified evidence earns at least this ceiling
+  // (src/engine/reliability.js) are admitted without a person: 0.765 is a
+  // verified repository file behind a model-initiated proposal. The audit UI
+  // turns it off or moves the threshold; src/engine/auto-accept.js says when it runs.
   auto_accept: { enabled: true, confidence_threshold: 0.765 },
   // INV-04's exception: an anchor action (anchors and trigger variants only) applies itself.
   auto_apply_retrieval_metadata: true,

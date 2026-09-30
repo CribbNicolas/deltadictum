@@ -1,10 +1,10 @@
 {
   "name": "deltadictum",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.16.0"
   },
   "bin": {
     "deltadictum": "src/cli.js"
@@ -22,6 +22,7 @@
     "test:hooks": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/hooks/**/*.test.js\"",
     "test:stress": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/stress/**/*.test.js\"",
     "test:all": "npm test && npm run test:stress",
+    "lint": "npx --yes eslint@10.11.0 .",
     "eval": "node src/eval/replay.js",
     "eval:models": "node src/eval/model-runner.js",
     "start": "node src/cli.js",

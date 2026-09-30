@@ -25,7 +25,7 @@ Anchors are how the memory is found, and only an anchor pushes it. Pick the spec
 
 Write 3-6 `trigger_variants` as the requests someone would make when the memory applies, in English and in the language the user writes in ("add a hunger rule that lowers endurance", and the same request as the user would write it in their language). They are indexed and embedded with the memory, so a request phrased like them finds it (document expansion); anchor keywords can then come from them.
 
-To anchor a memory that already exists (the `health` tool lists the ones without anchors), file an `act` action of kind `anchor` with its id, the `anchors`, and any `trigger_variants` needed to ground a keyword in the user's language. The user applies it in the audit UI.
+To anchor a memory that already exists (the `health` tool lists the ones without anchors), file an `act` action of kind `anchor` with its id, the `anchors`, and any `trigger_variants` needed to ground a keyword in the user's language. Anchors change only when a memory is delivered, so a valid anchor action applies itself unless the project turned that off; the result says whether it was applied or waits for the user in the audit UI.
 
 Use `decision` for an explicit project choice and `lesson` for a learned pattern. Add `applies_to`, `assumptions`, `revisit_when` and discarded `alternatives` when they define the limits of the advice. Scope `applies_to.files` to the files the advice is about; a project-wide glob such as `src/**` admits the memory everywhere but never activates it by itself. A one-off successful fix does not establish a universal rule.
 

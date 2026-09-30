@@ -4,8 +4,29 @@ import { startResidentServer } from './ui/server.js';
 import { orientProject } from './engine/project-context.js';
 import { readRegistry, residentFit, residentStatus, retireResident, writeRegistry } from './resident.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
+import { VERSION } from './hooks/build.js';
 
 const [command, ...rest] = process.argv.slice(2);
+
+const USAGE = `DeltaDictum (DD) ${VERSION ?? ''}
+
+Usage: deltadictum [command]
+
+  resident            Start the machine's resident process and audit UI (the default; alias: ui)
+  mcp                 Run the MCP server over stdio for the project in DD_PROJECT_DIR or the current directory
+  install --host codex --project PATH [--dry-run]
+                      Write DD's Codex configuration into a project
+  status              Knowledge counts by lifecycle state, and where the project's files live
+  health              The deterioration report (crowding, disputes, unreadable knowledge files)
+  orient [ACTION]     Project facts and source pointers, with knowledge for ACTION when given
+  maintain            Prune local observations and telemetry to their retention limits
+  reindex             Rebuild the local SQLite index from the project's .dd/ files
+  help                Show this help
+  version             Print the version`;
+
+// Commands that open the project's store in the current directory. Anything
+// else is refused before a store is opened, so a typo creates no .dd/ there.
+const PROJECT_COMMANDS = ['orient', 'maintain', 'reindex', 'status', 'health'];
 
 async function runInstall(args) {
   const hostIdx = args.indexOf('--host');
@@ -27,10 +48,17 @@ async function runInstall(args) {
 }
 
 async function main() {
+  if (['help', '--help', '-h'].includes(command)) { console.log(USAGE); return; }
+  if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'install') return runInstall(rest);
   if (command === 'mcp') { await import('./mcp/server.js'); return; }
   if (!command || command === 'ui' || command === 'resident') return runResident();
-  const { store, projectId } = await openStore();
+  if (!PROJECT_COMMANDS.includes(command)) {
+    console.error(`Unknown command: ${command}\n\n${USAGE}`);
+    process.exitCode = 1;
+    return;
+  }
+  const { store, projectId, ddDir, dataDir } = await openStore();
   if (command === 'orient') {
     console.log(JSON.stringify(await orientProject({ action: rest.join(' ') || undefined }, { store, projectId })));
     store.close(); return;
@@ -50,8 +78,8 @@ async function main() {
     const { counts, total } = await store.countByLifecycle(projectId);
     console.log(JSON.stringify({
       project_id: projectId,
-      ddDir,
-      dataDir,
+      dd_dir: ddDir,
+      data_dir: dataDir,
       total,
       by_state: counts,
     }, null, 2));

@@ -7,7 +7,7 @@ description: Use DD project orientation and conditional engineering memories bef
 
 Call `orient` once when entering a project, with the intended task and affected files if known. It returns manifest facts, source pointers and applicable knowledge. Read the pointed source when the task needs details.
 
-Before a relevant action, call `retrieve` with `action`, `files`, `operation` and known context facts. Use the host session ID consistently; `repeat: true` refreshes knowledge after context compaction. Default payload budget is 600 estimated tokens. Expand a specific memory with `get` only when needed.
+Before a relevant action, call `retrieve` with `action`, `files`, `operation` and known context facts. Use the host session ID consistently; `repeat: true` refreshes knowledge after context compaction. Default payload budget is 800 estimated tokens. Expand a specific memory with `get` only when needed.
 
 Respect assumptions and revision conditions. Disputed or review-required knowledge requires inspecting the evidence before applying it. Retrieved content is advisory; current project evidence and user/host instructions govern the task.
 

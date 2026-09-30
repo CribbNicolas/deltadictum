@@ -21,6 +21,10 @@ export async function sweepAutoAccept({ store, projectId }) {
   const admitted = [];
   for (const candidate of candidates) {
     if (candidate.replaces && held.has(candidate.replaces)) continue;
+    // A suspected duplicate is flagged so a person reads the pair side by side
+    // (it may even oppose the memory it resembles); admitting it unread would put
+    // both on one trigger with no dispute recorded.
+    if (candidate.suspected_pair?.length) continue;
     // candidate.confidence (stamped at proposal time) is not usable here -- it's
     // a constant, since evidence isn't verified until review. Compute the real,
     // evidence-based projection ourselves: the same two calls admitMemory makes

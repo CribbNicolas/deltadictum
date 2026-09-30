@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { callRunningStore } from '../src/hooks/bridge.js';
+import { VERSION } from '../src/hooks/build.js';
 
 const i = process.argv.indexOf('--project');
 if (i < 0 || !process.argv[i + 1]) throw new Error('Usage: node scripts/check-codex.mjs --project PROJECT');
@@ -17,7 +18,7 @@ const pluginRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const transport = new StdioClientTransport({ command: process.execPath,
   args: [join(pluginRoot, 'src/mcp/server.js')], cwd: projectRoot, stderr: 'inherit',
   env: { ...process.env, DD_PROJECT_DIR: projectRoot, DD_DATA: join(projectRoot, '.dd/local') } });
-const client = new Client({ name: 'dd-codex-install-check', version: '0.3.1' });
+const client = new Client({ name: 'dd-codex-install-check', version: VERSION ?? '0.0.0' });
 try {
   await client.connect(transport);
   const { tools } = await client.listTools();

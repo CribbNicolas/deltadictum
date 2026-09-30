@@ -1,11 +1,19 @@
 version: 2
 updates:
+  # Every dependency update ships to users through npm-shrinkwrap.json, so
+  # minor and patch bumps arrive as one reviewable PR a week rather than many.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ['*']
