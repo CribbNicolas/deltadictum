@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -17,6 +17,8 @@ test('actual MCP schema has one compact proposal surface and no self-approval op
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport); await client.connect(clientTransport);
   t.after(async () => { await client.close(); await server.close(); store.close(); });
+  // It reported 0.3.1 through 0.8.2, whatever was installed.
+  assert.equal(client.getServerVersion().version, JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version);
   const { tools } = await client.listTools();
   assert.equal(tools.some(t => ['admit', 'resolve', 'delete', 'reject', 'apply'].includes(t.name)), false);
   assert.equal(tools.filter(t => ['propose', 'capture', 'update'].includes(t.name)).length, 1);

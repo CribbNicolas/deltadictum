@@ -120,9 +120,11 @@ export function createSemanticRetrieve({ embedder: given, calibration = DEFAULT_
     if (!active) return { error: { code: 503, message: 'The embedding model is not ready.' } };
     const states = ['candidate', 'active', 'contested', 'superseded', 'legacy', 'archived'];
     const vectors = await syncVectors({ store, projectId, embedder: active, states });
-    const probe = id ? vectors.get(id) : (await active.embed([queryText(text)], 'query'))[0];
+    // An id or a topic key, as `get` accepts.
+    const target = id ? (await store.getAtom(id, projectId))?.id ?? id : null;
+    const probe = target ? vectors.get(target) : (await active.embed([queryText(text)], 'query'))[0];
     if (!probe) return { error: { code: 404, message: `not_found:${id}` } };
-    const ranked = [...vectors].filter(([other]) => other !== id).map(([other, vector]) => [other, cosine(probe, vector)])
+    const ranked = [...vectors].filter(([other]) => other !== target).map(([other, vector]) => [other, cosine(probe, vector)])
       .sort((a, b) => b[1] - a[1]).slice(0, Math.min(20, Math.max(1, Number(limit) || 8)));
     return { similar: await Promise.all(ranked.map(async ([other, similarity]) => {
       const atom = await store.getAtom(other, projectId);
