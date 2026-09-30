@@ -17,9 +17,11 @@ jobs:
   publish:
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: npm
     permissions:
-      contents: read
+      # contents: write creates the version's tag and GitHub release.
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v7
@@ -35,6 +37,7 @@ jobs:
         run: |
           name=$(node -p "require('./package.json').name")
           version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           if npm view "$name@$version" version >/dev/null 2>&1; then
             echo "$name@$version already published"
             echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -45,3 +48,20 @@ jobs:
         run: npm ci
       - if: steps.check.outputs.publish == 'true'
         run: npm publish --provenance --access public
+      # Idempotent, so a re-run after a failed release step still creates it.
+      - name: Tag and release on GitHub
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists"
+            exit 0
+          fi
+          node .github/scripts/release-notes.mjs "$VERSION" > release-notes.md
+          if [ -s release-notes.md ]; then
+            gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --notes-file release-notes.md
+          else
+            gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+          fi
