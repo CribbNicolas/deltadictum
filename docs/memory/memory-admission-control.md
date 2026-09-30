@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: reference
 stability: draft
-last_validated: 2026-09-18
+last_validated: 2026-09-30
 depends_on:
   - memory/behavioral-memory-architecture.md
   - architecture/plugin-constraints.md
@@ -32,11 +32,13 @@ Required and non-empty: `project_id`, `memory_type`, `scope`, `title`, `trigger`
 `what`, `why`, `topic_key`, at least one well-formed `evidence_refs` entry (`source_type`,
 `source_ref`, `summary`), and both the `micro` and `short` compact forms.
 
-Two checks go beyond presence:
+Three checks go beyond presence:
 
 - An `anti_memory` whose `behavior_delta` does not actually prevent anything is blocked. The check is a
   preventive-language match in English and Spanish.
 - Content carrying prompt-injection markers or unsanitised model output is blocked.
+- `trigger`, `behavior_delta` and `why` must be English (`memory_must_be_english`): memories are matched
+  in one vocabulary, whatever language the conversation uses.
 
 ## Source reliability
 
@@ -65,9 +67,9 @@ artifact. Which observation provenances count as verified is derived from the la
 
 The ladder never blocks. An unverified proposal is still admissible as a candidate awaiting review; what
 provenance decides is the ceiling, and the ceiling is applied **at admission**, not at proposal.
-Candidates are never retrieved — `retrieveMemories` filters to `active` and `contested` — so a
-proposal-time confidence affects no ranking. The number that the retrieval value at
-`src/engine/retrieve.js:46` reads is stamped by `admitMemory`, from the evidence it verifies during
+Candidates are never retrieved — `retrieveMemories` filters to `active`, `contested` and `legacy` — so a
+proposal-time confidence affects no ranking. The number the retrieval value in `src/engine/retrieve.js`
+reads is stamped by `admitMemory`, from the evidence it verifies during
 review. A proposal therefore always lands on the unverified rung, because nothing has been verified when
 `normalizeProposal` runs.
 
@@ -83,7 +85,7 @@ the review stamp never move, so nothing is promoted and a `canonical` grant stay
 it. It is read-only unless given `--apply`, because it rewrites git-tracked knowledge, and it refuses a
 reference that escapes the repository exactly as admission does.
 
-**Nothing else raises it.** A reported outcome is telemetry (`src/engine/feedback.js:12-13`), a
+**Nothing else raises it.** A reported outcome is telemetry (`recordOutcome` in `src/engine/feedback.js`), a
 resolution win is a track record, and re-proposing the same knowledge is ignored. No quantity of agent
 claims reaches the standing of one verified artifact; `tests/engine/reliability.test.js` asserts that
 under volume.
@@ -96,9 +98,9 @@ proposal -> block | observe | write | ignore
 
 | Decision | When | Result |
 |---|---|---|
-| `block` | Missing identity or type, invalid scope, unsafe content, or a non-preventive anti-memory | Nothing is stored; the reasons are logged. |
+| `block` | Missing identity or type, invalid scope, unsafe content, text not in English, or a non-preventive anti-memory | Nothing is stored; the reasons are logged. |
 | `observe` | Any other contract failure | Stored as an observation, never as knowledge. |
-| `write` | Contract satisfied | Stored as a **candidate**, awaiting human review. Never active. |
+| `write` | Contract satisfied | Stored as a **candidate**. Admitted by local review, or by auto-accept when the evidence DD verifies reaches the project's threshold (`src/engine/auto-accept.js`). |
 | `ignore` | An equivalent memory already exists | The existing memory is returned unchanged. |
 | `update` | The trigger collides with one effective memory of the same scope, saying the same thing | Stored as a **candidate** that names the colliding memory in `replaces`. Approval supersedes it; nothing changes before review. |
 
@@ -108,14 +110,13 @@ review promotes a candidate, and `contest`, when a caller declares a contradicti
 `warn` was removed from the list. It would have been a middle ground between advising and blocking,
 and there is no such ground while every write already stops at a candidate awaiting review.
 
-Note that `ADMISSION_DECISIONS` is itself a declaration with no consumer: nothing imports it, and the
-decisions the gate returns are string literals. The vocabulary that is actually enforced lives in the
-SQL `CHECK` constraints.
+The decisions are string literals written to `memory_admission_decisions`; no list declares them (an
+unused `ADMISSION_DECISIONS` constant was removed in 0.8.3).
 
 ## Equivalence and collision
 
-Deduplication is **exact**: two proposals are equivalent when thirteen authored fields serialise
-identically and their evidence signatures match. A paraphrase is therefore a new candidate, not a
+Deduplication is **exact**: two proposals are equivalent when fourteen authored fields (`MATERIAL_FIELDS`
+in `src/engine/contract.js`, less `valid_from`) serialise identically and their evidence signatures match. A paraphrase is therefore a new candidate, not a
 duplicate.
 
 The write path also computes `collides_with` **before the atom is written**: effective memories whose

@@ -14,9 +14,9 @@ Cold startup, a warm engine call and a resident hook are separate measurements. 
 npm run eval
 ```
 
-`src/eval/cases.js` contains seven authored knowledge fixtures and 24 scenarios: exact language, paraphrases, Spanish, mismatched scope, changed facts, retired advice and unrelated tasks. `src/eval/replay.js` seeds the actual store and runs the actual retrieval engine. Fixtures are evaluation ground truth, not production approval evidence.
+`src/eval/cases.js` contains nine authored knowledge fixtures (one superseded) and 28 scenarios: exact language, paraphrases, Spanish, mismatched scope, changed facts, retired advice and unrelated tasks. `src/eval/replay.js` seeds the actual store and runs the actual retrieval engine. Fixtures are evaluation ground truth, not production approval evidence.
 
-The report at `output/eval/replay.json` records expected/returned memories, review handling, exact cases, precision, recall, F1, estimated context cost and elapsed time. The command fails if F1 or exact-case accuracy is below 90%.
+The report at `output/eval/replay.json` records expected/returned memories, review handling, exact cases, precision, recall, F1, estimated context cost and elapsed time. The command fails if F1, exact-case accuracy or abstention F1 is below 90%.
 
 Context baselines are no supplied knowledge and all effective fixture knowledge as static instructions. The comparison charges serialized DD results, including metadata, against the static context. It excludes MCP tool schemas, host prompts, model output and future tool calls. The byte-based estimate is not provider billing data.
 
@@ -30,7 +30,7 @@ The runner accepts a local Node adapter instead of assuming a provider, SDK, mod
 npm run eval:models -- --adapter C:/path/provider-adapter.mjs --model MODEL_ID --out output/eval/model-results.json
 ```
 
-`--limit N` selects the first N scenarios for an integration smoke test (1 to 24). A full run makes 72 adapter invocations: each of 24 tasks with `none`, `static` and `dd` context. Provider calls and their costs are controlled by the supplied adapter. The plugin does not make them implicitly.
+`--limit N` selects the first N scenarios for an integration smoke test (1 to 28). A full run makes 84 adapter invocations: each of 28 tasks with `none`, `static` and `dd` context. Provider calls and their costs are controlled by the supplied adapter. The plugin does not make them implicitly.
 
 Each invocation receives one JSON document on stdin:
 
@@ -44,7 +44,7 @@ Each invocation receives one JSON document on stdin:
     "components": ["payments"]
   },
   "context": [{ "topic_key": "payments/retry/idempotency", "content": "Reuse the original idempotency key." }],
-  "choices": ["reuse_key", "new_migration", "inject_clock", "sqlite", "request_id", "delivery_id", "review_decision", "inspect_project"],
+  "choices": ["reuse_key", "inspect_project", "new_migration", "inject_clock", "sqlite", "review_decision", "request_id", "delivery_id", "layers", "sequential_export"],
   "instruction": "The shared decision task instructions."
 }
 ```
@@ -60,7 +60,7 @@ The adapter must query its chosen model and write exactly one JSON document to s
 
 Send diagnostics to stderr. Return actual provider usage when available; omit usage when unavailable. Do not estimate billing tokens as if the provider reported them. Keep provider prompts, sampling settings and output limits the same across modes. Never derive the decision from the scenario ID or implement the answer in the adapter.
 
-The runner strips expected answers and review labels before invoking the adapter, bounds output and enforces a two-minute invocation timeout. Reports preserve each result, elapsed wall time and adapter-supplied usage. Unknown token usage remains null. The automated runner test uses a mock adapter only and makes no model calls.
+The choices are every decision the scenarios expect, so each one can be answered correctly. The runner strips expected answers and review labels before invoking the adapter, bounds output and enforces a two-minute invocation timeout. Reports preserve each result, elapsed wall time and adapter-supplied usage. Unknown token usage remains null. The automated runner test uses a mock adapter only and makes no model calls.
 
 This is a closed-choice decision benchmark. Its no-context fallback is `inspect_project`; it measures whether supplied project guidance leads to the expected decision. It does not measure generated code quality, total development time, or whether a real model independently discovers equivalent guidance by reading files.
 

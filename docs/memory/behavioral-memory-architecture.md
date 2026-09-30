@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: architecture
 stability: draft
-last_validated: 2026-09-17
+last_validated: 2026-09-30
 depends_on:
   - architecture/plugin-constraints.md
 used_by:
@@ -71,8 +71,8 @@ is not allowed to rewrite canonical project history without deterministic policy
 
 Agents exhibit experience-following: when they retrieve similar past experiences, they tend to repeat
 similar outputs. Stored raw, a single bad experience propagates as misaligned replay. Behavioral memory
-counters this by storing the corrected behavior delta, and by allowing anti-memories to block a pattern
-rather than merely recall it.
+counters this by storing the corrected behavior delta, and by anti-memories that warn against a pattern
+rather than merely recall it (a veto that can stop a tool call is roadmap phase 3).
 
 ## Cognitive-Architecture Framing
 
@@ -93,14 +93,15 @@ tool events and user corrections
   -> proposal                             (model, Level 2)
   -> admission gate                       (deterministic, Level 2)
   -> candidate
-  -> local human review                   (Level 3)
+  -> local human review                   (Level 3; auto-accept only on evidence DD verified, when enabled)
   -> active knowledge, one live memory per topic key
-  -> trigger + scope + budget retrieval   (deterministic, Level 1)
+  -> anchor + text + embedding retrieval  (deterministic ranking, scope gates, budget; Level 1)
   -> outcome reports                      (telemetry only; never promotion)
 ```
 
-Each stage is a pure step over local state. There is no queue, no worker and no service between them:
-the whole pipeline runs inside a hook process, an MCP call or the local audit UI.
+Each stage is a step over local state. There is no queue and no background worker between them: the
+pipeline runs inside a hook process, an MCP call, or the resident process that holds the embedding model
+and serves the audit UI.
 
 ## Research Lineage
 

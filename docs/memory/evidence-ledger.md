@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: reference
 stability: draft
-last_validated: 2026-05-30
+last_validated: 2026-09-30
 depends_on:
   - memory/memory-admission-control.md
 used_by:
@@ -24,19 +24,32 @@ Every durable memory must be evidence-bearing by construction. A durable memory 
 
 ## Evidence Capsule
 
-Evidence can reference test logs, tool outputs, files, diffs, traces, decisions, user approvals, or artifacts.
+A proposal names its evidence in `evidence_refs`; DD records what it verified in `evidence_state`.
 
 ```json
 {
-  "evidence_id": "uuid",
-  "source_type": "test_log|tool_output|file|diff|trace|decision|user_approval|artifact",
-  "source_ref": "stable reference",
-  "observed_at": "timestamp",
-  "hash": "sha256-or-null",
-  "summary": "what this evidence supports",
-  "sensitivity": "public|project|private|secret"
+  "evidence_refs": [
+    { "source_type": "file|diff|test_log|tool_output|user_statement|user_approval|decision|artifact",
+      "source_ref": "a repository path (optionally #L10-L20) or a recorded observation id",
+      "summary": "what this evidence supports" }
+  ],
+  "evidence_state": {
+    "checked_at": "timestamp",
+    "artifacts": [
+      { "source_type": "file", "source_ref": "docs/payment-provider.md", "summary": "...",
+        "status": "verified|unverified|unavailable|out_of_scope",
+        "provenance": "filesystem|host|user_correction|agent_claim", "hash": "sha256 when verified" }
+    ],
+    "verified_count": 1,
+    "support": "unreviewed|human_reviewed"
+  }
 }
 ```
+
+`file`, `diff` and `test_log` references are hashed when they resolve inside the repository;
+`tool_output` references verify against a recorded host observation or user correction of the same
+project. Every other type stays an unverified agent claim. A reference that escapes the repository blocks
+the proposal. Verification records integrity; `support` becomes `human_reviewed` only through review.
 
 ## Temporal Validity
 

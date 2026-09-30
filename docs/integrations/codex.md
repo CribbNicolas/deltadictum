@@ -63,6 +63,6 @@ Tests cover the installer, paths with spaces, preservation of existing settings,
 
 Target: `C:/dev/Perfect Brew`; source: `C:/dev/supermem`; Codex CLI 0.153.4; Node 24.13.0.
 
-The actual Codex app-server configuration API, using the user's profile, reports DD enabled from the project layer. Skills discovery reports all three DD skills enabled. Hooks discovery reports all five project hooks without warnings/errors, with trust still pending user review. The direct stdio check reports all ten MCP tools and a working audit endpoint. Orientation identifies Perfect Brew, `project.godot` and README source context. No model was invoked and no project decisions were seeded.
+The actual Codex app-server configuration API, using the user's profile, reports DD enabled from the project layer. Skills discovery reports all three DD skills of that version enabled (eight command skills today). Hooks discovery reports all five project hooks without warnings/errors, with trust still pending user review. The direct stdio check reports all ten MCP tools of that version (twelve today) and a working audit endpoint. Orientation identifies Perfect Brew, `project.godot` and README source context. No model was invoked and no project decisions were seeded.
 
 An isolated sandbox profile can report different project trust than the user's desktop profile. Verify the effective configuration under the same user/host that will run Codex; do not change project trust merely to make a sandbox diagnostic pass.

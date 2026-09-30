@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: testing
 stability: draft
-last_validated: 2026-09-18
+last_validated: 2026-09-30
 depends_on:
   - memory/evidence-ledger.md
 used_by: []
@@ -58,13 +58,13 @@ Final QA accuracy is insufficient. The harness instruments:
 
 `src/eval/replay.js` runs two phases against throwaway stores.
 
-**Retrieval phase** — 24 authored scenarios against 7 fixtures seeded through `putAtom`.
+**Retrieval phase** — 28 authored scenarios against 9 fixtures (one of them superseded) seeded through `putAtom`.
 
 | Figure | Definition |
 |---|---|
 | `exact` | Scenarios where the returned topic-key set equals the expected set exactly, and a `review`-flagged scenario surfaced a `review_required` memory. |
-| `precision` / `recall` / `f1` | Micro-averaged over topic keys across all 24 scenarios. |
-| `abstention.{precision,recall,f1}` | "Returned nothing" as the positive class. The 9 scenarios expecting `[]` are the positives; a scenario that abstains when it should have injected is a false positive. Scored separately because retrieval F1 can hold at 1.0 while abstention degrades. |
+| `precision` / `recall` / `f1` | Micro-averaged over topic keys across all 28 scenarios. |
+| `abstention.{precision,recall,f1}` | "Returned nothing" as the positive class. The 10 scenarios expecting `[]` are the positives; a scenario that abstains when it should have injected is a false positive. Scored separately because retrieval F1 can hold at 1.0 while abstention degrades. |
 | `estimated_tokens.reduction_vs_static` | Injected tokens against a baseline that loads every non-superseded fixture on every scenario. |
 
 **Write-path phase** (`runWritePathProbe`) — the same authored knowledge proposed through the real
@@ -93,7 +93,7 @@ that threshold is being judged by.
 - **The fixtures are authored alongside the engine and its vocabulary.** This measures conditional
   retrieval and context cost. It does not measure model task success, code quality, or whether a real
   model would have found the same guidance by reading the repository.
-- **Duplicate rate catches exact equivalence only.** `sameKnowledge` compares thirteen authored fields
+- **Duplicate rate catches exact equivalence only.** `sameKnowledge` compares fourteen authored fields
   as serialised JSON, so paraphrases do not register as duplicates. The figure understates the problem
   by construction, which is why the two near-duplicate figures exist beside it. It was `0` over a corpus
   that contained no near-duplicate at all — a rate computed over nothing to detect, which is why the
@@ -101,7 +101,7 @@ that threshold is being judged by.
 - **Near-duplicate survival is judged lexically.** The pair count uses trigger Jaccard, scope equality
   and preventive polarity, the same signals the routing itself uses (L3 leaves no others). Two memories
   that restate each other in unrelated words are invisible to both.
-- **Sample sizes are single-developer sizes** (L6). 24 scenarios and 12 write-path fixtures are regression signals,
+- **Sample sizes are single-developer sizes** (L6). 28 scenarios and 14 write-path proposals are regression signals,
   not statistics. No confidence interval computed over them would mean anything.
 - **No latency figure belongs here.** Per-case `elapsed_ms` from the replay is not a percentile; the hot
   path is exercised in `npm run test:stress`.

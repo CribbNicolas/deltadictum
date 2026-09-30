@@ -16,8 +16,9 @@ Summary: knowledge is scoped to a project, and the project filter is the first b
 and every write.
 
 > The earlier version of this file described per-project Qdrant collections (`memories_<project>`) and
-> a namespace service that resolved them. DD is a harness plugin with no vector store and no service;
-> the mechanism below is what actually enforces isolation. See
+> a namespace service that resolved them. DD is a harness plugin with no external vector store and no
+> service: embedding vectors live in each project's own SQLite index, and the mechanism below is what
+> enforces isolation. See
 > [plugin constraints](../architecture/plugin-constraints.md).
 
 ## Why isolation comes first
@@ -43,9 +44,9 @@ A namespace is a project identifier plus the `.dd` directory of that repository:
 ```text
 project filter
   -> lifecycle and memory-type filter
-  -> candidate generation (local full-text index)
+  -> candidate generation (full-text index, anchor keywords and, in the resident, embeddings)
   -> applicability gate (scope, assumptions, validity window)
-  -> ranking (activation, reliability, usage)
+  -> ranking (rank fusion of full-text and dense lists, activation, reliability, usage)
   -> budgeted injection
 ```
 

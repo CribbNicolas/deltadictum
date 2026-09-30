@@ -42,7 +42,7 @@ Each of these was found by installing the plugin into an isolated Grok home (Gro
 ## Verification scope
 
 Verified 2026-09-23: marketplace add and install from GitHub; `grok mcp doctor` reporting the handshake
-and all ten tools once the packages were installed; the first-run package install and resident start,
+and all ten tools of that version (twelve today) once the packages were installed; the first-run package install and resident start,
 by running the plugin's `session-start` hook in a copy without `node_modules`.
 
 **Not verified:** the hooks in a live Grok session (payload and response shape of its `PreToolUse`

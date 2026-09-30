@@ -1,10 +1,28 @@
+<p align="center"><img src="brand/DeltaDictum-mark.svg" width="88" alt="DeltaDictum mark"></p>
+
 # DeltaDictum
+
+[![CI](https://github.com/CribbNicolas/deltadictum/actions/workflows/publish.yml/badge.svg?branch=main)](https://github.com/CribbNicolas/deltadictum/actions/workflows/publish.yml)
+[![npm](https://img.shields.io/npm/v/deltadictum)](https://www.npmjs.com/package/deltadictum)
+[![node](https://img.shields.io/node/v/deltadictum)](package.json)
+[![license](https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue)](LICENSE)
 
 DD supplies project context and conditional engineering knowledge to coding agents. It preserves decisions, rationale, assumptions and evidence, then recalls the applicable knowledge before an action.
 
 **DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** It runs from hooks and a local MCP server, stores knowledge as git-tracked files in the project it describes, and requires no database engine, no external vector store, no inference server and no cloud account. The seven constraints that follow from being a plugin are stated in [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md).
 
-Version **0.3.1** implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). The engine is local and provider independent: no model call, embeddings service or cloud account is required. Retrieval uses a local embedding model held by the [resident process](#resident-process); without it DD is inactive and says why.
+The engine implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). It is local and provider independent: no model call, hosted embeddings service or cloud account is required. Retrieval uses a local embedding model held by the [resident process](#resident-process); without it DD is inactive and says why.
+
+## How it works
+
+1. **Capture.** While it works, the agent proposes what an agent reading the code would miss: a `trigger`
+   (when it applies), a `behavior_delta` (what to do differently), a `why`, evidence and anchor keywords.
+   DD validates the contract, hashes the evidence and files a **candidate**.
+2. **Review.** A person approves, rejects or sends back each candidate in a local audit UI. Knowledge lives
+   as JSON files in the project's `.dd/` directory, reviewed and shared through git.
+3. **Recall.** Before each prompt and tool call, hooks push the memories whose anchors or meaning match,
+   within a token budget, and point at near misses the agent can pull. Disputed, stale or abandoned
+   advice arrives flagged, never silently.
 
 ## What the agent receives
 
@@ -12,11 +30,13 @@ Version **0.3.1** implements the project cognition contract described in [the ar
 - `retrieve`: action-specific advice, including applicability conditions and explicit dispute/review notices.
 - `get`: the rationale, alternatives and evidence for a particular memory.
 
-The default retrieval budget is **600 estimated tokens for the JSON result**, including metadata. Estimates use UTF-8 bytes/3; actual token counts depend on the model tokenizer. MCP accepts budgets from 128 to 8,000. Unchanged advice is suppressed within an explicitly supplied session ID; use `repeat: true` after context compaction.
+The default retrieval budget is **800 estimated tokens for what the agent reads**: each memory with its flag and id, and a fixed envelope (`budget_tokens` in `.dd/config.json`). Estimates use UTF-8 bytes/3; actual token counts depend on the model tokenizer. MCP accepts budgets from 128 to 8,000. Unchanged advice is suppressed within an explicitly supplied session ID; use `repeat: true` after context compaction.
 
 ## Knowledge lifecycle
 
-`propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal remains a candidate until local review, including anti-memories.
+`propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal is a candidate, including anti-memories, and reaches the agent only once it is admitted.
+
+**Auto-accept.** By default a project admits a candidate without a person when its verified evidence earns a confidence ceiling of at least 0.765 — in practice, a repository file, diff or test log that DD hashed, behind a model-initiated proposal (the ladder is in `src/engine/reliability.js`). The sweep runs when the resident first opens the project, when the audit UI lists memories, and when the setting changes. It takes only the newest candidate per topic, and leaves for a person a candidate a reviewer sent back, one flagged as a suspected duplicate, and a replacement whose target has a pending action. Each admitted memory records the rationale `Auto-accepted: confidence … >= threshold …`. Turn it off or move the threshold in the audit UI (`auto_accept` in `.dd/config.json`); with it off, every candidate waits for local review.
 
 Each memory records `capture_origin`: `model_initiated` or `user_explicit` (the user asked to save that knowledge). A proposal that states no origin is recorded as `user_explicit`. Agents and capture hooks explicitly mark autonomous discoveries as `model_initiated`. `capture_source` records the engine's entry point: `agent`, `local_ui`, or `unknown` for knowledge captured before the entry point was recorded. Capture origin is not proof of human approval. Audit lists and the UI can filter by origin.
 
@@ -54,7 +74,7 @@ On Codex the same skills are installed as `dd-<name>`.
 
 ## Install
 
-DD needs Node 22 or later on the machine. Each harness installs it its own way:
+DD needs Node.js 22.16 or later on the machine (its store is `node:sqlite` with FTS5, which earlier 22.x releases lack; on an older Node the session start says so). Each harness installs it its own way:
 
 | Harness | Status |
 |---|---|
@@ -288,11 +308,13 @@ your files and write `.dd/` directly, so review is a check on what the agent pro
 
 ```text
 <project>/.dd/
-  atoms/<topic_key>.json       effective decisions
+  atoms/<topic_key>.json      effective memories (active, contested)
   candidates/<id>.json        pending proposals
-  archive/<id>.json           historical/rejected versions
-  registry/topics.json
-  relations.json
+  legacy/<id>.json            abandoned practices, recalled as warnings
+  archive/<id>.json           superseded, archived and rejected versions
+  actions/<id>.json           store changes the agent filed, pending review
+  registry/topics.json        topic keys and domains
+  relations.json              supersession and dispute relations
   config.json
 ```
 
@@ -304,11 +326,12 @@ The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a p
 
 DD reads only knowledge files in its current schema (version 7) with a valid `capture_origin` and `capture_source`. A file that is not — an older schema, missing provenance, or invalid JSON — is never indexed or recalled, cannot be overwritten, and is listed with its reason by `health` and in the audit UI, so a person can fix or delete it. SQLite is rebuilt when its format or source fingerprint changes.
 
-Models write only through `propose({proposals:[...]})`; `admit`, `resolve`, `reject`, `delete` and `update` are not advertised to them. Submit revisions through `propose` and use local review for lifecycle changes.
+Models write knowledge only through `propose({proposals:[...]})` and request store changes only through `act`; `admit`, `resolve`, `reject`, `delete` and `update` are not advertised to them. Submit revisions through `propose` and use local review for lifecycle changes.
 
 ## Validation
 
 ```text
+npm run lint              # undefined and unused names
 npm test
 npm run test:stress
 npm run eval
@@ -316,13 +339,18 @@ npm run bench             # task benchmark, lexical retrieval
 npm run bench:semantic    # the same tasks with embeddings
 ```
 
-The replay covers 24 authored scenarios: exact matches, paraphrases, Spanish, incompatible scope, changed facts, retired advice and unrelated actions. It measures retrieval correctness and estimated context cost; it is not evidence of improved code quality across model families.
+CI runs lint, the suite on Ubuntu and Windows, the oldest supported Node (22.16.0) and Node 24, the stress suite, the replay, and a check of the published file list; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+The replay covers 28 authored scenarios: exact matches, paraphrases, Spanish, incompatible scope, changed facts, retired advice and unrelated actions. It measures retrieval correctness and estimated context cost; it is not evidence of improved code quality across model families.
 
 A provider-neutral [model evaluation runner](docs/evaluation/model-evaluation.md) compares no memory, static instructions and DD while preserving actual usage supplied by an adapter. Real model runs and repository task trials are required before claiming equal effectiveness across models or improved development outcomes.
 
 The current authority is [docs/DD.md](docs/DD.md).
 
 ## Developing DD
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks every change passes and how versions are released; [CHANGELOG.md](CHANGELOG.md) lists what each version changed.
+
 
 Run Claude Code from a checkout as a local plugin, `claude --plugin-dir <checkout>`, so the session gets the
 same hooks, MCP server and skills as a marketplace install. Hooks registered by hand in

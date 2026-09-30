@@ -3,7 +3,7 @@ artifact_class: authored
 owner_domain: memory
 artifact_type: roadmap
 stability: draft
-last_validated: 2026-09-18
+last_validated: 2026-09-30
 depends_on:
   - architecture/plugin-constraints.md
 used_by:
@@ -18,10 +18,13 @@ do_not_co_load_with: []
 
 Summary: what DD builds next, bounded by what a harness plugin can be.
 
-> This roadmap replaces the former "V1 to V10" plan. That plan targeted a service: V7 assumed dense
-> retrieval and reciprocal-rank fusion, V9 assumed federation and RBAC, V10 assumed a hosted AGI-memory
-> substrate. None of them are reachable under [the plugin constraints](../architecture/plugin-constraints.md),
-> and keeping them as aspiration misled every reader. They are gone rather than deferred.
+> This roadmap replaces the former "V1 to V10" plan. That plan targeted a service: V9 assumed federation
+> and RBAC, V10 assumed a hosted AGI-memory substrate, and V7 assumed dense retrieval behind an external
+> vector store. Federation and hosting are not reachable under
+> [the plugin constraints](../architecture/plugin-constraints.md) and are gone rather than deferred. Dense
+> retrieval turned out to be reachable inside the plugin: since 0.3 a local embedding model runs in the
+> resident process, and since 0.7 reciprocal rank fusion orders full-text and dense rankings.
+> Current delivery work (recall on the golden sets, pull, anchors) is tracked in [TODO.md](../../TODO.md).
 
 ## Thesis
 
@@ -112,9 +115,10 @@ Done:
 Done (continued):
 
 - ✅ Act on `collides_with` instead of only reporting it. The routing is lexical — scope equality and
-  preventive polarity — because there is no embedding budget (L3) and no background judge (L2).
-  Ambiguity escalates to the reviewer rather than resolving itself, since a duplicate is recoverable
-  and deleted knowledge is not.
+  preventive polarity — because it runs on the write path, which loads no model, and there is no
+  background judge (L2). Ambiguity escalates to the reviewer rather than resolving itself, since a
+  duplicate is recoverable and deleted knowledge is not. The resident's `similar` tool lets the agent
+  find semantic overlaps before proposing or merging.
 
 ## Phase 2 — Fix what produces the knowledge
 
@@ -144,9 +148,13 @@ Remaining:
   in place. Baseline measured 2026-09-19 once orphaned telemetry was recovered: `cap_saturation` 0.000
   over 50 retrievals, 43 of them abstentions and none returning more than one memory. The cap has never
   been approached here, so whether retirement lowers it stays a question for a crowded project.
-- Bounded automatic promotion, from inferred to validated only, on artifact-verified evidence only,
-  reversible and logged. This is the only item that relaxes a current safety property and it does not
-  begin without an explicit decision to relax it.
+- ✅ Bounded automatic promotion, shipped as auto-accept (`src/engine/auto-accept.js`): a candidate is
+  admitted as `validated` when the evidence DD verifies for it reaches the project's threshold, with an
+  `Auto-accepted` rationale, reversible through git and review. It never admits a candidate sent back,
+  flagged as a suspected duplicate, or replacing a memory with a pending action. It is on by default at
+  0.765 (a hashed repository file behind a model-initiated proposal). **Open decision:** this is the one
+  item that relaxes "promotion only through local human review", and whether it should stay on by
+  default has not been decided explicitly.
 
 ## Phase boundary rule
 
