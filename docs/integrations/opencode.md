@@ -45,8 +45,9 @@ guessing at one risks misclassifying results rather than skipping them (the same
 
 OpenCode runs plugins in Bun, which has no `node:sqlite`, so the adapter imports none of DD: it runs the
 SessionStart hook the other hosts run (`hooks/run.cjs`) in Node and injects its context. That hook reaches
-the machine's resident, or starts one, waits briefly for it, and says whether DD is active. Node 22 or
-later must be on `PATH`; without it nothing is injected and OpenCode is unaffected. OpenCode loads the
+the machine's resident, or starts one, waits briefly for it, and says whether DD is active. Node 22.16 or
+later must be on `PATH`; an older one injects a line saying why DD is inactive, and without Node nothing is
+injected. Either way OpenCode is unaffected. OpenCode loads the
 package's `./server` export and calls every export of that module as a plugin, so the module exports
 only the plugin function.
 
