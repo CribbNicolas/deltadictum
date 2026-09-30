@@ -31,6 +31,9 @@ when it reaches `main`, and CI refuses a version bump without a section here.
   blocking. Publishing tags the version and writes its GitHub release from this file.
 - Documentation brought in line with the code: auto-accept, the recall budget, the evaluation corpus,
   embeddings and the resident process.
+- Auto-accept stays on by default, now documented in the README with how to turn it off or move its
+  threshold (the audit UI's Settings panel, or `auto_accept` in `.dd/config.json`).
+- TODO.md lists the review's proposals, the repository settings to change and what was not verified.
 
 ## [0.8.2] - 2026-09-29
 

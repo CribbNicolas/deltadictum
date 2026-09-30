@@ -18,7 +18,8 @@ The engine implements the project cognition contract described in [the architect
 1. **Capture.** While it works, the agent proposes what an agent reading the code would miss: a `trigger`
    (when it applies), a `behavior_delta` (what to do differently), a `why`, evidence and anchor keywords.
    DD validates the contract, hashes the evidence and files a **candidate**.
-2. **Review.** A person approves, rejects or sends back each candidate in a local audit UI. Knowledge lives
+2. **Review.** A person approves, rejects or sends back each candidate in a local audit UI; candidates backed
+   by evidence DD verified are auto-accepted by default (configurable in the UI's Settings). Knowledge lives
    as JSON files in the project's `.dd/` directory, reviewed and shared through git.
 3. **Recall.** Before each prompt and tool call, hooks push the memories whose anchors or meaning match,
    within a token budget, and point at near misses the agent can pull. Disputed, stale or abandoned
@@ -34,9 +35,7 @@ The default retrieval budget is **800 estimated tokens for what the agent reads*
 
 ## Knowledge lifecycle
 
-`propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal is a candidate, including anti-memories, and reaches the agent only once it is admitted.
-
-**Auto-accept.** By default a project admits a candidate without a person when its verified evidence earns a confidence ceiling of at least 0.765 — in practice, a repository file, diff or test log that DD hashed, behind a model-initiated proposal (the ladder is in `src/engine/reliability.js`). The sweep runs when the resident first opens the project, when the audit UI lists memories, and when the setting changes. It takes only the newest candidate per topic, and leaves for a person a candidate a reviewer sent back, one flagged as a suspected duplicate, and a replacement whose target has a pending action. Each admitted memory records the rationale `Auto-accepted: confidence … >= threshold …`. Turn it off or move the threshold in the audit UI (`auto_accept` in `.dd/config.json`); with it off, every candidate waits for local review.
+`propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal is a candidate, including anti-memories, and reaches the agent only once it is admitted: by a person in the audit UI, or by [auto-accept](#auto-accept-on-by-default-configurable) when its verified evidence is strong enough.
 
 Each memory records `capture_origin`: `model_initiated` or `user_explicit` (the user asked to save that knowledge). A proposal that states no origin is recorded as `user_explicit`. Agents and capture hooks explicitly mark autonomous discoveries as `model_initiated`. `capture_source` records the engine's entry point: `agent`, `local_ui`, or `unknown` for knowledge captured before the entry point was recorded. Capture origin is not proof of human approval. Audit lists and the UI can filter by origin.
 
@@ -54,6 +53,30 @@ Changes to verified files keep the advice visible, flagged `EVIDENCE CHANGED`; r
 | `legacy` | what must not be done again? | yes, as a `LEGACY` warning, when nothing current covers it |
 | `archived` | what stopped being useful? (restorable, with its reason) | no |
 | `rejected` | what was turned down? | no |
+
+### Auto-accept (on by default, configurable)
+
+DD admits well-evidenced candidates by itself, so a project does not stall waiting for review. A candidate is
+auto-accepted when the evidence DD verifies for it earns a confidence ceiling of at least **0.765**: in
+practice, a repository file, diff or test log that DD hashed, behind a model-initiated proposal (the ladder is in
+`src/engine/reliability.js`). It takes only the newest candidate per topic, and always leaves for a person a
+candidate a reviewer sent back, one flagged as a suspected duplicate, and a replacement whose target has a
+pending action. Each memory it admits records the rationale `Auto-accepted: confidence … >= threshold …`, so
+the audit UI shows which memories no person reviewed. The sweep runs when the resident first opens the project,
+when the audit UI lists memories, and when the setting changes.
+
+**To configure it**, open the audit UI and its **Settings** panel:
+
+- **Auto-accept high-confidence candidates** turns it on or off. Off, every candidate waits for local review.
+- **Confidence threshold** moves the bar. The slider offers only the ceilings a candidate can actually reach,
+  each with what it admits, from any autonomous proposal (0.45) to an explicit user request backed by an
+  observed user correction (0.95).
+
+The same setting lives in the project's `.dd/config.json`, which is committed and so shared with the team:
+
+```json
+{ "auto_accept": { "enabled": true, "confidence_threshold": 0.765 } }
+```
 
 ## Managing memory from chat
 

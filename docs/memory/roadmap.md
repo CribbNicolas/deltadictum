@@ -152,9 +152,9 @@ Remaining:
   admitted as `validated` when the evidence DD verifies for it reaches the project's threshold, with an
   `Auto-accepted` rationale, reversible through git and review. It never admits a candidate sent back,
   flagged as a suspected duplicate, or replacing a memory with a pending action. It is on by default at
-  0.765 (a hashed repository file behind a model-initiated proposal). **Open decision:** this is the one
-  item that relaxes "promotion only through local human review", and whether it should stay on by
-  default has not been decided explicitly.
+  0.765 (a hashed repository file behind a model-initiated proposal). **Decided 2026-09-30:** on by
+  default, deliberately, and configurable per project in the audit UI's Settings panel or `auto_accept`
+  in `.dd/config.json`; it is the one item that relaxes "promotion only through local human review".
 
 ## Phase boundary rule
 
