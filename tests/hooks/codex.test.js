@@ -65,9 +65,10 @@ test('Codex project installation preserves unrelated configuration and is idempo
 test('Codex upgrades refresh owned hook settings and preserve other handlers', async () => {
   const root = await fixture();
   await applyCodexInstall(await planCodexInstall(root));
-  const path = join(root, '.codex/hooks.json');
+  // Plans name the real path: macOS tmpdir is a symlink, a Windows runner's TEMP an 8.3 short name.
+  const path = join(await realpath(root), '.codex/hooks.json');
   const hooks = JSON.parse(await readFile(path, 'utf8'));
-  const custom = { type: 'command', command: 'custom-start', additionalContextLimit: 123 };
+  const custom ={ type: 'command', command: 'custom-start', additionalContextLimit: 123 };
   hooks.hooks.SessionStart[0].matcher = 'startup|resume';
   hooks.hooks.SessionStart[0].hooks[0].additionalContextLimit = 800;
   hooks.hooks.SessionStart[0].hooks[0].timeout = 30;
@@ -117,7 +118,7 @@ test('Codex reinstalls from a moved DD replace its hooks instead of adding a sec
 test('Codex upgrades preserve per-tool preferences in the DD managed block', async () => {
   const root = await fixture();
   await applyCodexInstall(await planCodexInstall(root));
-  const path = join(root, '.codex/config.toml');
+  const path = join(await realpath(root), '.codex/config.toml');
   const preferences = '[mcp_servers.dd.tools.get]\napproval_mode = "approve"\noutput_token_limit = 2048\n\n[mcp_servers.dd.tools."propose"]\napproval_mode = "prompt"';
   const config = await readFile(path, 'utf8');
   await writeFile(path, config.replace('# END DD MANAGED CONFIG', `${preferences}\n# END DD MANAGED CONFIG`)
