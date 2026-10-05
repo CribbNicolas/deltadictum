@@ -84,7 +84,7 @@ function cookie(req, name) {
 export function inactiveMessage(retrieval) {
   return retrieval === 'loading'
     ? 'DD is starting: its embedding model is loading, and DD stays inactive until it is ready.'
-    : 'DD is inactive: the resident process could not load its embedding model. See README > "Resident process".';
+    : 'DD is inactive: the resident process could not load its embedding model. See README > "Troubleshooting".';
 }
 
 // The resident server: one process serves every project it is asked about, each

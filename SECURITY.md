@@ -14,7 +14,7 @@ system, and the steps that reproduce it.
 ## What DD protects, and what it does not
 
 The security boundary is described in the README, under
-[Security boundary](README.md#security-boundary). In short: DD protects its knowledge and review from other
+[Security boundary](docs/guide/security.md). In short: DD protects its knowledge and review from other
 accounts on the machine, from web pages and from text that did not pass review. It does not protect them
 from the agent itself, which runs as you and can write `.dd/` directly; review is a check on what the agent
 proposes, not a lock against it. Reports in scope include:

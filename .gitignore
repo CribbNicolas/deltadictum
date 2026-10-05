@@ -16,3 +16,8 @@ output/eval/
 coverage/
 .DS_Store
 Thumbs.db
+
+# Development plans, specs and working notes stay out of the repository.
+docs/plans/
+docs/specs/
+docs/superpowers/
