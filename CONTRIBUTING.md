@@ -23,7 +23,23 @@ npm ci
 ```
 
 Run DD from the checkout inside Claude Code with `claude --plugin-dir <checkout>`; see
-[Developing DD](README.md#developing-dd) for the resident process and test isolation.
+[Developing DD](#developing-dd) below for the resident process and test isolation.
+
+## Developing DD
+
+Run Claude Code from a checkout as a local plugin, `claude --plugin-dir <checkout>`, so the session gets the
+same hooks, MCP server and skills as a marketplace install. Hooks registered by hand in
+`.claude/settings.local.json` (with the root `.mcp.json`) bring no skills and miss hook events added to
+`hooks/hooks.json` later; do not combine them with `--plugin-dir`, or every hook runs twice.
+
+After editing `src/`, the resident refuses hooks until it is replaced; the next prompt or session start
+does that. The session's MCP server keeps its old code: its answers say so, and `/mcp` reconnects it.
+
+Tests and install checks that start DD must not replace the machine's resident: set
+`DD_RESIDENT_REGISTRY` to a temporary file (or `DD_RESIDENT=0`) and stop what they started.
+
+Plans, specs and other working notes written while developing stay out of the repository:
+`docs/plans/`, `docs/specs/` and `docs/superpowers/` are ignored by git.
 
 ## Checks
 

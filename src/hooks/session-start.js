@@ -127,7 +127,7 @@ export function isInactive(resident) {
 export function residentNotice(resident = {}) {
   if (!isInactive(resident)) return null;
   const { state, retrieval } = resident;
-  const fix = 'If this repeats, see README > "Resident process".';
+  const fix = 'If this repeats, see README > "Troubleshooting".';
   const tell = 'Tell the user this once.';
   if (state === 'live' && retrieval === 'loading') return `DD - Inactive for now: the resident DD process is loading its embedding model (the first run downloads about 130 MB). DD activates by itself once it is ready. ${tell}`;
   if (state === 'live') return `DD - Inactive: the resident DD process could not load its embedding model, which DD requires. ${fix} ${tell}`;
