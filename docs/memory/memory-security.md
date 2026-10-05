@@ -21,7 +21,7 @@ the code carries and the tests that hold them.
 > section and a "policy memory" tier. DD is a harness plugin with no tenants and no policy tier, and its
 > embeddings never leave the machine: the model runs in the local resident process and vectors live in
 > each project's own SQLite index. See [plugin constraints](../architecture/plugin-constraints.md). The
-> user-facing summary of the boundary is the README's *Security boundary* section; this file is the
+> user-facing summary of the boundary is [Security boundary](../guide/security.md); this file is the
 > engineering view.
 
 ## Threat model

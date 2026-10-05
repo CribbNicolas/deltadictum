@@ -7,168 +7,131 @@
 [![node](https://img.shields.io/node/v/deltadictum)](package.json)
 [![license](https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue)](LICENSE)
 
-DD supplies project context and conditional engineering knowledge to coding agents. It preserves decisions, rationale, assumptions and evidence, then recalls the applicable knowledge before an action.
+DeltaDictum (DD) gives coding agents the engineering knowledge your code does not show:
 
-**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** It runs from hooks and a local MCP server, stores knowledge as git-tracked files in the project it describes, and requires no database engine, no external vector store, no inference server and no cloud account. The seven constraints that follow from being a plugin are stated in [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md).
+- the decisions behind it;
+- the traps you already fell into;
+- the steps nothing enforces.
 
-The engine implements the project cognition contract described in [the architecture](docs/architecture/project-cognition.md). It is local and provider independent: no model call, hosted embeddings service or cloud account is required. Retrieval uses a local embedding model held by the [resident process](#resident-process); without it DD is inactive and says why.
+It recalls the right piece before the agent acts. Each memory says when it applies, what to do
+differently, why, and the evidence behind it. A person reviews it before it counts.
 
-## How it works
+DD is a **plugin** for Claude Code, Codex, Grok Build and OpenCode, not a service. Knowledge lives as
+reviewed JSON files in your repository, retrieval runs on your machine, and nothing leaves it: no cloud
+account, no model calls, no external database.
 
-1. **Capture.** While it works, the agent proposes what an agent reading the code would miss: a `trigger`
-   (when it applies), a `behavior_delta` (what to do differently), a `why`, evidence and anchor keywords.
-   DD validates the contract, hashes the evidence and files a **candidate**.
-2. **Review.** A person approves, rejects or sends back each candidate in a local audit UI; candidates backed
-   by evidence DD verified are auto-accepted by default (configurable in the UI's Settings). Knowledge lives
-   as JSON files in the project's `.dd/` directory, reviewed and shared through git.
-3. **Recall.** Before each prompt and tool call, hooks push the memories whose anchors or meaning match,
-   within a token budget, and point at near misses the agent can pull. Disputed, stale or abandoned
-   advice arrives flagged, never silently.
+## Quickstart (Claude Code)
 
-## What the agent receives
+You need [Node.js](https://nodejs.org) 22.16 or later.
 
-- `orient`: bounded manifest facts, repository structure, source pointers and relevant decisions.
-- `retrieve`: action-specific advice, including applicability conditions and explicit dispute/review notices.
-- `get`: the rationale, alternatives and evidence for a particular memory.
-
-The default retrieval budget is **800 estimated tokens for what the agent reads**: each memory with its flag and id, and a fixed envelope (`budget_tokens` in `.dd/config.json`). Estimates use UTF-8 bytes/3; actual token counts depend on the model tokenizer. MCP accepts budgets from 128 to 8,000. Unchanged advice is suppressed within an explicitly supplied session ID; use `repeat: true` after context compaction.
-
-## Knowledge lifecycle
-
-`propose` accepts batches of independent lessons with no proposal count limit per call or session. Capture supported decisions at meaningful checkpoints, including during long sessions; larger transfers can use multiple calls. DD derives compact forms from the authored statement. Every new proposal is a candidate, including anti-memories, and reaches the agent only once it is admitted: by a person in the audit UI, or by [auto-accept](#auto-accept-on-by-default-configurable) when its verified evidence is strong enough.
-
-Each memory records `capture_origin`: `model_initiated` or `user_explicit` (the user asked to save that knowledge). A proposal that states no origin is recorded as `user_explicit`. Agents and capture hooks explicitly mark autonomous discoveries as `model_initiated`. `capture_source` records the engine's entry point: `agent`, `local_ui`, or `unknown` for knowledge captured before the entry point was recorded. Capture origin is not proof of human approval. Audit lists and the UI can filter by origin.
-
-An existing active decision remains effective while a replacement is pending. Approval publishes the new decision and archives the old version together. Git writes use a recoverable journal and a project lock. Deleting an old version checks its identity before touching any current file.
-
-Local evidence references receive content hashes computed by DD. A verified file means the artifact exists and its bytes were checked; it does not establish that the lesson follows logically. The local reviewer assesses that support and records a rationale. Model-supplied approval labels and hashes cannot authorize promotion through MCP.
-
-Changes to verified files keep the advice visible, flagged `EVIDENCE CHANGED`; revision conditions or supported counterevidence produce a review notice. Memories tagged `ambient` reach every session once, at session start. Contradictions remain visible in both tool results and hooks.
-
-| State | Answers | Reaches the agent |
-|---|---|---|
-| `candidate` | what is pending review? | no |
-| `active`, `contested` | what do I do? | yes (disputed ones flagged) |
-| `superseded` | where did this memory come from? | no; history for evolving it |
-| `legacy` | what must not be done again? | yes, as a `LEGACY` warning, when nothing current covers it |
-| `archived` | what stopped being useful? (restorable, with its reason) | no |
-| `rejected` | what was turned down? | no |
-
-### Auto-accept (on by default, configurable)
-
-DD admits well-evidenced candidates by itself, so a project does not stall waiting for review. A candidate is
-auto-accepted when the evidence DD verifies for it earns a confidence ceiling of at least **0.765**: in
-practice, a repository file, diff or test log that DD hashed, behind a model-initiated proposal (the ladder is in
-`src/engine/reliability.js`). It takes only the newest candidate per topic, and always leaves for a person a
-candidate a reviewer sent back, one flagged as a suspected duplicate, and a replacement whose target has a
-pending action. Each memory it admits records the rationale `Auto-accepted: confidence … >= threshold …`, so
-the audit UI shows which memories no person reviewed. The sweep runs when the resident first opens the project,
-when the audit UI lists memories, and when the setting changes.
-
-**To configure it**, open the audit UI and its **Settings** panel:
-
-- **Auto-accept high-confidence candidates** turns it on or off. Off, every candidate waits for local review.
-- **Confidence threshold** moves the bar. The slider offers only the ceilings a candidate can actually reach,
-  each with what it admits, from any autonomous proposal (0.45) to an explicit user request backed by an
-  observed user correction (0.95).
-
-The same setting lives in the project's `.dd/config.json`, which is committed and so shared with the team:
-
-```json
-{ "auto_accept": { "enabled": true, "confidence_threshold": 0.765 } }
-```
-
-## Managing memory from chat
-
-Ask the agent in plain words ("merge these two", "that practice is dead, mark it legacy") or use a command.
-Every change it makes is a pending proposal or action; you apply, reject or send it back with a reason in the
-audit UI, and the reason reaches the agent on its next prompt.
-
-| Command | Does |
-|---|---|
-| `/dd:review [id]` | Works revision requests and memories whose evidence changed; files corrections, legacy or archive actions. |
-| `/dd:compact` | Finds memories that repeat or overlap and files merges. |
-| `/dd:clean` | Reviews the archive and files one restore and one delete action. |
-| `/dd:prospect <area>` | Looks for knowledge in one area and proposes only what is new or improves a memory. |
-| `/dd:init` | Deep first survey of a project; warns about the cost and waits for a yes. |
-| `/dd:recall`, `/dd:save`, `/dd:audit` | Use knowledge, save a lesson, inspect the store. |
-
-On Codex the same skills are installed as `dd-<name>`.
-
-## Install
-
-DD needs Node.js 22.16 or later on the machine (its store is `node:sqlite` with FTS5, which earlier 22.x releases lack; on an older Node the session start says so). Each harness installs it its own way:
-
-| Harness | Status |
-|---|---|
-| [Claude Code](#claude-code) | Tested (Claude Code 2.1.282, 2026-09-24) |
-| [Codex](#codex) | Partly tested: installer and MCP server check pass; a live session with trusted hooks is not verified |
-| [Grok Build](#grok-build) | **Not tested yet** |
-| [OpenCode](#opencode) | **Not tested yet** |
-
-Platforms: tested on Windows and Linux (WSL Ubuntu, Node 22). macOS is handled in code (`src/paths.js`)
-but has not been run on a Mac.
-
-The first session on a machine downloads the embedding model (about 130 MB). Until it is loaded, DD says
-it is inactive and recalls nothing; it turns on by itself.
-
-### Claude Code
-
-1. In Claude Code, add the marketplace and install the plugin:
+1. Install the plugin from Claude Code:
 
    ```text
    /plugin marketplace add CribbNicolas/deltadictum
    /plugin install dd@deltadictum
    ```
 
-2. Start a new session in your project. The first line names the audit UI address; the `/dd:*` commands
-   and the `dd` MCP tools are available.
+2. Start a new session in your project. Its first message gives you the **audit UI** address, where you
+   review what DD learns. The first session on a machine downloads the embedding model (about 130 MB);
+   until it is loaded DD says it is inactive, then it turns on by itself.
+3. Give the agent a first task:
 
-Claude Code installs the packages itself. What was checked on 2026-09-24: the session start context and
-audit UI address, the MCP tools, a failing command recorded as a `tool_failure` and a passing test run as
-a `validation`.
+   > Use DD to orient yourself in this project. Read the README and the main architecture documents,
+   > and propose the decisions and lessons worth keeping, with evidence.
+
+4. Open the audit UI to approve, reject or send back what it proposed. From then on, the agent receives
+   the memories that apply before each prompt and tool call.
+
+For other harnesses, see [Install](#install).
+
+## How it works
+
+1. **Capture.** While it works, the agent proposes what an agent reading the code would miss. DD
+   validates the proposal, hashes its evidence and files it as a candidate.
+2. **Review.** You approve, reject or send back each candidate in the local audit UI. Candidates backed by
+   evidence DD verified itself are auto-accepted by default; this is [configurable](#configuration).
+3. **Recall.** Before each prompt and tool call, hooks push the memories whose keywords or meaning match,
+   within a token budget, and point at near misses the agent can pull. Disputed, stale or abandoned advice
+   arrives flagged, never silently.
+
+More in [How DD works](docs/guide/how-it-works.md).
+
+## Compatibility
+
+| Harness | Status | Install |
+|---|---|---|
+| Claude Code | Tested (2.1.282) | [Plugin marketplace](#claude-code) |
+| Codex | Partly tested: installer and MCP server verified; a live session with trusted hooks is not | [`deltadictum install`](#codex) |
+| Grok Build | Not tested yet: install and MCP handshake checked | [Plugin marketplace](#grok-build) |
+| OpenCode | Not tested yet: plugin loading checked | [`opencode.json`](#opencode) |
+| Other MCP hosts | Tools only, no hooks | [Guide](docs/integrations/other-hosts.md) |
+
+**Requirements**
+
+- **Node.js 22.16 or later.** DD stores its index with `node:sqlite` and FTS5. On an older Node the
+  session start says DD is inactive and why.
+- **Operating system.**
+  - Windows and Linux are tested.
+  - macOS passes the test suite in CI but has not been used in a real session.
+  - Alpine/musl cannot run the embedding runtime.
+- **Resources.** One background process per machine, shared by every project and session:
+  - about 640 MB of RAM;
+  - about 610 MB of disk, including the model;
+  - ports 7733-7742 on `127.0.0.1`.
+
+  See [the resident process](docs/guide/resident.md).
+
+## Install
+
+### Claude Code
+
+```text
+/plugin marketplace add CribbNicolas/deltadictum
+/plugin install dd@deltadictum
+```
+
+Start a new session. The `/dd:*` commands and the `dd` MCP tools are available, and the first message
+names the audit UI. Claude Code installs DD's packages itself and updates the plugin from `/plugin`.
 
 ### Codex
 
-1. Install the package globally, so Codex has a directory that stays:
+Codex has no plugin marketplace, so DD writes the project's Codex configuration:
 
-   ```powershell
+1. Install DD globally, so Codex points at a directory that stays:
+
+   ```bash
    npm install -g deltadictum
    ```
 
-2. Write DD's configuration into the project, then check it:
+2. Write the configuration into the project, then check it:
 
-   ```powershell
+   ```bash
    deltadictum install --host codex --project "<absolute-project-path>"
    node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project "<absolute-project-path>"
    ```
 
-3. Open the project in Codex, trust the project, then trust DD's five hooks in `/hooks`. Codex ignores a
+3. Open the project in Codex and trust it, then trust DD's five hooks in `/hooks`. Codex ignores a
    project's `.codex/` configuration until the project is trusted.
 
-The skills are installed as `dd-<name>`. Details: [Codex guide](docs/integrations/codex.md).
+After `npm update -g deltadictum`, run the install command again. It refreshes DD's own settings and keeps
+everything else. Commands are installed as `dd-<name>` skills. Details:
+[Codex guide](docs/integrations/codex.md).
 
 ### Grok Build
-
-**Not tested yet.** The marketplace install and the MCP handshake (`grok mcp doctor`) were checked; a live
-session was not.
 
 ```bash
 grok plugin marketplace add CribbNicolas/deltadictum
 grok plugin install deltadictum@deltadictum --trust
 ```
 
-`--trust` is required for hooks and the MCP server to load. Grok copies the plugin without its packages,
-so the first session installs them in the background and says DD is inactive until they are in place. A
-failed attempt is named in the next session's message, with its log (`.dd-install.log` in the plugin
-directory) and the command to run by hand. Details: [Grok Build guide](docs/integrations/grok-build.md).
+`--trust` is required for the hooks and the MCP server to load.
+
+Grok copies the plugin without its packages, so the first session installs them in the background and
+says DD is inactive until they are ready. Details: [Grok Build guide](docs/integrations/grok-build.md).
 
 ### OpenCode
 
-**Not tested yet.** OpenCode loading the plugin and the adapter injecting its context were checked; a live
-session with a model was not.
-
-Add DD to the project's `opencode.json` (the same file is in `adapters/opencode.json`):
+Add DD to the project's `opencode.json`:
 
 ```json
 {
@@ -185,206 +148,100 @@ Add DD to the project's `opencode.json` (the same file is in `adapters/opencode.
 }
 ```
 
-OpenCode has no per-tool-call hook, so DD's context arrives once per session and recall is through the
+OpenCode has no per-tool-call hook, so DD's context arrives once per session and recall goes through the
 `dd` tools. Details: [OpenCode guide](docs/integrations/opencode.md).
 
-### Other MCP hosts
+## Using DD
 
-For any other MCP host, install the packages with `npm install` and register this entrypoint:
+- **The audit UI** is where knowledge is admitted. Every session start gives its address, and the agent can
+  return it at any time (ask for "the DD audit link"). There you can:
+  - approve, reject or send back candidates with a reason the agent receives on its next prompt;
+  - apply the store changes the agent requested;
+  - change the project's settings.
+- **Commands** manage knowledge from the chat. Every change they make is a pending proposal or action for
+  you to apply.
+
+| Command | Does |
+|---|---|
+| `/dd:save` | Saves a lesson or decision from the conversation |
+| `/dd:recall` | Recalls the knowledge for the current task |
+| `/dd:review [id]` | Works through revision requests and memories whose evidence changed |
+| `/dd:compact` | Finds memories that overlap and files merges |
+| `/dd:clean` | Reviews the archive and files restores or deletions |
+| `/dd:prospect <area>` | Looks for new knowledge in one area of the project |
+| `/dd:init` | Deep first survey of a project; states its cost and waits for a yes |
+| `/dd:audit` | Inspects knowledge, evidence and outcomes, and opens the audit UI |
+
+On Codex the same commands are the `dd-<name>` skills. You can also ask in plain words: "save this as a
+lesson", "merge these two", "that practice is dead, mark it legacy".
+
+## Memory types
+
+| Type | For |
+|---|---|
+| `lesson` (default) | A pattern learned from work: something that broke, and what to do next time |
+| `decision` | An explicit project choice, with the alternatives it beat |
+| `anti_memory` | A practice that must not be done; must be phrased as a prohibition |
+| `procedure` | Steps to follow, in order, for a recurring task |
+| `claim` | A fact about the project or its environment that the code does not show |
+
+Each memory moves through a lifecycle: candidate, active, contested, legacy, superseded, archived or
+rejected. Only active, contested (flagged) and legacy (as a warning) memories reach the agent. Fields,
+states, flags and confidence: [Memories](docs/guide/memories.md).
+
+## Configuration
+
+Project settings live in `.dd/config.json`. DD writes it with every default on first use; commit it to
+share the settings with your team. The audit UI's **Settings** panel changes auto-accept, and a hand edit
+applies within seconds.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `auto_accept.enabled` | `true` | Admit candidates backed by evidence DD verified, without waiting for review |
+| `auto_accept.confidence_threshold` | `0.765` | How strong that evidence must be; `0.765` is a repository file, diff or test log DD hashed |
+| `budget_tokens` | `800` | Estimated tokens of knowledge pushed per prompt or tool call |
+| `anchors.only` | `false` | Deliver a memory only when one of its keywords, files or components matches, never by similarity |
+
+For example, to review every candidate yourself:
 
 ```json
-{
-  "command": "node",
-  "args": ["<absolute-plugin-path>/src/mcp/server.js"],
-  "env": { "DD_PROJECT_DIR": "<absolute-project-path>" }
-}
+{ "auto_accept": { "enabled": false } }
 ```
 
-Use an absolute script path. `DD_PROJECT_DIR` identifies the consuming project independently of the plugin's working directory. If omitted, the consuming project's cwd is used. Host-provided hook cwd takes precedence for that hook.
+Machine-wide behaviour is set with environment variables. For example, `DD_EMBED_MODEL` selects the
+embedding model and `DD_DATA` the local data directory. Every setting, its default and the environment
+variables: [Configuration](docs/guide/configuration.md).
 
-The repository includes root/nested plugin manifests, hooks, and [generic host instructions](adapters/AGENTS.md). Native host installation and hook event support must be verified in each host; the automated suite checks DD's MCP protocol and hook processes.
+## Troubleshooting
 
-Run the standalone audit UI from the target project:
+When the first message says **DD is inactive**, it also says why. The usual causes:
 
-```text
-node <absolute-plugin-path>/src/cli.js
-```
+- the model is still downloading on the first run;
+- Node is older than 22.16;
+- the background process cannot start.
 
-The MCP server and the SessionStart hook start this UI as the [resident process](#resident-process) when none is running. Hooks use it when it runs an unchanged build of the same install or version; otherwise they recall nothing, keep recording capture bookkeeping, and SessionStart says DD is inactive. Neither path blocks the host on plugin failure.
+See [When DD says it is inactive](docs/guide/resident.md#when-dd-says-it-is-inactive). Report other problems
+in [issues](https://github.com/CribbNicolas/deltadictum/issues).
 
-## Propose a decision
+## Documentation
 
-```json
-{
-  "session_id": "host-session-id",
-  "proposals": [{
-    "memory_type": "decision",
-    "capture_origin": "model_initiated",
-    "topic_key": "payments/retry/idempotency",
-    "trigger": "when retrying payment requests",
-    "behavior_delta": "Reuse the original idempotency key.",
-    "why": "The provider may have accepted the first request before its response timed out.",
-    "applies_to": { "components": ["payments"] },
-    "assumptions": [{
-      "key": "provider.idempotency",
-      "equals": true,
-      "description": "The provider supports idempotency keys."
-    }],
-    "revisit_when": [{
-      "kind": "file_changed",
-      "path": "docs/payment-provider.md",
-      "description": "The provider contract changes."
-    }],
-    "evidence_refs": [{
-      "source_type": "file",
-      "source_ref": "docs/payment-provider.md",
-      "summary": "Provider retry contract"
-    }]
-  }]
-}
-```
+- [How DD works](docs/guide/how-it-works.md): capture, review, recall, MCP tools, commands, measurements
+- [Memories](docs/guide/memories.md): types, fields, lifecycle, flags
+- [Configuration](docs/guide/configuration.md): every setting and environment variable
+- [The resident process](docs/guide/resident.md): the background process, its cost, troubleshooting
+- [Storage](docs/guide/storage.md): what lives in `.dd/` and what stays local
+- [Security boundary](docs/guide/security.md): what DD protects, and from whom
+- Harness guides: [Codex](docs/integrations/codex.md), [Grok Build](docs/integrations/grok-build.md),
+  [OpenCode](docs/integrations/opencode.md), [other MCP hosts](docs/integrations/other-hosts.md)
+- [Behavioural contract](docs/DD.md) and [plugin constraints](docs/architecture/plugin-constraints.md)
+- [Changelog](CHANGELOG.md) and [contributing](CONTRIBUTING.md)
 
-Required authored fields: `topic_key`, `trigger`, `behavior_delta`, `why`, `evidence_refs`. Type defaults to `lesson`; title and compact forms are derived. A same-topic proposal requests a revision. Agent tools do not expose approval, resolution or deletion; use the local review UI.
+## Security
 
-## Feedback and capture
-
-`feedback` records an outcome for a memory and task: `helped`, `failed`, `refuted` or `not_applicable`. Retrieval frequency and agent-reported success never raise confidence or authority. A task ID prevents repeated submission of the same outcome from inflating counts.
-
-Hooks retain small failure diagnostics and explicit validation results. On Claude Code the outcome comes
-from the event: `PostToolUseFailure` is a failure, and `PostToolUse` a success, since that host reports
-no exit code; other hosts must report one. A success counts as a validation only when a test, lint or
-type-check runner is a statement's own program, its output is not piped and only `&&` follows it (after `;`,
-`||` or a pipe the status belongs to another command), and its output reports no failures. Ordinary reads and successful unrelated commands are discarded. Observations and telemetry are local SQLite data with configurable retention (defaults: 200 observations/14 days, 2,000 telemetry events per table/90 days). `node src/cli.js maintain` applies retention immediately.
-
-Automatic capture reminders are separate from writes: the Stop hook reminds only after a turn that recorded a host failure, a validation or a user correction, and avoids repeated continuations within a turn. A new user prompt rearms it, and previously offered host evidence alone does not trigger another reminder. Explicit `propose` calls remain available at any point.
-
-## Resident process
-
-DD requires one background process per machine, shared by every project and session: the resident. It
-holds a multilingual embedding model (`Xenova/multilingual-e5-small`, through `@huggingface/transformers`)
-and answers the hooks, the MCP `retrieve` tool and the audit UI for each project from that project's own
-store and data directory. **Until it is running with its model loaded, DD is inactive**: nothing is
-recalled, and the session's first message says why.
-
-- **Who starts it.** The first session or MCP server that finds none starts it in the background. It is
-  recorded in `~/.dd-data/resident.json` and outlives the sessions that use it. A session start that
-  launches one waits up to 5 seconds for it to listen (about one second in practice), so that session
-  already shows the audit UI address and says the model is loading. The model takes longer; the first
-  prompt after it is ready says DD is active.
-- **Where the address appears.** Every session start that reaches the resident shows the audit UI address
-  to the person and asks the model to relay it. A session that began before the resident listened gets
-  it, once, on its first prompt the resident answers.
-- **Several projects.** Each project is opened the first time one of its hooks asks, with its own SQLite
-  store; the model is loaded once for all of them. The audit UI is per project:
-  `http://127.0.0.1:<port>/?project=<key>` (the session banner prints it). Without `?project=` the page
-  lists the open projects.
-- **Several installs.** Installs of one version (a plugin in two hosts, a plugin and an npm install) share
-  one resident. A resident whose code changed since it started, or of an older version, is replaced at the
-  next session start or prompt; one of a newer version is kept, and an older install says it is inactive
-  until updated. It exits after 12 hours without hook traffic.
-- **Cost.** About 640 MB of RAM with the model loaded, plus little per open project (two projects measured
-  724 MB); about 480 MB on disk for the runtime and 130 MB for the model, downloaded once to
-  `~/.dd-data/models`. A query takes a few milliseconds.
-
-When the first message says DD is inactive, check in this order:
-
-1. **Is it running?** Open the `url` in `~/.dd-data/resident.json` and request `/api/resident`.
-   `retrieval` is `semantic` when ready, `loading` while the model loads (the first run downloads it), and
-   `unavailable` when the model could not be loaded. `stale: true` means its code changed; the next prompt
-   or session start replaces it.
-2. **Start it by hand:** `node <dd>/src/cli.js resident`. It says so and exits if a current one is running.
-3. **`retrieval: unavailable`:** the embedding runtime is missing or cannot run here. Reinstall DD's
-   dependencies; platforms without prebuilt ONNX binaries (for example Alpine/musl) cannot run DD.
-4. **It never stays up:** run `node <dd>/src/cli.js resident` in a terminal and read the error; a blocked
-   port range 7733-7742 or a read-only `~/.dd-data` are the usual causes.
-
-`DD_RESIDENT=0` never starts one, which leaves DD inactive. `DD_RETRIEVAL=lexical` runs retrieval without
-the model and exists only for tests and evaluation. `DD_EMBED_MODEL=multilingual-e5-base`, set where the
-resident starts, loads the larger e5 model instead: it tied e5-small on the golden sets for about 175 MB
-more memory, so it is an option, not the default. Restart the resident after changing it.
-
-## Security boundary
-
-DD protects its knowledge and review from other accounts on the machine, from web pages, and from text
-that did not pass review. It does not protect them from the agent itself: an agent running as you can read
-your files and write `.dd/` directly, so review is a check on what the agent proposes, not a lock against it.
-
-- **Audit UI.** It listens on `127.0.0.1` only and refuses requests for any other `Host` (DNS rebinding).
-  The page and every API route require a key from the address DD prints; the first visit trades it for an
-  `HttpOnly`, `SameSite=Strict` cookie. Changes also need the review token in the page and a same-origin
-  request. The page's script runs only under a per-response CSP nonce, so markup that an escaping mistake
-  let into the page cannot execute. The key and the hook token live in `~/.dd-data/resident.json`, readable only by you, like the
-  local data directories (POSIX modes; a Windows profile is already private).
-- **Committed knowledge.** A file in `.dd/` can arrive by any commit. On read it is held to the same
-  content limits as a proposal (size, injection-like text), and the text injected into the agent is derived
-  from the fields the audit UI shows, never taken from the file. Evidence paths must stay inside the
-  repository. The injection check is a phrase list: it stops obvious instruction text, not a determined
-  rewording, so human review of what enters `.dd/` remains the control. On OpenCode, where it lands in the system prompt, it is framed as advisory data that never
-  overrides the user or the host.
-- **Credentials.** A proposal carrying a credential in a recognizable shape (cloud, Git host, npm, Slack
-  or Stripe keys, JWTs, bearer tokens, private keys) is refused, since knowledge is committed and shared.
-  Observations and feedback are redacted before they are stored.
-- **Packages.** The published package ships `npm-shrinkwrap.json`, so npm installs the exact reviewed
-  dependency tree; the first-run installer runs `npm ci --ignore-scripts`.
-
-## Storage and migration
-
-```text
-<project>/.dd/
-  atoms/<topic_key>.json      effective memories (active, contested)
-  candidates/<id>.json        pending proposals
-  legacy/<id>.json            abandoned practices, recalled as warnings
-  archive/<id>.json           superseded, archived and rejected versions
-  actions/<id>.json           store changes the agent filed, pending review
-  registry/topics.json        topic keys and domains
-  relations.json              supersession and dispute relations
-  config.json
-```
-
-Commit these knowledge files to share them with a team. Ignore runtime files `.write-lock`, `.pending-write.json` and `*.tmp`. DD creates a local ignore file automatically.
-
-SQLite, observations, feedback and session deliveries live under a per-user cache at `~/.dd-data`, in one directory per project identified by its physical path (symlinks resolved; case folded on Windows and macOS), so every process that opens the project reaches the same directory. When a new directory is created, history from earlier locations of the same project is copied into it. `DD_DATA` explicitly overrides that directory; use a separate directory for each project. The cache is rebuildable from git, so deleting it costs local telemetry and no knowledge.
-
-The cache deliberately does **not** live at `~/.dd`. A `.dd` directory marks a project, and when the per-user cache shared that name the home directory resolved as a project root, merging unrelated work into one store.
-
-DD reads only knowledge files in its current schema (version 7) with a valid `capture_origin` and `capture_source`. A file that is not — an older schema, missing provenance, or invalid JSON — is never indexed or recalled, cannot be overwritten, and is listed with its reason by `health` and in the audit UI, so a person can fix or delete it. SQLite is rebuilt when its format or source fingerprint changes.
-
-Models write knowledge only through `propose({proposals:[...]})` and request store changes only through `act`; `admit`, `resolve`, `reject`, `delete` and `update` are not advertised to them. Submit revisions through `propose` and use local review for lifecycle changes.
-
-## Validation
-
-```text
-npm run lint              # undefined and unused names
-npm test
-npm run test:stress
-npm run eval
-npm run bench             # task benchmark, lexical retrieval
-npm run bench:semantic    # the same tasks with embeddings
-```
-
-CI runs lint, the suite on Ubuntu and Windows, the oldest supported Node (22.16.0) and Node 24, the stress suite, the replay, and a check of the published file list; see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-The replay covers 28 authored scenarios: exact matches, paraphrases, Spanish, incompatible scope, changed facts, retired advice and unrelated actions. It measures retrieval correctness and estimated context cost; it is not evidence of improved code quality across model families.
-
-A provider-neutral [model evaluation runner](docs/evaluation/model-evaluation.md) compares no memory, static instructions and DD while preserving actual usage supplied by an adapter. Real model runs and repository task trials are required before claiming equal effectiveness across models or improved development outcomes.
-
-The current authority is [docs/DD.md](docs/DD.md).
-
-## Developing DD
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks every change passes and how versions are released; [CHANGELOG.md](CHANGELOG.md) lists what each version changed.
-
-
-Run Claude Code from a checkout as a local plugin, `claude --plugin-dir <checkout>`, so the session gets the
-same hooks, MCP server and skills as a marketplace install. Hooks registered by hand in
-`.claude/settings.local.json` (with the root `.mcp.json`) bring no skills and miss hook events added to
-`hooks/hooks.json` later; do not combine them with `--plugin-dir`, or every hook runs twice.
-
-After editing `src/`, the resident refuses hooks until it is replaced; the next prompt or session start
-does that. The session's MCP server keeps its old code: its answers say so, and `/mcp` reconnects it.
-
-Tests and install checks that start DD must not replace the machine's resident: set
-`DD_RESIDENT_REGISTRY` to a temporary file (or `DD_RESIDENT=0`) and stop what they started.
+The audit UI listens on `127.0.0.1` only, behind a per-machine key. Knowledge files that arrive through a
+commit are checked before they reach the agent, and proposals carrying credentials are refused. Details:
+[Security boundary](docs/guide/security.md). Report vulnerabilities privately as described in
+[SECURITY.md](SECURITY.md).
 
 ## License
 

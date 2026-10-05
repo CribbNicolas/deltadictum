@@ -72,7 +72,7 @@ test('DD_RESIDENT=0 disables starting one', async t => {
 // and SessionStart says why and how to fix it.
 test('DD is inactive, and says so, until a resident with its model is serving', async t => {
   realMode(t);
-  assert.match(residentNotice({ state: 'started' }), /Inactive for now.*README > "Resident process"/);
+  assert.match(residentNotice({ state: 'started' }), /Inactive for now.*README > "Troubleshooting"/);
   assert.match(residentNotice({ state: 'live', retrieval: 'loading' }), /loading its embedding model/);
   assert.match(residentNotice({ state: 'live', retrieval: 'unavailable' }), /could not load its embedding model/);
   assert.match(residentNotice({ state: 'unreachable' }), /not answering/);

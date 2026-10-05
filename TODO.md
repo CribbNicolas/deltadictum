@@ -75,13 +75,13 @@ Each was tried on the golden sets and moved nothing, or bought recall with quiet
   memory map fits; confirm its unit and effect with `scripts/check-codex.mjs` in a project trusted in
   an interactive Codex session.
 - **GitHub repository settings** (only an admin can change them):
-  - Require the checks added in 0.8.3 in the `main` branch protection: `lint`, `test (node 22.16.0)`,
-    `test (node 24)` and `package`, beside the existing `test (ubuntu-latest)`, `test (windows-latest)` and
+  - Require the checks added in 0.8.3 in the `main` branch protection: `lint`, `test (node 22.16.0)` and
+    `test (node 24)`, beside the existing `test (ubuntu-latest)`, `test (windows-latest)`, `package` and
     `version`. `test (macos-latest, advisory)` reports without blocking and should stay optional.
   - Enable private vulnerability reporting (Settings > Security), which `SECURITY.md` points to.
   - Enable CodeQL default setup (Settings > Code security) for JavaScript.
-  - Add a description, the homepage (the npm page) and topics (`claude-code`, `mcp`, `coding-agents`,
-    `agent-memory`) so the repository reads well when shared.
+  - Add topics (`claude-code`, `mcp`, `coding-agents`, `agent-memory`) so the repository reads well when
+    shared. No homepage: DD has no landing page.
 - **Merging publishes.** Every version reaching `main` goes to npm and gets its tag and GitHub release, with
   notes taken from its `CHANGELOG.md` section.
 
@@ -110,17 +110,12 @@ Each needs a decision or a measurement before it is done:
   the resident does on every tool call. Once a minute per store would do; measure on the hot path first.
 - **Drop vectors of deleted memories.** `memory_vectors` rows outlive the memories they embed; clear them
   on reindex.
-- **Presentation.** A short GIF of the audit UI and a "quickstart in 60 seconds" in the README, with the
-  numbers already measured: 84% fewer tokens than static instructions on the replay, and 0.90-0.96
-  must-recall with push and pull on the golden sets' test halves.
-
-### Not verified in the review
-
-- The new workflows ran only as local scripts: YAML parsed, `check-pack.mjs`, `check-version.mjs` and
-  `release-notes.mjs` ran, but GitHub Actions did not. Watch the first PR and the first release.
-- `npm audit signatures` in the `package` job could not run in the review sandbox (Sigstore's TUF CDN was
-  blocked). If it fails on GitHub for a reason other than a bad signature, make that step advisory.
-- macOS: the advisory job is the first run DD gets there.
+- **The MCP `ui` and `status` tools on a cold machine.** Until the resident the MCP server started has
+  registered (about a second), both return the keyless default address `http://127.0.0.1:7733`, which
+  answers 403. Wait briefly for the registry, or say the resident is starting, instead of naming an address
+  that cannot work. `check-codex.mjs` works around it since 0.8.4.
+- **Presentation.** A short GIF of the audit UI for the README. The quickstart and the measured numbers are
+  in the README and `docs/guide/how-it-works.md` since 0.8.4.
 
 ### Project memories to review
 
@@ -131,4 +126,7 @@ The review changed files that 14 of this project's memories cite as evidence, so
   it legacy.
 - `hooks/hot-path-cache-lifetime`: `projectContext()` now caches in the SQLite index, and the tool-call hook
   answers through the resident; revise it.
+- `tooling/install-codex/managed-block-drops-manual-fields`: since 0.8.4 the Codex installer keeps
+  `[mcp_servers.dd.tools.*]` tables inside its managed block; other hand edits there are still replaced.
+  Revise it.
 
