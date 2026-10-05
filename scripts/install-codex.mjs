@@ -48,6 +48,13 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
   const configPath = join(projectRoot, '.codex', 'config.toml');
   const config = await optionalText(configPath);
   if (!config.includes(configStart) && /^\s*\[mcp_servers\.(?:dd|"dd"|'dd')(?:\]|\.)/m.test(config)) throw new Error('existing_dd_server_requires_review');
+  // Per-tool preferences are user-owned even inside an older DD managed block.
+  const managedFrom = config.indexOf(configStart), managedUntil = config.indexOf(configEnd);
+  const managedConfig = managedFrom >= 0 && managedUntil > managedFrom
+    ? config.slice(managedFrom + configStart.length, managedUntil) : '';
+  const toolPreferences = managedConfig.split(/(?=^\s*\[)/m)
+    .filter(table => /^\s*\[mcp_servers\.(?:dd|"dd"|'dd')\.tools(?:\.[^\]\r\n]+)?\]/.test(table))
+    .map(table => table.trim()).join('\n\n');
   const configBody = `[mcp_servers.dd]
 command = ${JSON.stringify(slash(process.execPath))}
 args = [${JSON.stringify(slash(join(pluginRoot, 'src/mcp/server.js')))}]
@@ -57,7 +64,7 @@ tool_timeout_sec = 30
 
 [mcp_servers.dd.env]
 DD_PROJECT_DIR = ${JSON.stringify(slash(projectRoot))}
-DD_DATA = ${JSON.stringify(slash(dataDir))}`;
+DD_DATA = ${JSON.stringify(slash(dataDir))}${toolPreferences ? `\n\n${toolPreferences}` : ''}`;
   await plan(configPath, managedBlock(config, configStart, configEnd, configBody), config);
 
   const hookPath = join(projectRoot, '.codex', 'hooks.json');
@@ -70,10 +77,21 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}`;
       commandWindows: `& ${args.map(psQuote).join(' ')}`, timeout: 10,
       // SessionStart carries the memory map (up to MAP_BUDGET = 5000 tokens, grouped past it), so its limit is wider.
       ...(event === 'PostToolUse' ? { async: true } : event === 'Stop' ? {} : { additionalContextLimit: event === 'SessionStart' ? 24000 : 800 }) };
-    const groups = hooks.hooks[event] ??= [];
-    if (!groups.some(g => g.hooks?.some(h => h.command === handler.command && h.commandWindows === handler.commandWindows))) {
-      groups.push({ ...(event === 'PreToolUse' || event === 'PostToolUse' ? { matcher: '*' } : {}), hooks: [handler] });
-    }
+    // A handler DD wrote is recognised by its runner and event, not by its full command:
+    // a new Node path or DD directory (a source checkout moved to a global install) would
+    // otherwise leave the old handler beside the new one and run DD twice per event.
+    const owned = previous => typeof previous?.command === 'string'
+      && slash(previous.command).includes(`src/hooks/run.js' '${command}' '--codex'`);
+    let installed = false;
+    const groups = (hooks.hooks[event] ?? []).filter(group => {
+      if (!Array.isArray(group?.hooks) || !group.hooks.some(owned)) return true;
+      // Upgrades refresh limits/timeouts as well as commands; a second DD copy is dropped,
+      // other handlers and the group's matcher are kept.
+      group.hooks = group.hooks.flatMap(previous => !owned(previous) ? [previous] : installed ? [] : (installed = true, [handler]));
+      return group.hooks.length > 0;
+    });
+    if (!installed) groups.push({ ...(event === 'PreToolUse' || event === 'PostToolUse' ? { matcher: '*' } : {}), hooks: [handler] });
+    hooks.hooks[event] = groups;
   }
   await plan(hookPath, `${JSON.stringify(hooks, null, 2)}\n`, hookText);
   // Codex has no plugin namespace, so the command skills are installed as dd-<name>:

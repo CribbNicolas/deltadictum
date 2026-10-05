@@ -18,7 +18,7 @@ refuses to run from the npx cache (`npx deltadictum install ...`), which npm may
 leave Codex pointing at nothing. From a source checkout, `node src/cli.js install --host codex --project
 <path>` works the same way; `npm update -g deltadictum` keeps the same directory.
 
-The installer adds a marked DD block to project configuration and instructions, preserving unrelated content. It merges DD hooks with existing hooks and refuses to overwrite a different DD MCP server or customized skill. Running it again with unchanged sources has no effect.
+The installer adds a marked DD block to project configuration and instructions, preserving unrelated content and existing per-tool approval/output preferences. It refreshes the settings of its own hook handlers on upgrade, including context limits, timeouts and async execution, while keeping unrelated handlers and matcher groups. It recognises its handlers by their runner and event, so reinstalling from another Node or DD directory replaces them instead of adding a second copy, and removes a duplicate an earlier install left. It refuses to overwrite a different DD MCP server or customized skill. Running it again with unchanged sources has no effect.
 
 Created or updated project files:
 

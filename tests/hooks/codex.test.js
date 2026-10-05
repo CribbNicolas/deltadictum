@@ -62,6 +62,76 @@ test('Codex project installation preserves unrelated configuration and is idempo
   assert.equal((await planCodexInstall(root)).operations.length, 0);
 });
 
+test('Codex upgrades refresh owned hook settings and preserve other handlers', async () => {
+  const root = await fixture();
+  await applyCodexInstall(await planCodexInstall(root));
+  const path = join(root, '.codex/hooks.json');
+  const hooks = JSON.parse(await readFile(path, 'utf8'));
+  const custom = { type: 'command', command: 'custom-start', additionalContextLimit: 123 };
+  hooks.hooks.SessionStart[0].matcher = 'startup|resume';
+  hooks.hooks.SessionStart[0].hooks[0].additionalContextLimit = 800;
+  hooks.hooks.SessionStart[0].hooks[0].timeout = 30;
+  hooks.hooks.SessionStart[0].hooks.push(custom);
+  hooks.hooks.PostToolUse[0].hooks[0].async = false;
+  await writeFile(path, JSON.stringify(hooks));
+  const plan = await planCodexInstall(root);
+  assert.ok(plan.operations.some(op => op.path === path));
+  await applyCodexInstall(plan);
+  const updated = JSON.parse(await readFile(path, 'utf8'));
+  assert.equal(updated.hooks.SessionStart.length, 1);
+  assert.equal(updated.hooks.SessionStart[0].matcher, 'startup|resume');
+  assert.equal(updated.hooks.SessionStart[0].hooks.length, 2);
+  assert.equal(updated.hooks.SessionStart[0].hooks[0].additionalContextLimit, 24000);
+  assert.equal(updated.hooks.SessionStart[0].hooks[0].timeout, 10);
+  assert.deepEqual(updated.hooks.SessionStart[0].hooks[1], custom);
+  assert.equal(updated.hooks.PostToolUse[0].hooks[0].async, true);
+  assert.equal((await planCodexInstall(root)).operations.length, 0);
+});
+
+test('Codex reinstalls from a moved DD replace its hooks instead of adding a second copy', async () => {
+  const root = await fixture();
+  await applyCodexInstall(await planCodexInstall(root));
+  const path = join(root, '.codex/hooks.json');
+  const hooks = JSON.parse(await readFile(path, 'utf8'));
+  const current = hooks.hooks.PreToolUse[0].hooks[0];
+  // As written by a source checkout under another Node, then installed again from there.
+  const moved = handler => ({ ...handler,
+    command: `'/old/node' '/old/checkout/src/hooks/run.js' ${handler.command.split("src/hooks/run.js' ")[1]}`,
+    commandWindows: `& '/old/node' '/old/checkout/src/hooks/run.js' ${handler.commandWindows.split("src/hooks/run.js' ")[1]}` });
+  for (const groups of Object.values(hooks.hooks)) for (const group of groups) group.hooks = group.hooks.map(moved);
+  hooks.hooks.PreToolUse[0].hooks.push({ type: 'command', command: 'custom-pre-tool' });
+  hooks.hooks.PreToolUse.push({ matcher: '*', hooks: [moved(current)] });
+  await writeFile(path, JSON.stringify(hooks));
+  await applyCodexInstall(await planCodexInstall(root));
+  const updated = JSON.parse(await readFile(path, 'utf8'));
+  for (const [event, groups] of Object.entries(updated.hooks)) {
+    const dd = groups.flatMap(group => group.hooks).filter(h => h.command.includes('src/hooks/run.js'));
+    assert.equal(dd.length, 1, event);
+    assert.ok(!dd[0].command.includes('/old/'), event);
+  }
+  assert.equal(updated.hooks.PreToolUse.length, 1);
+  assert.deepEqual(updated.hooks.PreToolUse[0].hooks.map(h => h.command), [current.command, 'custom-pre-tool']);
+  assert.equal((await planCodexInstall(root)).operations.length, 0);
+});
+
+test('Codex upgrades preserve per-tool preferences in the DD managed block', async () => {
+  const root = await fixture();
+  await applyCodexInstall(await planCodexInstall(root));
+  const path = join(root, '.codex/config.toml');
+  const preferences = '[mcp_servers.dd.tools.get]\napproval_mode = "approve"\noutput_token_limit = 2048\n\n[mcp_servers.dd.tools."propose"]\napproval_mode = "prompt"';
+  const config = await readFile(path, 'utf8');
+  await writeFile(path, config.replace('# END DD MANAGED CONFIG', `${preferences}\n# END DD MANAGED CONFIG`)
+    .replace('startup_timeout_sec = 30', 'startup_timeout_sec = 99'));
+  const plan = await planCodexInstall(root);
+  assert.ok(plan.operations.some(op => op.path === path));
+  await applyCodexInstall(plan);
+  const updated = await readFile(path, 'utf8');
+  assert.ok(updated.includes(preferences));
+  assert.match(updated, /startup_timeout_sec = 30/);
+  assert.equal((updated.match(/\[mcp_servers\.dd\.tools\.get\]/g) ?? []).length, 1);
+  assert.equal((await planCodexInstall(root)).operations.length, 0);
+});
+
 test('Codex installer refuses to overwrite an unrelated DD server', async () => {
   const root = await fixture();
   await mkdir(join(root, '.codex'));
