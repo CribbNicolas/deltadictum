@@ -38,18 +38,21 @@ try {
   process.env.DD_DATA = join(projectRoot, '.dd/local');
   const deadline = Date.now() + 5000;
   while (!await callRunningStore('session-start', { session_id: 'dd-codex-check', cwd: projectRoot }, projectRoot)) {
-    if (Date.now() > deadline) throw new Error('resident_unavailable: no resident of this DD build answered. See README > "Resident process".');
+    if (Date.now() > deadline) throw new Error('resident_unavailable: no resident of this DD build answered. See README > "Troubleshooting".');
     await new Promise(done => setTimeout(done, 250));
   }
   // ui_url names the project (/?project=<key>) on the shared resident; keep that query.
   // Its UI key is what a browser trades for a cookie (src/ui/server.js); send it as one.
-  const statusUrl = new URL(status.ui_url);
+  // On a machine with no resident yet, the first status ran before the one the server
+  // started had registered, so it named the keyless default address: ask again now.
+  const statusUrl = new URL((await call('status')).ui_url);
   statusUrl.pathname = '/api/status';
   const uiKey = statusUrl.searchParams.get('key');
   statusUrl.searchParams.delete('key');
   const audit = await fetch(statusUrl, { signal: AbortSignal.timeout(3000),
     headers: uiKey ? { cookie: `dd_ui_${statusUrl.port}=${uiKey}` } : {} });
-  if (!audit.ok || (await audit.json()).project_id !== status.project_id) throw new Error('audit_project_mismatch');
+  if (!audit.ok) throw new Error(`audit_http_${audit.status}: ${(await audit.text()).slice(0, 300)}`);
+  if ((await audit.json()).project_id !== status.project_id) throw new Error('audit_project_mismatch');
   console.log(JSON.stringify({ connected: true, project_root: projectRoot, project_id: status.project_id,
     tools: tools.map(t => t.name), knowledge: status.counts, orientation, audit_http: 'passed',
     model_calls: 0, note: 'The diagnostic process closes after this check; Codex starts its own server when the project opens.' }, null, 2));
