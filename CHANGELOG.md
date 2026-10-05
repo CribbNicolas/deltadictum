@@ -4,6 +4,32 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.8.4] - 2026-10-05
+
+### Fixed
+- Reinstalling DD into a Codex project dropped the per-tool preferences written inside DD's managed block
+  (`[mcp_servers.dd.tools.<tool>]`, such as `approval_mode`); they are now kept.
+- Reinstalling into a Codex project left DD's existing hooks with their old settings, so an upgrade never
+  received a raised limit such as SessionStart's `additionalContextLimit` of 24000. DD's own
+  handlers are now refreshed in place; other handlers and matcher groups are kept.
+- Reinstalling into a Codex project from another Node or DD directory (a source checkout moved to a global
+  install) added a second set of hooks beside the old one, so DD ran twice per event. DD's handlers are now
+  recognised by runner and event, replaced in place, and a duplicate left by an earlier install is removed.
+- `check-codex.mjs` failed with `audit_project_mismatch` on a machine with no resident running yet: its
+  first `status` ran before the resident it started had registered, and named the keyless default address.
+  It now asks again once the resident answers, and reports an HTTP failure as `audit_http_<status>`.
+- DD's inactive notices pointed at a README section that no longer exists; they now point at
+  README > "Troubleshooting".
+
+### Changed
+- The README covers what a new user needs: a quickstart, compatibility and requirements, installation for
+  each harness, the commands, the memory types and the common settings with their defaults. The rest moved
+  to `docs/guide/`: how DD works, memories (types, fields, lifecycle, flags), every configuration setting
+  and environment variable, the resident process and its troubleshooting, storage and the security
+  boundary. Other MCP hosts have their own guide, and the developer notes moved to CONTRIBUTING.md.
+- The npm package ships `docs/guide/` and carries search keywords.
+- Development plans and specs (`docs/plans/`, `docs/specs/`, `docs/superpowers/`) are ignored by git.
+
 ## [0.8.3] - 2026-09-30
 
 ### Fixed

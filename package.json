@@ -1,7 +1,16 @@
 {
   "name": "deltadictum",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "grok",
+    "opencode",
+    "mcp",
+    "coding-agents",
+    "agent-memory"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22.16.0"
@@ -37,6 +46,7 @@
     ".claude-plugin",
     "adapters",
     "docs/DD.md",
+    "docs/guide",
     "docs/architecture",
     "docs/integrations",
     "docs/evaluation",
