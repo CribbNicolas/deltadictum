@@ -20,6 +20,8 @@ DD is a **plugin** for Claude Code, Codex, Grok Build and OpenCode, not a servic
 reviewed JSON files in your repository, retrieval runs on your machine, and nothing leaves it: no cloud
 account, no model calls, no external database.
 
+<p align="center"><img src="docs/assets/audit-ui.gif" width="800" alt="The DD audit UI: memories listed by type, a decision with its rationale and evidence, a pending candidate to admit or reject, and the auto-accept setting"></p>
+
 ## Quickstart (Claude Code)
 
 You need [Node.js](https://nodejs.org) 22.16 or later.
