@@ -4,8 +4,10 @@ import { containsSecret, redactSecrets } from '../../src/engine/v2/sanitizer.js'
 import { normalizeProposal, validateContract } from '../../src/engine/contract.js';
 import { observationFromTool } from '../../src/hooks/observe.js';
 
+// Synthetic values in each issuer's shape. The Google key is split so secret scanners do not
+// report a test fixture as a leaked credential.
 const CREDENTIALS = ['AKIAABCDEFGHIJKLMNOP', 'sk-ant-api03-abcdefghijklmnop', 'ghp_abcdefghijklmnopqrstuvwxyz0123',
-  'github_pat_abcdefghijklmnopqrstuvwx', 'AIzaSyA1234567890abcdefghijklmnopqrstuv', 'xoxb-1234567890-abcdef',
+  'github_pat_abcdefghijklmnopqrstuvwx', 'AIza' + 'SyA1234567890abcdefghijklmnopqrstuv', 'xoxb-1234567890-abcdef',
   'npm_abcdefghijklmnopqrstuvwxyz0123456789', 'glpat-abcdefghijklmnopqrst', 'sk_live_abcdefghijklmnop1234',
   'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N', 'Bearer abcdefghijklmnopqrstuvwxyz012345',
   '-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXk\n-----END OPENSSH PRIVATE KEY-----'];

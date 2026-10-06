@@ -8,9 +8,9 @@ Install the published package globally, then run its installer against the proje
 
 ```powershell
 npm install -g deltadictum
-deltadictum install --host codex --project "C:/dev/Perfect Brew" --dry-run
-deltadictum install --host codex --project "C:/dev/Perfect Brew"
-node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project "C:/dev/Perfect Brew"
+deltadictum install --host codex --project "C:/dev/My Project" --dry-run
+deltadictum install --host codex --project "C:/dev/My Project"
+node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project "C:/dev/My Project"
 ```
 
 The Codex configuration names DD's directory by absolute path, so it must be one that stays. The installer
