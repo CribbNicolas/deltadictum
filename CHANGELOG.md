@@ -6,6 +6,14 @@ when it reaches `main`, and CI refuses a version bump without a section here.
 
 ## [0.8.6] - 2026-10-06
 
+### Security
+- The shipped `npm-shrinkwrap.json` pinned dependency versions with published advisories, so `npm audit` flagged
+  every install: `@modelcontextprotocol/sdk` (OAuth client, high), `proxy-addr` (critical), `ip-address` and
+  `fast-uri` (moderate) through the SDK's HTTP transport, and `sharp` (high) through
+  `@huggingface/transformers`. DD uses none of the affected paths (it speaks MCP over stdio and processes no
+  images), but they are now updated: the SDK to 1.32.1, with `^1.31.0` as its minimum, and `sharp` to 0.35.5.
+  `npm audit` reports no vulnerabilities.
+
 ### Fixed
 - The release-notes script found a version's CHANGELOG section with a regular expression built from the
   version string; it now matches the heading as a plain prefix (CodeQL: regular expression injection).
