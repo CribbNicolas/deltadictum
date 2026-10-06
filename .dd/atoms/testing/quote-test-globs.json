@@ -61,7 +61,7 @@
   "confidence": 0.765,
   "registry_key_id": "97bc4da9-06c9-4e97-8c9a-63b5ec29425d",
   "evidence_state": {
-    "checked_at": "2026-10-06T19:11:54.553Z",
+    "checked_at": "2026-10-06T22:47:45.228Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -69,7 +69,7 @@
         "summary": "test scripts with quoted globs",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "188805d5052ba5fd9b5bda32093d961a055987b7ed2002e365c84de35ffd1819"
+        "hash": "ffa5bb239e4526c934a491b7ed3dc74276b7997362a8a44442b981cea3b05801"
       },
       {
         "source_type": "tool_output",
@@ -84,8 +84,8 @@
   },
   "replaces": "7b5d2510-a33e-4d28-8793-4c031292f51f",
   "created_at": "2026-09-27T02:37:09.360Z",
-  "updated_at": "2026-10-06T19:11:54.840Z",
-  "activation_count": 9,
+  "updated_at": "2026-10-06T22:47:45.235Z",
+  "activation_count": 10,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:11.673Z",
