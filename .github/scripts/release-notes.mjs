@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 
 export function releaseNotes(changelog, version) {
   const lines = changelog.split(/\r?\n/);
-  const start = lines.findIndex(line => new RegExp(`^## \\[${version.replaceAll('.', '\\.')}\\]`).test(line));
+  // A plain prefix match: the version is input, so it never becomes a pattern.
+  const heading = `## [${version}]`;
+  const start = lines.findIndex(line => line.startsWith(heading));
   if (start < 0) return '';
   const end = lines.findIndex((line, i) => i > start && /^## /.test(line));
   return lines.slice(start + 1, end < 0 ? undefined : end).join('\n').trim();

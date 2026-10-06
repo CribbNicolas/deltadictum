@@ -74,7 +74,7 @@
   "confidence": 0.765,
   "registry_key_id": "900d7093-1f10-4ce8-8478-b21d67c2a6bd",
   "evidence_state": {
-    "checked_at": "2026-10-06T20:15:17.326Z",
+    "checked_at": "2026-10-06T22:43:49.530Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -82,7 +82,7 @@
         "summary": "Item 9 records that --test-force-exit crashes the resident tests on Windows.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "535bba56aab3f8f199c0f0454f957027215577c2699ce8f6850265306da3e8b1"
+        "hash": "f8bfaaf4cea52536d626b0e98017a741f2ec6b3dfc05aa84ce60e266e70a5cb4"
       },
       {
         "source_type": "file",
@@ -105,8 +105,8 @@
   },
   "replaces": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
   "created_at": "2026-09-27T02:37:09.031Z",
-  "updated_at": "2026-10-06T20:15:17.335Z",
-  "activation_count": 8,
+  "updated_at": "2026-10-06T22:43:49.537Z",
+  "activation_count": 9,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:11.750Z",

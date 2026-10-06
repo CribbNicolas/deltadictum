@@ -21,3 +21,6 @@ Thumbs.db
 docs/plans/
 docs/specs/
 docs/superpowers/
+
+# Claude Code project settings written by a local plugin install.
+.claude/settings.json
