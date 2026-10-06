@@ -510,5 +510,45 @@
     "source_atom_id": "a1ceca00-c6b8-4183-baa9-0150b77bdf4a",
     "relation_type": "supersedes",
     "target_atom_id": "013639b3-d412-44fe-aac9-e7c217b070c2"
+  },
+  {
+    "id": "ef0a49ed-8e49-464e-83dd-557d5e06ab3d",
+    "confidence": 0.5,
+    "created_at": "2026-10-06T19:08:51.829Z",
+    "source_atom_id": "c9f35b2d-3356-4d7d-94c0-806277499139",
+    "relation_type": "supersedes",
+    "target_atom_id": "3a840cef-bce7-4b05-87be-3b91f9710b8b"
+  },
+  {
+    "id": "95a961cd-9324-4b95-8a37-e53df10d0d5d",
+    "confidence": 0.5,
+    "created_at": "2026-10-06T19:08:51.998Z",
+    "source_atom_id": "cee29f6d-3229-4191-9e84-bf67595fe398",
+    "relation_type": "supersedes",
+    "target_atom_id": "1606e14c-aad8-43f3-8788-db93cbcf5d5f"
+  },
+  {
+    "id": "5c5d9da3-c7f1-4c23-9eb5-b1868ef6cd9d",
+    "confidence": 0.5,
+    "created_at": "2026-10-06T19:08:52.131Z",
+    "source_atom_id": "67b4bbd3-1694-4568-a4bd-cb26ddf74828",
+    "relation_type": "supersedes",
+    "target_atom_id": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f"
+  },
+  {
+    "id": "730424c9-0d4b-4a65-b741-37b7e5e27acc",
+    "confidence": 0.5,
+    "created_at": "2026-10-06T19:08:52.289Z",
+    "source_atom_id": "2ba86ba7-44ba-4a25-8199-69b884478858",
+    "relation_type": "supersedes",
+    "target_atom_id": "de0b9377-ce49-42b3-9f4a-7fbf3c05cd47"
+  },
+  {
+    "id": "ed5092bb-a9c1-42b3-9988-18229f799c94",
+    "confidence": 0.5,
+    "created_at": "2026-10-06T19:11:53.880Z",
+    "source_atom_id": "3dfadb60-67fc-4ee6-9392-8f7b83904fec",
+    "relation_type": "supersedes",
+    "target_atom_id": "ac75d10f-88db-42e0-a9e5-8ced26ee77b2"
   }
 ]

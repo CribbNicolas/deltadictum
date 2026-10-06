@@ -1,0 +1,119 @@
+{
+  "id": "2019b712-5bfc-46d1-9dc8-1ae5988f4557",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "procedure",
+  "scope": "project",
+  "title": "Find a project's DD data directory and query index.sqlite directly",
+  "topic_key": "debugging/dd-store/datadir-and-sqlite",
+  "trigger": "Need to verify which data directory DD uses for a project, or need to inspect index.sqlite (retrieval events, health indicators) directly instead of trusting a derived value.",
+  "behavior_delta": "1) Run node src/cli.js status (deltadictum status) from the project: it prints dd_dir and data_dir as this process resolves them (DD_DATA, else the harness plugin data directory under Claude Code or Grok Build, else ~/.dd-data, then <slug>-<hash of the normalized repo root>). The shared resident keeps the data_dir of the first hook that opened the project, so when two harnesses use different data directories, compare the index.sqlite in each. 2) The sqlite3 CLI is not installed on this machine: open <data_dir>/index.sqlite with node:sqlite (new (require('node:sqlite').DatabaseSync)(path)); retrieval events are in memory_retrieval_events.",
+  "what": "1) Run node src/cli.js status (deltadictum status) from the project: it prints dd_dir and data_dir as this process resolves them (DD_DATA, else the harness plugin data directory under Claude Code or Grok Build, else ~/.dd-data, then <slug>-<hash of the normalized repo root>). The shared resident keeps the data_dir of the first hook that opened the project, so when two harnesses use different data directories, compare the index.sqlite in each. 2) The sqlite3 CLI is not installed on this machine: open <data_dir>/index.sqlite with node:sqlite (new (require('node:sqlite').DatabaseSync)(path)); retrieval events are in memory_retrieval_events.",
+  "why": "The previous version found the data directory by hunting the node mcp.js process and hashing the repo root by hand, and cited .dd/ui.json, which no longer exists. Since 0.8.3 the status command prints data_dir directly. sqlite3 is still missing here (which sqlite3 finds nothing), and node:sqlite reads the index.",
+  "tags": [
+    "dd",
+    "sqlite",
+    "debugging",
+    "windows"
+  ],
+  "trigger_variants": [
+    "Where does DD keep its SQLite index",
+    "Donde guarda DD el index.sqlite",
+    "Query DD retrieval events directly"
+  ],
+  "applies_to": {
+    "files": [
+      "src/project.js",
+      "src/cli.js"
+    ],
+    "components": [
+      "store"
+    ],
+    "operations": [
+      "debugging",
+      "verification"
+    ]
+  },
+  "anchors": {
+    "keywords": [
+      "data_dir",
+      "index.sqlite",
+      "memory_retrieval_events",
+      "node:sqlite",
+      "sqlite3"
+    ],
+    "not_when": [],
+    "files": []
+  },
+  "assumptions": [],
+  "revisit_when": [],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/cli.js",
+      "summary": "status prints project_id, dd_dir, data_dir and counts."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/project.js",
+      "summary": "projectDataDir: DD_DATA, else resolveDataBase() (GROK_PLUGIN_DATA, CLAUDE_PLUGIN_DATA, ~/.dd-data) joined with the project key."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/store/schema.sql",
+      "summary": "CREATE TABLE memory_retrieval_events."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-10-06T17:40:50.650Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "1) Run node src/cli.js status (deltadictum status) from the project: it prints dd_dir and data_dir as this process resolves them (DD_DATA, else the harness plugin data directory under Claude Code or Grok Build, else ~/.dd-data, then <slug>-<hash of the normalized repo root>). The shared resident keeps the data_dir of the first hook that opened the project, so when two harnesses use different data directories, compare the index.sqlite in each. 2) The sqlite3 CLI is not installed on this machine: open <data_dir>/index.sqlite with node:sqlite (new (require('node:sqlite').DatabaseSync)(path)); retrieval events are in memory_retrieval_events.",
+    "short": "1) Run node src/cli.js status (deltadictum status) from the project: it prints dd_dir and data_dir as this process resolves them (DD_DATA, else the harness plugin data directory under Claude Code or Grok Build, else ~/.dd-data, then <slug>-<hash of the normalized repo root>). The shared resident keeps the data_dir of the first hook that opened the project, so when two harnesses use different data directories, compare the index.sqlite in each. 2) The sqlite3 CLI is not installed on this machine: open <data_dir>/index.sqlite with node:sqlite (new (require('node:sqlite').DatabaseSync)(path)); retrieval events are in memory_retrieval_events. Why: The previous version found the data directory by hunting the node mcp.js process and hashing the repo root by hand, and cited .dd/ui.json, which no longer exists. Since 0.8.3 the status command prints data_dir directly. sqlite3 is still missing here (which sqlite3 finds nothing), and node:sqlite reads the index.",
+    "full": "1) Run node src/cli.js status (deltadictum status) from the project: it prints dd_dir and data_dir as this process resolves them (DD_DATA, else the harness plugin data directory under Claude Code or Grok Build, else ~/.dd-data, then <slug>-<hash of the normalized repo root>). The shared resident keeps the data_dir of the first hook that opened the project, so when two harnesses use different data directories, compare the index.sqlite in each. 2) The sqlite3 CLI is not installed on this machine: open <data_dir>/index.sqlite with node:sqlite (new (require('node:sqlite').DatabaseSync)(path)); retrieval events are in memory_retrieval_events. Why: The previous version found the data directory by hunting the node mcp.js process and hashing the repo root by hand, and cited .dd/ui.json, which no longer exists. Since 0.8.3 the status command prints data_dir directly. sqlite3 is still missing here (which sqlite3 finds nothing), and node:sqlite reads the index."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "86d7730d-cdcc-421c-8da6-dd2ef879be85",
+  "evidence_state": {
+    "checked_at": "2026-10-06T19:08:51.660Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/cli.js",
+        "summary": "status prints project_id, dd_dir, data_dir and counts.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "4db610ea769166cb37e2ec43dc417b00d7b6e9996eb59e1e5b6186553173165e"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/project.js",
+        "summary": "projectDataDir: DD_DATA, else resolveDataBase() (GROK_PLUGIN_DATA, CLAUDE_PLUGIN_DATA, ~/.dd-data) joined with the project key.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "a2a8051b9fb584ab7715349d1080c7ba32179b47a90d62c412ea535b0f862a31"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/store/schema.sql",
+        "summary": "CREATE TABLE memory_retrieval_events.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "62d6d0fe07e99055ce933b0e83d1b9bee28440b6084f2cca3694d97ff9303651"
+      }
+    ],
+    "verified_count": 3,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-10-06T17:40:50.661Z",
+  "updated_at": "2026-10-06T19:08:51.756Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-10-06T19:08:51.660Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}

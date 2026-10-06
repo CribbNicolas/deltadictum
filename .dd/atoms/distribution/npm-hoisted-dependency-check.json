@@ -79,7 +79,7 @@
   "confidence": 0.765,
   "registry_key_id": "7fc5abdd-799a-4e9a-a790-1d38cad70181",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:13.366Z",
+    "checked_at": "2026-10-06T18:21:23.726Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -87,7 +87,7 @@
         "summary": "planCodexInstall's dependency-presence check, fixed from fs.access on a literal path to require.resolve.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "c0ad094e3e7b31d948076846b5e9ac03698e3953356312ae56a00f793ff64319"
+        "hash": "4c6f9492b4953b32ea0ff0177c79e4afc2917aa40539a7a53e9799556e563ff2"
       },
       {
         "source_type": "diff",
@@ -109,8 +109,8 @@
   },
   "replaces": "8724c2f2-f06c-42c2-a178-ec99672aa7ad",
   "created_at": "2026-09-27T02:37:09.825Z",
-  "updated_at": "2026-09-28T06:47:10.774Z",
-  "activation_count": 0,
+  "updated_at": "2026-10-06T18:21:23.732Z",
+  "activation_count": 5,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:10.769Z",

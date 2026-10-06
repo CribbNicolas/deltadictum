@@ -70,7 +70,7 @@
   "confidence": 0.765,
   "registry_key_id": "31cc69c0-05cd-4cba-b211-4f1ff318d0fa",
   "evidence_state": {
-    "checked_at": "2026-09-29T19:38:56.921Z",
+    "checked_at": "2026-10-06T18:21:23.547Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -78,7 +78,7 @@
         "summary": "rendered-pack budget, headline fallback, pointers on prompts and tool calls, explicit retrieve top 5",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "4af5ba6b7e030a69b21eaa11041cf4297f87c142d3443c054a3d45c4f5f6bfd1"
+        "hash": "7f936a72f5d1ec1391969ab1956e691c502982c740fb65872c79b1aba9291fd1"
       },
       {
         "source_type": "file",
@@ -101,10 +101,11 @@
   },
   "replaces": "013639b3-d412-44fe-aac9-e7c217b070c2",
   "created_at": "2026-09-29T19:38:56.892Z",
-  "updated_at": "2026-09-29T19:38:56.926Z",
+  "updated_at": "2026-10-06T18:21:23.554Z",
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-29T19:38:56.921Z",
     "rationale": "Content updated to 0.8.0 retrieval behaviour and checked against src/engine/retrieve.js; authorized by the user on 2026-09-29."
-  }
+  },
+  "activation_count": 2
 }

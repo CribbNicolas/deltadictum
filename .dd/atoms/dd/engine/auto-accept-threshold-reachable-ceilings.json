@@ -89,7 +89,7 @@
   "confidence": 0.765,
   "registry_key_id": "5d333234-daf7-4d04-a927-c5051f9e5ab9",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:14.090Z",
+    "checked_at": "2026-10-06T18:21:23.386Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -97,7 +97,7 @@
         "summary": "DEFAULT_CONFIG.auto_accept.confidence_threshold changed from 0.8 (dead zone) to 0.85 (reachable ceiling: filesystem cap x user_explicit factor)",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "a9caf37868475dc236d24376bab2c1626312268a607b1727506063eac6cc8050"
+        "hash": "a1d2b536934c9d83e7dd0dc306562b2f1083974989c861d32d035e376e6116c8"
       },
       {
         "source_type": "file",
@@ -113,7 +113,7 @@
         "summary": "Line 628: UI already labels a stored threshold not in the reachable set as 'Not one of the reachable ceilings -- pick a step to replace it'",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "79a54d422fec81f03249bfa627f3c44ed998262413247329e85d9484607a787d"
+        "hash": "ee860e8ce574ed893bd08e73224fbd4b6cd46e7246de3d3f5e765c6486b2fa9c"
       },
       {
         "source_type": "test_log",
@@ -136,8 +136,8 @@
   },
   "replaces": "d3d5bf57-a811-4a48-b183-c1601c0886f8",
   "created_at": "2026-09-27T02:37:09.422Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
-  "activation_count": 4,
+  "updated_at": "2026-10-06T18:21:23.393Z",
+  "activation_count": 5,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-29T19:41:34.750Z",
