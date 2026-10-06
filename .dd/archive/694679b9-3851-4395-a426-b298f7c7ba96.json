@@ -61,7 +61,7 @@
     }
   ],
   "authority": "validated",
-  "lifecycle_state": "active",
+  "lifecycle_state": "archived",
   "valid_from": "2026-09-19T08:06:39.192Z",
   "valid_until": null,
   "retrieval_forms": {
@@ -102,11 +102,14 @@
   },
   "replaces": "4cc886b4-d79a-46a1-85bb-b68c944fcf5c",
   "created_at": "2026-09-27T02:37:09.764Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
-  "activation_count": 5,
+  "updated_at": "2026-10-06T19:08:56.791Z",
+  "activation_count": 6,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-29T19:41:34.750Z",
     "rationale": "Format revised to the 0.8.0 standard: the advice opens with its action, so the one-line headline a full pack shows says what to do; the advice is unchanged. Authorized by the user on 2026-09-29."
-  }
+  },
+  "archived_at": "2026-10-06T19:08:56.784Z",
+  "archived_reason": "auto_admit was removed from the config defaults in 0.8.3; the trap this memory described no longer exists.",
+  "contested_at": null
 }

@@ -1,17 +1,17 @@
 {
-  "id": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f",
+  "id": "67b4bbd3-1694-4568-a4bd-cb26ddf74828",
   "project_id": "supermem",
   "schema_version": 7,
   "capture_origin": "model_initiated",
   "capture_source": "agent",
   "memory_type": "lesson",
   "scope": "project",
-  "title": "install-codex.mjs regen wipes custom fields inside managed block",
+  "title": "Codex installer keeps tools.* tables but replaces other edits inside its managed block",
   "topic_key": "tooling/install-codex/managed-block-drops-manual-fields",
-  "trigger": "Before re-running scripts/install-codex.mjs (or dd install --host codex) against a project whose .codex/config.toml managed DD block was hand-edited",
-  "behavior_delta": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
-  "what": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
-  "why": "Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
+  "trigger": "Before re-running scripts/install-codex.mjs (or deltadictum install --host codex) against a project whose .codex/config.toml managed DD block or .codex/hooks.json was hand-edited",
+  "behavior_delta": "Move hand edits out of DD's managed block, or warn the user before re-running the installer. Since 0.8.4 scripts/install-codex.mjs carries [mcp_servers.dd.tools.<tool>] tables (approval_mode and the like) from the old block into the new one, but every other key between BEGIN/END DD MANAGED CONFIG (command, args, cwd, startup_timeout_sec, tool_timeout_sec, the env table, comments) is replaced by configBody. In .codex/hooks.json DD's own handlers get the installer's timeout and limits back; other handlers are kept. Run with --dry-run first and diff the files it lists.",
+  "what": "Move hand edits out of DD's managed block, or warn the user before re-running the installer. Since 0.8.4 scripts/install-codex.mjs carries [mcp_servers.dd.tools.<tool>] tables (approval_mode and the like) from the old block into the new one, but every other key between BEGIN/END DD MANAGED CONFIG (command, args, cwd, startup_timeout_sec, tool_timeout_sec, the env table, comments) is replaced by configBody. In .codex/hooks.json DD's own handlers get the installer's timeout and limits back; other handlers are kept. Run with --dry-run first and diff the files it lists.",
+  "why": "Observed in Project-Patriark: regenerating the block dropped approval_mode = \"approve\" for orient and retrieve. The 0.8.4 fix preserves tools.* tables only; tests/hooks/codex.test.js asserts that a hand-set startup_timeout_sec returns to 30, so other hand edits are still replaced silently.",
   "tags": [
     "codex",
     "install",
@@ -49,66 +49,55 @@
     {
       "source_type": "file",
       "source_ref": "scripts/install-codex.mjs",
-      "summary": "configBody template (lines ~43-52) has no tools.*.approval_mode fields; managedBlock() fully replaces prior BEGIN/END content with this template"
+      "summary": "toolPreferences keeps [mcp_servers.dd.tools.*] tables from the managed block; the rest of the block is configBody; owned hook handlers are replaced in place."
     },
     {
-      "source_type": "tool_output",
-      "source_ref": "C:/dev/Project-Patriark/.codex/config.toml",
-      "summary": "Post-install file lost [mcp_servers.dd.tools.orient] and [mcp_servers.dd.tools.retrieve] approval_mode=\"approve\" blocks that were present pre-install"
-    },
-    {
-      "source_type": "tool_output",
-      "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "source_type": "file",
+      "source_ref": "tests/hooks/codex.test.js",
+      "summary": "Upgrade tests: tools.* preferences survive, startup_timeout_sec 99 returns to 30, hook timeout and limits are refreshed."
     }
   ],
   "authority": "validated",
   "lifecycle_state": "active",
-  "valid_from": "2026-09-19T15:12:52.690Z",
+  "valid_from": "2026-10-06T17:40:50.518Z",
   "valid_until": null,
   "retrieval_forms": {
-    "micro": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.",
-    "short": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
-    "full": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on. Why: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change."
+    "micro": "Move hand edits out of DD's managed block, or warn the user before re-running the installer. Since 0.8.4 scripts/install-codex.mjs carries [mcp_servers.dd.tools.<tool>] tables (approval_mode and the like) from the old block into the new one, but every other key between BEGIN/END DD MANAGED CONFIG (command, args, cwd, startup_timeout_sec, tool_timeout_sec, the env table, comments) is replaced by configBody. In .codex/hooks.json DD's own handlers get the installer's timeout and limits back; other handlers are kept. Run with --dry-run first and diff the files it lists.",
+    "short": "Move hand edits out of DD's managed block, or warn the user before re-running the installer. Since 0.8.4 scripts/install-codex.mjs carries [mcp_servers.dd.tools.<tool>] tables (approval_mode and the like) from the old block into the new one, but every other key between BEGIN/END DD MANAGED CONFIG (command, args, cwd, startup_timeout_sec, tool_timeout_sec, the env table, comments) is replaced by configBody. In .codex/hooks.json DD's own handlers get the installer's timeout and limits back; other handlers are kept. Run with --dry-run first and diff the files it lists. Why: Observed in Project-Patriark: regenerating the block dropped approval_mode = \"approve\" for orient and retrieve. The 0.8.4 fix preserves tools.* tables only; tests/hooks/codex.test.js asserts that a hand-set startup_timeout_sec returns to 30, so other hand edits are still replaced silently.",
+    "full": "Move hand edits out of DD's managed block, or warn the user before re-running the installer. Since 0.8.4 scripts/install-codex.mjs carries [mcp_servers.dd.tools.<tool>] tables (approval_mode and the like) from the old block into the new one, but every other key between BEGIN/END DD MANAGED CONFIG (command, args, cwd, startup_timeout_sec, tool_timeout_sec, the env table, comments) is replaced by configBody. In .codex/hooks.json DD's own handlers get the installer's timeout and limits back; other handlers are kept. Run with --dry-run first and diff the files it lists. Why: Observed in Project-Patriark: regenerating the block dropped approval_mode = \"approve\" for orient and retrieve. The 0.8.4 fix preserves tools.* tables only; tests/hooks/codex.test.js asserts that a hand-set startup_timeout_sec returns to 30, so other hand edits are still replaced silently."
   },
   "confidence": 0.765,
   "registry_key_id": "536868de-8fac-4983-94dd-2a894a825509",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:13.899Z",
+    "checked_at": "2026-10-06T19:08:52.124Z",
     "artifacts": [
       {
         "source_type": "file",
         "source_ref": "scripts/install-codex.mjs",
-        "summary": "configBody template (lines ~43-52) has no tools.*.approval_mode fields; managedBlock() fully replaces prior BEGIN/END content with this template",
+        "summary": "toolPreferences keeps [mcp_servers.dd.tools.*] tables from the managed block; the rest of the block is configBody; owned hook handlers are replaced in place.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "c0ad094e3e7b31d948076846b5e9ac03698e3953356312ae56a00f793ff64319"
+        "hash": "4c6f9492b4953b32ea0ff0177c79e4afc2917aa40539a7a53e9799556e563ff2"
       },
       {
-        "source_type": "tool_output",
-        "source_ref": "C:/dev/Project-Patriark/.codex/config.toml",
-        "summary": "Post-install file lost [mcp_servers.dd.tools.orient] and [mcp_servers.dd.tools.retrieve] approval_mode=\"approve\" blocks that were present pre-install",
-        "status": "unverified",
-        "provenance": "agent_claim"
-      },
-      {
-        "source_type": "tool_output",
-        "source_ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-        "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing.",
-        "status": "unverified",
-        "provenance": "agent_claim"
+        "source_type": "file",
+        "source_ref": "tests/hooks/codex.test.js",
+        "summary": "Upgrade tests: tools.* preferences survive, startup_timeout_sec 99 returns to 30, hook timeout and limits are refreshed.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "bf5d34fb4d2b80a47eaf67c1136b8dd8263b7db6f69909273133668566b89856"
       }
     ],
-    "verified_count": 1,
+    "verified_count": 2,
     "support": "human_reviewed"
   },
-  "replaces": "ccf342a4-8a20-4fff-83ed-e0722cbe3650",
-  "created_at": "2026-09-27T02:37:09.483Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
-  "activation_count": 2,
+  "replaces": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f",
+  "created_at": "2026-10-06T17:40:50.529Z",
+  "updated_at": "2026-10-06T19:08:52.131Z",
+  "activation_count": 0,
   "review": {
     "source": "local_ui",
-    "reviewed_at": "2026-09-29T19:41:34.750Z",
-    "rationale": "Format revised to the 0.8.0 standard: the advice opens with its action, so the one-line headline a full pack shows says what to do; the advice is unchanged. Authorized by the user on 2026-09-29."
+    "reviewed_at": "2026-10-06T19:08:52.124Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
   }
 }

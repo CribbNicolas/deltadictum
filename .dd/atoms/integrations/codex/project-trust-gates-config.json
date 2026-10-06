@@ -74,7 +74,7 @@
   "confidence": 0.765,
   "registry_key_id": "e04019f1-8856-4990-8578-1df83faf92b3",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:34.508Z",
+    "checked_at": "2026-10-06T19:11:54.523Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -82,7 +82,7 @@
         "summary": "Codex loads project MCP configuration only for trusted projects; each hook needs trust in /hooks.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "3d29b782a6e3a3f9a820da3ed5303aff471bc8cdd8149b65aefc2b10a96f21ff"
+        "hash": "6d214e065607a4a6d31cd76926aa89af9a7a64da2e8c3344f31d7db057fb6cc4"
       },
       {
         "source_type": "file",
@@ -90,7 +90,7 @@
         "summary": "Codex install steps include trusting the project and hooks; status recorded as partly tested.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "30fbfba0560d3423aa13ee352d3103a350c4710bcfed6b73078243717c233693"
+        "hash": "df7f54bcd83954a3e2a1c74b4cd7a4b7cc0ae215a07d0f6287e211377396e77b"
       },
       {
         "source_type": "tool_output",
@@ -105,8 +105,8 @@
   },
   "replaces": "f2ba3a65-0f71-4ac4-8bb6-384203348702",
   "created_at": "2026-09-27T02:37:08.753Z",
-  "updated_at": "2026-09-28T06:47:11.290Z",
-  "activation_count": 0,
+  "updated_at": "2026-10-06T19:11:54.531Z",
+  "activation_count": 6,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:11.285Z",

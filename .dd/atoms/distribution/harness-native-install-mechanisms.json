@@ -73,7 +73,7 @@
   "confidence": 0.765,
   "registry_key_id": "cb4f10f3-e385-4b82-b9a6-240e6c8c58ab",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:13.281Z",
+    "checked_at": "2026-10-06T18:21:23.357Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -89,7 +89,7 @@
         "summary": "States the confirmed hook-signature findings and what was/wasn't verified (opencode debug startup ran clean; live mid-conversation firing not verified).",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "e4cb5df27743da7bb0a9d22d5ec8452dc9944b89cd0c2cc4e40486c697cf8e62"
+        "hash": "5a3c8cc549c482efbf74309f89425ccd148f2227a9092a78f54c0461f0587db9"
       },
       {
         "source_type": "tool_output",
@@ -104,8 +104,8 @@
   },
   "replaces": "1b8bdaba-9f19-489e-a2e1-56b8f1c7ecf4",
   "created_at": "2026-09-27T02:37:09.857Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
-  "activation_count": 10,
+  "updated_at": "2026-10-06T18:21:23.363Z",
+  "activation_count": 13,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-29T19:41:34.750Z",
