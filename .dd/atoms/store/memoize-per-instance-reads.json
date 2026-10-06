@@ -77,7 +77,7 @@
   "confidence": 0.765,
   "registry_key_id": "7b7a9fae-684a-4831-badd-53c4fd4c2138",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:13.725Z",
+    "checked_at": "2026-10-06T18:21:23.520Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -85,7 +85,7 @@
         "summary": "loadConfig/saveConfig/recover now memoize config.json per store instance, invalidated on both write and recover.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "d3f647435af9f3b1c703d62ca1ebcd8923700e5be1d0a168e40407ed1081baad"
+        "hash": "024c7d04cf384fdea8c8e61f88baa7626453346bc3dc997b53fa68b5d253258e"
       },
       {
         "source_type": "file",
@@ -93,7 +93,7 @@
         "summary": "prune() holds its own reference to the git object and calls loadConfig independently of the store-level wrapper.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "4758947f7a68db11978216841b28745f9b772b159f88a0c18ce5be66ba5bc0dc"
+        "hash": "ab624c33f53b5f1d5a8992525850b889ef1b434ec34354a815ca56c7ffa4aadb"
       },
       {
         "source_type": "file",
@@ -101,7 +101,7 @@
         "summary": "retrieveMemories calls store.loadConfig() again, a second independent call site within the same PreToolUse invocation.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "1f7522c43efd6ca9f6e13b185b434eecde92f294deb92029f86b726a6197e0a6"
+        "hash": "7f936a72f5d1ec1391969ab1956e691c502982c740fb65872c79b1aba9291fd1"
       },
       {
         "source_type": "tool_output",
@@ -116,7 +116,7 @@
   },
   "replaces": "f1d79d20-3aa7-428c-94dc-e15dd9b29693",
   "created_at": "2026-09-27T02:37:09.668Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
+  "updated_at": "2026-10-06T18:21:23.527Z",
   "activation_count": 5,
   "review": {
     "source": "local_ui",

@@ -114,19 +114,11 @@ Each needs a decision or a measurement before it is done:
   registered (about a second), both return the keyless default address `http://127.0.0.1:7733`, which
   answers 403. Wait briefly for the registry, or say the resident is starting, instead of naming an address
   that cannot work. `check-codex.mjs` works around it since 0.8.4.
-- **Presentation.** A short GIF of the audit UI for the README. The quickstart and the measured numbers are
-  in the README and `docs/guide/how-it-works.md` since 0.8.4.
 
-### Project memories to review
+### Project memories
 
-The review changed files that 14 of this project's memories cite as evidence, so the audit UI flags them
-`EVIDENCE CHANGED`; run `/dd:review` on them. Two are stale in substance:
-
-- `engine/admission/auto-admit-config-unused`: `auto_admit` is gone from the defaults; archive it or mark
-  it legacy.
-- `hooks/hot-path-cache-lifetime`: `projectContext()` now caches in the SQLite index, and the tool-call hook
-  answers through the resident; revise it.
-- `tooling/install-codex/managed-block-drops-manual-fields`: since 0.8.4 the Codex installer keeps
-  `[mcp_servers.dd.tools.*]` tables inside its managed block; other hand edits there are still replaced.
-  Revise it.
+Reviewed for 0.8.5: every live memory whose evidence changed was checked against the code; 18 were
+re-verified, seven revised and one archived. The resident keeps the data directory of the first hook that
+opens a project (`dd/telemetry/bridge-interception`): a project used from two harnesses with different data
+directories records everything in one of them. Decide whether the resident should report or reconcile that.
 

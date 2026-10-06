@@ -76,7 +76,7 @@
   "confidence": 0.765,
   "registry_key_id": "96e6a47a-deeb-453b-b10b-597a7009b996",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:34.592Z",
+    "checked_at": "2026-10-06T18:21:23.803Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -84,7 +84,7 @@
         "summary": "An inactive resident returns only the banner and residentNotice; PULL_GUIDANCE and advisory context are added only when active.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "66e53a0fecd256a9aff0bfd94f736c7fb307bc3e30ecfc7668b9827da091675e"
+        "hash": "a8c035bccb0d0d036e706b1f27c381482f6afe41ece29f4090031c11014bf067"
       },
       {
         "source_type": "file",
@@ -107,8 +107,8 @@
   },
   "replaces": "e82ba814-47e6-4401-b96e-ae01aec268cc",
   "created_at": "2026-09-27T02:37:08.722Z",
-  "updated_at": "2026-09-28T06:47:10.550Z",
-  "activation_count": 0,
+  "updated_at": "2026-10-06T18:21:23.809Z",
+  "activation_count": 8,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:10.545Z",

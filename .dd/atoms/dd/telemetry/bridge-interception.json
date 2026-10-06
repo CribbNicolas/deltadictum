@@ -1,0 +1,106 @@
+{
+  "id": "ed451d5b-8643-46a3-b5fb-7185161434d8",
+  "project_id": "supermem",
+  "schema_version": 7,
+  "capture_origin": "model_initiated",
+  "capture_source": "agent",
+  "memory_type": "lesson",
+  "scope": "project",
+  "title": "The resident writes a project's telemetry to the data directory of the first hook that opened it",
+  "topic_key": "dd/telemetry/bridge-interception",
+  "trigger": "when DD telemetry looks empty or a hook's effect is missing from the store, or when measuring retrieval events, cap_saturation or activation counts",
+  "behavior_delta": "Check which data directory the shared resident opened the project with before concluding the hooks never ran. Hooks post session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keys projects by repo root and opens each with the data_dir of the first hook that asked (hookProject in src/ui/server.js). Later calls from a harness with a different data directory, such as Codex's <project>/.dd/local beside Claude Code's plugin data directory, write to that first directory until the resident exits. Compare the index.sqlite of each candidate data directory (modification time, memory_retrieval_events count) instead of trusting one.",
+  "what": "Check which data directory the shared resident opened the project with before concluding the hooks never ran. Hooks post session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keys projects by repo root and opens each with the data_dir of the first hook that asked (hookProject in src/ui/server.js). Later calls from a harness with a different data directory, such as Codex's <project>/.dd/local beside Claude Code's plugin data directory, write to that first directory until the resident exits. Compare the index.sqlite of each candidate data directory (modification time, memory_retrieval_events count) instead of trusting one.",
+  "why": "The previous version blamed a stale audit UI found through .dd/ui.json, which no longer exists: the bridge now answers only through a resident of the same build and sends its data_dir. The resident uses that data_dir only when it first opens the project, so a project used from two harnesses records everything in one directory and the other looks empty.",
+  "tags": [],
+  "trigger_variants": [
+    "The DD telemetry is empty",
+    "La telemetria de DD esta vacia",
+    "Count retrieval events for a project"
+  ],
+  "applies_to": {
+    "files": [
+      "src/hooks/bridge.js",
+      "src/ui/server.js"
+    ],
+    "components": [],
+    "operations": [
+      "debug",
+      "measure"
+    ]
+  },
+  "anchors": {
+    "keywords": [
+      "telemetry",
+      "data directory",
+      "retrieval events",
+      "cap_saturation",
+      "data_dir"
+    ],
+    "not_when": [],
+    "files": []
+  },
+  "assumptions": [],
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "The resident opens a store per data directory or reports which one it uses",
+      "path": "src/ui/server.js",
+      "hash": "b86d9eeeafe70099bc93aae6c7212ab3d644dd4ffe02171ab4fada7f0ff8dfe6"
+    }
+  ],
+  "alternatives": [],
+  "evidence_refs": [
+    {
+      "source_type": "file",
+      "source_ref": "src/ui/server.js",
+      "summary": "hookProject returns the known project by repo-root key; body.data_dir is used only in openProject for a project not yet open."
+    },
+    {
+      "source_type": "file",
+      "source_ref": "src/hooks/bridge.js",
+      "summary": "callRunningStore posts payload, repo_root and data_dir (projectDataDir of the hook process) to the resident."
+    }
+  ],
+  "authority": "validated",
+  "lifecycle_state": "active",
+  "valid_from": "2026-10-06T17:40:50.694Z",
+  "valid_until": null,
+  "retrieval_forms": {
+    "micro": "Check which data directory the shared resident opened the project with before concluding the hooks never ran. Hooks post session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keys projects by repo root and opens each with the data_dir of the first hook that asked (hookProject in src/ui/server.js). Later calls from a harness with a different data directory, such as Codex's <project>/.dd/local beside Claude Code's plugin data directory, write to that first directory until the resident exits. Compare the index.sqlite of each candidate data directory (modification time, memory_retrieval_events count) instead of trusting one.",
+    "short": "Check which data directory the shared resident opened the project with before concluding the hooks never ran. Hooks post session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keys projects by repo root and opens each with the data_dir of the first hook that asked (hookProject in src/ui/server.js). Later calls from a harness with a different data directory, such as Codex's <project>/.dd/local beside Claude Code's plugin data directory, write to that first directory until the resident exits. Compare the index.sqlite of each candidate data directory (modification time, memory_retrieval_events count) instead of trusting one. Why: The previous version blamed a stale audit UI found through .dd/ui.json, which no longer exists: the bridge now answers only through a resident of the same build and sends its data_dir. The resident uses that data_dir only when it first opens the project, so a project used from two harnesses records everything in one directory and the other looks empty.",
+    "full": "Check which data directory the shared resident opened the project with before concluding the hooks never ran. Hooks post session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keys projects by repo root and opens each with the data_dir of the first hook that asked (hookProject in src/ui/server.js). Later calls from a harness with a different data directory, such as Codex's <project>/.dd/local beside Claude Code's plugin data directory, write to that first directory until the resident exits. Compare the index.sqlite of each candidate data directory (modification time, memory_retrieval_events count) instead of trusting one. Why: The previous version blamed a stale audit UI found through .dd/ui.json, which no longer exists: the bridge now answers only through a resident of the same build and sends its data_dir. The resident uses that data_dir only when it first opens the project, so a project used from two harnesses records everything in one directory and the other looks empty."
+  },
+  "confidence": 0.765,
+  "registry_key_id": "22bc1142-55de-4dc6-9775-0495da8471ee",
+  "evidence_state": {
+    "checked_at": "2026-10-06T19:08:51.458Z",
+    "artifacts": [
+      {
+        "source_type": "file",
+        "source_ref": "src/ui/server.js",
+        "summary": "hookProject returns the known project by repo-root key; body.data_dir is used only in openProject for a project not yet open.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "b86d9eeeafe70099bc93aae6c7212ab3d644dd4ffe02171ab4fada7f0ff8dfe6"
+      },
+      {
+        "source_type": "file",
+        "source_ref": "src/hooks/bridge.js",
+        "summary": "callRunningStore posts payload, repo_root and data_dir (projectDataDir of the hook process) to the resident.",
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "6bfc6a4bf540553077fc1b8413b2c811ce4ab23f00fdd685ef20e58e4c7aeb0d"
+      }
+    ],
+    "verified_count": 2,
+    "support": "human_reviewed"
+  },
+  "created_at": "2026-10-06T17:40:50.705Z",
+  "updated_at": "2026-10-06T19:08:51.466Z",
+  "review": {
+    "source": "local_ui",
+    "reviewed_at": "2026-10-06T19:08:51.458Z",
+    "rationale": "Auto-accepted: confidence 0.765 >= threshold 0.765."
+  }
+}
