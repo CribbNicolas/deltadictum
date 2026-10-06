@@ -82,7 +82,7 @@
   "confidence": 0.765,
   "registry_key_id": "898896ef-98db-48d5-8bdd-e47b56fd9058",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:33.936Z",
+    "checked_at": "2026-10-06T18:21:23.625Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -90,7 +90,7 @@
         "summary": "Now calls useTempRegistry so retrieve cannot reach the machine's resident.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "f37d2282840a34e9b214f98a71ba4d64fa6b9fbfa6fa664f283a4882f66bbb14"
+        "hash": "923fd9851cd6804f177b92796d72d68b572b6ab3d414ed0cdf5db78c8779fe61"
       },
       {
         "source_type": "file",
@@ -121,8 +121,8 @@
   },
   "replaces": "741f0f52-cec7-414b-b0e7-fbb5c79b9a1f",
   "created_at": "2026-09-27T02:37:08.972Z",
-  "updated_at": "2026-09-28T06:47:11.716Z",
-  "activation_count": 0,
+  "updated_at": "2026-10-06T18:21:23.632Z",
+  "activation_count": 6,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:11.711Z",

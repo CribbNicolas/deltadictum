@@ -81,7 +81,7 @@
   "confidence": 0.765,
   "registry_key_id": "6a4565ad-a776-48b1-ae82-a8eda0bec0d2",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:33.541Z",
+    "checked_at": "2026-10-06T18:21:23.776Z",
     "artifacts": [
       {
         "source_type": "tool_output",
@@ -97,7 +97,7 @@
         "summary": "Launcher every checkout hook runs through; edits take effect on the next hook call.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "6306fcb958d4881a6d99a38eb53c9cc0e6259a338412c5ef7ecc895a88a12286"
+        "hash": "e5d249ade1965364106266bae6e43e944b276a4b3161cc4ab85a670ba0fdf3b4"
       },
       {
         "source_type": "file",
@@ -120,8 +120,8 @@
   },
   "replaces": "f825dc49-09aa-4842-8fec-6a0842f87966",
   "created_at": "2026-09-27T02:37:09.091Z",
-  "updated_at": "2026-09-28T06:47:10.588Z",
-  "activation_count": 0,
+  "updated_at": "2026-10-06T18:21:23.783Z",
+  "activation_count": 2,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:10.583Z",

@@ -85,7 +85,7 @@
   "confidence": 0.765,
   "registry_key_id": "d498ef02-021b-48d0-aa0c-b9ae1fe880f2",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:34.123Z",
+    "checked_at": "2026-10-06T18:21:23.413Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -101,7 +101,7 @@
         "summary": "staleCode() guards hook calls only (409 build_stale); UI routes keep answering with the loaded code; uiKey is random per start.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "80f37018e2d77e7a1a0a91e5996e110340fa44b79c3cdf74309152ffab1f4211"
+        "hash": "b86d9eeeafe70099bc93aae6c7212ab3d644dd4ffe02171ab4fada7f0ff8dfe6"
       },
       {
         "source_type": "file",
@@ -124,8 +124,8 @@
   },
   "replaces": "a723154d-3652-46ff-8fcb-6c6f3b510dd3",
   "created_at": "2026-09-27T02:37:08.912Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
-  "activation_count": 7,
+  "updated_at": "2026-10-06T18:21:23.420Z",
+  "activation_count": 10,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-29T19:41:34.750Z",

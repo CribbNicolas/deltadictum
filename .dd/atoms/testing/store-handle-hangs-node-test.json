@@ -74,14 +74,15 @@
   "confidence": 0.765,
   "registry_key_id": "900d7093-1f10-4ce8-8478-b21d67c2a6bd",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:33.750Z",
+    "checked_at": "2026-10-06T20:15:17.326Z",
     "artifacts": [
       {
         "source_type": "file",
         "source_ref": "TODO.md",
         "summary": "Item 9 records that --test-force-exit crashes the resident tests on Windows.",
-        "status": "unavailable",
-        "provenance": "agent_claim"
+        "status": "verified",
+        "provenance": "filesystem",
+        "hash": "535bba56aab3f8f199c0f0454f957027215577c2699ce8f6850265306da3e8b1"
       },
       {
         "source_type": "file",
@@ -89,7 +90,7 @@
         "summary": "Resident tests start UI servers and close them in t.after.",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "ec220fa28759f3f73face3c40a4b77560c706e164443555dfcac1eb2b9120557"
+        "hash": "5e165a0e20363eb79f6d02a4f78d9fd2c4479addbdfbad11f671cdf8e1af4289"
       },
       {
         "source_type": "tool_output",
@@ -99,13 +100,13 @@
         "provenance": "agent_claim"
       }
     ],
-    "verified_count": 1,
+    "verified_count": 2,
     "support": "human_reviewed"
   },
   "replaces": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
   "created_at": "2026-09-27T02:37:09.031Z",
-  "updated_at": "2026-09-28T06:47:11.755Z",
-  "activation_count": 0,
+  "updated_at": "2026-10-06T20:15:17.335Z",
+  "activation_count": 8,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-28T06:47:11.750Z",

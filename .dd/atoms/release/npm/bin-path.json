@@ -67,7 +67,7 @@
   "confidence": 0.765,
   "registry_key_id": "f6b8aa47-3168-4536-990a-f504d0c316b4",
   "evidence_state": {
-    "checked_at": "2026-09-27T14:57:14.671Z",
+    "checked_at": "2026-10-06T19:11:55.107Z",
     "artifacts": [
       {
         "source_type": "file",
@@ -75,7 +75,7 @@
         "summary": "bin now reads {\"deltadictum\": \"src/cli.js\"}",
         "status": "verified",
         "provenance": "filesystem",
-        "hash": "ff27ef3bd6b07d9a7de520b51709b3382e81f72db4a965a862c3e4155ff846f3"
+        "hash": "188805d5052ba5fd9b5bda32093d961a055987b7ed2002e365c84de35ffd1819"
       },
       {
         "source_type": "tool_output",
@@ -90,8 +90,8 @@
   },
   "replaces": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
   "created_at": "2026-09-27T02:37:09.235Z",
-  "updated_at": "2026-09-29T19:41:35.499Z",
-  "activation_count": 4,
+  "updated_at": "2026-10-06T19:11:55.242Z",
+  "activation_count": 9,
   "review": {
     "source": "local_ui",
     "reviewed_at": "2026-09-29T19:41:34.750Z",

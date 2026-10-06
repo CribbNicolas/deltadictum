@@ -1,11 +1,11 @@
 {
   "name": "deltadictum",
-  "description": "DeltaDictum (DD): next-action doctrine for coding agents",
+  "description": "DeltaDictum (DD): reviewed project knowledge for coding agents, recalled before each action.",
   "owner": { "name": "DeltaDictum" },
   "plugins": [
     {
       "name": "deltadictum",
-      "description": "Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit in a local UI. Share via git.",
+      "description": "Reviewed project knowledge for coding agents, recalled before each action. Local, reviewed in an audit UI, shared via git.",
       "source": { "source": "url", "url": "https://github.com/CribbNicolas/deltadictum.git" }
     }
   ]
