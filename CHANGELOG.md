@@ -4,6 +4,18 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.8.5] - 2026-10-06
+
+### Changed
+- The package, plugin and marketplace descriptions say what DD is in plain words: reviewed project knowledge
+  for coding agents, recalled before each action. "Next-action doctrine" is gone from every manifest.
+- The README opens with a short recording of the audit UI on a demo project: memories by type, a decision
+  with its rationale and evidence, a candidate waiting for review and the auto-accept setting.
+- This project's own memories were reviewed against the 0.8.x code: 18 still hold and had their evidence
+  re-verified, seven were revised (the hook cache, the Codex managed block, embeddings, the MCP retrieve view,
+  the CLI dispatch before `openStore()`, the data directory and where the resident writes telemetry) and one
+  that described the removed `auto_admit` block was archived.
+
 ## [0.8.4] - 2026-10-05
 
 ### Fixed

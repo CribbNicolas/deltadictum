@@ -1,7 +1,7 @@
 {
   "name": "deltadictum",
-  "version": "0.8.4",
-  "description": "DeltaDictum (DD): next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
+  "version": "0.8.5",
+  "description": "DeltaDictum (DD): reviewed project knowledge for coding agents, recalled before each action. Local plugin for Claude Code, Codex, Grok Build and OpenCode.",
   "keywords": [
     "claude-code",
     "codex",
