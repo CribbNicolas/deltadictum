@@ -3,12 +3,12 @@
   "owner": {
     "name": "DeltaDictum"
   },
-  "description": "DD: next-action doctrine for coding agents. Trigger + behavior_delta + evidence, not session memory.",
+  "description": "DeltaDictum (DD): reviewed project knowledge for coding agents, recalled before each action.",
   "plugins": [
     {
       "name": "dd",
       "source": "./",
-      "description": "Admit trigger + behavior_delta + evidence. Inject budgeted forms. Audit locally. Share via git."
+      "description": "Reviewed project knowledge for coding agents, recalled before each action. Local, reviewed in an audit UI, shared via git."
     }
   ]
 }
