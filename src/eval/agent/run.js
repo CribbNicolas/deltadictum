@@ -11,7 +11,7 @@
 // This spends real model usage. It runs only when invoked:
 //   node src/eval/agent/run.js [--model claude-sonnet-5] [--repeat 2] [--tasks a,b]
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,9 +45,9 @@ async function cloneRepo() {
   const dir = join(await mkdtemp(join(tmpdir(), 'dd-agent-')), 'supermem');
   execFileSync('git', ['clone', '-q', REPO, dir]);
   execFileSync('git', ['-C', dir, 'checkout', '-q', execFileSync('git', ['-C', REPO, 'rev-parse', 'HEAD']).toString().trim()]);
-  // Dependencies are shared, not copied (~500 MB); a junction works without admin on Windows.
-  if (process.platform === 'win32') execFileSync('cmd', ['/c', 'mklink', '/J', join(dir, 'node_modules'), join(REPO, 'node_modules')], { stdio: 'ignore' });
-  else execFileSync('ln', ['-s', join(REPO, 'node_modules'), join(dir, 'node_modules')]);
+  // Dependencies are shared, not copied (~500 MB); a junction works without admin on Windows,
+  // and the type is ignored elsewhere. No shell: the paths come from the environment.
+  await symlink(join(REPO, 'node_modules'), join(dir, 'node_modules'), 'junction');
   return dir;
 }
 
