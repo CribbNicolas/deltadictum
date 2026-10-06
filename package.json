@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "DeltaDictum (DD): reviewed project knowledge for coding agents, recalled before each action. Local plugin for Claude Code, Codex, Grok Build and OpenCode.",
   "keywords": [
     "claude-code",

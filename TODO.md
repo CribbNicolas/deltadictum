@@ -114,6 +114,10 @@ Each needs a decision or a measurement before it is done:
   registered (about a second), both return the keyless default address `http://127.0.0.1:7733`, which
   answers 403. Wait briefly for the registry, or say the resident is starting, instead of naming an address
   that cannot work. `check-codex.mjs` works around it since 0.8.4.
+- **Release files churn evidence.** Every release edits `package.json`, `.claude-plugin/plugin.json` and
+  `CHANGELOG.md`, so each memory citing them is flagged `EVIDENCE CHANGED` though its advice is untouched
+  (five per release in this project). Hash a cited range or key instead of the whole file, or stop citing
+  release files as evidence.
 
 ### Project memories
 
