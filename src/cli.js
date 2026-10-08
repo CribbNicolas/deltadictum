@@ -2,6 +2,7 @@
 import { join } from 'node:path';
 import { findRepoRoot, openStore } from './project.js';
 import { migrateProject } from './memory/migrate.js';
+import { compileProject } from './engine/compile.js';
 import { startResidentServer } from './ui/server.js';
 import { orientProject } from './engine/project-context.js';
 import { readRegistry, residentFit, residentStatus, retireResident, writeRegistry } from './resident.js';
@@ -19,6 +20,7 @@ Usage: deltadictum [command]
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
   migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
+  compile             Compile this project's memories for delivery (.dd/local/v2)
   status              Knowledge counts by lifecycle state, and where the project's files live
   health              The deterioration report (crowding, disputes, unreadable knowledge files)
   orient [ACTION]     Project facts and source pointers, with knowledge for ACTION when given
@@ -63,6 +65,10 @@ async function main() {
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'install') return runInstall(rest);
   if (command === 'migrate') return runMigrate(rest);
+  if (command === 'compile') {
+    console.log(JSON.stringify(await compileProject(await findRepoRoot(process.cwd())), null, 2));
+    return;
+  }
   if (command === 'mcp') { await import('./mcp/server.js'); return; }
   if (!command || command === 'ui' || command === 'resident') return runResident();
   if (!PROJECT_COMMANDS.includes(command)) {

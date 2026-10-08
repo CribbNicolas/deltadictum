@@ -77,6 +77,19 @@ export function createMemoryFiles(ddDir) {
     });
   }
 
+  // The manifest is derived and git-ignored: a fresh clone has none, and a pull
+  // or a hand edit can outdate it. Rebuilt from the files when it differs.
+  async function refreshManifest() {
+    return withWriteLock(async () => {
+      await recoverTransaction(ddDir);
+      const fresh = manifestOf(await usable());
+      const current = await manifest();
+      if (current?.hash === fresh.hash && current?.count === fresh.count) return false;
+      await commitTransaction(ddDir, [{ path: `memories/${MANIFEST}`, value: fresh }]);
+      return true;
+    });
+  }
+
   // Topics with more than one live memory (a merge can bring two in), for the health report.
   async function conflicts() {
     const byTopic = new Map();
@@ -88,5 +101,5 @@ export function createMemoryFiles(ddDir) {
     try { return JSON.parse(await readFile(join(dir, MANIFEST), 'utf8')); } catch { return null; }
   }
 
-  return { ddDir, list, get, unsupported, conflicts, commit, manifest };
+  return { ddDir, list, get, unsupported, conflicts, commit, manifest, refreshManifest };
 }
