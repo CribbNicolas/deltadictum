@@ -8,16 +8,17 @@ const { containsPhrase, words } = require('./text.cjs');
 // with globs and symbols compiled once per hook and clauses grouped by event kind.
 const KIND_ORDER = ['trap', 'decision', 'fact', 'failed_approach', 'procedure'];
 
+// Clauses are grouped by event kind, and a kind's patterns are compiled only when
+// an event of that kind asks: a hook sees one event.
 function prepareIndex(index) {
-  const byKind = {};
-  index.clauses.forEach((clause, order) => {
-    const prepared = { ...clause, order,
-      paths: clause.paths?.map(source => new RegExp(source)),
-      not_paths: clause.not_paths?.map(source => new RegExp(source)),
-      symbols: clause.symbols?.map(symbolPattern) };
-    for (const kind of clause.on) (byKind[kind] ??= []).push(prepared);
-  });
-  return { byKind, memories: index.memories };
+  const raw = {};
+  for (const clause of index.clauses) for (const kind of clause.on) (raw[kind] ??= []).push(clause);
+  const prepared = {};
+  const compile = clause => ({ ...clause,
+    paths: clause.paths?.map(source => new RegExp(source)),
+    not_paths: clause.not_paths?.map(source => new RegExp(source)),
+    symbols: clause.symbols?.map(symbolPattern) });
+  return { memories: index.memories, clausesFor: kind => (prepared[kind] ??= (raw[kind] ?? []).map(compile)) };
 }
 
 function clauseHolds(clause, event, text, lazyWords) {
@@ -34,7 +35,7 @@ function clauseHolds(clause, event, text, lazyWords) {
 }
 
 function matchEvent(runtime, event) {
-  const clauses = runtime.byKind[event?.kind] ?? [];
+  const clauses = runtime.clausesFor(event?.kind);
   const text = String(event.text ?? '');
   let cached = null;
   const lazyWords = () => (cached ??= words(text));
