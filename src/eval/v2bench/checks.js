@@ -1,4 +1,7 @@
+import { unsafePattern } from '../../checks/pattern.js';
 import { globToRegExp } from '../../engine/clause.js';
+
+export { unsafePattern };
 
 // A violation: if_content matches and unless_content, when stated, does not.
 export function violates(check, text) {
@@ -10,12 +13,6 @@ export function violates(check, text) {
 // Whether a check behaves as its own examples say.
 export function examplesHold(check) {
   return violates(check, check.examples?.violates) && !violates(check, check.examples?.passes);
-}
-
-// A pattern the spec refuses: over 500 characters, or a quantified group that is itself quantified (ReDoS).
-export function unsafePattern(source) {
-  const text = String(source ?? '');
-  return text.length > 500 || /\((?:[^()\\]|\\.)*[*+}]\)\s*[*+{]/.test(text);
 }
 
 // A check scored on the lines each run added to the files it covers, against the
