@@ -1,17 +1,20 @@
-import { containsPhrase, words } from './text.js';
+'use strict';
+
+const { containsPhrase, words } = require('./text.cjs');
 
 // The reference semantics of a v2 trigger clause (docs/superpowers/specs/
 // 2026-10-08-dd-v2-design.md, section 3), written for clarity, not speed: the
-// compiled matcher must agree with it on every event.
+// compiled matcher (match.cjs) must agree with it on every event. CommonJS
+// because hooks load it: an ES module costs a hook about 3 ms more.
 
-export const EVENT_KINDS = ['read', 'edit', 'write', 'search', 'run', 'prompt'];
-export const DIMENSIONS = ['paths', 'symbols', 'commands', 'keywords'];
+const EVENT_KINDS = ['read', 'edit', 'write', 'search', 'run', 'prompt'];
+const DIMENSIONS = ['paths', 'symbols', 'commands', 'keywords'];
 const KEYWORD_KINDS = ['prompt', 'search'];
 
 const globs = new Map();
 // A glob over repository-relative paths: `**/` crosses any number of folders, a
 // trailing `**` matches the rest, `*` and `?` stay within one segment.
-export function globToRegExp(glob) {
+function globToRegExp(glob) {
   const source = String(glob).replaceAll('\\', '/').replace(/^\.\//, '');
   if (globs.has(source)) return globs.get(source);
   let out = '';
@@ -31,20 +34,18 @@ export function globToRegExp(glob) {
 
 const escape = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // An identifier, or a dotted name, as a whole token: `openStore` does not match `reopenStore`.
-export const hasSymbol = (text, symbol) => new RegExp(`(?<![\\w$])${escape(symbol)}(?![\\w$])`).test(String(text ?? ''));
+const symbolPattern = symbol => new RegExp(`(?<![\\w$])${escape(symbol)}(?![\\w$])`);
+const hasSymbol = (text, symbol) => symbolPattern(symbol).test(String(text ?? ''));
 
 const shellTokens = text => String(text ?? '').trim().split(/\s+/).filter(Boolean);
+const hasTokens = (hay, needle) => needle.length > 0 && hay.some((_, i) => needle.every((token, j) => hay[i + j] === token));
 // The command contains the pattern's tokens in sequence, whitespace normalized.
-export function hasCommand(command, pattern) {
-  const hay = shellTokens(command);
-  const needle = shellTokens(pattern);
-  return needle.length > 0 && hay.some((_, i) => needle.every((token, j) => hay[i + j] === token));
-}
+const hasCommand = (command, pattern) => hasTokens(shellTokens(command), shellTokens(pattern));
 
 // Whether the clause matches the event, and the dimensions it matched on. A
 // clause that states no dimension besides `on` never matches. `not` phrases and
 // `not_paths` globs cancel it.
-export function clauseMatches(clause, event) {
+function clauseMatches(clause, event) {
   const none = { matched: false, via: [] };
   if (!Array.isArray(clause?.on) || !clause.on.includes(event?.kind)) return none;
   const stated = DIMENSIONS.filter(dimension => Array.isArray(clause[dimension]) && clause[dimension].length);
@@ -66,7 +67,7 @@ export function clauseMatches(clause, event) {
 }
 
 // The memory's best clause for the event: the one matching on most dimensions.
-export function memoryMatch(memory, event) {
+function memoryMatch(memory, event) {
   let best = null;
   for (const clause of memory?.triggers ?? []) {
     const result = clauseMatches(clause, event);
@@ -74,3 +75,6 @@ export function memoryMatch(memory, event) {
   }
   return best;
 }
+
+module.exports = { EVENT_KINDS, DIMENSIONS, KEYWORD_KINDS, globToRegExp, symbolPattern, hasSymbol, shellTokens, hasTokens,
+  hasCommand, clauseMatches, memoryMatch };

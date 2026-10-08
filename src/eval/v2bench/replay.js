@@ -1,4 +1,4 @@
-import { memoryMatch } from '../../engine/clause.js';
+import { memoryMatch } from '../../engine/clause.cjs';
 
 const LIVE = ['active', 'contested'];
 
