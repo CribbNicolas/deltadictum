@@ -12,8 +12,10 @@ const PERSON_SOURCES = ['user_statement', 'user_approval', 'user_correction'];
 const slashed = path => String(path).replaceAll('\\', '/').replace(/^\.\//, '');
 const unique = list => [...new Set(list)];
 const LINES = /#L\d+(?:-L?\d+)?$/;
-// A v1 scope entry naming a folder ("skills/") meant everything under it.
-const scopeGlob = entry => (slashed(entry).endsWith('/') ? `${slashed(entry)}**` : slashed(entry));
+// A v1 scope entry naming a folder ("tests/") limited where a memory applied; v1
+// never let a folder anchor it. As a trigger it fires on most work (tests/**
+// reached 52% of the bench's runs), so it is left to a person to narrow.
+const isFolder = entry => slashed(entry).endsWith('/');
 
 // A v1 file reference is a repository path, possibly followed by words about it
 // ("src/hooks/banner.js sessionBanner()"); some were never paths ("npm test").
@@ -60,13 +62,14 @@ function legacyBody(atom, titles, liveByTopic, issues) {
 // titles: v1 id to title; liveByTopic: topic to the title of the live v1 memory on it.
 export function convertV1(atom, { titles = new Map(), liveByTopic = new Map() } = {}) {
   const legacy = atom.lifecycle_state === 'legacy';
-  const files = unique([...(atom.anchors?.files ?? []), ...(atom.applies_to?.files ?? [])].map(scopeGlob));
+  const scope = [...(atom.anchors?.files ?? []), ...(atom.applies_to?.files ?? [])];
+  const files = unique(scope.filter(entry => !isFolder(entry)).map(slashed));
   const keywords = atom.anchors?.keywords ?? [];
   const not = atom.anchors?.not_when ?? [];
   const triggers = [];
   if (files.length) triggers.push({ on: ['read', 'edit', 'write'], paths: files });
   if (keywords.length) triggers.push({ on: ['prompt', 'search'], keywords, ...(not.length ? { not } : {}) });
-  const found = new Set();
+  const found = new Set(scope.some(isFolder) ? ['folder_scope'] : []);
   const body = legacy ? legacyBody(atom, titles, liveByTopic, found) : bodyOf(atom);
   const evidence = evidenceOf(atom, found);
   const issues = ['not_derivable_missing', ...found];
