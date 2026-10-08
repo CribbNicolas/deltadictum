@@ -61,11 +61,11 @@ export function createMemoryFiles(ddDir) {
       const removed = new Set(remove.map(entry => (typeof entry === 'string' ? entry : entry.id)));
       const after = new Map(current.filter(memory => !removed.has(memory.id)).map(memory => [memory.id, memory]));
       for (const memory of stored) after.set(memory.id, memory);
-      const topics = new Set();
-      for (const memory of after.values()) {
-        if (!LIVE_STATUSES.includes(memory.status)) continue;
-        if (topics.has(memory.topic)) throw new Error(`live_topic_conflict:${memory.topic}`);
-        topics.add(memory.topic);
+      // Only the topics this commit makes live are checked: a conflict a git merge
+      // left on disk is reported by conflicts() and blocks only writes to its topic.
+      const live = [...after.values()].filter(memory => LIVE_STATUSES.includes(memory.status));
+      for (const topic of new Set(stored.filter(memory => LIVE_STATUSES.includes(memory.status)).map(memory => memory.topic))) {
+        if (live.filter(memory => memory.topic === topic).length > 1) throw new Error(`live_topic_conflict:${topic}`);
       }
       const written = new Set(stored.map(memory => memory.id));
       await commitTransaction(ddDir, [
@@ -77,9 +77,16 @@ export function createMemoryFiles(ddDir) {
     });
   }
 
+  // Topics with more than one live memory (a merge can bring two in), for the health report.
+  async function conflicts() {
+    const byTopic = new Map();
+    for (const memory of await list({ statuses: LIVE_STATUSES })) byTopic.set(memory.topic, [...(byTopic.get(memory.topic) ?? []), memory.id]);
+    return [...byTopic].filter(([, ids]) => ids.length > 1).map(([topic, ids]) => ({ topic, ids: ids.sort() }));
+  }
+
   async function manifest() {
     try { return JSON.parse(await readFile(join(dir, MANIFEST), 'utf8')); } catch { return null; }
   }
 
-  return { ddDir, list, get, unsupported, commit, manifest };
+  return { ddDir, list, get, unsupported, conflicts, commit, manifest };
 }
