@@ -33,7 +33,8 @@ test('a v1 lesson becomes a trap whose body is the advice, its reason and the al
   assert.equal(m.not_derivable, '');
   assert.equal(m.origin, 'model_initiated');
   assert.equal(m.replaces, 'old-id');
-  assert.deepEqual(m.review, { migrated: true, issues: ['not_derivable_missing'] });
+  assert.equal(m.review.migrated, true);
+  assert.deepEqual(m.review.issues, ['not_derivable_missing']);
   assert.equal(m.created, '2026-09-22T00:00:00.000Z');
   assert.equal(m.updated, '2026-09-23T00:00:00.000Z');
 });
@@ -96,6 +97,24 @@ test('a reference that is not a repository path never becomes file evidence', ()
     { type: 'file', path: 'src/hooks/banner.js', summary: 'sessionBanner(): the banner' },
   ]);
   assert.ok(m.review.issues.includes('evidence_not_a_path'));
+});
+
+test('an absolute or network path never becomes file evidence, and a long summary is shortened', () => {
+  const m = convertV1(atom({ evidence_refs: [
+    { source_type: 'file', source_ref: '/home/me/x.js', summary: 'a' },
+    { source_type: 'file', source_ref: '\\\\server\\share\\x.js', summary: 'b' },
+    { source_type: 'file', source_ref: `src/a.js ${'w'.repeat(300)}`, summary: 's'.repeat(300) },
+  ], evidence_state: { artifacts: [] } }));
+  assert.deepEqual(m.evidence.slice(0, 2).map(e => e.type), ['note', 'note']);
+  assert.equal(m.evidence[2].type, 'file');
+  assert.ok(m.evidence[2].summary.length <= 500);
+  assert.ok(m.evidence[2].summary.endsWith('...'));
+});
+
+test('what v2 has no field for is kept for the reviewer, not lost', () => {
+  const m = convertV1(atom({ assumptions: [{ description: 'Node 22' }], valid_until: '2027-01-01T00:00:00.000Z' }));
+  assert.deepEqual(m.review.v1, { trigger: 'when a test opens a store', assumptions: [{ description: 'Node 22' }], valid_until: '2027-01-01T00:00:00.000Z' });
+  assert.deepEqual(convertV1(atom({ trigger: '' })).review.v1, undefined);
 });
 
 test('a legacy memory names the live memory on its topic when v1 recorded no replacement', () => {
