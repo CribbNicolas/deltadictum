@@ -1,76 +1,15 @@
 {
-  "description": "DD capture and budgeted recall. Claude Code reads plugin hooks from this file and runs them from the user project, so every command is anchored at ${CLAUDE_PLUGIN_ROOT}. Failures must not block the host.",
+  "description": "DD v2 delivery. Claude Code reads plugin hooks from this file and runs them from the user project, so every command is anchored at ${CLAUDE_PLUGIN_ROOT}. Failures never block the host.",
   "hooks": {
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" session-start",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool",
-            "timeout": 10
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" session-start", "timeout": 30 } ] }
     ],
     "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" prompt",
-            "timeout": 15
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" prompt", "timeout": 10 } ] }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" observe",
-            "timeout": 15,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" observe",
-            "timeout": 15,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" stop",
-            "timeout": 10
-          }
-        ]
-      }
+    "PreToolUse": [
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool", "timeout": 10 } ] }
     ]
   }
 }
