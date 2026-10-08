@@ -41,7 +41,8 @@ export const VARIANTS = {
 
 const v1 = await readV1(join(REPO, '.dd'));
 const titles = new Map(v1.map(atom => [atom.id, atom.title]));
-const memories = v1.map(atom => convertV1(atom, { titles }));
+const liveByTopic = new Map(v1.filter(atom => atom.lifecycle_state !== 'legacy').map(atom => [atom.topic_key, atom.title]));
+const memories = v1.map(atom => convertV1(atom, { titles, liveByTopic }));
 const fixture = await loadFixture(args.fixture ? resolve(REPO, args.fixture) : undefined);
 const conditions = [...new Set(fixture.runs.map(run => run.condition))];
 

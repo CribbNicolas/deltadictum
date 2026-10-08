@@ -77,10 +77,39 @@ test('a legacy memory becomes an active failed approach on its own topic', () =>
   const m = convertV1(atom({ lifecycle_state: 'legacy', legacy_reason: 'The resident replaced ui.json.', replaced_by: 'new-id' }), { titles });
   assert.equal(m.kind, 'failed_approach');
   assert.equal(m.status, 'active');
-  assert.equal(m.topic, 'testing/store-handle-abandoned');
+  // Its own topic, unique even when two abandoned approaches share the v1 topic.
+  assert.equal(m.topic, 'testing/store-handle-abandoned-a1b2c3d4');
   assert.equal(m.body, 'No longer done: Close stores in t.after.\n\nAbandoned because: The resident replaced ui.json.\n\nNow: Read the data directory from deltadictum status');
   const orphan = convertV1(atom({ lifecycle_state: 'legacy', legacy_reason: 'x', replaced_by: null }));
   assert.match(orphan.body, /Now: no replacement recorded$/);
+});
+
+test('a reference that is not a repository path never becomes file evidence', () => {
+  const m = convertV1(atom({ evidence_refs: [
+    { source_type: 'diff', source_ref: 'commit 39af05c', summary: 'the fix' },
+    { source_type: 'test_log', source_ref: 'npm test', summary: 'green' },
+    { source_type: 'file', source_ref: 'src/hooks/banner.js sessionBanner()', summary: 'the banner' },
+  ], evidence_state: { artifacts: [] } }));
+  assert.deepEqual(m.evidence, [
+    { type: 'note', ref: 'commit 39af05c', summary: 'the fix' },
+    { type: 'note', ref: 'npm test', summary: 'green' },
+    { type: 'file', path: 'src/hooks/banner.js', summary: 'sessionBanner(): the banner' },
+  ]);
+  assert.ok(m.review.issues.includes('evidence_not_a_path'));
+});
+
+test('a legacy memory names the live memory on its topic when v1 recorded no replacement', () => {
+  const live = new Map([['testing/store-handle', 'Close stores in t.after, the current way']]);
+  const m = convertV1(atom({ lifecycle_state: 'legacy', legacy_reason: 'Superseded.', replaced_by: null }), { liveByTopic: live });
+  assert.match(m.body, /Now: Close stores in t\.after, the current way$/);
+  assert.ok(!m.review.issues.includes('replacement_unknown'));
+  const orphan = convertV1(atom({ lifecycle_state: 'legacy', legacy_reason: 'x', replaced_by: null }));
+  assert.ok(orphan.review.issues.includes('replacement_unknown'));
+});
+
+test('a v1 folder scope becomes a glob over the folder', () => {
+  const m = convertV1(atom({ anchors: {}, applies_to: { files: ['skills/', 'tests\\'] } }));
+  assert.deepEqual(m.triggers, [{ on: ['read', 'edit', 'write'], paths: ['skills/**', 'tests/**'] }]);
 });
 
 test('a long body is converted whole and flagged; a memory with no trigger is flagged', () => {
