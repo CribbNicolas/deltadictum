@@ -72,7 +72,7 @@ if (!('no-latency' in args)) {
     const event = JSON.stringify({ kind: 'read', paths: ['src/store/paths.js'] });
     report.latency = {
       node_start: timeSpawn(['-e', '']),
-      hook: timeSpawn([sim, index, join(dir, 'ledger.jsonl')], { input: event }),
+      hook: timeSpawn(null, { input: event, prepare: i => [sim, index, join(dir, `ledger-${i}.jsonl`)] }),
     };
   } finally { rmSync(dir, { recursive: true, force: true }); }
   report.staleness = await stalenessTiming();
