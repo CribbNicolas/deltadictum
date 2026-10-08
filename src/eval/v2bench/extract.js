@@ -9,6 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { redactSecrets } from '../../engine/v2/sanitizer.js';
+import { bashPaths, relativize, toolEvent as hookEvent } from '../../hooks/v2/events.cjs';
 import { TASKS } from '../agent/tasks.js';
 import { DEFAULT_FIXTURE } from './fixture.js';
 
@@ -16,36 +17,13 @@ const TEXT_MAX = 2000;
 const ADDED_MAX = 16000;
 const clip = text => redactSecrets(String(text ?? '')).slice(0, TEXT_MAX);
 
-export function relativize(path, cwd) {
-  const slashed = String(path ?? '').replaceAll('\\', '/');
-  const root = String(cwd ?? '').replaceAll('\\', '/').replace(/\/$/, '');
-  if (root && slashed.replace(/\/$/, '').toLowerCase() === root.toLowerCase()) return '.';
-  if (root && slashed.toLowerCase().startsWith(`${root.toLowerCase()}/`)) return slashed.slice(root.length + 1);
-  return slashed.replace(/^\.\//, '');
-}
+export { bashPaths, relativize };
 
-// Repository paths a shell command names: tokens with a folder separator or a file extension.
-export function bashPaths(command, cwd) {
-  const tokens = String(command ?? '').split(/[\s;&|<>()]+/).map(token => token.replace(/^['"]+|['",]+$/g, ''));
-  return [...new Set(tokens.filter(token => token && !token.startsWith('-') && !token.includes('://') && !token.includes('=')
-    && (/^[\w@.~\-*:\\/]+[\\/][\w@.\-*\\/]*$/.test(token) || /^[\w@.-]+\.[a-z][a-z0-9]{0,4}$/i.test(token)))
-    .map(token => relativize(token, cwd)))];
-}
-
-// One tool call as a normalized event, or null for a tool that carries no project work.
+// The hook's event (src/hooks/v2/events.cjs), with its text clipped and redacted
+// for a committed fixture; null for a tool that carries no project work.
 export function toolEvent(name, input, cwd) {
-  const path = p => relativize(p, cwd);
-  switch (name) {
-    case 'Read': return { kind: 'read', paths: [path(input.file_path)] };
-    case 'Edit': return { kind: 'edit', paths: [path(input.file_path)], text: clip(input.new_string) };
-    case 'MultiEdit': return { kind: 'edit', paths: [path(input.file_path)], text: clip((input.edits ?? []).map(e => e.new_string).join('\n')) };
-    case 'NotebookEdit': return { kind: 'edit', paths: [path(input.notebook_path)], text: clip(input.new_source) };
-    case 'Write': return { kind: 'write', paths: [path(input.file_path)], text: clip(input.content) };
-    case 'Bash': return { kind: 'run', paths: bashPaths(input.command, cwd), text: clip(input.command) };
-    case 'Grep': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: clip(input.pattern) };
-    case 'Glob': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: clip(input.pattern) };
-    default: return null;
-  }
+  const event = hookEvent(name, input, cwd);
+  return event && 'text' in event ? { ...event, text: clip(event.text) } : event;
 }
 
 export function streamEvents(stream) {
