@@ -50,8 +50,21 @@ test('keywords match whole phrases on prompt and search events, ignoring case, a
   assert.equal(clauseMatches(clause, ev('prompt', [], 'the data of the directory')).matched, false);
 });
 
-test('every stated dimension must match, and not cancels the clause', () => {
-  const clause = { on: ['edit'], paths: ['src/**'], symbols: ['loadConfig'], not: ['src/ui/**'] };
+test('symbols are never matched against a prompt: the signal is what the agent does', () => {
+  const clause = { on: ['prompt', 'edit'], symbols: ['loadConfig'] };
+  assert.equal(clauseMatches(clause, ev('prompt', [], 'why does loadConfig run twice?')).matched, false);
+  assert.equal(clauseMatches(clause, ev('edit', ['src/a.js'], 'loadConfig()')).matched, true);
+});
+
+test('not cancels by phrase and not_paths by glob, whatever characters a phrase holds', () => {
+  const phrase = { on: ['prompt'], keywords: ['threshold'], not: ['and/or'] };
+  assert.equal(clauseMatches(phrase, ev('prompt', [], 'the threshold and/or the limit')).matched, false);
+  const file = { on: ['read'], paths: ['src/**'], not: ['package.json'] };
+  assert.equal(clauseMatches(file, ev('read', ['src/package.json'])).matched, true);
+});
+
+test('every stated dimension must match, and not or not_paths cancel the clause', () => {
+  const clause = { on: ['edit'], paths: ['src/**'], symbols: ['loadConfig'], not_paths: ['src/ui/**'] };
   assert.equal(clauseMatches(clause, ev('edit', ['src/store/a.js'], 'loadConfig()')).matched, true);
   assert.equal(clauseMatches(clause, ev('edit', ['src/store/a.js'], 'other()')).matched, false);
   assert.equal(clauseMatches(clause, ev('edit', ['src/ui/server.js'], 'loadConfig()')).matched, false);

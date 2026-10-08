@@ -67,7 +67,9 @@ test('globs, symbols and phrases are bounded', () => {
   assert.ok(reasons({ triggers: [{ on: ['prompt'], keywords: Array.from({ length: 17 }, (_, i) => `k${i}`) }] }).includes('too_many_trigger_entries'));
   assert.deepEqual(reasons({ triggers: [{ on: ['prompt'], keywords: Array.from({ length: 16 }, (_, i) => `k${i}`) }] }), []);
   assert.ok(reasons({ triggers: [{ on: ['prompt'], keywords: ['k'.repeat(101)] }] }).includes('invalid_trigger_phrase'));
-  assert.ok(reasons({ triggers: [{ on: ['read'], paths: ['src/**'], not: ['../x/*'] }] }).includes('invalid_trigger_not'));
+  assert.ok(reasons({ triggers: [{ on: ['read'], paths: ['src/**'], not_paths: ['../x/*'] }] }).includes('invalid_trigger_not'));
+  assert.deepEqual(reasons({ triggers: [{ on: ['read'], paths: ['src/**'], not_paths: ['src/ui/**'], not: ['and/or'] }] }), []);
+  assert.ok(reasons({ triggers: [{ on: ['prompt'], keywords: ['a b'], not: ['n'.repeat(101)] }] }).includes('invalid_trigger_not'));
 });
 
 test('a check needs paths, safe compiling patterns, a short message and examples', () => {
