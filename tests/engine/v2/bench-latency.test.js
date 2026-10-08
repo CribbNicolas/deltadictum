@@ -5,7 +5,17 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stalenessTiming, summarize, timeSpawn } from '../../../src/eval/v2bench/latency.js';
+import { stalenessTiming, summarize, timeInterleaved, timeSpawn } from '../../../src/eval/v2bench/latency.js';
+
+test('interleaved timing alternates its commands, so machine drift hits them alike', () => {
+  const order = [];
+  const result = timeInterleaved({
+    a: { prepare: i => { order.push(`a${i}`); return ['-e', '']; } },
+    b: { prepare: i => { order.push(`b${i}`); return ['-e', '']; } },
+  }, { runs: 2 });
+  assert.deepEqual(order, ['a0', 'b0', 'a1', 'b1']);
+  assert.ok(result.a.p50 > 0 && result.b.p50 > 0);
+});
 
 test('a timed process that fails stops the timing instead of being counted', () => {
   assert.throws(() => timeSpawn(['-e', 'process.exit(3)'], { runs: 1 }), /spawn_failed:3/);

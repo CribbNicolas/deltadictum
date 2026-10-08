@@ -1,6 +1,5 @@
 'use strict';
 
-const { createHash } = require('node:crypto');
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
@@ -13,7 +12,10 @@ const LABELS = { trap: 'TRAP', decision: 'DECISION', fact: 'FACT', failed_approa
 // Evidence files whose content changed since the memory was written, or that are gone.
 function staleEvidence(root, evidence) {
   const stale = [];
-  for (const entry of evidence ?? []) {
+  if (!evidence?.length) return stale;
+  // Loaded only when there is evidence to hash: node:crypto costs a hook 2 ms to load.
+  const { createHash } = require('node:crypto');
+  for (const entry of evidence) {
     try {
       if (createHash('sha256').update(readFileSync(join(root, entry.path))).digest('hex') !== entry.sha256) stale.push(entry.path);
     } catch { stale.push(entry.path); }

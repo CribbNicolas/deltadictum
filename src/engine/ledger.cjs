@@ -1,7 +1,6 @@
 'use strict';
 
 const { appendFileSync, closeSync, fstatSync, mkdirSync, openSync, readdirSync, readSync, rmSync, statSync } = require('node:fs');
-const { randomBytes } = require('node:crypto');
 const { dirname, join } = require('node:path');
 
 // A session's delivery ledger (spec section 4): which memories were delivered in
@@ -62,7 +61,8 @@ function openLedger(path) {
       try { before = read(); } catch { return [...ids]; }
       const wanted = [...new Set(ids)].filter(id => !before.first.has(id));
       if (!wanted.length) return [];
-      const token = randomBytes(8).toString('hex');
+      // Unique per claim among concurrent hooks; node:crypto would cost a hook 2 ms to load.
+      const token = `${process.pid.toString(36)}.${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 12)}`;
       try {
         append(wanted.map(id => `${JSON.stringify({ t: 'claim', m: id, n: before.epoch, k: token })}\n`).join(''));
         const after = read();

@@ -1,16 +1,19 @@
 // The v2 bench (docs/superpowers/plans/2026-10-08-dd-v2-plan-0-bench.md): the
 // trial's recorded runs replayed through trigger matching, with no agent runs.
 //   node src/eval/v2bench/run.js [--fixture=PATH] [--no-latency] [--out=output/eval/v2bench-report.json]
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compileIndex, writeCompiled } from '../../engine/compile.js';
+import { localPaths } from '../../engine/locate.cjs';
 import { convertV1 } from '../../memory/convert-v1.js';
+import { productionEngine } from './engine.js';
 import { scoreCheck, scoreCommandCheck } from './checks.js';
 import { classifyMemory } from './classify.js';
 import { loadFixture } from './fixture.js';
-import { stalenessTiming, timeSpawn } from './latency.js';
+import { stalenessTiming, timeInterleaved, timeSpawn } from './latency.js';
 import { benchMetrics } from './metrics.js';
 import { replay } from './replay.js';
 import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from './spike-checks.js';
@@ -57,6 +60,14 @@ for (const [name, transform] of Object.entries(VARIANTS)) {
   }));
   report.variants[name] = { summary: all.summary, by_condition: byCondition };
 }
+{
+  // The production engine (compiled index, matchEvent) must deliver exactly what the reference does.
+  const results = replay(fixture, memories, productionEngine);
+  report.variants.production = { summary: benchMetrics(fixture, results, memories).summary };
+  // Compared by content, run by run: the production engine orders hits by rank, the reference by memory.
+  const plain = list => JSON.stringify(list.map(r => [r.run_id, [...r.delivered].map(([id, hit]) => `${id}@${hit.at}:${hit.via.join('+')}`).sort()]));
+  report.production_equals_reference = plain(results) === plain(replay(fixture, memories));
+}
 report.checks = SPIKE_CHECKS.map(spec => scoreCheck(spec, fixture));
 report.command_checks = SPIKE_COMMAND_CHECKS.map(spec => scoreCommandCheck(spec, fixture));
 const classes = memories.map(classifyMemory);
@@ -74,6 +85,21 @@ if (!('no-latency' in args)) {
       node_start: timeSpawn(['-e', '']),
       hook: timeSpawn(null, { input: event, prepare: i => [sim, index, join(dir, `ledger-${i}.jsonl`)] }),
     };
+    // The production hot path over a project compiled from the same memories.
+    const root = join(dir, 'project');
+    const paths = localPaths(root);
+    mkdirSync(paths.memories, { recursive: true });
+    writeFileSync(paths.manifest, JSON.stringify({ version: 1, count: memories.length, hash: 'bench' }));
+    writeCompiled(paths, compileIndex({ memories, manifest: { count: memories.length, hash: 'bench' } }));
+    const real = fileURLToPath(new URL('./hook-real.cjs', import.meta.url));
+    // Interleaved so drift hits all three alike: the common case (nothing fires) and a read that fires.
+    const timed = timeInterleaved({
+      node: { prepare: () => ['-e', ''] },
+      nothing_fires: { prepare: i => [real, root, `quiet-${i}`], input: JSON.stringify({ kind: 'read', paths: ['README.md'] }) },
+      fires: { prepare: i => [real, root, `fire-${i}`], input: event },
+    });
+    const over = name => Math.round((timed[name].p50 - timed.node.p50) * 10) / 10;
+    report.latency.production = { ...timed, overhead_nothing_fires_ms: over('nothing_fires'), overhead_fires_ms: over('fires') };
   } finally { rmSync(dir, { recursive: true, force: true }); }
   report.staleness = await stalenessTiming();
 }
@@ -85,7 +111,7 @@ const s = name => report.variants[name].summary;
 const lines = [
   '| Variant | Key delivered | Before first edit | Noise (memory / control tasks) | Tokens median / p90 | Runs with 0 tokens | Hubs |',
   '|---|---|---|---|---|---|---|',
-  ...Object.keys(VARIANTS).map(name => `| ${name} | ${s(name).key_delivered}/${s(name).memory_runs} | ${s(name).key_before_edit}/${s(name).memory_runs} | ${s(name).median_noise_memory_tasks} / ${s(name).median_noise_control_tasks} | ${s(name).median_tokens} / ${s(name).p90_tokens} | ${s(name).zero_token_runs}/${s(name).runs} | ${s(name).hubs.map(h => `${h.topic} ${h.rate}%`).join(', ') || 'none'} |`),
+  ...[...Object.keys(VARIANTS), 'production'].map(name => `| ${name} | ${s(name).key_delivered}/${s(name).memory_runs} | ${s(name).key_before_edit}/${s(name).memory_runs} | ${s(name).median_noise_memory_tasks} / ${s(name).median_noise_control_tasks} | ${s(name).median_tokens} / ${s(name).p90_tokens} | ${s(name).zero_token_runs}/${s(name).runs} | ${s(name).hubs.map(h => `${h.topic} ${h.rate}%`).join(', ') || 'none'} |`),
   '',
   '| Check | Examples hold | TP | FP | FN | TN | Fired / runs seen |',
   '|---|---|---|---|---|---|---|',
@@ -94,6 +120,8 @@ const lines = [
   `Command checks: ${report.command_checks.map(c => `${c.memory} fired in ${c.fired} runs`).join('; ')}`,
   `Classification: ${JSON.stringify(report.classification.counts)}; review issues: ${JSON.stringify(report.review_issues)}`,
   report.latency ? `Latency (ms): node start ${JSON.stringify(report.latency.node_start)}, hook ${JSON.stringify(report.latency.hook)}` : 'Latency: skipped',
+  report.latency ? `Production hook overhead over node start (ms, p50, interleaved): nothing fires ${report.latency.production.overhead_nothing_fires_ms}, a read that fires ${report.latency.production.overhead_fires_ms}` : '',
+  `Production engine equals reference: ${report.production_equals_reference}`,
   report.staleness ? `Staleness at ${report.staleness.files} files (ms): stat all ${JSON.stringify(report.staleness.stat_all)}, manifest ${JSON.stringify(report.staleness.manifest)}` : '',
 ];
 console.log(lines.join('\n'));
