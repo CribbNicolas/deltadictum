@@ -41,11 +41,9 @@ export function hasCommand(command, pattern) {
   return needle.length > 0 && hay.some((_, i) => needle.every((token, j) => hay[i + j] === token));
 }
 
-// A `not` entry with a glob character or a folder separator cancels by path; any other, by phrase.
-const isGlob = entry => /[*?/]/.test(entry);
-
 // Whether the clause matches the event, and the dimensions it matched on. A
-// clause that states no dimension besides `on` never matches.
+// clause that states no dimension besides `on` never matches. `not` phrases and
+// `not_paths` globs cancel it.
 export function clauseMatches(clause, event) {
   const none = { matched: false, via: [] };
   if (!Array.isArray(clause?.on) || !clause.on.includes(event?.kind)) return none;
@@ -56,14 +54,14 @@ export function clauseMatches(clause, event) {
   const textWords = words(text);
   const test = {
     paths: () => clause.paths.some(glob => paths.some(path => globToRegExp(glob).test(path))),
-    symbols: () => clause.symbols.some(symbol => hasSymbol(text, symbol)),
+    // What the agent writes, runs or searches for; a person's prompt naming a symbol is not the agent touching it.
+    symbols: () => event.kind !== 'prompt' && clause.symbols.some(symbol => hasSymbol(text, symbol)),
     commands: () => event.kind === 'run' && clause.commands.some(pattern => hasCommand(text, pattern)),
     keywords: () => KEYWORD_KINDS.includes(event.kind) && clause.keywords.some(phrase => containsPhrase(textWords, words(phrase))),
   };
   if (!stated.every(dimension => test[dimension]())) return none;
-  const cancelled = (clause.not ?? []).some(entry => (isGlob(entry)
-    ? paths.some(path => globToRegExp(entry).test(path))
-    : containsPhrase(textWords, words(entry))));
+  const cancelled = (clause.not ?? []).some(phrase => containsPhrase(textWords, words(phrase)))
+    || (clause.not_paths ?? []).some(glob => paths.some(path => globToRegExp(glob).test(path)));
   return cancelled ? none : { matched: true, via: stated };
 }
 

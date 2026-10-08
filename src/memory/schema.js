@@ -18,7 +18,7 @@ export const LIMITS = { body: BODY_MAX, title: 200, not_derivable: 300, file: 16
 
 const FIELDS = ['schema_version', 'id', 'project_id', 'topic', 'kind', 'status', 'title', 'body', 'not_derivable',
   'triggers', 'check', 'evidence', 'origin', 'replaces', 'revisit_when', 'review', 'created', 'updated'];
-const CLAUSE_FIELDS = ['on', ...DIMENSIONS, 'not'];
+const CLAUSE_FIELDS = ['on', ...DIMENSIONS, 'not', 'not_paths'];
 const CHECK_FIELDS = ['on', 'paths', 'when', 'if_content', 'unless_content', 'if_command', 'unless_command', 'say', 'examples'];
 const CHECK_EVENTS = ['edit', 'write', 'run'];
 const CHECK_WHEN = ['turn', 'edit', 'run'];
@@ -48,7 +48,7 @@ function clauseProblems(clause) {
   if (Object.keys(clause).some(key => !CLAUSE_FIELDS.includes(key))) problems.push('unknown_trigger_field');
   if (!Array.isArray(clause.on) || !clause.on.length || !clause.on.every(kind => EVENT_KINDS.includes(kind))) problems.push('invalid_trigger_on');
   if (!DIMENSIONS.some(dimension => Array.isArray(clause[dimension]) && clause[dimension].length)) problems.push('trigger_without_dimension');
-  for (const key of [...DIMENSIONS, 'not']) {
+  for (const key of [...DIMENSIONS, 'not', 'not_paths']) {
     if (clause[key] === undefined) continue;
     if (!isStringList(clause[key])) { problems.push('invalid_trigger_entry'); continue; }
     if (clause[key].length > (key === 'keywords' ? LIMITS.keywords : LIMITS.list)) problems.push('too_many_trigger_entries');
@@ -58,9 +58,8 @@ function clauseProblems(clause) {
   for (const key of ['commands', 'keywords']) {
     if (isStringList(clause[key]) && clause[key].some(phrase => phrase.length > LIMITS.phrase)) problems.push('invalid_trigger_phrase');
   }
-  if (isStringList(clause.not) && clause.not.some(entry => entry.length > LIMITS.phrase || (/[*?/]/.test(entry) && !validRelativePath(entry)))) {
-    problems.push('invalid_trigger_not');
-  }
+  if ((isStringList(clause.not) && clause.not.some(phrase => phrase.length > LIMITS.phrase))
+    || (isStringList(clause.not_paths) && !clause.not_paths.every(validRelativePath))) problems.push('invalid_trigger_not');
   return problems;
 }
 
