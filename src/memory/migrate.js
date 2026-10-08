@@ -34,8 +34,9 @@ export async function migrateProject({ ddDir, dryRun = false } = {}) {
     catch { unreadable.push(relative(ddDir, file).replaceAll('\\', '/')); }
   }
   const titles = new Map(atoms.map(atom => [atom.id, atom.title]));
+  const liveByTopic = new Map(atoms.filter(atom => ['active', 'contested'].includes(atom.lifecycle_state)).map(atom => [atom.topic_key, atom.title]));
   const memories = atoms.map(atom => {
-    const memory = convertV1(atom, { titles });
+    const memory = convertV1(atom, { titles, liveByTopic });
     // A live memory needs a trigger: one that converts without any waits as a candidate.
     return LIVE_STATUSES.includes(memory.status) && !memory.triggers.length ? { ...memory, status: 'candidate' } : memory;
   });

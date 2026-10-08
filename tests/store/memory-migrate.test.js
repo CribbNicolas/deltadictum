@@ -52,12 +52,19 @@ test('a migration writes every memory, removes the v1 directories and keeps conf
   const store = createMemoryFiles(dd);
   const all = await store.list();
   assert.deepEqual(all.map(m => m.id).sort(), ['bare', 'cand', 'gone', 'live', 'old']);
-  assert.equal(all.find(m => m.id === 'gone').topic, 'testing/live-abandoned');
+  assert.equal(all.find(m => m.id === 'gone').topic, 'testing/live-abandoned-gone');
   // An active memory with no trigger waits as a candidate.
   assert.equal(all.find(m => m.id === 'bare').status, 'candidate');
   assert.equal(all.find(m => m.id === 'live').updated, '2026-09-02T00:00:00.000Z');
   assert.equal((await store.manifest()).count, 5);
   assert.deepEqual(readdirSync(dd).sort(), ['config.json', 'memories', 'relations.json']);
+});
+
+test('a legacy memory with no recorded replacement names the live memory on its topic', async t => {
+  const dd = v1Store(t, [['legacy/orphan.json', atom('orphan', { lifecycle_state: 'legacy', topic_key: 'testing/live', legacy_reason: 'Old.', replaced_by: null })]]);
+  await migrateProject({ ddDir: dd });
+  const orphan = await createMemoryFiles(dd).get('orphan');
+  assert.match(orphan.body, /Now: Title live$/);
 });
 
 test('a second run finds nothing to migrate', async t => {
