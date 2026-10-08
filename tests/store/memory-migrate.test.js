@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { migrateProject } from '../../src/memory/migrate.js';
@@ -16,7 +16,7 @@ const atom = (id, over = {}) => ({
 function v1Store(t, extra = []) {
   const dd = join(mkdtempSync(join(tmpdir(), 'dd-migrate-')), '.dd');
   t.after(() => rmSync(join(dd, '..'), { recursive: true, force: true }));
-  const put = (path, value) => { mkdirSync(join(dd, path, '..'), { recursive: true }); writeFileSync(join(dd, path), JSON.stringify(value)); };
+  const put = (path, value) => { mkdirSync(join(dd, path, '..'), { recursive: true }); writeFileSync(join(dd, path), typeof value === 'string' ? value : JSON.stringify(value)); };
   put('atoms/testing/live.json', atom('live'));
   put('atoms/testing/bare.json', atom('bare', { applies_to: { files: [] } }));
   put('candidates/cand.json', atom('cand', { lifecycle_state: 'candidate' }));
@@ -57,7 +57,7 @@ test('a migration writes every memory, removes the v1 directories and keeps conf
   assert.equal(all.find(m => m.id === 'bare').status, 'candidate');
   assert.equal(all.find(m => m.id === 'live').updated, '2026-09-02T00:00:00.000Z');
   assert.equal((await store.manifest()).count, 5);
-  assert.deepEqual(readdirSync(dd).sort(), ['config.json', 'memories', 'relations.json']);
+  assert.deepEqual(readdirSync(dd).sort(), ['.gitignore', 'config.json', 'memories', 'relations.json']);
 });
 
 test('a legacy memory with no recorded replacement names the live memory on its topic', async t => {
@@ -65,6 +65,33 @@ test('a legacy memory with no recorded replacement names the live memory on its 
   await migrateProject({ ddDir: dd });
   const orphan = await createMemoryFiles(dd).get('orphan');
   assert.match(orphan.body, /Now: Title live$/);
+});
+
+test('a pending v1 write is applied before the migration reads, so it is not lost', async t => {
+  const dd = v1Store(t);
+  writeFileSync(join(dd, '.pending-write.json'), JSON.stringify({ version: 1, operations: [{ path: 'atoms/testing/late.json', value: atom('late') }] }));
+  const dry = await migrateProject({ ddDir: dd, dryRun: true });
+  assert.equal(dry.pending_journal, true);
+  await migrateProject({ ddDir: dd });
+  assert.equal((await createMemoryFiles(dd).get('late'))?.title, 'Title late');
+});
+
+test('a file the migration would not convert, or two files with one id, block it', async t => {
+  const odd = v1Store(t, [['candidates/notes.txt', 'hand-written']]);
+  const blocked = await migrateProject({ ddDir: odd });
+  assert.deepEqual(blocked.unexpected, ['candidates/notes.txt']);
+  assert.equal(existsSync(join(odd, 'memories')), false);
+  const twin = v1Store(t, [['archive/copy.json', atom('live', { lifecycle_state: 'superseded' })]]);
+  const report = await migrateProject({ ddDir: twin });
+  assert.deepEqual(report.failures, [{ id: 'live', topic: 'testing/live', reasons: ['duplicate_id'] }]);
+  assert.equal(existsSync(join(twin, 'memories')), false);
+});
+
+test('the migration keeps derived files out of git', async t => {
+  const dd = v1Store(t);
+  writeFileSync(join(dd, '.gitignore'), 'ui.json\n');
+  await migrateProject({ ddDir: dd });
+  assert.equal(readFileSync(join(dd, '.gitignore'), 'utf8'), 'ui.json\nlocal/\nmemories/manifest.json\n');
 });
 
 test('a second run finds nothing to migrate', async t => {

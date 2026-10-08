@@ -81,6 +81,18 @@ test('a rewrite keeps the creation date and moves the update date, unless dates 
   assert.equal(kept.updated, '2026-09-01T00:00:00.000Z');
 });
 
+test('a topic conflict already on disk is reported and blocks only commits on that topic', async t => {
+  const { dir, store } = scratch(t);
+  mkdirSync(join(dir, 'memories'), { recursive: true });
+  writeFileSync(join(dir, 'memories', 'x.json'), JSON.stringify(memory('x', { topic: 'testing/merged' })));
+  writeFileSync(join(dir, 'memories', 'y.json'), JSON.stringify(memory('y', { topic: 'testing/merged' })));
+  await store.commit({ put: [memory('other')] });
+  assert.deepEqual(await store.conflicts(), [{ topic: 'testing/merged', ids: ['x', 'y'] }]);
+  await assert.rejects(store.commit({ put: [memory('z', { topic: 'testing/merged' })] }), /live_topic_conflict/);
+  await store.commit({ put: [{ ...(await store.get('y')), status: 'superseded' }] });
+  assert.deepEqual(await store.conflicts(), []);
+});
+
 test('concurrent commits both land, serialized by the write lock', async t => {
   const { store } = scratch(t);
   await Promise.all([store.commit({ put: [memory('x1')] }), store.commit({ put: [memory('x2')] })]);
