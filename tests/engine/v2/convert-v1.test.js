@@ -107,9 +107,14 @@ test('a legacy memory names the live memory on its topic when v1 recorded no rep
   assert.ok(orphan.review.issues.includes('replacement_unknown'));
 });
 
-test('a v1 folder scope becomes a glob over the folder', () => {
-  const m = convertV1(atom({ anchors: {}, applies_to: { files: ['skills/', 'tests\\'] } }));
-  assert.deepEqual(m.triggers, [{ on: ['read', 'edit', 'write'], paths: ['skills/**', 'tests/**'] }]);
+test('a v1 folder scope is flagged for review, never turned into a trigger', () => {
+  // A whole folder fires on most work: tests/** reached 52% of the bench's runs.
+  const m = convertV1(atom({ anchors: {}, applies_to: { files: ['skills/', 'tests\\', 'src/a.js'] } }));
+  assert.deepEqual(m.triggers, [{ on: ['read', 'edit', 'write'], paths: ['src/a.js'] }]);
+  assert.ok(m.review.issues.includes('folder_scope'));
+  const onlyFolder = convertV1(atom({ anchors: {}, applies_to: { files: ['tests/'] } }));
+  assert.deepEqual(onlyFolder.triggers, []);
+  assert.ok(onlyFolder.review.issues.includes('no_triggers'));
 });
 
 test('a long body is converted whole and flagged; a memory with no trigger is flagged', () => {
