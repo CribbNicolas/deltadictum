@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import { openStore } from './project.js';
+import { join } from 'node:path';
+import { findRepoRoot, openStore } from './project.js';
+import { migrateProject } from './memory/migrate.js';
 import { startResidentServer } from './ui/server.js';
 import { orientProject } from './engine/project-context.js';
 import { readRegistry, residentFit, residentStatus, retireResident, writeRegistry } from './resident.js';
@@ -16,6 +18,7 @@ Usage: deltadictum [command]
   mcp                 Run the MCP server over stdio for the project in DD_PROJECT_DIR or the current directory
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
+  migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
   status              Knowledge counts by lifecycle state, and where the project's files live
   health              The deterioration report (crowding, disputes, unreadable knowledge files)
   orient [ACTION]     Project facts and source pointers, with knowledge for ACTION when given
@@ -47,10 +50,19 @@ async function runInstall(args) {
   }, null, 2));
 }
 
+// Converts the project's v1 store before any store opens it: a v2 store has no atoms to index.
+async function runMigrate(args) {
+  const repoRoot = await findRepoRoot(process.cwd());
+  const report = await migrateProject({ ddDir: join(repoRoot, '.dd'), dryRun: args.includes('--dry-run') });
+  console.log(JSON.stringify(report, null, 2));
+  if (report.failures.length || report.unreadable.length) process.exitCode = 1;
+}
+
 async function main() {
   if (['help', '--help', '-h'].includes(command)) { console.log(USAGE); return; }
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'install') return runInstall(rest);
+  if (command === 'migrate') return runMigrate(rest);
   if (command === 'mcp') { await import('./mcp/server.js'); return; }
   if (!command || command === 'ui' || command === 'resident') return runResident();
   if (!PROJECT_COMMANDS.includes(command)) {
