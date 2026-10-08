@@ -93,6 +93,19 @@ test('a topic conflict already on disk is reported and blocks only commits on th
   assert.deepEqual(await store.conflicts(), []);
 });
 
+test('a missing or outdated manifest is rebuilt from the files', async t => {
+  const { dir, store } = scratch(t);
+  await store.commit({ put: [memory('m1')] });
+  const expected = await store.manifest();
+  rmSync(join(dir, 'memories', 'manifest.json'));
+  assert.equal(await store.refreshManifest(), true);
+  assert.deepEqual(await store.manifest(), expected);
+  assert.equal(await store.refreshManifest(), false);
+  writeFileSync(join(dir, 'memories', 'm2.json'), JSON.stringify(memory('m2')));
+  assert.equal(await store.refreshManifest(), true);
+  assert.equal((await store.manifest()).count, 2);
+});
+
 test('concurrent commits both land, serialized by the write lock', async t => {
   const { store } = scratch(t);
   await Promise.all([store.commit({ put: [memory('x1')] }), store.commit({ put: [memory('x2')] })]);
