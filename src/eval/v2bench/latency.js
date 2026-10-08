@@ -12,12 +12,16 @@ export function summarize(times) {
 }
 
 // Wall time of a fresh Node process with these arguments, as a hook pays it.
-export function timeSpawn(args, { runs = 30, input = '' } = {}) {
+// prepare(i) gives run i its own arguments (a fresh ledger, so every run does the
+// same work); a run that fails stops the timing rather than being counted.
+export function timeSpawn(args, { runs = 30, input = '', prepare } = {}) {
   const times = [];
   for (let i = 0; i < runs; i += 1) {
+    const argv = prepare ? prepare(i) : args;
     const start = performance.now();
-    spawnSync(process.execPath, args, { input, windowsHide: true });
+    const result = spawnSync(process.execPath, argv, { input, windowsHide: true });
     times.push(performance.now() - start);
+    if (result.status !== 0) throw new Error(`spawn_failed:${result.status}:${String(result.stderr ?? '').slice(0, 200)}`);
   }
   return summarize(times);
 }

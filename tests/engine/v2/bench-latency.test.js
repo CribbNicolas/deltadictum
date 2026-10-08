@@ -5,7 +5,17 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stalenessTiming, summarize } from '../../../src/eval/v2bench/latency.js';
+import { stalenessTiming, summarize, timeSpawn } from '../../../src/eval/v2bench/latency.js';
+
+test('a timed process that fails stops the timing instead of being counted', () => {
+  assert.throws(() => timeSpawn(['-e', 'process.exit(3)'], { runs: 1 }), /spawn_failed:3/);
+});
+
+test('each timed run can get its own arguments, such as a fresh ledger', () => {
+  const seen = [];
+  timeSpawn(null, { runs: 2, prepare: i => { seen.push(i); return ['-e', '']; } });
+  assert.deepEqual(seen, [0, 1]);
+});
 
 test('timings summarize to the median and the 95th percentile', () => {
   assert.deepEqual(summarize([5, 1, 3, 2, 4]), { p50: 3, p95: 5 });
