@@ -1,5 +1,5 @@
 import { compilePattern } from '../checks/pattern.js';
-import { DIMENSIONS, EVENT_KINDS } from '../engine/clause.js';
+import { DIMENSIONS, EVENT_KINDS } from '../engine/clause.cjs';
 import { containsSecret, hasUnsafeMemoryContent } from '../engine/v2/sanitizer.js';
 import { BODY_MAX } from './convert-v1.js';
 

@@ -1,5 +1,5 @@
 import { unsafePattern } from '../../checks/pattern.js';
-import { globToRegExp } from '../../engine/clause.js';
+import { globToRegExp } from '../../engine/clause.cjs';
 
 export { unsafePattern };
 

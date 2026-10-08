@@ -2,7 +2,7 @@
 // event and the memories, match, claim in the session ledger, answer.
 //   node hook-sim.mjs <memories.json> <ledger.jsonl>  < event.json
 import { appendFileSync, readFileSync } from 'node:fs';
-import { memoryMatch } from '../../engine/clause.js';
+import { memoryMatch } from '../../engine/clause.cjs';
 
 const [indexPath, ledgerPath] = process.argv.slice(2);
 const event = JSON.parse(readFileSync(0, 'utf8') || '{}');
