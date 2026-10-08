@@ -12,7 +12,7 @@ export const STATUSES = ['candidate', 'active', 'contested', 'superseded', 'arch
 export const LIVE_STATUSES = ['active', 'contested'];
 export const ORIGINS = ['model_initiated', 'user_explicit'];
 export const EVIDENCE_TYPES = ['file', 'observation', 'correction', 'note'];
-// keywords allow 16 because v1 anchors did: a migrated store must still validate.
+// keywords and not allow 16 because v1 anchors did: a migrated store must still validate.
 export const LIMITS = { body: BODY_MAX, title: 200, not_derivable: 300, file: 16000, list: 12, keywords: 16,
   phrase: 100, glob: 200, say: 200, summary: 500 };
 
@@ -51,7 +51,7 @@ function clauseProblems(clause) {
   for (const key of [...DIMENSIONS, 'not', 'not_paths']) {
     if (clause[key] === undefined) continue;
     if (!isStringList(clause[key])) { problems.push('invalid_trigger_entry'); continue; }
-    if (clause[key].length > (key === 'keywords' ? LIMITS.keywords : LIMITS.list)) problems.push('too_many_trigger_entries');
+    if (clause[key].length > (key === 'keywords' || key === 'not' ? LIMITS.keywords : LIMITS.list)) problems.push('too_many_trigger_entries');
   }
   if (isStringList(clause.paths) && !clause.paths.every(validRelativePath)) problems.push('invalid_trigger_glob');
   if (isStringList(clause.symbols) && !clause.symbols.every(symbol => SYMBOL.test(symbol))) problems.push('invalid_trigger_symbol');
