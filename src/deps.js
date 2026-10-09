@@ -17,7 +17,8 @@ export const INSTALL_FAILED = '.dd-install.failed';
 export const INSTALL_LOG = '.dd-install.log';
 // An install that has held the lock this long is presumed dead.
 export const LOCK_STALE_MS = 15 * 60 * 1000;
-const REQUIRED = ['@modelcontextprotocol/sdk', 'zod', '@huggingface/transformers'];
+// The audit UI's resident still loads the embedding model (until v2 plan 6 makes it optional).
+const REQUIRED = ['@huggingface/transformers'];
 const INSTALLER = fileURLToPath(new URL('../scripts/install-deps.mjs', import.meta.url));
 
 // Resolved the way Node resolves the real imports, so a hoisted install (npm,

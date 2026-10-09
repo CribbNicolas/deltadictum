@@ -35,7 +35,6 @@
     "eval": "node src/eval/replay.js",
     "eval:models": "node src/eval/model-runner.js",
     "start": "node src/cli.js",
-    "mcp": "node src/mcp/server.js",
     "bench": "node src/eval/bench/run.js --project=.",
     "bench:semantic": "node src/eval/bench/run.js --project=. --provider=semantic",
     "bench:v2": "node src/eval/v2bench/run.js",
@@ -54,16 +53,12 @@
     "docs/memory",
     "skills",
     "hooks",
-    "mcp.js",
-    ".mcp.json",
     "scripts",
     "LICENSE",
     "npm-shrinkwrap.json"
   ],
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.31.0",
-    "zod": "^4.6.0",
     "@huggingface/transformers": "^4.3.0"
   },
   "repository": {

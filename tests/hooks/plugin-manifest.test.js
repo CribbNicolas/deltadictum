@@ -29,3 +29,16 @@ test('v2 listens at session start, at prompts and before the tools that carry pr
   assert.match(command('UserPromptSubmit'), / prompt$/);
   assert.match(command('PreToolUse'), / pre-tool$/);
 });
+
+test('DD ships no MCP server and no MCP dependency', async () => {
+  const plugin = JSON.parse(await readFile(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
+  assert.equal(plugin.mcpServers, undefined);
+  const grok = JSON.parse(await readFile(join(ROOT, '.grok-plugin', 'plugin.json'), 'utf8'));
+  assert.equal(grok.mcpServers, undefined);
+  const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  assert.equal(pkg.dependencies?.['@modelcontextprotocol/sdk'], undefined);
+  assert.equal(pkg.dependencies?.zod, undefined);
+  assert.equal(pkg.scripts.mcp, undefined);
+  await assert.rejects(access(join(ROOT, '.mcp.json')));
+  await assert.rejects(access(join(ROOT, 'src', 'mcp')));
+});
