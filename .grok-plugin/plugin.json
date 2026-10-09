@@ -1,21 +1,63 @@
 {
   "name": "deltadictum",
-  "mcpServers": "./.grok-plugin/mcp.json",
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" session-start", "timeout": 15 }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" session-start",
+            "timeout": 15
+          }
+        ]
+      }
     ],
     "PreToolUse": [
-      { "matcher": "*", "hooks": [{ "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool", "timeout": 10 }] }
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool",
+            "timeout": 10
+          }
+        ]
+      }
     ],
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" prompt", "timeout": 15 }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" prompt",
+            "timeout": 15
+          }
+        ]
+      }
     ],
     "PostToolUse": [
-      { "matcher": "*", "hooks": [{ "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" observe", "timeout": 15, "async": true }] }
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" observe",
+            "timeout": 15,
+            "async": true
+          }
+        ]
+      }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" stop", "timeout": 10 }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" stop",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

@@ -16,7 +16,6 @@ const USAGE = `DeltaDictum (DD) ${VERSION ?? ''}
 Usage: deltadictum [command]
 
   resident            Start the machine's resident process and audit UI (the default; alias: ui)
-  mcp                 Run the MCP server over stdio for the project in DD_PROJECT_DIR or the current directory
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
   migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
@@ -69,7 +68,6 @@ async function main() {
     console.log(JSON.stringify(await compileProject(await findRepoRoot(process.cwd())), null, 2));
     return;
   }
-  if (command === 'mcp') { await import('./mcp/server.js'); return; }
   if (!command || command === 'ui' || command === 'resident') return runResident();
   if (!PROJECT_COMMANDS.includes(command)) {
     console.error(`Unknown command: ${command}\n\n${USAGE}`);
