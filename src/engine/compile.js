@@ -100,6 +100,18 @@ function gitLines(root, args) {
   catch { return null; }
 }
 
+// The trigger symbols the project's code holds, in one git grep over tracked
+// files. DD's own files are excluded: a memory names its own symbols. null when
+// git cannot answer, so no symbol is reported dead on a guess.
+function codeSymbols(root, symbols) {
+  if (!symbols.length) return new Set();
+  try {
+    const out = execFileSync('git', ['-C', root, 'grep', '-h', '-o', '-w', '-F', '-I', '-f', '-', '--', '.', ':(exclude).dd'],
+      { input: `${symbols.join('\n')}\n`, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true, maxBuffer: 256 * 1024 * 1024 });
+    return new Set(out.split('\n').map(line => line.trim()).filter(Boolean));
+  } catch (err) { return err.status === 1 ? new Set() : null; }
+}
+
 export async function compileProject(root) {
   const paths = localPaths(root);
   const store = createMemoryFiles(paths.dd);
@@ -108,8 +120,8 @@ export async function compileProject(root) {
   const all = await store.list();
   const manifest = await store.manifest();
   const repoFiles = gitLines(root, ['ls-files']);
-  // git grep -l exits 1 (null here) when nothing matches.
-  const symbolExists = repoFiles ? symbol => gitLines(root, ['grep', '-l', '-w', '-F', '-e', symbol]) !== null : null;
+  const found = repoFiles ? codeSymbols(root, [...new Set(all.flatMap(memory => (memory.triggers ?? []).flatMap(clause => clause.symbols ?? [])))]) : null;
+  const symbolExists = found ? symbol => found.has(symbol) : null;
   const compiled = compileIndex({ memories: all, manifest, fingerprint: memoryFilesFingerprint(paths.memories), repoFiles, symbolExists });
   await ensureIgnored(paths.dd);
   writeCompiled(paths, compiled);

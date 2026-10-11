@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,6 +130,26 @@ test('compiling a project writes the index, the bodies and the git-ignore for de
   assert.match(readFileSync(join(root, '.dd', '.gitignore'), 'utf8'), /^local\/$/m);
   await compileProject(root);
   assert.equal(readFileSync(join(root, '.dd', '.gitignore'), 'utf8').match(/^local\/$/gm).length, 1);
+});
+
+// A memory file names its own symbols; only the project's code says whether they exist.
+test('a symbol found only in DD files is dead; one in the code is not, however many there are', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-compile-git-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (...args) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+  git('init', '-q');
+  mkdirSync(join(root, 'src'));
+  const present = Array.from({ length: 60 }, (_, i) => `liveSymbol${i}`);
+  writeFileSync(join(root, 'src', 'a.js'), present.map(name => `export function ${name}() {}`).join('\n'));
+  // At most 12 symbols a clause: six memories of ten, the last with a symbol no code has.
+  const groups = Array.from({ length: 6 }, (_, i) => present.slice(i * 10, i * 10 + 10));
+  groups[5].push('ghostSymbol');
+  await createMemoryFiles(join(root, '.dd')).commit({ put: groups.map((symbols, i) => memory(`m${i}`, { triggers: [
+    { on: ['edit'], paths: ['src/a.js'], symbols },
+  ] })) });
+  git('add', '-A');
+  const { warnings } = await compileProject(root);
+  assert.deepEqual(warnings.filter(w => w.kind === 'dead_symbol').map(w => w.value), ['ghostSymbol']);
 });
 
 test('deltadictum compile compiles the project it runs in', async t => {
