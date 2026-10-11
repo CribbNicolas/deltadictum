@@ -26,7 +26,7 @@ function localPaths(root) {
   const local = join(dd, 'local');
   const v2 = join(local, 'v2');
   return { dd, memories: join(dd, 'memories'), manifest: join(dd, 'memories', 'manifest.json'), local, v2,
-    index: join(v2, 'index.json'), bodies: join(v2, 'bodies.json'), sessions: join(local, 'sessions') };
+    index: join(v2, 'index.json'), sessions: join(local, 'sessions') };
 }
 
 module.exports = { findProjectRoot, localPaths };

@@ -27,7 +27,7 @@ function deliverFor(root, event, session) {
   const won = path ? new Set(openLedger(path).claim(fired.map(hit => hit.id))) : new Set(fired.map(hit => hit.id));
   const items = fired.filter(hit => won.has(hit.id));
   if (!items.length) return '';
-  const bodies = readBodies(root) ?? {};
+  const bodies = readBodies(root, index) ?? {};
   return renderDelivery({ label: (event.paths ?? []).join(', ') || event.kind, items: items.map(hit => ({ id: hit.id,
     ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '', stale: staleEvidence(root, bodies[hit.id]?.evidence) })) });
 }
