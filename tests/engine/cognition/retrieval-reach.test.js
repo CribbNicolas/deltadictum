@@ -7,7 +7,6 @@ import { createMemoryStore } from '../../../src/store/create-store.js';
 import { proposeMemory } from '../../../src/engine/write.js';
 import { retrieveMemories } from '../../../src/engine/retrieve.js';
 import { admitMemory, HUMAN_REVIEW } from '../../../src/engine/lifecycle.js';
-import { buildSessionStartContext } from '../../../src/hooks/session-start.js';
 import { estimateTokens } from '../../../src/engine/budget.js';
 
 // Regressions found against real stores (2026-09-22): reviewed memories that
@@ -69,15 +68,6 @@ test('changed evidence keeps the advice visible, flagged for review', async t =>
   assert.equal(recalled.memories[0].lifecycle_state, 'review_required');
   assert.match(recalled.memories[0].content, /Keep domain, application, infrastructure and client separate/);
   assert.match(recalled.memories[0].content, /evidence changed/i);
-});
-
-test('memories tagged ambient reach every session once, at session start', async t => {
-  const f = await fixture(t, { tags: ['ambient'] });
-  const start = await buildSessionStartContext({ store: f.store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 's1' });
-  assert.match(start.hookSpecificOutput.additionalContext, /Keep domain, application, infrastructure and client separate/);
-  // Already delivered in this session: the tool-call path does not repeat it.
-  const later = await f.retrieve({ action: 'when adding game logic, commands or presentation', session_id: 's1' });
-  assert.equal(later.memories.length, 0);
 });
 
 test('a memory delivered once in a session is not repeated because the next call is shaped differently', async t => {

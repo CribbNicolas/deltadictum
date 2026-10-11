@@ -17,8 +17,7 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { openBenchStore, inSplit } from './run.js';
-import { memoryMap, promptPack, PULL_GUIDANCE } from '../../hooks/session-start.js';
-import { preToolPack, preToolRequest } from '../../hooks/pre-tool.js';
+import { memoryMap, promptPack, PULL_GUIDANCE, preToolPack, preToolRequest } from './packs.js';
 import { samePath } from '../../paths.js';
 
 function askModel(prompt, { model, dir }) {

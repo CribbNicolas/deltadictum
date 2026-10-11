@@ -9,7 +9,7 @@ import { retrieveMemories } from '../../../src/engine/retrieve.js';
 import { admitMemory, HUMAN_REVIEW, declareContradiction } from '../../../src/engine/lifecycle.js';
 import { estimateTokens } from '../../../src/engine/budget.js';
 import { recordOutcome } from '../../../src/engine/feedback.js';
-import { microPack } from '../../../src/hooks/session-start.js';
+import { microPack } from '../../../src/eval/bench/packs.js';
 
 async function fixture(t, fields = {}) {
   const root = await mkdtemp(join(tmpdir(), 'dd-recall-'));

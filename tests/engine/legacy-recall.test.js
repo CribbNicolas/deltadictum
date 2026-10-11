@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
-import { microPack } from '../../src/hooks/session-start.js';
+import { microPack } from '../../src/eval/bench/packs.js';
 import { PROVENANCE } from '../helpers/atom.js';
 
 const atom = (id, topic, extra = {}) => ({ id, project_id: 'demo', memory_type: 'procedure', scope: 'project',
