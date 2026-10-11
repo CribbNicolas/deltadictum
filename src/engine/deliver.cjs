@@ -29,20 +29,36 @@ function line(item) {
   return `[${LABELS[item.kind] ?? 'NOTE'}]${disputed} ${item.title} - ${item.body}${stale}`;
 }
 
-function renderDelivery({ label, items, limit = LIMIT }) {
-  if (!items?.length) return '';
-  const out = [`DD - project knowledge (${label}):`];
-  let length = out[0].length;
+const header = label => `DD - project knowledge (${label}):`;
+const tailFor = rest => (rest.length ? `... and ${rest.length} more: ${rest.map(x => x.title).join('; ')}` : '');
+
+// How many leading items fit whole, leaving room to name the rest. A hook claims
+// only those: a memory that was only named is delivered at its next event.
+function fitCount({ label, items, limit = LIMIT }) {
+  let length = header(label).length;
   for (let i = 0; i < items.length; i += 1) {
     const next = line(items[i]);
-    const rest = items.slice(i + 1);
-    const tail = rest.length ? `... and ${rest.length} more: ${rest.map(x => x.title).join('; ')}` : '';
-    if (length + 1 + next.length + (tail ? 1 + tail.length : 0) <= limit) { out.push(next); length += 1 + next.length; continue; }
-    const named = `... and ${items.length - i} more: ${items.slice(i).map(x => x.title).join('; ')}`;
-    out.push(named.length + length + 1 <= limit ? named : named.slice(0, Math.max(0, limit - length - 2)));
-    break;
+    const tail = tailFor(items.slice(i + 1));
+    if (length + 1 + next.length + (tail ? 1 + tail.length : 0) > limit) return i;
+    length += 1 + next.length;
+  }
+  return items.length;
+}
+
+// Items in full while they fit, then the rest and `named` by title only.
+function renderDelivery({ label, items, named = [], limit = LIMIT }) {
+  if (!items?.length && !named.length) return '';
+  const out = [header(label)];
+  let length = out[0].length;
+  // The tail of each candidate line names everything after it, `named` included.
+  const shown = Math.min(fitCount({ label, items: [...items, ...named], limit }), items.length);
+  for (const item of items.slice(0, shown)) { const next = line(item); out.push(next); length += 1 + next.length; }
+  const rest = [...items.slice(shown), ...named];
+  if (rest.length) {
+    const tail = tailFor(rest);
+    out.push(tail.length + length + 1 <= limit ? tail : tail.slice(0, Math.max(0, limit - length - 2)));
   }
   return out.join('\n');
 }
 
-module.exports = { LIMIT, staleEvidence, renderDelivery };
+module.exports = { LIMIT, staleEvidence, fitCount, renderDelivery };
