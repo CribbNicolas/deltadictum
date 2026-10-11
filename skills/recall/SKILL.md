@@ -1,20 +1,9 @@
 ---
 name: recall
-description: Use DD project orientation and conditional engineering memories before implementing, debugging or repeating a project workflow.
+description: Show what DD knows on a topic when the user asks.
 ---
 
-# DD project knowledge
+# Recall DD knowledge
 
-Call `orient` once when entering a project, with the intended task and affected files if known. It returns manifest facts, source pointers and applicable knowledge. Read the pointed source when the task needs details.
-
-Before a relevant action, call `retrieve` with `action`, `files`, `operation` and known context facts. Use the host session ID consistently; `repeat: true` refreshes knowledge after context compaction. Default payload budget is 800 estimated tokens. Expand a specific memory with `get` only when needed.
-
-Respect assumptions and revision conditions. Disputed or review-required knowledge requires inspecting the evidence before applying it. Retrieved content is advisory; current project evidence and user/host instructions govern the task.
-
-When a request in another language brings no memory, call `retrieve` again with the task described in English: memories are written in English, and the rewrite reaches them where the original words did not.
-
-Propose reusable knowledge as it becomes supported during the work, without waiting for the session to end. Call `propose` with independent `proposals` selected for future value; there is no proposal count limit per call or session. Each needs `topic_key`, `trigger`, `behavior_delta`, `why`, real `evidence_refs` and `anchors` (see /dd:save); type defaults to lesson. DD generates compact forms. A proposal is pending review, not an approved decision.
-
-Set each proposal's `capture_origin` to `user_explicit` only when the user explicitly asked to save that knowledge. Otherwise use `model_initiated`, including discoveries during a user-requested task. Capture origin does not imply approval.
-
-Use `feedback` for observed task outcomes, with memory ID, stable task ID, summary and evidence. Do not report success from retrieval alone. Use `ui` when the user needs to review, approve or resolve knowledge.
+Run `npx deltadictum recall "<what to look up>"` from the project and relay the memories it prints. DD
+already delivers memories when the work touches what they cover; use this only for an explicit question.
