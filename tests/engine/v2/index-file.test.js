@@ -14,9 +14,9 @@ function project(t) {
   mkdirSync(p.v2, { recursive: true });
   writeFileSync(join(p.memories, 'm1.json'), '{"id":"m1"}');
   writeFileSync(p.manifest, JSON.stringify({ version: 1, count: 1, hash: 'h1' }));
-  const index = { version: INDEX_VERSION, manifest: { count: 1, hash: 'h1' }, fingerprint: memoryFilesFingerprint(p.memories), memories: {}, clauses: [] };
+  const index = { version: INDEX_VERSION, manifest: { count: 1, hash: 'h1' }, fingerprint: memoryFilesFingerprint(p.memories), bodies: 'bodies-t1.json', memories: {}, clauses: [] };
   writeFileSync(p.index, JSON.stringify(index));
-  writeFileSync(p.bodies, JSON.stringify({ m1: { body: 'b', evidence: [] } }));
+  writeFileSync(join(p.v2, 'bodies-t1.json'), JSON.stringify({ m1: { body: 'b', evidence: [] } }));
   return { root, p };
 }
 
@@ -25,7 +25,24 @@ test('a fresh index is not stale and loads with its bodies', t => {
   const index = loadIndex(root);
   assert.equal(isStale(index, root), false);
   assert.equal(needsCompile(index, root), false);
-  assert.deepEqual(readBodies(root), { m1: { body: 'b', evidence: [] } });
+  assert.deepEqual(readBodies(root, index), { m1: { body: 'b', evidence: [] } });
+});
+
+// The hot path must not read an index of another shape as this one: it is
+// ignored, and session start recompiles it.
+test('an index of another version does not load, and needs a compile', t => {
+  const { root, p } = project(t);
+  writeFileSync(p.index, JSON.stringify({ version: INDEX_VERSION - 1, manifest: { count: 1, hash: 'h1' }, memories: { m1: {} },
+    clauses: [{ m: 'm1', on: ['read'], dims: ['paths'], paths: ['.*'] }] }));
+  assert.equal(loadIndex(root), null);
+  assert.equal(needsCompile(loadIndex(root), root), true);
+});
+
+test('bodies come only from the file the index names, inside the index folder', t => {
+  const { root } = project(t);
+  assert.equal(readBodies(root, null), null);
+  assert.equal(readBodies(root, { bodies: undefined }), null);
+  for (const name of ['../../memories/m1.json', 'bodies-t1.json/../x', 'index.json']) assert.equal(readBodies(root, { bodies: name }), null, name);
 });
 
 test('a missing or unreadable index, another version or a changed manifest is stale', t => {

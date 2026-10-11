@@ -8,14 +8,27 @@ const { localPaths } = require('./locate.cjs');
 // manifest's hash with the index's (0.3 ms, bench decision 4); session start also
 // compares a fingerprint of the memory files, which catches hand edits and git
 // pulls that never rewrote the manifest.
-const INDEX_VERSION = 2;
+// Version 3: each build writes its own bodies file, named by the index.
+const INDEX_VERSION = 3;
 
 function readJson(path) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
-const loadIndex = root => readJson(localPaths(root).index);
-const readBodies = root => readJson(localPaths(root).bodies);
+// An index of another version is not read as this one: hooks ignore it until
+// session start recompiles.
+function loadIndex(root) {
+  const index = readJson(localPaths(root).index);
+  return index?.version === INDEX_VERSION ? index : null;
+}
+
+// The bodies of the build that wrote this index, so a hook never pairs an index
+// with another build's bodies. Only a plain name inside the index folder is read.
+const BODIES_NAME = /^bodies-[a-z0-9]+\.json$/;
+function readBodies(root, index) {
+  const name = index?.bodies;
+  return typeof name === 'string' && BODIES_NAME.test(name) ? readJson(join(localPaths(root).v2, name)) : null;
+}
 const manifestHash = root => readJson(localPaths(root).manifest)?.hash ?? null;
 
 function isStale(index, root) {
@@ -38,4 +51,4 @@ function memoryFilesFingerprint(memoriesDir) {
 
 const needsCompile = (index, root) => isStale(index, root) || index.fingerprint !== memoryFilesFingerprint(localPaths(root).memories);
 
-module.exports = { INDEX_VERSION, readJson, loadIndex, readBodies, manifestHash, isStale, memoryFilesFingerprint, needsCompile };
+module.exports = { INDEX_VERSION, BODIES_NAME, readJson, loadIndex, readBodies, manifestHash, isStale, memoryFilesFingerprint, needsCompile };

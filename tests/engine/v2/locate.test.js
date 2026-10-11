@@ -32,6 +32,6 @@ test('local files live under .dd/local', () => {
   assert.equal(p.memories, join('R', '.dd', 'memories'));
   assert.equal(p.manifest, join('R', '.dd', 'memories', 'manifest.json'));
   assert.equal(p.index, join('R', '.dd', 'local', 'v2', 'index.json'));
-  assert.equal(p.bodies, join('R', '.dd', 'local', 'v2', 'bodies.json'));
+  assert.equal(p.bodies, undefined);
   assert.equal(p.sessions, join('R', '.dd', 'local', 'sessions'));
 });

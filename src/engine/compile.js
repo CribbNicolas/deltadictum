@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { DIMENSIONS, globToRegExp, shellTokens } from './clause.cjs';
-import { INDEX_VERSION, memoryFilesFingerprint } from './index-file.cjs';
+import { INDEX_VERSION, memoryFilesFingerprint, readJson } from './index-file.cjs';
 import { localPaths } from './locate.cjs';
 import { words } from './text.cjs';
 import { ensureIgnored } from '../memory/ignore.js';
@@ -45,10 +47,10 @@ function triggerWarnings(memory, repoFiles, symbolExists) {
   return warnings;
 }
 
-export function compileIndex({ memories, manifest, fingerprint = null, repoFiles = null, symbolExists = null }) {
+export function compileIndex({ memories, manifest, fingerprint = null, repoFiles = null, symbolExists = null, bodiesFile = null }) {
   const live = memories.filter(memory => LIVE_STATUSES.includes(memory.status));
   const index = { version: INDEX_VERSION, manifest: { count: manifest?.count ?? 0, hash: manifest?.hash ?? '' }, fingerprint,
-    memories: {}, clauses: [] };
+    bodies: bodiesFile, memories: {}, clauses: [] };
   const bodies = {};
   const warnings = [];
   for (const memory of live) {
@@ -61,13 +63,35 @@ export function compileIndex({ memories, manifest, fingerprint = null, repoFiles
   return { index, bodies, warnings };
 }
 
-// Bodies first, then the index: a reader that sees the new index finds its bodies.
-export function writeCompiled(paths, { index, bodies }) {
+// Windows refuses a rename over a file another process has open for a moment
+// (a hook reading the index): retried briefly, then the error stands.
+const RETRY_CODES = new Set(['EPERM', 'EBUSY', 'EACCES']);
+const RETRY_DELAYS_MS = [10, 20, 40, 80];
+function renameRetrying(from, to, rename) {
+  for (let attempt = 0; ; attempt += 1) {
+    try { return rename(from, to); } catch (err) {
+      if (!RETRY_CODES.has(err.code) || attempt >= RETRY_DELAYS_MS.length) throw err;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, RETRY_DELAYS_MS[attempt]);
+    }
+  }
+}
+
+const newBodiesName = () => `bodies-${Date.now().toString(36)}${randomBytes(4).toString('hex')}.json`;
+
+// Each build writes its own bodies file, then the index that names it: a hook
+// holding either index finds the bodies of its build. The previous build's
+// bodies stay for a hook that read the previous index; older ones are removed.
+export function writeCompiled(paths, { index, bodies }, { rename = renameSync } = {}) {
   mkdirSync(paths.v2, { recursive: true });
-  for (const [file, value] of [[paths.bodies, bodies], [paths.index, index]]) {
+  const named = { ...index, bodies: index.bodies ?? newBodiesName() };
+  const previous = readJson(paths.index)?.bodies;
+  for (const [file, value] of [[join(paths.v2, named.bodies), bodies], [paths.index, named]]) {
     const temp = `${file}.${process.pid}.tmp`;
     writeFileSync(temp, JSON.stringify(value));
-    try { renameSync(temp, file); } finally { rmSync(temp, { force: true }); }
+    try { renameRetrying(temp, file, rename); } finally { rmSync(temp, { force: true }); }
+  }
+  for (const name of readdirSync(paths.v2)) {
+    if (/^bodies.*\.json$/.test(name) && name !== named.bodies && name !== previous) rmSync(join(paths.v2, name), { force: true });
   }
 }
 
