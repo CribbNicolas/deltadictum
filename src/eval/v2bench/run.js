@@ -10,6 +10,7 @@ import { compileIndex, writeCompiled } from '../../engine/compile.js';
 import { localPaths } from '../../engine/locate.cjs';
 import { loadIndex } from '../../engine/index-file.cjs';
 import { matchEvent, prepareIndex } from '../../engine/match.cjs';
+import { synthesizeMemories } from './synth.js';
 import { convertV1 } from '../../memory/convert-v1.js';
 import { productionEngine } from './engine.js';
 import { scoreCheck, scoreCommandCheck } from './checks.js';
@@ -87,25 +88,39 @@ if (!('no-latency' in args)) {
       node_start: timeSpawn(['-e', '']),
       hook: timeSpawn(null, { input: event, prepare: i => [sim, index, join(dir, `ledger-${i}.jsonl`)] }),
     };
-    // The production hot path over a project compiled from the same memories.
-    const root = join(dir, 'project');
-    const paths = localPaths(root);
-    mkdirSync(paths.memories, { recursive: true });
-    writeFileSync(paths.manifest, JSON.stringify({ version: 1, count: memories.length, hash: 'bench' }));
-    writeCompiled(paths, compileIndex({ memories, manifest: { count: memories.length, hash: 'bench' } }));
+    // The production hot path over a project compiled from these memories, and
+    // over 300 synthesized ones (a project with years of memories).
+    const compiled = (name, set) => {
+      const root = join(dir, name);
+      const paths = localPaths(root);
+      mkdirSync(paths.memories, { recursive: true });
+      writeFileSync(paths.manifest, JSON.stringify({ version: 1, count: set.length, hash: 'bench' }));
+      writeCompiled(paths, compileIndex({ memories: set, manifest: { count: set.length, hash: 'bench' } }));
+      return { root, runtime: prepareIndex(loadIndex(root)), count: set.length };
+    };
+    const synthetic = synthesizeMemories(fixture, 300);
+    const scales = { project: compiled('project', memories), synthetic: compiled('synthetic', synthetic) };
+    // The common case must really fire nothing, and the other must fire: a wrong
+    // event would time one path under the other's label.
+    const quietCandidates = [{ kind: 'read', paths: ['bench-quiet/untouched.txt'] }, { kind: 'run', paths: [], text: 'echo dd-bench-quiet' }];
+    const fixtureReads = fixture.runs.flatMap(run => run.events).filter(e => e.kind === 'read');
+    for (const [name, scale] of Object.entries(scales)) {
+      scale.quiet = quietCandidates.find(e => !matchEvent(scale.runtime, e).length);
+      scale.fires = [JSON.parse(event), ...fixtureReads].find(e => matchEvent(scale.runtime, e).length);
+      if (!scale.quiet || !scale.fires) throw new Error(`bench_events_unusable:${name}`);
+    }
     const real = fileURLToPath(new URL('./hook-real.cjs', import.meta.url));
-    // The common case must really fire nothing: a memory naming the quiet path
-    // would time the delivery path under the wrong label.
-    const quiet = { kind: 'read', paths: ['bench-quiet/untouched.txt'] };
-    if (matchEvent(prepareIndex(loadIndex(root)), quiet).length) throw new Error(`bench_quiet_event_fires: ${quiet.paths[0]}`);
-    // Interleaved so drift hits all three alike: the common case (nothing fires) and a read that fires.
-    const timed = timeInterleaved({
-      node: { prepare: () => ['-e', ''] },
-      nothing_fires: { prepare: i => [real, root, `quiet-${i}`], input: JSON.stringify(quiet) },
-      fires: { prepare: i => [real, root, `fire-${i}`], input: event },
-    });
+    // Interleaved so drift hits every series alike.
+    const series = { node: { prepare: () => ['-e', ''] } };
+    for (const [name, scale] of Object.entries(scales)) {
+      series[`${name}_nothing_fires`] = { prepare: i => [real, scale.root, `quiet-${i}`], input: JSON.stringify(scale.quiet) };
+      series[`${name}_fires`] = { prepare: i => [real, scale.root, `fire-${i}`], input: JSON.stringify(scale.fires) };
+    }
+    const timed = timeInterleaved(series);
     const over = name => Math.round((timed[name].p50 - timed.node.p50) * 10) / 10;
-    report.latency.production = { ...timed, overhead_nothing_fires_ms: over('nothing_fires'), overhead_fires_ms: over('fires') };
+    report.latency.production = Object.fromEntries(Object.entries(scales).map(([name, scale]) => [name, { memories: scale.count,
+      overhead_nothing_fires_ms: over(`${name}_nothing_fires`), overhead_fires_ms: over(`${name}_fires`) }]));
+    report.latency.production.timed = timed;
   } finally { rmSync(dir, { recursive: true, force: true }); }
   report.staleness = await stalenessTiming();
 }
@@ -126,7 +141,7 @@ const lines = [
   `Command checks: ${report.command_checks.map(c => `${c.memory} fired in ${c.fired} runs`).join('; ')}`,
   `Classification: ${JSON.stringify(report.classification.counts)}; review issues: ${JSON.stringify(report.review_issues)}`,
   report.latency ? `Latency (ms): node start ${JSON.stringify(report.latency.node_start)}, hook ${JSON.stringify(report.latency.hook)}` : 'Latency: skipped',
-  report.latency ? `Production hook overhead over node start (ms, p50, interleaved): nothing fires ${report.latency.production.overhead_nothing_fires_ms}, a read that fires ${report.latency.production.overhead_fires_ms}` : '',
+  ...(report.latency ? ['project', 'synthetic'].map(name => { const r = report.latency.production[name]; return `Production hook overhead over node start (ms, p50, interleaved), ${r.memories} memories: nothing fires ${r.overhead_nothing_fires_ms}, fires ${r.overhead_fires_ms}`; }) : []),
   `Production engine equals reference: ${report.production_equals_reference}`,
   report.staleness ? `Staleness at ${report.staleness.files} files (ms): stat all ${JSON.stringify(report.staleness.stat_all)}, manifest ${JSON.stringify(report.staleness.manifest)}` : '',
 ];
