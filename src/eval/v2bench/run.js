@@ -8,6 +8,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compileIndex, writeCompiled } from '../../engine/compile.js';
 import { localPaths } from '../../engine/locate.cjs';
+import { loadIndex } from '../../engine/index-file.cjs';
+import { matchEvent, prepareIndex } from '../../engine/match.cjs';
 import { convertV1 } from '../../memory/convert-v1.js';
 import { productionEngine } from './engine.js';
 import { scoreCheck, scoreCommandCheck } from './checks.js';
@@ -92,10 +94,14 @@ if (!('no-latency' in args)) {
     writeFileSync(paths.manifest, JSON.stringify({ version: 1, count: memories.length, hash: 'bench' }));
     writeCompiled(paths, compileIndex({ memories, manifest: { count: memories.length, hash: 'bench' } }));
     const real = fileURLToPath(new URL('./hook-real.cjs', import.meta.url));
+    // The common case must really fire nothing: a memory naming the quiet path
+    // would time the delivery path under the wrong label.
+    const quiet = { kind: 'read', paths: ['bench-quiet/untouched.txt'] };
+    if (matchEvent(prepareIndex(loadIndex(root)), quiet).length) throw new Error(`bench_quiet_event_fires: ${quiet.paths[0]}`);
     // Interleaved so drift hits all three alike: the common case (nothing fires) and a read that fires.
     const timed = timeInterleaved({
       node: { prepare: () => ['-e', ''] },
-      nothing_fires: { prepare: i => [real, root, `quiet-${i}`], input: JSON.stringify({ kind: 'read', paths: ['README.md'] }) },
+      nothing_fires: { prepare: i => [real, root, `quiet-${i}`], input: JSON.stringify(quiet) },
       fires: { prepare: i => [real, root, `fire-${i}`], input: event },
     });
     const over = name => Math.round((timed[name].p50 - timed.node.p50) * 10) / 10;
