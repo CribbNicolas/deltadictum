@@ -1,6 +1,6 @@
 'use strict';
 
-const { hasTokens, shellTokens, symbolPattern } = require('./clause.cjs');
+const { PATH_FLAGS, hasTokens, shellTokens, symbolPattern } = require('./clause.cjs');
 const { containsPhrase, words } = require('./text.cjs');
 
 // The compiled matcher: the same answers as memoryMatch in clause.cjs on every
@@ -15,8 +15,8 @@ function prepareIndex(index) {
   for (const clause of index.clauses) for (const kind of clause.on) (raw[kind] ??= []).push(clause);
   const prepared = {};
   const compile = clause => ({ ...clause,
-    paths: clause.paths?.map(source => new RegExp(source)),
-    not_paths: clause.not_paths?.map(source => new RegExp(source)),
+    paths: clause.paths?.map(source => new RegExp(source, PATH_FLAGS)),
+    not_paths: clause.not_paths?.map(source => new RegExp(source, PATH_FLAGS)),
     symbols: clause.symbols?.map(symbolPattern) });
   return { memories: index.memories, clausesFor: kind => (prepared[kind] ??= (raw[kind] ?? []).map(compile)) };
 }
