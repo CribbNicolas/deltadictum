@@ -69,5 +69,5 @@ test('a hook sending one spelling is answered by a resident started with the oth
   const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
   t.after(async () => { await ui.close(); store.close(); });
   await registerResident(t, ui);
-  assert.notEqual(await callRunningStore('session-start', { session_id: 's' }, link), null);
+  assert.notEqual(await callRunningStore('retrieve', { action: 'edit the parser' }, link), null);
 });

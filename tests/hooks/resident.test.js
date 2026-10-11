@@ -3,12 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { ensureResident, projectUiUrl, writeRegistry } from '../../src/resident.js';
+import { ensureResident, projectUiUrl } from '../../src/resident.js';
 import { createMemoryStore } from '../../src/store/create-store.js';
 import { startResidentServer, startUiServer } from '../../src/ui/server.js';
-import { residentNotice, isInactive, buildSessionStartContext } from '../../src/hooks/session-start.js';
 import { callRunningStore } from '../../src/hooks/bridge.js';
 import { projectKey } from '../../src/project.js';
 import { registerResident, uiCookie, useTempRegistry } from '../helpers/resident.js';
@@ -68,55 +65,6 @@ test('DD_RESIDENT=0 disables starting one', async t => {
   assert.equal(result.state, 'disabled');
 });
 
-// Embeddings are required (2026-09-23): without a ready resident DD is inactive,
-// and SessionStart says why and how to fix it.
-test('DD is inactive, and says so, until a resident with its model is serving', async t => {
-  realMode(t);
-  assert.match(residentNotice({ state: 'started' }), /Inactive for now.*README > "Troubleshooting"/);
-  assert.match(residentNotice({ state: 'live', retrieval: 'loading' }), /loading its embedding model/);
-  assert.match(residentNotice({ state: 'live', retrieval: 'unavailable' }), /could not load its embedding model/);
-  assert.match(residentNotice({ state: 'unreachable' }), /not answering/);
-  assert.match(residentNotice({ state: 'disabled' }), /DD_RESIDENT=0/);
-  assert.equal(residentNotice({ state: 'live', retrieval: 'semantic' }), null);
-  assert.equal(isInactive({ state: 'live', retrieval: 'semantic' }), false);
-
-  const { store } = await project('c');
-  t.after(() => store.close());
-  const start = await buildSessionStartContext({ store, projectId: 'demo', uiUrl: 'http://127.0.0.1:7733', sessionId: 's', resident: { state: 'started' } });
-  const text = start.hookSpecificOutput.additionalContext;
-  assert.match(text, /DD - Inactive for now/);
-  assert.doesNotMatch(text, /Project context/);
-
-  process.env.DD_RETRIEVAL = 'lexical';
-  assert.equal(isInactive({ state: 'started' }), false);
-});
-
-// The registry is rewritten only once a new resident is listening, so at the
-// session start that replaces (or fails to start) one it still names the old,
-// dead address. SessionStart must not hand that address to the person.
-test('SessionStart names no audit URL for a resident that is not live', async t => {
-  realMode(t);
-  const registry = await useTempRegistry(t);
-  const { root, store } = await project('d');
-  store.close();
-  await writeRegistry({ url: 'http://127.0.0.1:1', port: 1, hookToken: 'a'.repeat(64) });
-  const output = await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [fileURLToPath(new URL('../../src/hooks/run.js', import.meta.url)), 'session-start'],
-      { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'],
-        env: { ...process.env, DD_RESIDENT: '0', DD_RESIDENT_REGISTRY: registry, DD_DATA: join(root, 'data') } });
-    let text = '';
-    child.stdout.on('data', chunk => { text += chunk; });
-    child.on('error', reject);
-    child.on('close', () => resolve(JSON.parse(text)));
-    child.stdin.end(JSON.stringify({ cwd: root, session_id: 's' }));
-  });
-  const text = output.hookSpecificOutput.additionalContext;
-  assert.match(text, /DD - Inactive: the resident DD process is disabled/);
-  assert.doesNotMatch(text, /127\.0\.0\.1:1\b/);
-  assert.doesNotMatch(text, /tell the user this URL/);
-  assert.equal(output.systemMessage, undefined);
-});
-
 // One resident, many projects, each from its own store; the model loads once.
 test('one resident serves several projects, each from its own store', async t => {
   realMode(t);
@@ -136,7 +84,7 @@ test('one resident serves several projects, each from its own store', async t =>
   await registerResident(t, server);
   await new Promise(resolve => setTimeout(resolve, 20));
   for (const root of [a.root, b.root, a.root]) {
-    assert.notEqual(await callRunningStore('session-start', { session_id: 's' }, root), null);
+    assert.notEqual(await callRunningStore('retrieve', { action: 'edit the parser' }, root), null);
   }
   assert.equal(opened.length, 2);
   assert.equal(created, 1);
@@ -147,39 +95,6 @@ test('one resident serves several projects, each from its own store', async t =>
   const status = await (await fetch(`${server.url}/api/status?project=${projectKey(b.root).key}`, { headers: uiCookie(server) })).json();
   assert.equal(status.project_id, 'id-2');
   assert.equal((await fetch(`${server.url}/api/status`, { headers: uiCookie(server) })).status, 400);
-});
-
-// A session that began before its resident listened had no address to show. The
-// person gets it, once, on the first prompt the resident answers; and a session
-// told the model was loading hears, once, that DD is now active.
-test('the first prompt a resident answers names the audit UI and says DD became active, once per session', async t => {
-  realMode(t);
-  const a = await project('prompt');
-  a.store.close();
-  const openProject = async (repoRoot, dataDir) => ({ store: await createMemoryStore({ ddDir: join(repoRoot, '.dd'), dataDir, repoRoot }), projectId: 'demo' });
-  let ready;
-  const loaded = new Promise(resolve => { ready = resolve; });
-  const createRetrieve = () => { const r = async () => ({ memories: [] }); r.warm = () => loaded; r.preload = () => loaded; return r; };
-  const server = await startResidentServer({ openProject, port: 0, semantic: true, createRetrieve });
-  t.after(() => server.close());
-  await registerResident(t, server);
-
-  const prompt = session => callRunningStore('prompt', { session_id: session, prompt: 'edit the parser' }, a.root);
-  const pointer = `DD audit UI: ${server.projectUrl(a.root)}`;
-  // Began before the resident: the first prompt names the UI, later ones do not.
-  assert.equal((await prompt('late')).systemMessage, pointer);
-  assert.equal((await prompt('late')).systemMessage, undefined);
-
-  // Started while the model loads: the session start names the UI and says so.
-  const start = await callRunningStore('session-start', { session_id: 'early' }, a.root);
-  assert.match(start.hookSpecificOutput.additionalContext, /loading its embedding model/);
-  assert.equal((await prompt('early')).systemMessage, undefined);
-  ready(true);
-  await new Promise(resolve => setTimeout(resolve, 20));
-  assert.equal((await prompt('early')).systemMessage, 'DD is active: its embedding model is loaded.');
-  assert.equal((await prompt('early')).systemMessage, undefined);
-  // A session that never saw DD inactive is not told it became active.
-  assert.equal((await prompt('late')).systemMessage, undefined);
 });
 
 // Two installs on one machine (a plugin and a checkout, or two hosts) replaced
@@ -199,5 +114,4 @@ test('a resident serves every install of its version and is kept when newer', as
   assert.equal(residentFit({ build: other, version: bump(VERSION), stale: false }), 'superseded');
   assert.ok(compareVersions('0.10.0', '0.9.9') > 0);
   assert.equal(compareVersions('0.3.1', '0.3.1'), 0);
-  assert.match(residentNotice({ state: 'superseded', version: '9.9.9' }), /version 9\.9\.9, newer than this install/);
 });

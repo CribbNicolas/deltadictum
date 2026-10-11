@@ -4,7 +4,6 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as adapter from '../../adapters/opencode/index.js';
-import { ADVISORY_FRAME } from '../../adapters/opencode/frame.js';
 
 const DeltaDictum = adapter.default;
 import { useTempRegistry } from '../helpers/resident.js';
@@ -32,29 +31,6 @@ async function turn(hooks, sessionID) {
   return output.system;
 }
 
-test('OpenCode adapter says DD is inactive, once per session, when no resident serves it', async t => {
-  const root = await fixture(t);
-  const hooks = await DeltaDictum({ directory: root });
-  const first = await turn(hooks, 's1');
-  assert.equal(first.length, 1);
-  assert.match(first[0], /DD - Inactive: the resident DD process is disabled/);
-  assert.doesNotMatch(first[0], /Project context/i);
-  assert.deepEqual(await turn(hooks, 's1'), []);
-  assert.equal((await turn(hooks, 's2')).length, 1);
-});
-
-test('OpenCode adapter injects session context in the explicit lexical mode', async t => {
-  const root = await fixture(t);
-  process.env.DD_RETRIEVAL = 'lexical';
-  t.after(() => { delete process.env.DD_RETRIEVAL; });
-  const hooks = await DeltaDictum({ directory: root });
-  const [context] = await turn(hooks, 's1');
-  assert.ok(context);
-  assert.doesNotMatch(context, /Inactive/);
-  // It lands in the system prompt, so it says it is advisory and ranks below the user and the host.
-  assert.ok(context.startsWith(ADVISORY_FRAME));
-});
-
 test('OpenCode adapter ignores turns without a session id', async t => {
   const root = await fixture(t);
   const hooks = await DeltaDictum({ directory: root });
@@ -74,22 +50,3 @@ test('the OpenCode adapter imports nothing Bun cannot load, exports only the plu
   assert.equal(pkg.exports['./server'], './adapters/opencode/index.js');
 });
 
-// OpenCode cannot inject per tool call, so the session memory map is how its
-// agent sees every memory it can pull.
-test('OpenCode receives the memory map in its system prompt', async t => {
-  const root = await fixture(t);
-  process.env.DD_RETRIEVAL = 'lexical';
-  t.after(() => { delete process.env.DD_RETRIEVAL; });
-  const { openStore } = await import('../../src/project.js');
-  const { PROVENANCE } = await import('../helpers/atom.js');
-  const { store, projectId } = await openStore({ cwd: root });
-  await store.putAtom({ id: 'map-1', project_id: projectId, memory_type: 'lesson', scope: 'project', title: 'Keep the tray stable',
-    trigger: 'when changing the dice tray', behavior_delta: 'Keep it stable.', what: 'x', why: 'y', authority: 'validated', confidence: 0.8,
-    valid_from: '2026-09-01T00:00:00.000Z', topic_key: 'dice/tray/stable', tags: [], ...PROVENANCE, lifecycle_state: 'active',
-    retrieval_forms: { micro: 'Keep it stable.' } });
-  store.close();
-  const hooks = await DeltaDictum({ directory: root });
-  const [context] = await turn(hooks, 's1');
-  assert.match(context, /DD - Memory map \(1\)/);
-  assert.ok(context.includes('dice/tray/stable — when changing the dice tray'));
-});

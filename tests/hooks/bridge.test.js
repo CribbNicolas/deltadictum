@@ -71,9 +71,9 @@ describe('bridging only to the same build', () => {
     const ui = await startUiServer({ store, projectId: 'demo', port: 0, fingerprint: async () => code, staleCheckMs: 0 });
     t.after(async () => { await ui.close(); store.close(); });
     await registerResident(t, ui);
-    assert.notEqual(await callRunningStore('session-start', { session_id: 's' }, root), null);
+    assert.notEqual(await callRunningStore('retrieve', { action: 'edit the parser' }, root), null);
     code = 'v2';
-    assert.equal(await callRunningStore('session-start', { session_id: 's' }, root), null);
+    assert.equal(await callRunningStore('retrieve', { action: 'edit the parser' }, root), null);
   });
 });
 
