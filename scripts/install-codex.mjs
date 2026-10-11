@@ -93,7 +93,7 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}${toolPreferences ? `\n\n${toolPrefer
   // other file at that path is the project's and stops the install for review.
   const skillName = text => /^---\r?\nname: (.+?)\r?$/m.exec(text ?? '')?.[1]?.trim();
   const ddOwned = text => /^dd(-[a-z]+)?$/.test(skillName(text) ?? '');
-  const skills = ['recall', 'audit', 'save', 'review', 'compact', 'clean', 'prospect', 'init'];
+  const skills = ['save', 'recall', 'review'];
   for (const skill of skills) {
     const content = (await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8'))
       .replace(/^(---\r?\nname: )(.+)$/m, `$1dd-${skill}`);
@@ -102,10 +102,13 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}${toolPreferences ? `\n\n${toolPrefer
     if (before && before !== content && !ddOwned(before)) throw new Error(`existing_skill_requires_review:${path}`);
     await plan(path, content, before);
   }
-  // 0.3.x installed the recall skill as `dd`; it is retired, not left beside dd-recall.
-  const retired = join(projectRoot, '.agents', 'skills', 'dd', 'SKILL.md');
-  const retiredText = await optionalText(retired);
-  if (retiredText && skillName(retiredText) === 'dd') await plan(retired, null, retiredText);
+  // 0.3.x installed the recall skill as `dd`, and v1 shipped five skills v2 does
+  // not; DD's own copies are retired, not left beside the current ones.
+  for (const name of ['dd', 'dd-audit', 'dd-clean', 'dd-compact', 'dd-prospect', 'dd-init']) {
+    const retired = join(projectRoot, '.agents', 'skills', name, 'SKILL.md');
+    const retiredText = await optionalText(retired);
+    if (retiredText && skillName(retiredText) === name) await plan(retired, null, retiredText);
+  }
   const agentsPath = join(projectRoot, 'AGENTS.md');
   const agents = await optionalText(agentsPath);
   await plan(agentsPath, managedBlock(agents, agentsStart, agentsEnd, `## DD project knowledge
