@@ -10,7 +10,7 @@ import { localPaths } from '../../../src/engine/locate.cjs';
 import { productionEngine } from '../../../src/eval/v2bench/engine.js';
 import { loadFixture } from '../../../src/eval/v2bench/fixture.js';
 import { replay } from '../../../src/eval/v2bench/replay.js';
-import { synthesizeMemories } from './helpers/synth.js';
+import { synthesizeMemories } from '../../../src/eval/v2bench/synth.js';
 
 const plain = results => results.map(r => [r.run_id, [...r.delivered].map(([id, hit]) => `${id}@${hit.at}:${hit.via.join('+')}`).sort()]);
 
