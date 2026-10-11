@@ -22,14 +22,22 @@ function deliverFor(root, event, session) {
   const fired = index ? matchEvent(prepareIndex(index), event) : [];
   if (!fired.length) return '';
   const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
-  const { renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
-  const path = session ? ledgerPath(localPaths(root).sessions, session.id, session.agent) : null;
-  const won = path ? new Set(openLedger(path).claim(fired.map(hit => hit.id))) : new Set(fired.map(hit => hit.id));
-  const items = fired.filter(hit => won.has(hit.id));
-  if (!items.length) return '';
+  const { fitCount, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
+  const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
+  const done = ledger ? ledger.delivered() : new Set();
+  const fresh = fired.filter(hit => !done.has(hit.id));
+  if (!fresh.length) return '';
   const bodies = readBodies(root, index) ?? {};
-  return renderDelivery({ label: (event.paths ?? []).join(', ') || event.kind, items: items.map(hit => ({ id: hit.id,
-    ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '', stale: staleEvidence(root, bodies[hit.id]?.evidence) })) });
+  const label = (event.paths ?? []).join(', ') || event.kind;
+  const candidates = fresh.map(hit => ({ id: hit.id, ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '',
+    stale: staleEvidence(root, bodies[hit.id]?.evidence) }));
+  // Only what fits whole is claimed; the rest is named and arrives at its next event.
+  const fits = candidates.slice(0, fitCount({ label, items: candidates }));
+  const won = ledger ? new Set(ledger.claim(fits.map(item => item.id))) : new Set(fits.map(item => item.id));
+  const items = fits.filter(item => won.has(item.id));
+  const named = candidates.slice(fits.length);
+  if (!items.length && !named.length) return '';
+  return renderDelivery({ label, items, named });
 }
 
 // Session start injects nothing (spec section 1): it re-arms the ledger after a

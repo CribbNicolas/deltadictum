@@ -43,6 +43,26 @@ test('a read of a scoped file delivers the memory once per session and once per 
   assert.match(context(hook('pre-tool', read(root, 's1', { agent_id: 'sub-1' }))), /Close stores/);
 });
 
+// Past the 10,000-character field, memories are only named; one only named is
+// not counted as delivered, so it arrives in full at the next event it fires on.
+test('memories that did not fit are named, not marked delivered, and arrive in full next time', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  const long = id => ({ ...memory(id, `Rule ${id}`, [{ on: ['read'], paths: ['src/a.js'] }]), body: `Rule ${id}: ${'keep the layers apart. '.repeat(63)}` });
+  const ids = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8'];
+  await createMemoryFiles(join(root, '.dd')).commit({ put: ids.map(long) });
+  await compileProject(root);
+  const first = context(hook('pre-tool', read(root, 's1')));
+  assert.ok(first.length <= 10000, `${first.length}`);
+  const full = text => ids.filter(id => text.includes(`[TRAP] Rule ${id} - `));
+  const named = first.slice(first.indexOf('... and ')).match(/Rule m\d/g);
+  assert.ok(full(first).length >= 1 && named.length >= 1);
+  const second = context(hook('pre-tool', read(root, 's1')));
+  assert.deepEqual([...full(first), ...full(second)].sort(), ids);
+  assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
+});
+
 test('a prompt naming a keyword delivers its memory', async t => {
   const root = await project(t);
   const result = hook('prompt', { session_id: 's1', cwd: root, hook_event_name: 'UserPromptSubmit', prompt: 'Rename the data directory' });
