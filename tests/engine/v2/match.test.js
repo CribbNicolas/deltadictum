@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileIndex } from '../../../src/engine/compile.js';
-import { memoryMatch } from '../../../src/engine/clause.cjs';
+import { FOLD_CASE, memoryMatch } from '../../../src/engine/clause.cjs';
 import { matchEvent, prepareIndex } from '../../../src/engine/match.cjs';
 import { loadFixture } from '../../../src/eval/v2bench/fixture.js';
 import { synthesizeMemories } from './helpers/synth.js';
@@ -21,9 +21,19 @@ test('memories that fire come back best clause first, then by kind, then by id',
   assert.deepEqual(matchEvent(rt, { kind: 'read', paths: ['src/a.js'] }), []);
 });
 
-test('path matching is case-sensitive, as the reference is', () => {
-  const rt = runtime([memory('m', 'trap', [{ on: ['read'], paths: ['src/Store/paths.js'] }])]);
-  assert.deepEqual(matchEvent(rt, { kind: 'read', paths: ['src/store/paths.js'] }), []);
+// Windows and macOS file systems ignore letter case, so an agent there may name
+// src/Store/paths.js as src/store/paths.js; Linux keeps them apart.
+test('path matching folds letter case where the file system does, as the reference does', () => {
+  const triggers = [{ on: ['read'], paths: ['src/Store/*.js'], not_paths: ['src/Store/skip.js'] }];
+  const rt = runtime([memory('m', 'trap', triggers)]);
+  const reference = event => memoryMatch({ triggers }, event) !== null;
+  const folds = FOLD_CASE ? [{ id: 'm', via: ['paths'] }] : [];
+  assert.equal(FOLD_CASE, process.platform === 'win32' || process.platform === 'darwin');
+  assert.deepEqual(matchEvent(rt, { kind: 'read', paths: ['src/store/paths.js'] }), folds);
+  assert.equal(reference({ kind: 'read', paths: ['src/store/paths.js'] }), FOLD_CASE);
+  assert.deepEqual(matchEvent(rt, { kind: 'read', paths: ['SRC/STORE/SKIP.JS'] }), []);
+  assert.equal(reference({ kind: 'read', paths: ['SRC/STORE/SKIP.JS'] }), false);
+  assert.deepEqual(matchEvent(rt, { kind: 'read', paths: ['src/Store/paths.js'] }), [{ id: 'm', via: ['paths'] }]);
 });
 
 test('on every event of the bench fixture the compiled matcher answers exactly as the reference', async () => {

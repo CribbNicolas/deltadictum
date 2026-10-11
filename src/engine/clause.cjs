@@ -11,6 +11,11 @@ const EVENT_KINDS = ['read', 'edit', 'write', 'search', 'run', 'prompt'];
 const DIMENSIONS = ['paths', 'symbols', 'commands', 'keywords'];
 const KEYWORD_KINDS = ['prompt', 'search'];
 
+// Windows and macOS file systems ignore letter case, so a path the agent spells in
+// another case is the same file there; Linux keeps them apart.
+const FOLD_CASE = process.platform === 'win32' || process.platform === 'darwin';
+const PATH_FLAGS = FOLD_CASE ? 'i' : '';
+
 const globs = new Map();
 // A glob over repository-relative paths: `**/` crosses any number of folders, a
 // trailing `**` matches the rest, `*` and `?` stay within one segment.
@@ -27,7 +32,7 @@ function globToRegExp(glob) {
     else if (c === '?') out += '[^/]';
     else out += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
   }
-  const regex = new RegExp(`^${out}$`);
+  const regex = new RegExp(`^${out}$`, PATH_FLAGS);
   globs.set(source, regex);
   return regex;
 }
@@ -76,5 +81,5 @@ function memoryMatch(memory, event) {
   return best;
 }
 
-module.exports = { EVENT_KINDS, DIMENSIONS, KEYWORD_KINDS, globToRegExp, symbolPattern, hasSymbol, shellTokens, hasTokens,
+module.exports = { EVENT_KINDS, DIMENSIONS, KEYWORD_KINDS, FOLD_CASE, PATH_FLAGS, globToRegExp, symbolPattern, hasSymbol, shellTokens, hasTokens,
   hasCommand, clauseMatches, memoryMatch };
