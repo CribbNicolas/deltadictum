@@ -32,6 +32,17 @@ test('recall prints the matching live memories in full; candidates only with --a
   assert.equal(await recall(root, '"*:-'), 'DD - nothing matches.');
 });
 
+// Seen on this repository's migrated store: 69 superseded versions outranked the
+// live memories, and "the" counted as a search term.
+test('recall finds the live memory among many superseded versions, whatever the stop words', async t => {
+  const root = await project(t);
+  const store = createMemoryFiles(join(root, '.dd'));
+  await store.commit({ put: Array.from({ length: 30 }, (_, i) => memory(`old${i}`, `Close the store in the test ${i}`,
+    'Close the store in the test, the old way, the store and the test and the close.', 'superseded')) });
+  const text = await recall(root, 'close the store in tests', { limit: 1 });
+  assert.match(text, /^\[TRAP\] Close stores in t\.after \(recall\/close, active\)/);
+});
+
 test('status counts memories by status', async t => {
   const root = await project(t);
   assert.deepEqual(await status(root), { total: 2, by_status: { active: 1, candidate: 1 }, candidates: 1, conflicts: [] });

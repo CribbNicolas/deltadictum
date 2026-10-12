@@ -6,24 +6,33 @@ import { words } from '../engine/text.cjs';
 // review, suggests triggers and serves `deltadictum recall`; it never decides
 // delivery.
 const SCHEMA = 'CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(id UNINDEXED, topic, title, body)';
+// Only what can still be delivered or reviewed: superseded versions would outrank
+// the memories that replaced them (seen: 69 of them on one migrated store).
+export const SIMILAR_STATUSES = ['active', 'contested', 'candidate'];
+const INDEX_REVISION = 'v2';
 
 export function refreshSimilarity(root, db, memories, hash) {
   db.exec(SCHEMA);
-  if (db.prepare("SELECT value FROM meta WHERE key = 'similarity_hash'").get()?.value === hash) return false;
+  const key = `${INDEX_REVISION}:${hash}`;
+  if (db.prepare("SELECT value FROM meta WHERE key = 'similarity_hash'").get()?.value === key) return false;
   db.exec('BEGIN');
   try {
     db.exec('DELETE FROM memories_fts');
     const insert = db.prepare('INSERT INTO memories_fts (id, topic, title, body) VALUES (?, ?, ?, ?)');
-    for (const memory of memories) insert.run(memory.id, memory.topic, memory.title, memory.body);
-    db.prepare("INSERT INTO meta (key, value) VALUES ('similarity_hash', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(hash);
+    for (const memory of memories.filter(m => SIMILAR_STATUSES.includes(m.status))) insert.run(memory.id, memory.topic, memory.title, memory.body);
+    db.prepare("INSERT INTO meta (key, value) VALUES ('similarity_hash', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key);
     db.exec('COMMIT');
   } catch (err) { db.exec('ROLLBACK'); throw err; }
   return true;
 }
 
+// Function words match everything and rank nothing.
+const STOP = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'when', 'what', 'which', 'are', 'was', 'were',
+  'has', 'have', 'not', 'but', 'its', 'can', 'all', 'any', 'how', 'why', 'out', 'use']);
+
 // Words only, each quoted: nothing a person or a memory writes is FTS5 syntax.
 export function ftsQuery(text) {
-  const terms = [...new Set(words(text).filter(word => word.length > 2))].slice(0, 16);
+  const terms = [...new Set(words(text).filter(word => word.length > 2 && !STOP.has(word)))].slice(0, 16);
   return terms.length ? terms.map(term => `"${term.replaceAll('"', '')}"`).join(' OR ') : null;
 }
 
