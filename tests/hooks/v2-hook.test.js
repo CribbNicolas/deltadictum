@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,6 +61,17 @@ test('memories that did not fit are named, not marked delivered, and arrive in f
   const second = context(hook('pre-tool', read(root, 's1')));
   assert.deepEqual([...full(first), ...full(second)].sort(), ids);
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
+});
+
+// A partial install or a checkout on another branch must not turn every tool call
+// into a hook error: a module that fails to load ends the hook silently too.
+test('a hook whose modules cannot load exits 0 with no output', t => {
+  const plugin = mkdtempSync(join(tmpdir(), 'dd-partial-'));
+  t.after(() => rmSync(plugin, { recursive: true, force: true }));
+  mkdirSync(join(plugin, 'hooks'));
+  for (const name of ['run.cjs', 'node-support.cjs']) copyFileSync(fileURLToPath(new URL(`../../hooks/${name}`, import.meta.url)), join(plugin, 'hooks', name));
+  const out = spawnSync(process.execPath, [join(plugin, 'hooks', 'run.cjs'), 'pre-tool'], { input: '{"tool_name":"Read","tool_input":{}}', encoding: 'utf8' });
+  assert.deepEqual({ status: out.status, stdout: out.stdout, stderr: out.stderr }, { status: 0, stdout: '', stderr: '' });
 });
 
 test('a prompt naming a keyword delivers its memory', async t => {
