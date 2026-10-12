@@ -17,8 +17,8 @@ export async function run(command, root, payload) {
     return '';
   }
   if (command === 'stop') {
-    // A Stop that DD already made the agent continue says nothing more: no loops.
-    if (payload.stop_hook_active) return '';
+    // A turn DD made continue is checked too: a fix can break the rule elsewhere,
+    // and the twice-per-file limit bounds the loop. It asks for no memory.
     const { turnViolations } = await import('../checks/turn.js');
     return [turnViolations(root, payload), stopRequest(root, payload)].filter(Boolean).join('\n\n');
   }
