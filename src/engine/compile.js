@@ -30,7 +30,7 @@ function compileClause(memoryId, clause) {
 
 // Triggers that can never fire, or that fire on a large share of the repository
 // (spec section 3, review note on clause breadth). Reported, never dropped.
-function triggerWarnings(memory, repoFiles, symbolExists) {
+export function triggerWarnings(memory, repoFiles, symbolExists) {
   const warnings = [];
   for (const clause of memory.triggers) {
     for (const glob of clause.paths ?? []) {
@@ -108,10 +108,13 @@ function gitLines(root, args) {
   catch { return null; }
 }
 
+// The repository's tracked files, or null when git cannot answer.
+export const repoFilesOf = root => gitLines(root, ['ls-files']);
+
 // The trigger symbols the project's code holds, in one git grep over tracked
 // files. DD's own files are excluded: a memory names its own symbols. null when
 // git cannot answer, so no symbol is reported dead on a guess.
-function codeSymbols(root, symbols) {
+export function codeSymbols(root, symbols) {
   if (!symbols.length) return new Set();
   try {
     const out = execFileSync('git', ['-C', root, 'grep', '-h', '-o', '-w', '-F', '-I', '-f', '-', '--', '.', ':(exclude).dd'],
@@ -127,7 +130,7 @@ export async function compileProject(root) {
   await store.refreshManifest();
   const all = await store.list();
   const manifest = await store.manifest();
-  const repoFiles = gitLines(root, ['ls-files']);
+  const repoFiles = repoFilesOf(root);
   const found = repoFiles ? codeSymbols(root, [...new Set(all.flatMap(memory => (memory.triggers ?? []).flatMap(clause => clause.symbols ?? [])))]) : null;
   const symbolExists = found ? symbol => found.has(symbol) : null;
   const compiled = compileIndex({ memories: all, manifest, fingerprint: memoryFilesFingerprint(paths.memories), repoFiles, symbolExists });
