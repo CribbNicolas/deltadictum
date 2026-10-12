@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,6 +61,16 @@ test('memories that did not fit are named, not marked delivered, and arrive in f
   const second = context(hook('pre-tool', read(root, 's1')));
   assert.deepEqual([...full(first), ...full(second)].sort(), ids);
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
+});
+
+// A memory is never delivered, or counted as delivered, without its body.
+test('an index whose bodies are missing delivers nothing until session start recompiles it', async t => {
+  const root = await project(t);
+  const v2 = join(root, '.dd', 'local', 'v2');
+  for (const name of readdirSync(v2).filter(name => name.startsWith('bodies'))) rmSync(join(v2, name));
+  assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
+  hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'startup' });
+  assert.match(context(hook('pre-tool', read(root, 's1'))), /\[TRAP\] Close stores - Close stores, always\./);
 });
 
 // A partial install or a checkout on another branch must not turn every tool call

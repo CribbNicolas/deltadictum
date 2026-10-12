@@ -1,6 +1,6 @@
 'use strict';
 
-const { readdirSync, readFileSync, statSync } = require('node:fs');
+const { existsSync, readdirSync, readFileSync, statSync } = require('node:fs');
 const { join } = require('node:path');
 const { localPaths } = require('./locate.cjs');
 
@@ -49,6 +49,10 @@ function memoryFilesFingerprint(memoriesDir) {
   return `${count}:${newest}:${size}`;
 }
 
-const needsCompile = (index, root) => isStale(index, root) || index.fingerprint !== memoryFilesFingerprint(localPaths(root).memories);
+// Session start also rebuilds an index whose bodies file is gone (two compiles
+// that overlapped, a hand deletion): hooks deliver nothing from it meanwhile.
+const bodiesPresent = (index, root) => typeof index.bodies === 'string' && BODIES_NAME.test(index.bodies) && existsSync(join(localPaths(root).v2, index.bodies));
+const needsCompile = (index, root) => isStale(index, root) || index.fingerprint !== memoryFilesFingerprint(localPaths(root).memories)
+  || !bodiesPresent(index, root);
 
 module.exports = { INDEX_VERSION, BODIES_NAME, readJson, loadIndex, readBodies, manifestHash, isStale, memoryFilesFingerprint, needsCompile };

@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DIMENSIONS, globToRegExp, shellTokens } from './clause.cjs';
 import { INDEX_VERSION, memoryFilesFingerprint, readJson } from './index-file.cjs';
@@ -78,10 +78,20 @@ function renameRetrying(from, to, rename) {
 
 const newBodiesName = () => `bodies-${Date.now().toString(36)}${randomBytes(4).toString('hex')}.json`;
 
+// Bodies of other builds go once they are old enough that no hook still holds an
+// index naming them, and no compile running at the same moment just wrote them.
+const RETAIN_MS = 60 * 1000;
+function pruneBodies(dir, keep, now) {
+  for (const name of readdirSync(dir)) {
+    if (!/^bodies.*\.json$/.test(name) || keep.includes(name)) continue;
+    try { if (now - statSync(join(dir, name)).mtimeMs > RETAIN_MS) rmSync(join(dir, name), { force: true }); } catch { /* gone */ }
+  }
+}
+
 // Each build writes its own bodies file, then the index that names it: a hook
 // holding either index finds the bodies of its build. The previous build's
 // bodies stay for a hook that read the previous index; older ones are removed.
-export function writeCompiled(paths, { index, bodies }, { rename = renameSync } = {}) {
+export function writeCompiled(paths, { index, bodies }, { rename = renameSync, now = Date.now() } = {}) {
   mkdirSync(paths.v2, { recursive: true });
   const named = { ...index, bodies: index.bodies ?? newBodiesName() };
   const previous = readJson(paths.index)?.bodies;
@@ -90,9 +100,7 @@ export function writeCompiled(paths, { index, bodies }, { rename = renameSync } 
     writeFileSync(temp, JSON.stringify(value));
     try { renameRetrying(temp, file, rename); } finally { rmSync(temp, { force: true }); }
   }
-  for (const name of readdirSync(paths.v2)) {
-    if (/^bodies.*\.json$/.test(name) && name !== named.bodies && name !== previous) rmSync(join(paths.v2, name), { force: true });
-  }
+  pruneBodies(paths.v2, [named.bodies, previous], now);
 }
 
 function gitLines(root, args) {

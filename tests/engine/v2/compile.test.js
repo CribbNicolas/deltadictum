@@ -75,10 +75,30 @@ test('each build writes its own bodies file, and a reader of the previous index 
   assert.notEqual(first.bodies, second.bodies);
   assert.equal(readBodies(root, first).m1.body, 'First body.');
   assert.equal(readBodies(root, second).m1.body, 'Second body.');
-  await compileProject(root);
-  // Only the current build and the one before it are kept.
+  // A minute later, only the current build and the one before it are kept.
+  const third = compileIndex({ memories: await store.list(), manifest: await store.manifest(), fingerprint: 'f' });
+  writeCompiled(localPaths(root), third, { now: Date.now() + 2 * 60 * 1000 });
   const kept = readdirSync(join(root, '.dd', 'local', 'v2')).filter(name => name.startsWith('bodies')).sort();
   assert.deepEqual(kept, [second.bodies, loadIndex(root).bodies].sort());
+});
+
+// Two session starts compiling at once: the one that finishes last must not
+// delete the bodies the final index names.
+test('a compile that overlaps another never leaves the index without its bodies', t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-compile-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const paths = localPaths(root);
+  const build = name => compileIndex({ memories: [memory('m1', { body: `Body ${name}.` })], manifest: { count: 1, hash: name }, fingerprint: name });
+  writeCompiled(paths, build('p'));
+  // X renames its index, then Y runs from start to end, then X cleans up.
+  const interleaved = (from, to) => {
+    renameSync(from, to);
+    if (to === paths.index) writeCompiled(paths, build('y'));
+  };
+  writeCompiled(paths, build('x'), { rename: interleaved });
+  const index = loadIndex(root);
+  assert.equal(index.manifest.hash, 'y');
+  assert.equal(readBodies(root, index).m1.body, 'Body y.');
 });
 
 // Windows refuses a rename over a file another process holds open for a moment.

@@ -25,9 +25,11 @@ function deliverFor(root, event, session) {
   const { fitCount, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
   const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
   const done = ledger ? ledger.delivered() : new Set();
-  const fresh = fired.filter(hit => !done.has(hit.id));
+  // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
+  const bodies = readBodies(root, index);
+  if (!bodies) return '';
+  const fresh = fired.filter(hit => !done.has(hit.id) && typeof bodies[hit.id]?.body === 'string');
   if (!fresh.length) return '';
-  const bodies = readBodies(root, index) ?? {};
   const label = (event.paths ?? []).join(', ') || event.kind;
   const candidates = fresh.map(hit => ({ id: hit.id, ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '',
     stale: staleEvidence(root, bodies[hit.id]?.evidence) }));
