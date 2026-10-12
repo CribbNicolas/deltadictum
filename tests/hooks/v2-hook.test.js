@@ -91,6 +91,18 @@ test('a command naming many paths gets a short label and the memory in full', as
   assert.match(out, /^DD - project knowledge \(src\/a\.js, src\/generated\/file-0\.js, src\/generated\/file-1\.js and 398 more\):\n\[TRAP\] Format src\/a\.js by hand - /);
 });
 
+// A plugin installed for every project runs on every tool call of projects that
+// have no DD: those must not pay for loading the matcher and the index reader.
+test('a tool call in a project without a compiled index loads no matching module', t => {
+  const bare = mkdtempSync(join(tmpdir(), 'dd-bare-'));
+  t.after(() => rmSync(bare, { recursive: true, force: true }));
+  const hookModule = fileURLToPath(new URL('../../src/hooks/v2/hook.cjs', import.meta.url));
+  const script = `require(${JSON.stringify(hookModule)}).handle('pre-tool', { cwd: ${JSON.stringify(bare)}, tool_name: 'Read', tool_input: { file_path: 'a.js' } })
+    .then(() => console.log(JSON.stringify(Object.keys(require.cache).map(p => p.split(/[\\\\/]/).pop()))))`;
+  const loaded = JSON.parse(spawnSync(process.execPath, ['-e', script], { encoding: 'utf8' }).stdout);
+  for (const name of ['match.cjs', 'clause.cjs', 'text.cjs', 'index-file.cjs', 'events.cjs']) assert.ok(!loaded.includes(name), `${name} loaded`);
+});
+
 // A memory is never delivered, or counted as delivered, without its body.
 test('an index whose bodies are missing delivers nothing until session start recompiles it', async t => {
   const root = await project(t);

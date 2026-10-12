@@ -3,14 +3,12 @@
 const { existsSync } = require('node:fs');
 const { join } = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { loadIndex, needsCompile, readBodies } = require('../../engine/index-file.cjs');
 const { findProjectRoot, localPaths } = require('../../engine/locate.cjs');
-const { matchEvent, prepareIndex } = require('../../engine/match.cjs');
-const { toolEvent } = require('./events.cjs');
 
 // What a Claude Code hook does in v2 (spec section 5): nothing at session start
 // but bookkeeping, memories at the prompt and at tool calls, once per epoch per
-// session and subagent. Modules a quiet event does not need load lazily.
+// session and subagent. Modules a quiet event does not need load lazily, and a
+// project without a compiled index loads none of the matching code.
 const EVENT_NAMES = { 'session-start': 'SessionStart', prompt: 'UserPromptSubmit', 'pre-tool': 'PreToolUse' };
 
 function respond(command, text) {
@@ -27,6 +25,8 @@ function labelFor(event) {
 }
 
 function deliverFor(root, event, session) {
+  const { loadIndex, readBodies } = require('../../engine/index-file.cjs');
+  const { matchEvent, prepareIndex } = require('../../engine/match.cjs');
   const index = event ? loadIndex(root) : null;
   const fired = index ? matchEvent(prepareIndex(index), event) : [];
   if (!fired.length) return '';
@@ -60,6 +60,7 @@ async function sessionStart(root, payload, session) {
   const { ledgerPath, openLedger, pruneSessions } = require('../../engine/ledger.cjs');
   if (session && ['compact', 'clear'].includes(payload.source)) openLedger(ledgerPath(paths.sessions, session.id, session.agent)).newEpoch(payload.source);
   pruneSessions(paths.sessions);
+  const { loadIndex, needsCompile } = require('../../engine/index-file.cjs');
   if (needsCompile(loadIndex(root), root)) {
     const { compileProject } = await import(pathToFileURL(join(__dirname, '..', '..', 'engine', 'compile.js')).href);
     await compileProject(root);
@@ -72,9 +73,10 @@ async function handle(command, payload) {
   const root = findProjectRoot(payload.cwd || process.cwd());
   const session = payload.session_id ? { id: payload.session_id, agent: payload.agent_id } : null;
   if (command === 'session-start') return respond(command, await sessionStart(root, payload, session));
+  if (!existsSync(localPaths(root).index)) return '';
   const event = command === 'prompt'
     ? { kind: 'prompt', paths: [], text: String(payload.prompt ?? '') }
-    : toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
+    : require('./events.cjs').toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
   return respond(command, deliverFor(root, event, session));
 }
 
