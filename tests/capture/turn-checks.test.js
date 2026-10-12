@@ -46,6 +46,24 @@ test('a file the turn deleted, or did not touch, is not judged', async t => {
   assert.equal(turnViolations(root, { session_id: 's1' }), '');
 });
 
+// A check that empty content violates: a deleted file read as empty would speak.
+test('a file the turn deleted is not judged, even by a check that empty content would violate', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-turn-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  const strict = { ...check, if_content: '^(?![\\s\\S]*use strict)', unless_content: undefined, say: 'Start every test with use strict.',
+    examples: { violates: '', passes: "'use strict';" } };
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [{ ...memory, id: 'strict', topic: 'checks/strict', check: strict }] });
+  await compileProject(root);
+  edited(root, 'tests/gone.test.js', '2026-10-12T00:00:01.000Z');
+  assert.equal(turnViolations(root, { session_id: 's1' }), '');
+  mkdirSync(join(root, 'tests'), { recursive: true });
+  writeFileSync(join(root, 'tests', 'here.test.js'), 'x();\n');
+  await new Promise(resolve => setTimeout(resolve, 5));
+  edited(root, 'tests/here.test.js', new Date().toISOString());
+  assert.match(turnViolations(root, { session_id: 's1' }), /use strict/);
+});
+
 test('a violation is reported at most twice an epoch, also when the agent edits the file without fixing it', async t => {
   const root = await project(t);
   writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\n');

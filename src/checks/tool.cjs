@@ -16,13 +16,15 @@ function contentAfter(root, payload) {
   if (name !== 'Edit' && name !== 'MultiEdit') return null;
   const file = String(input.file_path ?? '');
   let text;
-  try { text = readFileSync(isAbsolute(file) ? file : join(payload.cwd || root, file), 'utf8'); } catch { return null; }
+  // Git for Windows checks files out with CRLF and the Edit tool matches with plain
+  // newlines: the text is judged with plain newlines too.
+  try { text = readFileSync(isAbsolute(file) ? file : join(payload.cwd || root, file), 'utf8').replace(/\r\n/g, '\n'); } catch { return null; }
   const edits = name === 'Edit' ? [input] : (Array.isArray(input.edits) ? input.edits : []);
   for (const edit of edits) {
-    const from = String(edit.old_string ?? '');
+    const from = String(edit.old_string ?? '').replace(/\r\n/g, '\n');
     // An edit whose text is not in the file fails in the host; it is not judged as if it applied.
     if (!from || !text.includes(from)) return null;
-    const to = String(edit.new_string ?? '');
+    const to = String(edit.new_string ?? '').replace(/\r\n/g, '\n');
     text = edit.replace_all ? text.split(from).join(to) : text.replace(from, () => to);
   }
   return text;

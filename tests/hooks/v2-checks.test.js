@@ -55,6 +55,28 @@ test('an edit check judges the file as the edit would leave it', async t => {
   assert.match(write, /without closing it in t\.after/);
 });
 
+// Git for Windows checks files out with CRLF, and the Edit tool's old_string
+// comes with plain newlines.
+test('an edit check judges a multi-line Edit on a CRLF file', async t => {
+  const root = await project(t, [store]);
+  const file = join(root, 'tests', 'c.test.js');
+  writeFileSync(file, 'const s = await createMemoryStore(d);\r\nt.after(() => s.close());\r\n');
+  const out = context(hook({ session_id: 's1', cwd: root, tool_name: 'Edit', tool_input: { file_path: file,
+    old_string: 'const s = await createMemoryStore(d);\nt.after(() => s.close());', new_string: 'const s = await createMemoryStore(d);' } }));
+  assert.match(out, /without closing it in t\.after/);
+});
+
+// The file already violates: judging it as if a failed edit applied, or judging
+// the file as it is, would both speak.
+test('an edit the host would refuse is not judged', async t => {
+  const root = await project(t, [store]);
+  const file = join(root, 'tests', 'v.test.js');
+  writeFileSync(file, 'const s = await createMemoryStore(d);\n');
+  const run = input => context(hook({ session_id: 's1', cwd: root, ...input }));
+  assert.equal(run({ tool_name: 'Edit', tool_input: { file_path: file, old_string: 'not in the file', new_string: 'x' } }), '');
+  assert.equal(run({ tool_name: 'MultiEdit', tool_input: { file_path: file, edits: [{ old_string: 'const s', new_string: 'const t' }, { old_string: 'missing', new_string: 'y' }] } }), '');
+});
+
 // Turn checks wait for Stop, and an edit check on other files does not apply:
 // neither may cost an Edit the check machinery (measured: about 2.5 ms).
 test('checks that do not apply to the tool call load no check module', async t => {
