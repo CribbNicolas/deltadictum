@@ -1,6 +1,7 @@
 // Pure helpers for the agent trial: what run.js recorded, turned into numbers.
 // No model calls and no file access here, so all of it is unit-tested.
-import { estimateTokens } from '../../engine/budget.js';
+// About three bytes a token, as v1 measured injected context.
+const estimateTokens = value => Math.max(1, Math.ceil(Buffer.byteLength(typeof value === 'string' ? value : JSON.stringify(value), 'utf8') / 3));
 
 export function median(values) {
   const sorted = [...values].sort((a, b) => a - b);

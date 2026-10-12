@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 import { join } from 'node:path';
-import { findRepoRoot, openStore } from './project.js';
+import { findProjectRoot } from './engine/locate.cjs';
 import { migrateProject } from './memory/migrate.js';
 import { compileProject } from './engine/compile.js';
-import { startResidentServer } from './ui/server.js';
-import { readRegistry, residentFit, residentStatus, retireResident, writeRegistry } from './resident.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
-import { VERSION } from './hooks/build.js';
+import { VERSION } from './version.js';
+
 
 const [command, ...rest] = process.argv.slice(2);
 
@@ -48,7 +47,7 @@ async function runInstall(args) {
 
 // Converts the project's v1 store before any store opens it: a v2 store has no atoms to index.
 async function runMigrate(args) {
-  const repoRoot = await findRepoRoot(process.cwd());
+  const repoRoot = findProjectRoot(process.cwd());
   const report = await migrateProject({ ddDir: join(repoRoot, '.dd'), dryRun: args.includes('--dry-run') });
   console.log(JSON.stringify(report, null, 2));
   if (report.failures.length || report.unreadable.length) process.exitCode = 1;
@@ -64,63 +63,35 @@ async function main() {
     const limitAt = rest.indexOf('--limit');
     const limit = limitAt >= 0 ? Number(rest[limitAt + 1]) || 5 : 5;
     const query = rest.filter((arg, i) => arg !== '--all' && (limitAt < 0 || (i !== limitAt && i !== limitAt + 1))).join(' ');
-    console.log(await recall(await findRepoRoot(process.cwd()), query, { all: rest.includes('--all'), limit }));
+    console.log(await recall(findProjectRoot(process.cwd()), query, { all: rest.includes('--all'), limit }));
     return;
   }
   if (command === 'status') {
     const { status } = await import('./maintenance/recall.js');
-    console.log(JSON.stringify(await status(await findRepoRoot(process.cwd())), null, 2));
+    console.log(JSON.stringify(await status(findProjectRoot(process.cwd())), null, 2));
     return;
   }
   if (command === 'health') {
     const { healthReport } = await import('./maintenance/health.js');
-    console.log(JSON.stringify(await healthReport(await findRepoRoot(process.cwd())), null, 2));
+    console.log(JSON.stringify(await healthReport(findProjectRoot(process.cwd())), null, 2));
     return;
   }
   if (command === 'maintain') {
     const { maintain } = await import('./maintenance/maintain.js');
-    console.log(JSON.stringify(await maintain(await findRepoRoot(process.cwd())), null, 2));
+    console.log(JSON.stringify(await maintain(findProjectRoot(process.cwd())), null, 2));
     return;
   }
   if (command === 'compile') {
-    console.log(JSON.stringify(await compileProject(await findRepoRoot(process.cwd())), null, 2));
+    console.log(JSON.stringify(await compileProject(findProjectRoot(process.cwd())), null, 2));
     return;
   }
-  if (!command || command === 'ui' || command === 'resident') return runResident();
+  if (!command || command === 'ui' || command === 'resident') return runUi(rest);
   console.error(`Unknown command: ${command}\n\n${USAGE}`);
   process.exitCode = 1;
 }
 
-// The resident process (L2): one per machine, shared by every project and
-// session. It opens each project's store the first time a hook or the audit UI
-// asks for it, and loads the embedding model once. It steps aside for a live
-// one serving this install or a newer version, replaces a stale or older one,
-// and exits after a long idle period.
-const IDLE_EXIT_MS = 12 * 60 * 60 * 1000;
-async function runResident() {
-  const existing = await residentStatus();
-  const fit = residentFit(existing);
-  if (fit === 'live' || fit === 'superseded') {
-    console.log(`DD - resident ${existing.url} (already running${fit === 'superseded' ? `, version ${existing.version}, newer than this install` : ''})`);
-    return;
-  }
-  if (existing) await retireResident(existing);
-  let server;
-  const stop = async () => { await server?.close(); process.exit(0); };
-  const openProject = async (repoRoot, dataDir) => {
-    const { store, projectId } = await openStore({ cwd: repoRoot, dataDir });
-    return { store, projectId };
-  };
-  server = await startResidentServer({ openProject, semantic: true, onShutdown: stop });
-  await writeRegistry(server);
-  console.log(`DD - resident ${server.url}`);
-  // Two sessions can start a resident at the same moment; the one whose URL did
-  // not stay in the registry leaves.
-  setTimeout(async () => { if ((await readRegistry())?.url !== server.url) await stop(); }, 500).unref();
-  setInterval(() => { if (server.idleFor() > IDLE_EXIT_MS) void stop(); }, 60 * 1000).unref();
-  process.once('SIGINT', stop);
-  process.once('SIGTERM', stop);
-}
+// The review UI (plan 6b, Task 7).
+async function runUi() { throw new Error('ui_unavailable_until_task_7'); }
 
 main().catch(err => {
   console.error(err.message);

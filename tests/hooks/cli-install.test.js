@@ -57,3 +57,11 @@ test('help, version and an unknown command leave the current directory untouched
   assert.match(unknown.stderr, /Unknown command: statsu/);
   await assert.rejects(access(join(root, '.dd')));
 });
+
+test('deltadictum version prints the package version without loading v1 modules', async () => {
+  const { code, stdout } = await run(['version']);
+  assert.equal(code, 0);
+  assert.equal(stdout.trim(), JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version);
+  const source = await readFile(new URL('../../src/cli.js', import.meta.url), 'utf8');
+  for (const v1 of ['./project.js', './resident.js', './hooks/build.js', './engine/project-context.js']) assert.ok(!source.includes(v1), v1);
+});
