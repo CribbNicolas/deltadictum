@@ -1,9 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
-import { codeSymbols, compileProject, repoFilesOf, triggerWarnings } from '../engine/compile.js';
+import { codeSymbols, compileProject, repoFilesOf, triggerWarnings, untrackedFilesOf } from '../engine/compile.js';
+import { globToRegExp } from '../engine/clause.cjs';
 import { localPaths } from '../engine/locate.cjs';
 import { words } from '../engine/text.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from '../memory/schema.js';
@@ -38,32 +39,58 @@ function reject(name, reasons) {
 
 // Evidence made self-contained and verified by DD: a repository file is hashed
 // now, a footprint entry is copied in with its summary, a note is kept as said.
-function resolveEvidence(root, cited, footprint) {
+// The files git lists for the repository: tracked, and untracked but not ignored.
+// null without git, when nothing can say what belongs to the repository.
+function repositoryListing(root) {
+  const tracked = repoFilesOf(root);
+  if (!tracked) return null;
+  return { tracked, all: new Set([...tracked, ...(untrackedFilesOf(root) ?? [])]) };
+}
+
+const EVIDENCE_FILE_MAX = 1024 * 1024;
+
+// Evidence made self-contained and verified by DD: a repository file is hashed
+// now, a footprint entry is copied in with its summary, a note is kept as said.
+// A file is evidence only if it is a regular file the repository lists, outside
+// .git/ and .dd/: never a symlink, an ignored file or the proposal itself.
+function resolveEvidence(root, cited, footprint, listing) {
   const reasons = [];
   const evidence = [];
-  const verified = { files: 0, corrections: 0 };
+  const files = [];
+  let corrections = 0;
   const byId = new Map(footprint.filter(e => e.id).map(e => [e.id, e]));
   for (const entry of Array.isArray(cited) ? cited : []) {
     if (entry?.type === 'file') {
-      const path = String(entry.path ?? '').replaceAll('\\', '/');
+      const path = String(entry.path ?? '').replaceAll('\\', '/').replace(/^\.\//, '');
       if (!validRelativePath(path)) { reasons.push('invalid_evidence_path'); continue; }
-      let content;
-      try { content = readFileSync(join(root, path)); } catch { reasons.push(`evidence_file_missing:${path}`); continue; }
-      evidence.push({ type: 'file', path, sha256: createHash('sha256').update(content).digest('hex'),
+      const outside = /^\.(?:git|dd)\//i.test(path) || (listing && !listing.all.has(path));
+      let info;
+      try { info = lstatSync(join(root, path)); } catch { reasons.push(`evidence_file_missing:${path}`); continue; }
+      if (outside || !info.isFile()) { reasons.push(`evidence_not_a_repository_file:${path}`); continue; }
+      if (info.size > EVIDENCE_FILE_MAX) { reasons.push(`evidence_file_too_large:${path}`); continue; }
+      evidence.push({ type: 'file', path, sha256: createHash('sha256').update(readFileSync(join(root, path))).digest('hex'),
         summary: String(entry.summary ?? 'Cited when this memory was saved.').slice(0, 500) });
-      verified.files += 1;
+      files.push(path);
     } else if (entry?.type === 'observation' || entry?.type === 'correction') {
       const found = byId.get(String(entry.ref ?? ''));
       const type = found?.t === 'correction' ? 'correction' : 'observation';
-      if (!found || found.t === 'asked' || type !== entry.type) { reasons.push(`evidence_ref_unknown:${entry.ref ?? ''}`); continue; }
+      if (!found || (found.t !== 'tool' && found.t !== 'correction') || type !== entry.type) { reasons.push(`evidence_ref_unknown:${entry.ref ?? ''}`); continue; }
       evidence.push({ type, summary: String(found.preview ?? '').slice(0, 500) });
-      if (type === 'correction') verified.corrections += 1;
+      if (type === 'correction') corrections += 1;
     } else if (entry?.type === 'note' && typeof entry.summary === 'string' && entry.summary.trim()) {
       evidence.push({ type: 'note', summary: entry.summary.slice(0, 500) });
     } else reasons.push('invalid_evidence_type');
   }
   if (!evidence.length && !reasons.length) reasons.push('evidence_required');
-  return { evidence, verified, reasons };
+  return { evidence, files, corrections, reasons };
+}
+
+// Evidence proves integrity, not relevance (CLAUDE.md): a file counts toward
+// auto-accept only when the memory's triggers cover it or this session touched it.
+function relevantFiles(files, triggers, footprint) {
+  const touched = new Set(footprint.filter(e => e.t === 'tool').flatMap(e => e.paths ?? []));
+  const globs = triggers.flatMap(clause => clause.paths ?? []).map(glob => globToRegExp(glob));
+  return files.filter(path => touched.has(path) || globs.some(regex => regex.test(path)));
 }
 
 // A check must flag its violating example and pass its passing one (spec section 6).
@@ -126,10 +153,11 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date() 
   const all = await store.list();
   const live = all.filter(memory => LIVE_STATUSES.includes(memory.status));
   const footprint = sessionId ? readFootprint(footprintPath(root, sessionId)) : [];
+  const listing = repositoryListing(root);
   const reasons = [];
   const notDerivable = String(proposal.not_derivable ?? '').trim();
   if (notDerivable.length < NOT_DERIVABLE_MIN || [proposal.title, proposal.body].includes(notDerivable)) reasons.push('not_derivable_required');
-  const { evidence, verified, reasons: evidenceReasons } = resolveEvidence(root, proposal.evidence, footprint);
+  const { evidence, files, corrections, reasons: evidenceReasons } = resolveEvidence(root, proposal.evidence, footprint, listing);
   reasons.push(...evidenceReasons);
   let triggers = Array.isArray(proposal.triggers) ? proposal.triggers : [];
   let suggested = false;
@@ -149,14 +177,16 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date() 
   reasons.push(...validateMemory({ ...memory, status: 'active' }));
   if (typeof memory.body === 'string') reasons.push(...genericReasons(memory));
   reasons.push(...checkReasons(memory.check));
-  const repoFiles = reasons.length ? null : repoFilesOf(root);
+  const repoFiles = reasons.length ? null : listing?.tracked ?? null;
   const found = repoFiles ? codeSymbols(root, [...new Set(triggers.flatMap(clause => clause.symbols ?? []))]) : null;
   const warnings = repoFiles ? triggerWarnings(memory, repoFiles, found ? symbol => found.has(symbol) : null) : [];
   for (const warning of warnings) if (warning.kind.startsWith('dead_')) reasons.push(`${warning.kind}:${warning.value}`);
   if (reasons.length) return reject(name, reasons);
 
   const duplicate = duplicateOf(memory, live);
-  const accept = autoAcceptReasons({ memory, verified, warnings, duplicateOf: duplicate, enabled: autoAcceptEnabled(config) });
+  const verified = { files: relevantFiles(files, triggers, footprint).length, corrections };
+  const accept = autoAcceptReasons({ memory, verified, warnings, duplicateOf: duplicate, enabled: autoAcceptEnabled(config),
+    triggersVerified: Boolean(repoFiles && found) });
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
     review: { migrated: false, issues: duplicate ? [`suspected_duplicate:${duplicate}`] : [] } };
   await store.commit({ put: [stored] });
