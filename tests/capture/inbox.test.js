@@ -43,6 +43,7 @@ test('a proposal with a hashed file, live triggers and no check is stored active
   assert.match(reply, /^DD - config\/parse-config: stored and active/);
   assert.equal(stored.status, 'active');
   assert.match(stored.evidence[0].sha256, /^[0-9a-f]{64}$/);
+  assert.deepEqual(stored.review.accepted, { by: 'dd', at: stored.created });
   assert.equal(existsSync(file), false);
   assert.ok(loadIndex(root).memories[stored.id]);
 });
@@ -60,6 +61,7 @@ test('without triggers, the footprint suggests them and the reply says so', asyn
   assert.deepEqual(stored.triggers[0], { on: ['edit'], paths: ['src/config.js'] });
   assert.equal(stored.evidence[0].summary, 'Failed. parseConfig');
   assert.equal(stored.status, 'candidate');
+  assert.equal(stored.review.accepted, undefined);
 });
 
 // A /dd:save about something else must not inherit the session's last fix.

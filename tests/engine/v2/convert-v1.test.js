@@ -144,3 +144,12 @@ test('a long body is converted whole and flagged; a memory with no trigger is fl
   assert.deepEqual(bare.triggers, []);
   assert.ok(bare.review.issues.includes('no_triggers'));
 });
+
+// Retirement never touches what a person reviewed (spec section 8): v1 recorded
+// a review in its local UI as review.source local_ui.
+test('a memory a person reviewed in the v1 UI keeps that it was accepted by a person', () => {
+  const reviewed = convertV1(atom({ review: { source: 'local_ui', reviewed_at: '2026-09-20T00:00:00.000Z', rationale: 'ok' } }));
+  assert.deepEqual(reviewed.review.accepted, { by: 'person', at: '2026-09-20T00:00:00.000Z' });
+  assert.equal(convertV1(atom({ review: { source: 'auto_accept' } })).review.accepted, undefined);
+  assert.equal(convertV1(atom()).review.accepted, undefined);
+});

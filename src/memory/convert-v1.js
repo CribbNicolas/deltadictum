@@ -103,7 +103,9 @@ export function convertV1(atom, { titles = new Map(), liveByTopic = new Map() } 
     origin: atom.capture_origin === 'model_initiated' ? 'model_initiated' : 'user_explicit',
     replaces: atom.replaces ?? null,
     revisit_when: atom.revisit_when ?? [],
-    review: { migrated: true, issues, ...(Object.keys(v1).length ? { v1 } : {}) },
+    review: { migrated: true, issues, ...(Object.keys(v1).length ? { v1 } : {}),
+      // A person reviewed it in v1's local UI: retirement must not undo that.
+      ...(atom.review?.source === 'local_ui' ? { accepted: { by: 'person', at: atom.review.reviewed_at ?? null } } : {}) },
     created: atom.created_at ?? atom.valid_from ?? null,
     updated: atom.updated_at ?? atom.created_at ?? null,
   };
