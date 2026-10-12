@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { compilePattern } from '../checks/pattern.js';
+import { compilePattern } from '../checks/pattern.cjs';
 import { codeSymbols, compileProject, repoFilesOf, triggerWarnings } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { words } from '../engine/text.cjs';

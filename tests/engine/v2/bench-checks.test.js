@@ -24,7 +24,7 @@ test('long patterns and quantified quantified groups are unsafe', () => {
 test('every spike check holds on its own examples and is safe', () => {
   for (const spec of SPIKE_CHECKS) {
     assert.equal(examplesHold(spec.check), true, spec.memory);
-    assert.equal(unsafePattern(spec.check.if_content) || unsafePattern(spec.check.unless_content ?? ''), false, spec.memory);
+    assert.equal(unsafePattern(spec.check.if_content) || Boolean(spec.check.unless_content && unsafePattern(spec.check.unless_content)), false, spec.memory);
   }
 });
 
