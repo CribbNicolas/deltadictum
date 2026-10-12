@@ -21,7 +21,7 @@ Usage: deltadictum [command]
   migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
   compile             Compile this project's memories for delivery (.dd/local/v2)
   status              Knowledge counts by lifecycle state, and where the project's files live
-  health              The deterioration report (crowding, disputes, unreadable knowledge files)
+  health              Each memory's health: dead triggers, idle, hubs, central paths, stale evidence, false alarms
   orient [ACTION]     Project facts and source pointers, with knowledge for ACTION when given
   maintain            Roll session files up into local telemetry, then prune them (runs daily on its own)
   reindex             Rebuild the local SQLite index from the project's .dd/ files
@@ -30,7 +30,7 @@ Usage: deltadictum [command]
 
 // Commands that open the project's store in the current directory. Anything
 // else is refused before a store is opened, so a typo creates no .dd/ there.
-const PROJECT_COMMANDS = ['orient', 'reindex', 'status', 'health'];
+const PROJECT_COMMANDS = ['orient', 'reindex', 'status'];
 
 async function runInstall(args) {
   const hostIdx = args.indexOf('--host');
@@ -64,6 +64,11 @@ async function main() {
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'install') return runInstall(rest);
   if (command === 'migrate') return runMigrate(rest);
+  if (command === 'health') {
+    const { healthReport } = await import('./maintenance/health.js');
+    console.log(JSON.stringify(await healthReport(await findRepoRoot(process.cwd())), null, 2));
+    return;
+  }
   if (command === 'maintain') {
     const { maintain } = await import('./maintenance/maintain.js');
     console.log(JSON.stringify(await maintain(await findRepoRoot(process.cwd())), null, 2));
@@ -99,12 +104,6 @@ async function main() {
       total,
       by_state: counts,
     }, null, 2));
-    store.close();
-    return;
-  }
-  if (command === 'health') {
-    const report = await store.assessDeterioration(projectId);
-    console.log(JSON.stringify(report, null, 2));
     store.close();
     return;
   }
