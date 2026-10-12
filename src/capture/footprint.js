@@ -114,17 +114,6 @@ function collapse(paths) {
   });
 }
 
-// A command's program and subcommand, without its arguments: `npm test`, `node --test`.
-function commandPrefix(command) {
-  const first = String(command).split(/&&|\|\||;|\|/)[0].trim().split(/\s+/).filter(token => !/^\w+=/.test(token));
-  const out = [];
-  for (const token of first) {
-    if (token === '--' || out.length >= 3 || (out.length && (token.includes('/') || token.includes('\\') || /\.\w+$/.test(token)))) break;
-    out.push(token);
-  }
-  return out.join(' ');
-}
-
 const COMMON = new Set(['function', 'return', 'const', 'string', 'number', 'object', 'undefined', 'expected', 'actual', 'error',
   'typeerror', 'referenceerror', 'syntaxerror', 'assertionerror', 'node_modules', 'require', 'import', 'export', 'default']);
 // An identifier specific enough to trigger on: camelCase, snake_case, or long.
@@ -134,8 +123,10 @@ export function suggestTriggers(fix) {
   const clauses = [];
   const paths = collapse([...new Set(fix.edits.flatMap(e => e.paths).filter(isRepoPath))]).slice(0, 12);
   if (paths.length) clauses.push({ on: ['edit'], paths });
-  const commands = [...new Set(fix.failures.filter(e => e.kind === 'run' && e.command).map(e => commandPrefix(e.command)).filter(Boolean))].slice(0, 4);
-  if (commands.length) clauses.push({ on: ['run'], commands });
+  // The failed run is remembered by the files it named, never by its bare
+  // command: `npm test` alone would fire at every test run of every session.
+  const ran = [...new Set(fix.failures.filter(e => e.kind === 'run').flatMap(e => e.paths ?? []).filter(isRepoPath))].slice(0, 12);
+  if (ran.length) clauses.push({ on: ['run'], paths: ran });
   const output = new Set(fix.failures.flatMap(e => e.output_identifiers ?? []));
   const symbols = [...new Set(fix.edits.flatMap(e => e.identifiers ?? []))].filter(id => output.has(id) && distinctive(id)).slice(0, 12);
   if (symbols.length) clauses.push({ on: ['edit', 'write'], symbols });

@@ -62,6 +62,19 @@ test('without triggers, the footprint suggests them and the reply says so', asyn
   assert.equal(stored.status, 'candidate');
 });
 
+// A /dd:save about something else must not inherit the session's last fix.
+test('without triggers or a cited fix, the proposal is sent back with the suggestions to adopt', async t => {
+  const root = repo(t);
+  const path = footprintPath(root, 's1');
+  appendFootprint(path, { t: 'tool', id: 'f1', kind: 'run', runner: true, paths: [], command: 'npm test', outcome: 'failure', preview: 'Failed.', output_identifiers: [] });
+  appendFootprint(path, { t: 'tool', id: 'x1', kind: 'edit', paths: ['src/config.js'], identifiers: [] });
+  appendFootprint(path, { t: 'tool', id: 'v1', kind: 'run', runner: true, paths: [], command: 'npm test', outcome: 'validation', preview: 'Validation passed.' });
+  const file = write(root, 'u.json', proposal({ triggers: undefined, evidence: [{ type: 'file', path: 'README.md' }] }));
+  const { reply, rejected } = await ingestInboxFile({ root, file, sessionId: 's1' });
+  assert.deepEqual(rejected, ['triggers_required']);
+  assert.match(reply, /Suggested from this session's last fix: \[\{"on":\["edit"\],"paths":\["src\/config\.js"\]\}\]/);
+});
+
 test('rejections name their reasons and keep the file', async t => {
   const root = repo(t);
   const cases = [

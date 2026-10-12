@@ -32,9 +32,10 @@ function projectId(root, config, memories) {
   return (typeof config.project_id === 'string' && config.project_id.trim()) || memories[0]?.project_id || basename(root);
 }
 
-function reject(name, reasons) {
+function reject(name, reasons, hint = null) {
   const unique = [...new Set(reasons)];
-  return { reply: `DD - .dd/inbox/${name} rejected: ${unique.join(', ')}. Fix the file and write it again; it was kept.`, rejected: unique };
+  const reply = `DD - .dd/inbox/${name} rejected: ${unique.join(', ')}. Fix the file and write it again; it was kept.`;
+  return { reply: hint ? `${reply}\n${hint}` : reply, rejected: unique };
 }
 
 // Evidence made self-contained and verified by DD: a repository file is hashed
@@ -161,10 +162,20 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date() 
   reasons.push(...evidenceReasons);
   let triggers = Array.isArray(proposal.triggers) ? proposal.triggers : [];
   let suggested = false;
+  let hint = null;
   if (!triggers.length) {
-    const fix = findEvidence(footprint, { includeAsked: true }).fixes.at(-1);
+    // Only the fix the proposal cites lends its triggers: a save about something
+    // else gets the last fix's suggestions to adopt, not silently.
+    const cited = new Set((Array.isArray(proposal.evidence) ? proposal.evidence : []).map(entry => String(entry?.ref ?? '')));
+    const fixes = findEvidence(footprint, { includeAsked: true }).fixes;
+    const fix = fixes.findLast(f => [...f.failures, f.validation].some(e => cited.has(e.id)));
     triggers = fix ? suggestTriggers(fix) : [];
     suggested = triggers.length > 0;
+    if (!suggested) {
+      reasons.push('triggers_required');
+      const last = fixes.at(-1) ? suggestTriggers(fixes.at(-1)) : [];
+      if (last.length) hint = `Suggested from this session's last fix: ${JSON.stringify(last)}`;
+    }
   }
   const previous = live.find(memory => memory.topic === proposal.topic);
   // `review` is DD's: a proposal cannot claim the migrated exemption.
@@ -181,7 +192,7 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date() 
   const found = repoFiles ? codeSymbols(root, [...new Set(triggers.flatMap(clause => clause.symbols ?? []))]) : null;
   const warnings = repoFiles ? triggerWarnings(memory, repoFiles, found ? symbol => found.has(symbol) : null) : [];
   for (const warning of warnings) if (warning.kind.startsWith('dead_')) reasons.push(`${warning.kind}:${warning.value}`);
-  if (reasons.length) return reject(name, reasons);
+  if (reasons.length) return reject(name, reasons, hint);
 
   const duplicate = duplicateOf(memory, live);
   const verified = { files: relevantFiles(files, triggers, footprint).length, corrections };
