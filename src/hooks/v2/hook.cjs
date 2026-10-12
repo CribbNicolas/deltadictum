@@ -9,7 +9,9 @@ const { findProjectRoot, localPaths } = require('../../engine/locate.cjs');
 // but bookkeeping, memories at the prompt and at tool calls, once per epoch per
 // session and subagent. Modules a quiet event does not need load lazily, and a
 // project without a compiled index loads none of the matching code.
-const EVENT_NAMES = { 'session-start': 'SessionStart', prompt: 'UserPromptSubmit', 'pre-tool': 'PreToolUse' };
+const EVENT_NAMES = { 'session-start': 'SessionStart', prompt: 'UserPromptSubmit', 'pre-tool': 'PreToolUse', stop: 'Stop', inbox: 'PostToolUse' };
+// Capture (spec section 7) is ES modules off the PreToolUse path, loaded only for these.
+const CAPTURE = ['observe', 'observe-prompt', 'stop', 'inbox'];
 
 function respond(command, text) {
   return text ? JSON.stringify({ hookSpecificOutput: { hookEventName: EVENT_NAMES[command], additionalContext: text } }) : '';
@@ -69,8 +71,13 @@ async function sessionStart(root, payload, session) {
 }
 
 async function handle(command, payload) {
-  if (!EVENT_NAMES[command] || !payload || typeof payload !== 'object') return '';
+  if (!(EVENT_NAMES[command] || CAPTURE.includes(command)) || !payload || typeof payload !== 'object') return '';
   const root = findProjectRoot(payload.cwd || process.cwd());
+  if (CAPTURE.includes(command)) {
+    if (!existsSync(localPaths(root).memories)) return '';
+    const capture = await import(pathToFileURL(join(__dirname, '..', '..', 'capture', 'hooks.js')).href);
+    return respond(command, await capture.run(command, root, payload));
+  }
   const session = payload.session_id ? { id: payload.session_id, agent: payload.agent_id } : null;
   if (command === 'session-start') return respond(command, await sessionStart(root, payload, session));
   if (!existsSync(localPaths(root).index)) return '';
