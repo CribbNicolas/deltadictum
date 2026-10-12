@@ -4,7 +4,6 @@ import { findRepoRoot, openStore } from './project.js';
 import { migrateProject } from './memory/migrate.js';
 import { compileProject } from './engine/compile.js';
 import { startResidentServer } from './ui/server.js';
-import { orientProject } from './engine/project-context.js';
 import { readRegistry, residentFit, residentStatus, retireResident, writeRegistry } from './resident.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
 import { VERSION } from './hooks/build.js';
@@ -15,22 +14,18 @@ const USAGE = `DeltaDictum (DD) ${VERSION ?? ''}
 
 Usage: deltadictum [command]
 
-  resident            Start the machine's resident process and audit UI (the default; alias: ui)
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
   migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
   compile             Compile this project's memories for delivery (.dd/local/v2)
-  status              Knowledge counts by lifecycle state, and where the project's files live
+  recall QUERY [--all] [--limit N]
+                      Print the memories that match QUERY in full (--all includes candidates)
+  status              Memory counts by status, and topics with more than one live memory
   health              Each memory's health: dead triggers, idle, hubs, central paths, stale evidence, false alarms
-  orient [ACTION]     Project facts and source pointers, with knowledge for ACTION when given
-  maintain            Roll session files up into local telemetry, then prune them (runs daily on its own)
-  reindex             Rebuild the local SQLite index from the project's .dd/ files
+  maintain            Roll session files up into local telemetry, prune them, retire unused memories (runs daily on its own)
+  resident            The audit UI (alias: ui), until the v2 review UI replaces it
   help                Show this help
   version             Print the version`;
-
-// Commands that open the project's store in the current directory. Anything
-// else is refused before a store is opened, so a typo creates no .dd/ there.
-const PROJECT_COMMANDS = ['orient', 'reindex', 'status'];
 
 async function runInstall(args) {
   const hostIdx = args.indexOf('--host');
@@ -64,6 +59,19 @@ async function main() {
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'install') return runInstall(rest);
   if (command === 'migrate') return runMigrate(rest);
+  if (command === 'recall') {
+    const { recall } = await import('./maintenance/recall.js');
+    const limitAt = rest.indexOf('--limit');
+    const limit = limitAt >= 0 ? Number(rest[limitAt + 1]) || 5 : 5;
+    const query = rest.filter((arg, i) => arg !== '--all' && i !== limitAt && i !== limitAt + 1).join(' ');
+    console.log(await recall(await findRepoRoot(process.cwd()), query, { all: rest.includes('--all'), limit }));
+    return;
+  }
+  if (command === 'status') {
+    const { status } = await import('./maintenance/recall.js');
+    console.log(JSON.stringify(await status(await findRepoRoot(process.cwd())), null, 2));
+    return;
+  }
   if (command === 'health') {
     const { healthReport } = await import('./maintenance/health.js');
     console.log(JSON.stringify(await healthReport(await findRepoRoot(process.cwd())), null, 2));
@@ -79,36 +87,8 @@ async function main() {
     return;
   }
   if (!command || command === 'ui' || command === 'resident') return runResident();
-  if (!PROJECT_COMMANDS.includes(command)) {
-    console.error(`Unknown command: ${command}\n\n${USAGE}`);
-    process.exitCode = 1;
-    return;
-  }
-  const { store, projectId, ddDir, dataDir } = await openStore();
-  if (command === 'orient') {
-    console.log(JSON.stringify(await orientProject({ action: rest.join(' ') || undefined }, { store, projectId })));
-    store.close(); return;
-  }
-  if (command === 'reindex') {
-    const result = await store.reindex();
-    console.log(`reindexed ${result.atoms} atoms`);
-    store.close();
-    return;
-  }
-  if (command === 'status') {
-    const { counts, total } = await store.countByLifecycle(projectId);
-    console.log(JSON.stringify({
-      project_id: projectId,
-      dd_dir: ddDir,
-      data_dir: dataDir,
-      total,
-      by_state: counts,
-    }, null, 2));
-    store.close();
-    return;
-  }
-  store.close();
-  throw new Error(`Unknown command: ${command}`);
+  console.error(`Unknown command: ${command}\n\n${USAGE}`);
+  process.exitCode = 1;
 }
 
 // The resident process (L2): one per machine, shared by every project and
