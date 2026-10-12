@@ -1,4 +1,6 @@
+import { isAbsolute, join } from 'node:path';
 import { appendFootprint, correctionEntry, footprintPath, toolEntry } from './footprint.js';
+import { ingestInboxFile } from './inbox.js';
 import { stopRequest } from './stop.js';
 
 // The capture side of DD's hooks (spec section 7), loaded only for these commands.
@@ -15,5 +17,10 @@ export async function run(command, root, payload) {
     return '';
   }
   if (command === 'stop') return stopRequest(root, payload);
+  if (command === 'inbox') {
+    const raw = String(payload.tool_input?.file_path ?? '');
+    const file = isAbsolute(raw) ? raw : join(payload.cwd || root, raw);
+    return (await ingestInboxFile({ root, file, sessionId: payload.session_id })).reply;
+  }
   return '';
 }

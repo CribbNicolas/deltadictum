@@ -2,9 +2,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 // Derived files never belong in git: local/ (compiled index, session ledgers,
-// telemetry) and the memory manifest, which two branches would always conflict
-// on. Each entry is appended to .dd/.gitignore once.
-export const DERIVED_ENTRIES = ['local/', 'memories/manifest.json'];
+// telemetry), the memory manifest, which two branches would always conflict on,
+// and the inbox, where proposals wait seconds before ingestion. Each entry is
+// appended to .dd/.gitignore once.
+export const DERIVED_ENTRIES = ['local/', 'memories/manifest.json', 'inbox/'];
 
 export async function ensureIgnored(ddDir, entries = DERIVED_ENTRIES) {
   const file = join(ddDir, '.gitignore');

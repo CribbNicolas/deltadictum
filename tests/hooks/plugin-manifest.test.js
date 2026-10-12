@@ -24,6 +24,7 @@ test('v2 listens at session start, at prompts and before the tools that carry pr
   const manifest = JSON.parse(await readFile(join(ROOT, 'hooks', 'hooks.json'), 'utf8'));
   assert.deepEqual(Object.keys(manifest.hooks).sort(), ['PostToolUse', 'PostToolUseFailure', 'PreToolUse', 'SessionStart', 'Stop', 'UserPromptSubmit']);
   assert.match(manifest.hooks.Stop[0].hooks[0].command, / stop$/);
+  assert.ok(manifest.hooks.PostToolUse.some(group => group.matcher === 'Write|Edit|MultiEdit' && group.hooks.some(hook => / inbox$/.test(hook.command) && !hook.async)));
   const observe = event => manifest.hooks[event].flatMap(group => group.hooks).find(hook => / observe$/.test(hook.command));
   assert.equal(observe('PostToolUse').async, true);
   assert.equal(observe('PostToolUseFailure').async, true);

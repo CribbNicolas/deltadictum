@@ -16,7 +16,9 @@
     ],
     "PostToolUse": [
       { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
-        "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" observe", "timeout": 10, "async": true } ] }
+        "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" observe", "timeout": 10, "async": true } ] },
+      { "matcher": "Write|Edit|MultiEdit",
+        "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/run.cjs\" inbox", "timeout": 30 } ] }
     ],
     "PostToolUseFailure": [
       { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
