@@ -3,6 +3,9 @@
 // The entry point every DD hook command names. CommonJS end to end: an ES module
 // costs a hook about 3 ms. Any failure ends silently with exit 0: DD never
 // blocks the host.
+// A module that fails to load (a partial install, a checkout on another branch)
+// throws before any handler could catch it: end silently then too.
+process.on('uncaughtException', () => process.exit(0));
 const { appendFileSync, readFileSync } = require('node:fs');
 const { MINIMUM_NODE, supportedNode } = require('./node-support.cjs');
 
