@@ -71,15 +71,27 @@ test('a reported file that the next turn leaves alone counts as a suspected fals
   assert.deepEqual(suspectedFalseAlarms(root), [{ memory: 'store', ignored: 3 }]);
 });
 
-test('the Stop hook says a turn violation, and nothing when it is already continuing', async t => {
+// A fix made at DD's request can break the rule in another file (seen live: the
+// agent moved console.log into a new logger). The turn it continued is checked
+// too; the twice-per-file limit bounds the loop, and no capture request is made.
+test('the Stop hook says turn violations, also in a turn DD made continue, without asking for a memory then', async t => {
   const root = await project(t);
   writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\n');
   edited(root, 'tests/a.test.js', '2026-10-12T00:00:01.000Z');
   const { spawnSync } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
   const run = payload => spawnSync(process.execPath, [fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url)), 'stop'], { input: JSON.stringify(payload), encoding: 'utf8' });
-  assert.equal(run({ session_id: 's1', cwd: root, stop_hook_active: true }).stdout, '');
-  const out = JSON.parse(run({ session_id: 's1', cwd: root }).stdout).hookSpecificOutput;
-  assert.equal(out.hookEventName, 'Stop');
-  assert.match(out.additionalContext, /^DD - check \(Close stores in t\.after\)/);
+  const context = out => (out.stdout ? JSON.parse(out.stdout).hookSpecificOutput.additionalContext : '');
+  const first = JSON.parse(run({ session_id: 's1', cwd: root }).stdout).hookSpecificOutput;
+  assert.equal(first.hookEventName, 'Stop');
+  assert.match(first.additionalContext, /^DD - check \(Close stores in t\.after\)/);
+  // The continued turn fixes a.test.js and breaks b.test.js.
+  writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\nt.after(() => 1)\n');
+  writeFileSync(join(root, 'tests', 'b.test.js'), 'createMemoryStore(d)\n');
+  edited(root, 'tests/a.test.js', new Date().toISOString());
+  edited(root, 'tests/b.test.js', new Date().toISOString());
+  const continued = context(run({ session_id: 's1', cwd: root, stop_hook_active: true }));
+  assert.match(continued, /\(tests\/b\.test\.js\)/);
+  assert.doesNotMatch(continued, /a\.test\.js|save it/);
+  assert.equal(context(run({ session_id: 's1', cwd: root, stop_hook_active: true })), '');
 });
