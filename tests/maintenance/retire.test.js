@@ -39,3 +39,20 @@ test('a memory that never fired despite opportunity retires; reviewed, measured-
   for (const id of ['reviewed', 'keywords', 'used']) assert.equal(after[id].status, 'active', id);
   assert.deepEqual(await retireByDisuse(root, { afterSessions: 21 }), []);
 });
+
+// A revision waiting for review must still have its target to replace.
+test('a memory a pending candidate revises is not retired', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-retire-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  const store = createMemoryFiles(join(root, '.dd'));
+  const narrow = [{ on: ['edit'], paths: ['src/a.js'], symbols: ['neverWritten'] }];
+  await store.commit({ put: [memory('target', narrow), memory('revision', narrow, { topic: 'retire/target', status: 'candidate', replaces: 'target' })] });
+  const db = openTelemetry(root);
+  for (let i = 0; i < 20; i += 1) {
+    db.prepare('INSERT INTO sessions (session) VALUES (?)').run(`s${i}`);
+    db.prepare('INSERT INTO touches VALUES (?, ?, ?)').run(`s${i}`, 'src/a.js', 'edit');
+  }
+  db.close();
+  assert.deepEqual(await retireByDisuse(root, { afterSessions: 20 }), []);
+});

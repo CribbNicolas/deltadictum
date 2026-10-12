@@ -15,7 +15,10 @@ function afterSessionsOf(root) {
 
 export async function retireByDisuse(root, { afterSessions = afterSessionsOf(root), now = new Date() } = {}) {
   const store = createMemoryFiles(localPaths(root).dd);
-  const active = (await store.list()).filter(memory => memory.status === 'active' && memory.review?.accepted?.by !== 'person');
+  const all = await store.list();
+  // A revision waiting for review must still find its target.
+  const revised = new Set(all.filter(memory => memory.status === 'candidate' && memory.replaces).map(memory => memory.replaces));
+  const active = all.filter(memory => memory.status === 'active' && memory.review?.accepted?.by !== 'person' && !revised.has(memory.id));
   if (!active.length) return [];
   const db = openTelemetry(root);
   let retired;
