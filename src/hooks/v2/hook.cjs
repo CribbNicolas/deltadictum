@@ -26,19 +26,28 @@ function labelFor(event) {
   return paths.length > LABEL_PATHS ? `${shown} and ${paths.length - LABEL_PATHS} more` : shown;
 }
 
-function deliverFor(root, event, session) {
+// Memories that fire at this event and checks that speak at it (spec sections 3 and 6).
+function deliverFor(root, event, session, payload = {}) {
   const { loadIndex, readBodies } = require('../../engine/index-file.cjs');
-  const { matchEvent, prepareIndex } = require('../../engine/match.cjs');
   const index = event ? loadIndex(root) : null;
-  const fired = index ? matchEvent(prepareIndex(index), event) : [];
-  if (!fired.length) return '';
+  if (!index) return '';
+  const { matchEvent, prepareIndex } = require('../../engine/match.cjs');
+  const fired = matchEvent(prepareIndex(index), event);
+  const checked = (index.checks ?? []).some(check => check.on.includes(event.kind));
+  if (!fired.length && !checked) return '';
   const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
-  const { fitItems, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
   const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
-  const done = ledger ? ledger.delivered() : new Set();
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
   const bodies = readBodies(root, index);
   if (!bodies) return '';
+  const parts = [fired.length ? delivery(root, index, event, fired, ledger, bodies) : ''];
+  if (checked) parts.push(...require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, bodies }));
+  return parts.filter(Boolean).join('\n\n');
+}
+
+function delivery(root, index, event, fired, ledger, bodies) {
+  const { fitItems, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
+  const done = ledger ? ledger.delivered() : new Set();
   const fresh = fired.filter(hit => !done.has(hit.id) && typeof bodies[hit.id]?.body === 'string');
   if (!fresh.length) return '';
   const label = labelFor(event);
@@ -89,7 +98,7 @@ async function handle(command, payload) {
   const event = command === 'prompt'
     ? { kind: 'prompt', paths: [], text: String(payload.prompt ?? '') }
     : require('./events.cjs').toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
-  return respond(command, deliverFor(root, event, session));
+  return respond(command, deliverFor(root, event, session, payload));
 }
 
 module.exports = { handle, deliverFor, respond };
