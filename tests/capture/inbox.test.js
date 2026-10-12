@@ -160,6 +160,20 @@ test('a proposal on a live topic becomes a revision and waits for a person', asy
   assert.match(reply, /revises/);
 });
 
+// A rewrite of a proposal still waiting for review replaces it: a topic never
+// holds a pending candidate beside an active memory a person could not accept over.
+test('a proposal on a topic whose candidate is still pending replaces that candidate', async t => {
+  const root = repo(t);
+  const first = await ingestInboxFile({ root, file: write(root, 'a.json', proposal({ evidence: [{ type: 'note', summary: 'Seen while debugging.' }] })), sessionId: 's1' });
+  assert.equal(first.stored.status, 'candidate');
+  const second = await ingestInboxFile({ root, file: write(root, 'b.json', proposal()), sessionId: 's1' });
+  assert.equal(second.stored.status, 'active');
+  assert.deepEqual(second.stored.review.issues, [`supersedes_candidate:${first.stored.id}`]);
+  assert.match(second.reply, new RegExp(`replaces the pending candidate ${first.stored.id}`));
+  const onTopic = (await createMemoryFiles(join(root, '.dd')).list()).filter(m => m.topic === 'config/parse-config');
+  assert.deepEqual(onTopic.map(m => m.id), [second.stored.id]);
+});
+
 test('a check whose examples disagree with it is rejected', async t => {
   const root = repo(t);
   const check = { on: ['edit'], paths: ['src/*.js'], if_content: 'JSON\\.parse\\(', unless_content: 'try', say: 'Guard JSON.parse.',

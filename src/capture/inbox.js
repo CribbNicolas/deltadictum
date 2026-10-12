@@ -134,6 +134,8 @@ function storedReply(memory, { suggested, warnings, accept }) {
   const broad = warnings.filter(w => w.kind === 'broad_glob');
   if (broad.length) lines.push(`Broad: ${broad.map(w => `${w.value} matches ${w.files} files`).join('; ')}. Narrow it if the memory applies to fewer.`);
   if (memory.replaces) lines.push(`It revises ${memory.replaces}, which stays active until a person accepts this one.`);
+  const superseded = memory.review.issues.filter(issue => issue.startsWith('supersedes_candidate:')).map(issue => issue.split(':')[1]);
+  if (superseded.length) lines.push(`It replaces the pending candidate ${superseded.join(', ')}.`);
   return lines.join('\n');
 }
 
@@ -198,9 +200,11 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   const verified = { files: relevantFiles(files, triggers, footprint).length, corrections };
   const accept = autoAcceptReasons({ memory, verified, warnings, duplicateOf: duplicate, enabled: autoAcceptEnabled(config),
     triggersVerified: Boolean(repoFiles && found) });
+  // A rewrite replaces the candidates still pending on its topic, in the same commit.
+  const pending = all.filter(other => other.status === 'candidate' && other.topic === memory.topic);
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
-    review: { migrated: false, issues: duplicate ? [`suspected_duplicate:${duplicate}`] : [] } };
-  await store.commit({ put: [stored] });
+    review: { migrated: false, issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)] } };
+  await store.commit({ put: [stored], remove: pending.map(other => other.id) });
   // Stored: the file goes now, so writing it again never revises what it just became.
   rmSync(file, { force: true });
   let reply = storedReply(stored, { suggested, warnings, accept });
