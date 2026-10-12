@@ -78,6 +78,19 @@ test('a command run from a subfolder fires the memory for that folder, not the r
   assert.doesNotMatch(out, /Root tests run serially/);
 });
 
+// A formatter run over hundreds of files must not spend the field on its header.
+test('a command naming many paths gets a short label and the memory in full', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [memory('fmt', 'Format src/a.js by hand', [{ on: ['run'], paths: ['src/a.js'] }])] });
+  await compileProject(root);
+  const files = ['src/a.js', ...Array.from({ length: 400 }, (_, i) => `src/generated/file-${i}.js`)];
+  const out = context(hook('pre-tool', { session_id: 's1', cwd: root, tool_name: 'Bash', tool_input: { command: `npx prettier --write ${files.join(' ')}` } }));
+  assert.ok(out.length < 1000, `${out.length}`);
+  assert.match(out, /^DD - project knowledge \(src\/a\.js, src\/generated\/file-0\.js, src\/generated\/file-1\.js and 398 more\):\n\[TRAP\] Format src\/a\.js by hand - /);
+});
+
 // A memory is never delivered, or counted as delivered, without its body.
 test('an index whose bodies are missing delivers nothing until session start recompiles it', async t => {
   const root = await project(t);
