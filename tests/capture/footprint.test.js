@@ -16,6 +16,17 @@ test('a write records its path and identifiers, never its content', t => {
   assert.doesNotMatch(JSON.stringify(entry), /sk-abcdefghijklmnop1234|export function/);
 });
 
+test('identifiers taken from written content never carry a secret', t => {
+  const root = scratch(t);
+  const content = 'GITHUB_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123456789\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nOPENAI=sk-abcdefghijklmnop1234\n'
+    + `DB_PASSWORD=hunter2hunter2\nexport function parseConfig() {}\nconst ${'x'.repeat(100)} = 1;`;
+  const entry = toolEntry({ tool_name: 'Write', tool_input: { file_path: join(root, '.env'), content } }, { root });
+  const stored = JSON.stringify(entry);
+  for (const secret of ['ghp_abcdefghij', 'AKIAIOSFODNN7EXAMPLE', 'abcdefghijklmnop1234', 'hunter2hunter2']) assert.doesNotMatch(stored, new RegExp(secret));
+  assert.ok(entry.identifiers.includes('parseConfig'));
+  assert.ok(entry.identifiers.every(id => id.length <= 64));
+});
+
 test('a failing command records the redacted command and output, and the output identifiers', t => {
   const root = scratch(t);
   const entry = toolEntry({ hook_event_name: 'PostToolUseFailure', tool_name: 'Bash', tool_input: { command: 'TOKEN=ghp_abcdefghijklmnopqrstuv npm test' },
