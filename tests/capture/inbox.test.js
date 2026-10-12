@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appendFootprint, footprintPath } from '../../src/capture/footprint.js';
@@ -142,6 +142,13 @@ test('a memory stored when the index cannot be rebuilt is still reported, and it
   assert.match(reply, /stored and active/);
   assert.match(reply, /index is rebuilt at the next session start/);
   assert.equal(existsSync(file), false);
+});
+
+// A rejected proposal stays in the inbox: it must never show up in git status.
+test('the first ingestion keeps the inbox out of git, even when it rejects', async t => {
+  const root = repo(t);
+  await ingestInboxFile({ root, file: write(root, 'r.json', '{ torn'), sessionId: 's1' });
+  assert.match(readFileSync(join(root, '.dd', '.gitignore'), 'utf8'), /^inbox\/$/m);
 });
 
 test('a file over 16,000 characters is rejected unread', async t => {
