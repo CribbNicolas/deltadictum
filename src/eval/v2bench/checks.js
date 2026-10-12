@@ -1,19 +1,17 @@
-import { unsafePattern } from '../../checks/pattern.cjs';
+import { evaluateCommand, evaluateContent, exampleProblems } from '../../checks/check.cjs';
+import { createMatcher, unsafePattern } from '../../checks/pattern.cjs';
 import { globToRegExp } from '../../engine/clause.cjs';
 
 export { unsafePattern };
 
+// The production check module (src/checks/check.cjs), with one bounded matcher.
+const matcher = createMatcher();
+
 // A violation: if_content matches and unless_content, when stated, does not.
-export function violates(check, text) {
-  const source = String(text ?? '');
-  if (!new RegExp(check.if_content).test(source)) return false;
-  return !(check.unless_content && new RegExp(check.unless_content).test(source));
-}
+export const violates = (check, text) => evaluateContent(check, text, matcher).violated;
 
 // Whether a check behaves as its own examples say.
-export function examplesHold(check) {
-  return violates(check, check.examples?.violates) && !violates(check, check.examples?.passes);
-}
+export const examplesHold = check => !exampleProblems(check, matcher).length;
 
 // A check scored on the lines each run added to the files it covers, against the
 // run's verdict on the requirement it enforces (true: met, so silence is right).
@@ -33,15 +31,13 @@ export function scoreCheck(spec, fixture) {
     counts[outcome] += 1;
     if (outcome === 'fp' || outcome === 'fn') cases.push({ run_id: run.run_id, outcome });
   }
-  return { memory: spec.memory, requirement: spec.requirement ?? null, examples_hold: examplesHold(spec.check),
+  return { memory: spec.memory, requirement: spec.requirement ?? null, engine: 'production', examples_hold: examplesHold(spec.check),
     unsafe: unsafePattern(spec.check.if_content) || Boolean(spec.check.unless_content && unsafePattern(spec.check.unless_content)), ...counts, cases };
 }
 
 // A command check scored on every run's commands: how often it would speak.
 export function scoreCommandCheck(spec, fixture) {
-  const runs = fixture.runs.filter(run => run.events.some(e => e.kind === 'run'
-    && new RegExp(spec.check.if_command).test(e.text ?? '')
-    && !(spec.check.unless_command && new RegExp(spec.check.unless_command).test(e.text ?? ''))))
+  const runs = fixture.runs.filter(run => run.events.some(e => e.kind === 'run' && evaluateCommand(spec.check, e.text ?? '', matcher).violated))
     .map(run => run.run_id);
   return { memory: spec.memory, fired: runs.length, runs: runs.slice(0, 10) };
 }
