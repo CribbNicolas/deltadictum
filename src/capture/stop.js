@@ -23,6 +23,6 @@ export function stopRequest(root, payload, { now = new Date() } = {}) {
     ...cited.map(e => `- {"type":"${e.t === 'correction' ? 'correction' : 'observation'}","ref":"${e.id}"} ${clip(e.preview ?? '')}`),
   ];
   const triggers = fix ? suggestTriggers(fix) : [];
-  if (triggers.length) lines.push(`Suggested triggers, used when you give none: ${JSON.stringify(triggers)}`);
+  if (triggers.length) lines.push(`Suggested triggers, used when you give none and cite this evidence: ${JSON.stringify(triggers)}`);
   return lines.join('\n');
 }

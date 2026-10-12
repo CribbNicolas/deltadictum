@@ -36,18 +36,21 @@ test('edits to DD files do not make a fix', () => {
   assert.deepEqual(findEvidence([fail('f1'), edit('x1', '.dd/inbox/a.json'), pass('v1')]).fixes, []);
 });
 
-test('suggested triggers: edited paths, the failed command, identifiers in both the failure and the fix', () => {
-  const fix = { failures: [fail('f1')], edits: [edit('x1', 'src/config.js', ['parseConfig', 'value']), edit('x2', 'tests/config.test.js', ['parseConfig'])],
+// A bare `npm test` clause would fire at every test run of every session: the
+// failed run is remembered by the paths it named.
+test('suggested triggers: edited paths, the paths the failed run named, identifiers in both the failure and the fix', () => {
+  const fix = { failures: [fail('f1', { paths: ['tests/config.test.js'] })], edits: [edit('x1', 'src/config.js', ['parseConfig', 'value']), edit('x2', 'tests/config.test.js', ['parseConfig'])],
     validation: pass('v1') };
   assert.deepEqual(suggestTriggers(fix), [
     { on: ['edit'], paths: ['src/config.js', 'tests/config.test.js'] },
-    { on: ['run'], commands: ['npm test'] },
+    { on: ['run'], paths: ['tests/config.test.js'] },
     { on: ['edit', 'write'], symbols: ['parseConfig'] },
   ]);
+  assert.ok(suggestTriggers({ ...fix, failures: [fail('f1')] }).every(clause => !clause.commands && clause.on[0] !== 'run'));
 });
 
 test('three or more sibling files with one extension become one glob', () => {
-  const fix = { failures: [fail('f1', { command: 'node --test tests/a.test.js' })],
+  const fix = { failures: [fail('f1', { command: 'node --test tests/a.test.js', paths: ['tests/a.test.js'] })],
     edits: ['a', 'b', 'c'].map((n, i) => edit(`x${i}`, `src/store/${n}.js`)), validation: pass('v1') };
-  assert.deepEqual(suggestTriggers(fix).slice(0, 2), [{ on: ['edit'], paths: ['src/store/*.js'] }, { on: ['run'], commands: ['node --test'] }]);
+  assert.deepEqual(suggestTriggers(fix).slice(0, 2), [{ on: ['edit'], paths: ['src/store/*.js'] }, { on: ['run'], paths: ['tests/a.test.js'] }]);
 });
