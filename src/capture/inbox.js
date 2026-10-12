@@ -137,7 +137,7 @@ function storedReply(memory, { suggested, warnings, accept }) {
   return lines.join('\n');
 }
 
-export async function ingestInboxFile({ root, file, sessionId, now = new Date() }) {
+export async function ingestInboxFile({ root, file, sessionId, now = new Date(), compile = compileProject }) {
   const name = basename(file);
   let size;
   try { size = statSync(file).size; } catch { return { reply: '' }; }
@@ -201,7 +201,9 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date() 
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
     review: { migrated: false, issues: duplicate ? [`suspected_duplicate:${duplicate}`] : [] } };
   await store.commit({ put: [stored] });
-  await compileProject(root);
+  // Stored: the file goes now, so writing it again never revises what it just became.
   rmSync(file, { force: true });
-  return { reply: storedReply(stored, { suggested, warnings, accept }), stored };
+  let reply = storedReply(stored, { suggested, warnings, accept });
+  try { await compile(root); } catch { reply += '\nThe index could not be rebuilt now; the index is rebuilt at the next session start.'; }
+  return { reply, stored };
 }

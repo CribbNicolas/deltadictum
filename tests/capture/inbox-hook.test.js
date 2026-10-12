@@ -38,6 +38,18 @@ test('a write to the inbox is answered in the same turn with what was stored', t
   assert.equal(existsSync(file), false);
 });
 
+// The agent was told DD replies in the same turn: a failure says so.
+test('an ingestion that fails tells the agent it was not stored', t => {
+  const root = repo(t);
+  writeFileSync(join(root, '.dd', 'memories'), 'not a folder');
+  const file = join(root, '.dd', 'inbox', 'a.json');
+  writeFileSync(file, proposal('config/parse-config'));
+  const out = hook(payload(root, file));
+  assert.equal(out.status, 0);
+  assert.match(JSON.parse(out.stdout).hookSpecificOutput.additionalContext, /^DD - \.dd\/inbox\/a\.json not stored \(.+\); write it again\.$/);
+  assert.equal(existsSync(file), true);
+});
+
 test('a write anywhere else says nothing and creates nothing', t => {
   const root = repo(t);
   rmSync(join(root, '.dd'), { recursive: true, force: true });
