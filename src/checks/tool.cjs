@@ -2,7 +2,6 @@
 
 const { readFileSync } = require('node:fs');
 const { isAbsolute, join } = require('node:path');
-const { PATH_FLAGS } = require('../engine/clause.cjs');
 const { REPORT_LIMIT } = require('../engine/ledger.cjs');
 const { evaluateCommand, evaluateContent } = require('./check.cjs');
 const { createMatcher } = require('./pattern.cjs');
@@ -29,29 +28,30 @@ function contentAfter(root, payload) {
   return text;
 }
 
-function toolViolations({ root, index, event, payload, ledger, bodies }) {
+// `checks` are the ones that apply to this call (hook.cjs applicableChecks); the
+// memories' bodies are read only once a violation is found.
+function toolViolations({ root, event, index, payload, ledger, checks, bodiesOf = () => null }) {
   const kind = event.kind;
-  const checks = (index.checks ?? []).filter(check => check.on.includes(kind) && check.when === (kind === 'run' ? 'run' : 'edit'));
   if (!checks.length) return [];
-  const matcher = createMatcher();
+  let matcher;
+  const match = () => (matcher ??= createMatcher());
   const lines = [];
   for (const check of checks) {
     let target;
     let result;
     if (kind === 'run') {
       target = 'run';
-      result = evaluateCommand(check, event.text, matcher);
+      result = evaluateCommand(check, event.text, match());
     } else {
       target = event.paths[0];
-      if (!target || !(check.paths ?? []).some(source => new RegExp(source, PATH_FLAGS).test(target))) continue;
       const content = contentAfter(root, payload);
       if (content === null) continue;
-      result = evaluateContent(check, content, matcher);
+      result = evaluateContent(check, content, match());
     }
     if (!result.violated) continue;
     if (ledger && ledger.reported(check.m, target) >= REPORT_LIMIT) continue;
     if (ledger) ledger.report(check.m, target);
-    const body = !ledger || !ledger.delivered().has(check.m) ? bodies?.[check.m]?.body : null;
+    const body = !ledger || !ledger.delivered().has(check.m) ? bodiesOf()?.[check.m]?.body : null;
     if (body && ledger) ledger.claim([check.m]);
     const title = index.memories[check.m]?.title ?? check.m;
     lines.push(`DD - check (${title}): ${check.say}${kind === 'run' ? '' : ` (${target})`}${body ? `\n${body}` : ''}`);

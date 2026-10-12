@@ -33,16 +33,28 @@ function deliverFor(root, event, session, payload = {}) {
   if (!index) return '';
   const { matchEvent, prepareIndex } = require('../../engine/match.cjs');
   const fired = matchEvent(prepareIndex(index), event);
-  const checked = (index.checks ?? []).some(check => check.on.includes(event.kind));
-  if (!fired.length && !checked) return '';
+  const checks = applicableChecks(index, event);
+  if (!fired.length && !checks.length) return '';
   const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
   const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
+  let bodies;
+  const bodiesOf = () => (bodies === undefined ? (bodies = readBodies(root, index)) : bodies);
+  const parts = [];
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
-  const bodies = readBodies(root, index);
-  if (!bodies) return '';
-  const parts = [fired.length ? delivery(root, index, event, fired, ledger, bodies) : ''];
-  if (checked) parts.push(...require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, bodies }));
+  if (fired.length && bodiesOf()) parts.push(delivery(root, index, event, fired, ledger, bodiesOf()));
+  if (checks.length) parts.push(...require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf }));
   return parts.filter(Boolean).join('\n\n');
+}
+
+// The checks this tool call evaluates: command checks for a run, `when: edit`
+// checks whose paths cover the file for an edit or write. Turn checks wait for
+// Stop; nothing else loads the check machinery.
+function applicableChecks(index, event) {
+  const checks = (index.checks ?? []).filter(check => check.on.includes(event.kind) && check.when === (event.kind === 'run' ? 'run' : 'edit'));
+  if (!checks.length || event.kind === 'run') return checks;
+  const { PATH_FLAGS } = require('../../engine/clause.cjs');
+  const target = event.paths?.[0];
+  return target ? checks.filter(check => (check.paths ?? []).some(source => new RegExp(source, PATH_FLAGS).test(target))) : [];
 }
 
 function delivery(root, index, event, fired, ledger, bodies) {
