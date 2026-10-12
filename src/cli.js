@@ -63,7 +63,7 @@ async function main() {
     const { recall } = await import('./maintenance/recall.js');
     const limitAt = rest.indexOf('--limit');
     const limit = limitAt >= 0 ? Number(rest[limitAt + 1]) || 5 : 5;
-    const query = rest.filter((arg, i) => arg !== '--all' && i !== limitAt && i !== limitAt + 1).join(' ');
+    const query = rest.filter((arg, i) => arg !== '--all' && (limitAt < 0 || (i !== limitAt && i !== limitAt + 1))).join(' ');
     console.log(await recall(await findRepoRoot(process.cwd()), query, { all: rest.includes('--all'), limit }));
     return;
   }

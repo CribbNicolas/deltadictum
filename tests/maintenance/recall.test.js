@@ -54,6 +54,11 @@ test('deltadictum recall runs from the project', async t => {
   const out = spawnSync(process.execPath, [cli, 'recall', 'store', 't.after'], { cwd: root, encoding: 'utf8' });
   assert.equal(out.status, 0, out.stderr);
   assert.match(out.stdout, /Close stores in t\.after/);
+  // One quoted argument is the whole query.
+  const quoted = spawnSync(process.execPath, [cli, 'recall', 'every store a test opens'], { cwd: root, encoding: 'utf8' });
+  assert.match(quoted.stdout, /Close stores in t\.after/);
+  const limited = spawnSync(process.execPath, [cli, 'recall', '--limit', '1', 'every store a test opens'], { cwd: root, encoding: 'utf8' });
+  assert.match(limited.stdout, /Close stores in t\.after/);
   const counts = spawnSync(process.execPath, [cli, 'status'], { cwd: root, encoding: 'utf8' });
   assert.equal(counts.status, 0, counts.stderr);
   assert.equal(JSON.parse(counts.stdout).total, 2);
