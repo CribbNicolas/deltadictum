@@ -53,8 +53,8 @@ test('the compiled index has the shape its INDEX_VERSION names', () => {
   const { index } = compileIndex({ memories: [memory('m1', { triggers: [
     { on: ['edit'], paths: ['src/a.js'], symbols: ['s'], commands: ['npm test'], keywords: ['k'], not: ['n'], not_paths: ['x/**'] },
   ] })], manifest: { count: 1, hash: 'h' }, fingerprint: 'f', bodiesFile: 'bodies-x.json' });
-  assert.equal(INDEX_VERSION, 3);
-  assert.deepEqual(Object.keys(index).sort(), ['bodies', 'clauses', 'fingerprint', 'manifest', 'memories', 'version']);
+  assert.equal(INDEX_VERSION, 4);
+  assert.deepEqual(Object.keys(index).sort(), ['bodies', 'checks', 'clauses', 'fingerprint', 'manifest', 'memories', 'version']);
   assert.equal(index.bodies, 'bodies-x.json');
   assert.deepEqual(Object.keys(index.memories.m1).sort(), ['kind', 'status', 'title']);
   assert.deepEqual(Object.keys(index.clauses[0]).sort(), ['commands', 'dims', 'keywords', 'm', 'not', 'not_paths', 'on', 'paths', 'symbols']);
@@ -118,6 +118,19 @@ test('a rename the system refuses for a moment is retried, and a lasting refusal
   assert.throws(() => writeCompiled(paths, { ...compiled, index: { ...compiled.index, bodies: 'bodies-b.json' } }, { rename: refuse }), /busy/);
   assert.deepEqual(readdirSync(paths.v2).filter(name => name.endsWith('.tmp')), []);
   assert.equal(loadIndex(root).bodies, 'bodies-a.json');
+});
+
+test('live checks whose examples hold are compiled; others are reported and left out', () => {
+  const good = { on: ['edit'], paths: ['tests/**/*.test.js'], if_content: 'createMemoryStore\\(', unless_content: 't\\.after\\(', say: 'Close it.',
+    examples: { violates: 'createMemoryStore(d)', passes: 'createMemoryStore(d); t.after(x)' } };
+  const bad = { ...good, examples: { violates: 'nothing', passes: 'createMemoryStore(d)' } };
+  const { index, warnings } = compileIndex({ memories: [memory('m1', { check: good }), memory('m2', { check: bad }), memory('m3', { status: 'candidate', check: good })],
+    manifest: { count: 3, hash: 'h' } });
+  assert.deepEqual(index.checks.map(c => [c.m, c.when]), [['m1', 'turn']]);
+  assert.equal(new RegExp(index.checks[0].paths[0]).test('tests/a/b.test.js'), true);
+  assert.deepEqual(warnings.filter(w => w.kind === 'check_examples_fail'), [
+    { memory: 'm2', kind: 'check_examples_fail', value: 'check_misses_its_violating_example' },
+    { memory: 'm2', kind: 'check_examples_fail', value: 'check_flags_its_passing_example' }]);
 });
 
 test('dead and broad triggers are reported, never dropped', () => {

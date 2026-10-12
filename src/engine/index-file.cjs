@@ -9,7 +9,8 @@ const { localPaths } = require('./locate.cjs');
 // compares a fingerprint of the memory files, which catches hand edits and git
 // pulls that never rewrote the manifest.
 // Version 3: each build writes its own bodies file, named by the index.
-const INDEX_VERSION = 3;
+// Version 4: the index carries checks.
+const INDEX_VERSION = 4;
 
 function readJson(path) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
