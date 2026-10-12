@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { defaultWhen, exampleProblems } from '../checks/check.cjs';
+import { createMatcher } from '../checks/pattern.cjs';
 import { DIMENSIONS, globToRegExp, shellTokens } from './clause.cjs';
 import { INDEX_VERSION, memoryFilesFingerprint, readJson } from './index-file.cjs';
 import { localPaths } from './locate.cjs';
@@ -28,6 +30,13 @@ function compileClause(memoryId, clause) {
   return compiled;
 }
 
+function compileCheck(memoryId, check) {
+  const compiled = { m: memoryId, on: check.on, when: defaultWhen(check), say: check.say };
+  if (check.paths?.length) compiled.paths = check.paths.map(glob => globToRegExp(glob).source);
+  for (const key of ['if_content', 'unless_content', 'if_command', 'unless_command']) if (check[key]) compiled[key] = check[key];
+  return compiled;
+}
+
 // Triggers that can never fire, or that fire on a large share of the repository
 // (spec section 3, review note on clause breadth). Reported, never dropped.
 export function triggerWarnings(memory, repoFiles, symbolExists) {
@@ -50,15 +59,22 @@ export function triggerWarnings(memory, repoFiles, symbolExists) {
 export function compileIndex({ memories, manifest, fingerprint = null, repoFiles = null, symbolExists = null, bodiesFile = null }) {
   const live = memories.filter(memory => LIVE_STATUSES.includes(memory.status));
   const index = { version: INDEX_VERSION, manifest: { count: manifest?.count ?? 0, hash: manifest?.hash ?? '' }, fingerprint,
-    bodies: bodiesFile, memories: {}, clauses: [] };
+    bodies: bodiesFile, memories: {}, clauses: [], checks: [] };
   const bodies = {};
   const warnings = [];
+  const matcher = createMatcher();
   for (const memory of live) {
     index.memories[memory.id] = { title: memory.title, kind: memory.kind, status: memory.status };
     for (const clause of memory.triggers) index.clauses.push(compileClause(memory.id, clause));
     bodies[memory.id] = { body: memory.body,
       evidence: memory.evidence.filter(e => e.type === 'file' && e.sha256).map(e => ({ path: e.path, sha256: e.sha256 })) };
     warnings.push(...triggerWarnings(memory, repoFiles, symbolExists));
+    // A check that does not behave as its examples say never reaches a hook.
+    if (memory.check) {
+      const problems = exampleProblems(memory.check, matcher);
+      if (problems.length) warnings.push(...problems.map(value => ({ memory: memory.id, kind: 'check_examples_fail', value })));
+      else index.checks.push(compileCheck(memory.id, memory.check));
+    }
   }
   return { index, bodies, warnings };
 }
