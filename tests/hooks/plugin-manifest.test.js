@@ -22,7 +22,11 @@ test('every plugin hook command is anchored at the plugin root and names a real 
 
 test('v2 listens at session start, at prompts and before the tools that carry project work', async () => {
   const manifest = JSON.parse(await readFile(join(ROOT, 'hooks', 'hooks.json'), 'utf8'));
-  assert.deepEqual(Object.keys(manifest.hooks).sort(), ['PreToolUse', 'SessionStart', 'UserPromptSubmit']);
+  assert.deepEqual(Object.keys(manifest.hooks).sort(), ['PostToolUse', 'PostToolUseFailure', 'PreToolUse', 'SessionStart', 'UserPromptSubmit']);
+  const observe = event => manifest.hooks[event].flatMap(group => group.hooks).find(hook => / observe$/.test(hook.command));
+  assert.equal(observe('PostToolUse').async, true);
+  assert.equal(observe('PostToolUseFailure').async, true);
+  assert.ok(manifest.hooks.UserPromptSubmit.flatMap(group => group.hooks).some(hook => / observe-prompt$/.test(hook.command) && hook.async === true));
   assert.equal(manifest.hooks.PreToolUse[0].matcher, 'Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob');
   const command = event => manifest.hooks[event][0].hooks[0].command;
   assert.match(command('SessionStart'), / session-start$/);
