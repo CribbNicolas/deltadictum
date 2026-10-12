@@ -45,7 +45,7 @@ test('a proposal with a hashed file, live triggers and no check is stored active
 test('without triggers, the footprint suggests them and the reply says so', async t => {
   const root = repo(t);
   const path = footprintPath(root, 's1');
-  appendFootprint(path, { t: 'tool', id: 'f1', kind: 'run', paths: [], command: 'npm test', outcome: 'failure', preview: 'Failed. parseConfig', output_identifiers: ['parseConfig'] });
+  appendFootprint(path, { t: 'tool', id: 'f1', kind: 'run', runner: true, paths: [], command: 'npm test', outcome: 'failure', preview: 'Failed. parseConfig', output_identifiers: ['parseConfig'] });
   appendFootprint(path, { t: 'tool', id: 'x1', kind: 'edit', paths: ['src/config.js'], identifiers: ['parseConfig'] });
   appendFootprint(path, { t: 'tool', id: 'v1', kind: 'run', paths: [], command: 'npm test', outcome: 'validation', preview: 'Validation passed.' });
   appendFootprint(path, { t: 'asked', ids: ['f1', 'v1'] });

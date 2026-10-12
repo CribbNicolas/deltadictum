@@ -12,7 +12,7 @@ function session(t, entries) {
   for (const entry of entries) appendFootprint(footprintPath(root, 's1'), entry);
   return root;
 }
-const fail = { t: 'tool', id: 'f1', kind: 'run', paths: [], command: 'npm test', outcome: 'failure', preview: 'Failed (exit 1). parseConfig is not a function', output_identifiers: ['parseConfig'] };
+const fail = { t: 'tool', id: 'f1', kind: 'run', runner: true, paths: [], command: 'npm test', outcome: 'failure', preview: 'Failed (exit 1). parseConfig is not a function', output_identifiers: ['parseConfig'] };
 const edit = { t: 'tool', id: 'x1', kind: 'edit', paths: ['src/config.js'], identifiers: ['parseConfig'] };
 const pass = { t: 'tool', id: 'v1', kind: 'run', paths: [], command: 'npm test', outcome: 'validation', preview: 'Validation passed (exit 0).' };
 
