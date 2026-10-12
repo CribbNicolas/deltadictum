@@ -55,6 +55,12 @@ test('a missing or unreadable index, another version or a changed manifest is st
   assert.equal(isStale({ version: INDEX_VERSION, manifest: { hash: 'h1' } }, root), true);
 });
 
+test('an index whose bodies file is gone needs a compile', t => {
+  const { root, p } = project(t);
+  rmSync(join(p.v2, 'bodies-t1.json'));
+  assert.equal(needsCompile(loadIndex(root), root), true);
+});
+
 test('a memory file changed by hand or by git, with the manifest untouched, needs a compile at session start', t => {
   const { root, p } = project(t);
   const index = loadIndex(root);
