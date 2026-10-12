@@ -1,6 +1,5 @@
 import { createRequire } from 'node:module';
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { listRequests } from './requests.js';
 import { namedSymbols } from '../capture/generic.js';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
@@ -19,13 +18,6 @@ const { staleEvidence } = createRequire(import.meta.url)('../engine/deliver.cjs'
 // its breadth, its check and its evidence. Nothing here writes.
 export const QUEUES = ['candidates', 'stale', 'hubs', 'dead', 'false_alarms', 'duplicates', 'missing_not_derivable', 'requests', 'all'];
 const SIGNAL_QUEUES = { stale: 'stale_evidence', hubs: 'hub', dead: 'dead_trigger', false_alarms: 'suspected_false_alarm' };
-
-function readRequests(root) {
-  const dir = join(localPaths(root).local, 'requests');
-  let names = [];
-  try { names = readdirSync(dir).filter(name => name.endsWith('.json')); } catch { return []; }
-  return names.map(name => { try { return JSON.parse(readFileSync(join(dir, name), 'utf8')); } catch { return null; } }).filter(Boolean);
-}
 
 async function snapshot(root) {
   const store = createMemoryFiles(localPaths(root).dd);
@@ -53,7 +45,7 @@ function queueIds({ memories, health, signals, pairs }, queue) {
 export async function overview(root) {
   const snap = await snapshot(root);
   const queues = Object.fromEntries(QUEUES.filter(q => q !== 'requests').map(q => [q, queueIds(snap, q).length]));
-  return { status: await status(root), queues: { ...queues, requests: readRequests(root).length } };
+  return { status: await status(root), queues: { ...queues, requests: listRequests(root).length } };
 }
 
 export async function listMemories(root, { queue = 'all' } = {}) {
