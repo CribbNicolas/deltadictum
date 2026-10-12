@@ -46,9 +46,17 @@ function stateOf(lines) {
     if ((line.t === 'epoch' || line.t === 'claim') && Number.isInteger(line.n)) epoch = Math.max(epoch, line.n);
   }
   const first = new Map();
-  for (const line of lines) if (line.t === 'claim' && line.n === epoch && !first.has(line.m)) first.set(line.m, line.k);
-  return { epoch, first };
+  const checks = new Map();
+  for (const line of lines) {
+    if (line.n !== epoch) continue;
+    if (line.t === 'claim' && !first.has(line.m)) first.set(line.m, line.k);
+    if (line.t === 'check') { const key = `${line.m}\0${line.f}`; checks.set(key, (checks.get(key) ?? 0) + 1); }
+  }
+  return { epoch, first, checks };
 }
+
+// A violation is reported at most twice per file per epoch (spec section 6).
+const REPORT_LIMIT = 2;
 
 function openLedger(path) {
   const read = () => stateOf(retrying(() => readLines(path)));
@@ -70,6 +78,10 @@ function openLedger(path) {
         return wanted.filter(id => after.first.get(id) === token);
       } catch { return wanted; }
     },
+    reported: (memoryId, target) => { try { return read().checks.get(`${memoryId}\0${target}`) ?? 0; } catch { return 0; } },
+    report(memoryId, target) {
+      try { append(`${JSON.stringify({ t: 'check', m: memoryId, f: String(target), n: read().epoch })}\n`); } catch { /* fail open */ }
+    },
     newEpoch(reason) {
       try { append(`${JSON.stringify({ t: 'epoch', n: read().epoch + 1, why: String(reason ?? '') })}\n`); } catch { /* fail open */ }
     },
@@ -89,4 +101,4 @@ function pruneSessions(dir, { maxAgeMs = 7 * 24 * 60 * 60 * 1000, now = Date.now
   return pruned;
 }
 
-module.exports = { TAIL_BYTES, ledgerPath, openLedger, pruneSessions };
+module.exports = { TAIL_BYTES, REPORT_LIMIT, ledgerPath, openLedger, pruneSessions };
