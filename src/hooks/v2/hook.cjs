@@ -65,7 +65,7 @@ async function handle(command, payload) {
   if (command === 'session-start') return respond(command, await sessionStart(root, payload, session));
   const event = command === 'prompt'
     ? { kind: 'prompt', paths: [], text: String(payload.prompt ?? '') }
-    : toolEvent(payload.tool_name, payload.tool_input ?? {}, root);
+    : toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
   return respond(command, deliverFor(root, event, session));
 }
 

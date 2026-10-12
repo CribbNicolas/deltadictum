@@ -15,16 +15,31 @@ function relativize(path, root) {
   return slashed.replace(/^\.\//, '');
 }
 
+// A relative path from the session's folder, made absolute. Claude Code may start
+// in a subfolder, and Bash keeps its folder after a cd. Slashes only, so a
+// Windows root reads the same on any platform.
+const ABSOLUTE = /^(?:[A-Za-z]:)?[\\/]|^[A-Za-z]:$/;
+function fromFolder(folder, path) {
+  const text = String(path ?? '').replaceAll('\\', '/');
+  if (!folder || !text || ABSOLUTE.test(text)) return text;
+  const parts = String(folder).replaceAll('\\', '/').replace(/\/$/, '').split('/');
+  for (const part of text.split('/')) {
+    if (part === '.' || part === '') continue;
+    if (part === '..') { if (parts.length > 1) parts.pop(); } else parts.push(part);
+  }
+  return parts.join('/');
+}
+
 // Repository paths a shell command names: tokens with a folder separator or a file extension.
-function bashPaths(command, root) {
+function bashPaths(command, root, cwd = root) {
   const tokens = String(command ?? '').split(/[\s;&|<>()]+/).map(token => token.replace(/^['"]+|['",]+$/g, ''));
   return [...new Set(tokens.filter(token => token && !token.startsWith('-') && !token.includes('://') && !token.includes('=')
     && (/^[\w@.~\-*:\\/]+[\\/][\w@.\-*\\/]*$/.test(token) || /^[\w@.-]+\.[a-z][a-z0-9]{0,4}$/i.test(token)))
-    .map(token => relativize(token, root)))];
+    .map(token => relativize(fromFolder(cwd, token), root)))];
 }
 
-function toolEvent(name, input, root) {
-  const path = p => relativize(p, root);
+function toolEvent(name, input, root, cwd = root) {
+  const path = p => relativize(fromFolder(cwd, p), root);
   const text = value => String(value ?? '');
   switch (name) {
     case 'Read': return { kind: 'read', paths: [path(input.file_path)] };
@@ -32,7 +47,7 @@ function toolEvent(name, input, root) {
     case 'MultiEdit': return { kind: 'edit', paths: [path(input.file_path)], text: (input.edits ?? []).map(e => text(e.new_string)).join('\n') };
     case 'NotebookEdit': return { kind: 'edit', paths: [path(input.notebook_path)], text: text(input.new_source) };
     case 'Write': return { kind: 'write', paths: [path(input.file_path)], text: text(input.content) };
-    case 'Bash': return { kind: 'run', paths: bashPaths(input.command, root), text: text(input.command) };
+    case 'Bash': return { kind: 'run', paths: bashPaths(input.command, root, cwd), text: text(input.command) };
     case 'Grep': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: text(input.pattern) };
     case 'Glob': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: text(input.pattern) };
     default: return null;

@@ -63,6 +63,21 @@ test('memories that did not fit are named, not marked delivered, and arrive in f
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
 });
 
+test('a command run from a subfolder fires the memory for that folder, not the root one', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  mkdirSync(join(root, 'packages', 'api'), { recursive: true });
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [
+    memory('root', 'Root tests run serially', [{ on: ['run'], paths: ['tests/**'] }]),
+    memory('api', 'API tests need the fixture server', [{ on: ['run'], paths: ['packages/api/tests/**'] }]),
+  ] });
+  await compileProject(root);
+  const out = context(hook('pre-tool', { session_id: 's1', cwd: join(root, 'packages', 'api'), tool_name: 'Bash', tool_input: { command: 'node --test tests/x.test.js' } }));
+  assert.match(out, /API tests need the fixture server/);
+  assert.doesNotMatch(out, /Root tests run serially/);
+});
+
 // A memory is never delivered, or counted as delivered, without its body.
 test('an index whose bodies are missing delivers nothing until session start recompiles it', async t => {
   const root = await project(t);
