@@ -1,4 +1,4 @@
-import { unsafePattern } from '../../checks/pattern.js';
+import { unsafePattern } from '../../checks/pattern.cjs';
 import { globToRegExp } from '../../engine/clause.cjs';
 
 export { unsafePattern };
@@ -34,7 +34,7 @@ export function scoreCheck(spec, fixture) {
     if (outcome === 'fp' || outcome === 'fn') cases.push({ run_id: run.run_id, outcome });
   }
   return { memory: spec.memory, requirement: spec.requirement ?? null, examples_hold: examplesHold(spec.check),
-    unsafe: unsafePattern(spec.check.if_content) || unsafePattern(spec.check.unless_content ?? ''), ...counts, cases };
+    unsafe: unsafePattern(spec.check.if_content) || Boolean(spec.check.unless_content && unsafePattern(spec.check.unless_content)), ...counts, cases };
 }
 
 // A command check scored on every run's commands: how often it would speak.
