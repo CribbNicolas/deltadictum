@@ -17,6 +17,15 @@ function respond(command, text) {
   return text ? JSON.stringify({ hookSpecificOutput: { hookEventName: EVENT_NAMES[command], additionalContext: text } }) : '';
 }
 
+// What the delivery is about: the event's first paths, never a list that fills the field.
+const LABEL_PATHS = 3;
+function labelFor(event) {
+  const paths = event.paths ?? [];
+  if (!paths.length) return event.kind;
+  const shown = paths.slice(0, LABEL_PATHS).map(path => String(path).slice(0, 200)).join(', ');
+  return paths.length > LABEL_PATHS ? `${shown} and ${paths.length - LABEL_PATHS} more` : shown;
+}
+
 function deliverFor(root, event, session) {
   const index = event ? loadIndex(root) : null;
   const fired = index ? matchEvent(prepareIndex(index), event) : [];
@@ -30,7 +39,7 @@ function deliverFor(root, event, session) {
   if (!bodies) return '';
   const fresh = fired.filter(hit => !done.has(hit.id) && typeof bodies[hit.id]?.body === 'string');
   if (!fresh.length) return '';
-  const label = (event.paths ?? []).join(', ') || event.kind;
+  const label = labelFor(event);
   const candidates = fresh.map(hit => ({ id: hit.id, ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '',
     stale: staleEvidence(root, bodies[hit.id]?.evidence) }));
   // Only what fits whole is claimed; the rest is named and arrives at its next event.
