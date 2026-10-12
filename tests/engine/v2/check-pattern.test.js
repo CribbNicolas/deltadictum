@@ -5,7 +5,9 @@ import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from '../../../src/eval/v2bench/sp
 
 test('quantified groups that hold a quantifier or an alternation, and backreferences, are refused', () => {
   for (const source of ['(a+)+', '(a+)+$', '(?:\\w*)*x', '(a|aa)+', '((ab)*)+', '(a*)*', '(\\w+\\s?)+', '(.*a){3}', '(?:x|y)*', '((a|b)c)+',
-    '(a)\\1', '(?<n>a)\\k<n>', 'x'.repeat(501)]) {
+    '(a)\\1', '(?<n>a)\\k<n>', 'x'.repeat(501),
+    // In JavaScript `[]` is an empty class and `[^]` any character: the group after it is real.
+    '[]|(a+)+$|]', '[^](a+)+']) {
     assert.ok(patternProblem(source), source);
     assert.equal(unsafePattern(source), true, source);
     assert.equal(compilePattern(source), null, source);
