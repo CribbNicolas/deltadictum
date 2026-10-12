@@ -17,6 +17,7 @@ test('each unmet condition is named', () => {
   assert.deepEqual(autoAcceptReasons({ ...ok, duplicateOf: 'x' }), ['suspected_duplicate']);
   assert.deepEqual(autoAcceptReasons({ ...ok, memory: { replaces: 'y' } }), ['revision']);
   assert.deepEqual(autoAcceptReasons({ ...ok, enabled: false }), ['auto_accept_disabled']);
+  assert.deepEqual(autoAcceptReasons({ ...ok, triggersVerified: false }), ['triggers_unverified']);
 });
 
 test('auto-accept is on unless the project turns it off', () => {

@@ -126,6 +126,8 @@ function gitLines(root, args) {
 
 // The repository's tracked files, or null when git cannot answer.
 export const repoFilesOf = root => gitLines(root, ['ls-files']);
+// Untracked files git does not ignore: new work not yet added.
+export const untrackedFilesOf = root => gitLines(root, ['ls-files', '--others', '--exclude-standard']);
 
 // The trigger symbols the project's code holds, in one git grep over tracked
 // files. DD's own files are excluded: a memory names its own symbols. null when

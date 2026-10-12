@@ -16,7 +16,12 @@ function repo(t) {
   git('init', '-q');
   mkdirSync(join(root, 'src'));
   writeFileSync(join(root, 'src', 'config.js'), 'export function parseConfig(text) { return JSON.parse(text); }\n');
+  writeFileSync(join(root, 'README.md'), '# Project\n');
+  writeFileSync(join(root, '.gitignore'), 'node_modules/\n.env\n');
   git('add', '-A');
+  mkdirSync(join(root, 'node_modules'));
+  writeFileSync(join(root, 'node_modules', 'x.js'), 'x');
+  writeFileSync(join(root, '.env'), 'TOKEN=1');
   mkdirSync(join(root, '.dd', 'inbox'), { recursive: true });
   return root;
 }
@@ -63,6 +68,12 @@ test('rejections name their reasons and keep the file', async t => {
     [proposal({ not_derivable: 'short' }), /not_derivable_required/],
     [proposal({ body: 'Write tests before changing code.', title: 'Tests' }), /generic_advice/],
     [proposal({ evidence: [{ type: 'file', path: '../outside.txt' }] }), /invalid_evidence_path/],
+    [proposal({ evidence: [{ type: 'file', path: '/etc/passwd' }] }), /invalid_evidence_path/],
+    [proposal({ evidence: [{ type: 'file', path: 'C:/Windows/win.ini' }] }), /invalid_evidence_path/],
+    [proposal({ evidence: [{ type: 'file', path: '.git/HEAD' }] }), /evidence_not_a_repository_file:\.git\/HEAD/],
+    [proposal({ evidence: [{ type: 'file', path: '.dd/inbox/r.json' }] }), /evidence_not_a_repository_file/],
+    [proposal({ evidence: [{ type: 'file', path: 'node_modules/x.js' }] }), /evidence_not_a_repository_file:node_modules\/x\.js/],
+    [proposal({ evidence: [{ type: 'file', path: '.env' }] }), /evidence_not_a_repository_file:\.env/],
     [proposal({ evidence: [{ type: 'file', path: 'src/gone.js' }] }), /evidence_file_missing:src\/gone\.js/],
     [proposal({ evidence: [{ type: 'observation', ref: 'nope' }] }), /evidence_ref_unknown:nope/],
     [proposal({ triggers: [{ on: ['edit'], paths: ['docs/none.md'] }] }), /dead_glob:docs\/none\.md/],
@@ -76,6 +87,36 @@ test('rejections name their reasons and keep the file', async t => {
     assert.match(reply, reason);
     assert.ok(existsSync(file));
   }
+});
+
+// Evidence proves integrity, not relevance: a file counts toward auto-accept only
+// when the memory's triggers cover it or the session touched it.
+test('a repository file unrelated to the memory is kept as evidence but does not activate it', async t => {
+  const root = repo(t);
+  const { stored, reply } = await ingestInboxFile({ root, file: write(root, 'a.json', proposal({ evidence: [{ type: 'file', path: 'README.md' }] })), sessionId: 's1' });
+  assert.equal(stored.status, 'candidate');
+  assert.match(reply, /no_verified_evidence/);
+  assert.match(stored.evidence[0].sha256, /^[0-9a-f]{64}$/);
+});
+
+test('a symlink is not evidence', async t => {
+  const root = repo(t);
+  const { symlinkSync } = await import('node:fs');
+  try { symlinkSync(join(root, 'src', 'config.js'), join(root, 'src', 'link.js')); } catch { t.skip('symlinks need privileges here'); return; }
+  spawnSync('git', ['-C', root, 'add', '-A']);
+  const { reply } = await ingestInboxFile({ root, file: write(root, 'a.json', proposal({ evidence: [{ type: 'file', path: 'src/link.js' }] })), sessionId: 's1' });
+  assert.match(reply, /evidence_not_a_repository_file:src\/link\.js/);
+});
+
+test('without git, triggers cannot be verified and nothing auto-activates', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-inbox-nogit-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'src'));
+  writeFileSync(join(root, 'src', 'config.js'), 'export function parseConfig() {}\n');
+  mkdirSync(join(root, '.dd', 'inbox'), { recursive: true });
+  const { stored, reply } = await ingestInboxFile({ root, file: write(root, 'a.json', proposal()), sessionId: 's1' });
+  assert.equal(stored.status, 'candidate');
+  assert.match(reply, /triggers_unverified/);
 });
 
 test('a file over 16,000 characters is rejected unread', async t => {
