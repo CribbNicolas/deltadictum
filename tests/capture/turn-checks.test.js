@@ -56,6 +56,27 @@ test('a violation is reported at most twice an epoch, also when the agent edits 
   }
 });
 
+// The agent that disagrees with a check runs the test file it named; that is not
+// changing it. A file counts as changed by a command only if it was modified
+// after the previous Stop.
+test('a turn that only runs a command naming a reported file leaves it alone', async t => {
+  const root = await project(t);
+  writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\n');
+  edited(root, 'tests/a.test.js', new Date(Date.now() - 1000).toISOString());
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.match(turnViolations(root, { session_id: 's1' }), /DD - check/);
+  await new Promise(resolve => setTimeout(resolve, 20));
+  appendFootprint(footprintPath(root, 's1'), { t: 'tool', id: 'r1', at: new Date().toISOString(), kind: 'run', paths: ['tests/a.test.js'], command: 'node --test tests/a.test.js' });
+  assert.equal(turnViolations(root, { session_id: 's1' }), '');
+  const outcomes = readFileSync(join(root, '.dd', 'local', 'telemetry', 'checks.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line).outcome);
+  assert.deepEqual(outcomes, ['ignored']);
+  // A command that does rewrite the file is a change.
+  await new Promise(resolve => setTimeout(resolve, 20));
+  appendFootprint(footprintPath(root, 's1'), { t: 'tool', id: 'r2', at: new Date().toISOString(), kind: 'run', paths: ['tests/a.test.js'], command: 'sed -i s/x/y/ tests/a.test.js' });
+  writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\n// touched\n');
+  assert.match(turnViolations(root, { session_id: 's1' }), /DD - check/);
+});
+
 test('a reported file that the next turn leaves alone counts as a suspected false alarm', async t => {
   const root = await project(t);
   writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\n');

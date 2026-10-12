@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { appendFootprint, footprintPath, readFootprint } from '../capture/footprint.js';
@@ -19,11 +18,12 @@ function record(root, entry) {
   try { mkdirSync(telemetryDir(root), { recursive: true }); appendFileSync(telemetryPath(root), `${JSON.stringify(entry)}\n`); } catch { /* telemetry is best effort */ }
 }
 
-function gitChanged(root) {
-  try {
-    return new Set(execFileSync('git', ['-C', root, 'diff', '--name-only'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true })
-      .split('\n').filter(Boolean));
-  } catch { return new Set(); }
+// Modified since `since` (ms): a command that names a file changed it only if the
+// file's modification time says so. Running a test file does not change it.
+function modifiedSince(root, file, since) {
+  // Whole milliseconds, as the marker's time is: a write in the very millisecond
+  // of the previous Stop belongs to that turn.
+  try { return Math.floor(statSync(join(root, file)).mtimeMs) > since; } catch { return false; }
 }
 
 function readSmall(file) {
@@ -36,13 +36,13 @@ export function turnViolations(root, payload, { now = new Date() } = {}) {
   // This turn: everything after the previous Stop's marker. The previous Stop's
   // violations were written after its marker, so they open this segment.
   const entries = readFootprint(path);
-  const turn = entries.slice(entries.findLastIndex(e => e.t === 'turn') + 1);
+  const marker = entries.findLastIndex(e => e.t === 'turn');
+  const since = marker >= 0 ? Date.parse(entries[marker].at) || 0 : 0;
+  const turn = entries.slice(marker + 1);
   const tools = turn.filter(e => e.t === 'tool');
   const editedPaths = new Set(tools.filter(e => e.kind === 'edit' || e.kind === 'write').flatMap(e => e.paths ?? []));
-  const named = tools.filter(e => e.kind === 'run').flatMap(e => e.paths ?? []);
-  if (named.length) {
-    const changed = gitChanged(root);
-    for (const file of named) if (changed.has(file)) editedPaths.add(file);
+  for (const file of tools.filter(e => e.kind === 'run').flatMap(e => e.paths ?? [])) {
+    if (modifiedSince(root, file, since)) editedPaths.add(file);
   }
   appendFootprint(path, { t: 'turn', at: now.toISOString() });
 
