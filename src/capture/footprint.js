@@ -55,3 +55,70 @@ export function readFootprint(path) {
   try { text = readFileSync(path, 'utf8'); } catch { return []; }
   return text.split('\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
 }
+
+const isRepoPath = path => Boolean(path) && path !== '.' && !path.startsWith('.dd/') && !path.startsWith('../') && !path.startsWith('/') && !/^[A-Za-z]:/.test(path);
+const changesRepo = entry => (entry.kind === 'edit' || entry.kind === 'write') && entry.paths.some(isRepoPath);
+
+// What a turn can teach (spec section 7): a fix (failures, then edits, then a
+// passing validation) and user corrections. Evidence already asked about is left
+// out, so each set is asked about once.
+export function findEvidence(entries, { includeAsked = false } = {}) {
+  const asked = includeAsked ? new Set() : new Set(entries.filter(e => e.t === 'asked').flatMap(e => e.ids ?? []));
+  const fixes = [];
+  let failures = [];
+  let edits = [];
+  for (const entry of entries) {
+    if (entry.t !== 'tool') continue;
+    if (entry.outcome === 'failure') { failures.push(entry); continue; }
+    if (failures.length && changesRepo(entry)) edits.push(entry);
+    if (entry.outcome === 'validation') {
+      if (failures.length && edits.length && !asked.has(entry.id)) fixes.push({ failures, edits, validation: entry });
+      failures = [];
+      edits = [];
+    }
+  }
+  return { fixes, corrections: entries.filter(e => e.t === 'correction' && !asked.has(e.id)) };
+}
+
+// Sibling files of one folder and extension, three or more, become one glob.
+function collapse(paths) {
+  const groups = new Map();
+  for (const path of paths) {
+    const slash = path.lastIndexOf('/');
+    const dot = path.lastIndexOf('.');
+    const key = `${path.slice(0, slash + 1)}\0${dot > slash ? path.slice(dot) : ''}`;
+    groups.set(key, [...(groups.get(key) ?? []), path]);
+  }
+  return [...groups].flatMap(([key, members]) => {
+    const [dir, ext] = key.split('\0');
+    return members.length >= 3 && ext ? [`${dir}*${ext}`] : members;
+  });
+}
+
+// A command's program and subcommand, without its arguments: `npm test`, `node --test`.
+function commandPrefix(command) {
+  const first = String(command).split(/&&|\|\||;|\|/)[0].trim().split(/\s+/).filter(token => !/^\w+=/.test(token));
+  const out = [];
+  for (const token of first) {
+    if (token === '--' || out.length >= 3 || (out.length && (token.includes('/') || token.includes('\\') || /\.\w+$/.test(token)))) break;
+    out.push(token);
+  }
+  return out.join(' ');
+}
+
+const COMMON = new Set(['function', 'return', 'const', 'string', 'number', 'object', 'undefined', 'expected', 'actual', 'error',
+  'typeerror', 'referenceerror', 'syntaxerror', 'assertionerror', 'node_modules', 'require', 'import', 'export', 'default']);
+// An identifier specific enough to trigger on: camelCase, snake_case, or long.
+const distinctive = id => !COMMON.has(id.toLowerCase()) && (/[a-z][A-Z]/.test(id) || id.includes('_') || id.length >= 10);
+
+export function suggestTriggers(fix) {
+  const clauses = [];
+  const paths = collapse([...new Set(fix.edits.flatMap(e => e.paths).filter(isRepoPath))]).slice(0, 12);
+  if (paths.length) clauses.push({ on: ['edit'], paths });
+  const commands = [...new Set(fix.failures.filter(e => e.kind === 'run' && e.command).map(e => commandPrefix(e.command)).filter(Boolean))].slice(0, 4);
+  if (commands.length) clauses.push({ on: ['run'], commands });
+  const output = new Set(fix.failures.flatMap(e => e.output_identifiers ?? []));
+  const symbols = [...new Set(fix.edits.flatMap(e => e.identifiers ?? []))].filter(id => output.has(id) && distinctive(id)).slice(0, 12);
+  if (symbols.length) clauses.push({ on: ['edit', 'write'], symbols });
+  return clauses;
+}
