@@ -8,6 +8,7 @@ import { globToRegExp } from '../engine/clause.cjs';
 import { localPaths } from '../engine/locate.cjs';
 import { words } from '../engine/text.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from '../memory/schema.js';
+import { ensureIgnored } from '../memory/ignore.js';
 import { createMemoryFiles } from '../memory/store.js';
 import { autoAcceptEnabled, autoAcceptReasons } from './auto-accept.js';
 import { findEvidence, footprintPath, readFootprint, suggestTriggers } from './footprint.js';
@@ -143,6 +144,8 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   const name = basename(file);
   let size;
   try { size = statSync(file).size; } catch { return { reply: '' }; }
+  // Rejected proposals stay in the inbox; it is kept out of git from the first one.
+  await ensureIgnored(localPaths(root).dd);
   if (size > INBOX_MAX) return reject(name, [`file_too_large:${size}>${INBOX_MAX}`]);
   let proposal;
   try { proposal = JSON.parse(readFileSync(file, 'utf8')); } catch { return reject(name, ['invalid_json']); }
