@@ -209,7 +209,9 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   // A rewrite replaces the candidates still pending on its topic, in the same commit.
   const pending = all.filter(other => other.status === 'candidate' && other.topic === memory.topic);
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
-    review: { migrated: false, issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)] } };
+    review: { migrated: false, issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)],
+      // Who accepted it: DD here; a person through the review UI.
+      ...(accept.length ? {} : { accepted: { by: 'dd', at: memory.created } }) } };
   await store.commit({ put: [stored], remove: pending.map(other => other.id) });
   // Stored: the file goes now, so writing it again never revises what it just became.
   rmSync(file, { force: true });
