@@ -32,28 +32,31 @@ function line(item) {
 const header = label => `DD - project knowledge (${label}):`;
 const tailFor = rest => (rest.length ? `... and ${rest.length} more: ${rest.map(x => x.title).join('; ')}` : '');
 
-// How many leading items fit whole, leaving room to name the rest. A hook claims
-// only those: a memory that was only named is delivered at its next event.
-function fitCount({ label, items, limit = LIMIT }) {
+// The items that fit whole, in order, leaving room to name everything else. One
+// that does not fit is skipped, not the end: a long migrated memory must not keep
+// the ones after it from arriving. A hook claims only these; a memory that was
+// only named is delivered at its next event. `named` is always named.
+function fitItems({ label, items, named = [], limit = LIMIT }) {
+  const fitted = [];
+  const skipped = [];
   let length = header(label).length;
-  for (let i = 0; i < items.length; i += 1) {
-    const next = line(items[i]);
-    const tail = tailFor(items.slice(i + 1));
-    if (length + 1 + next.length + (tail ? 1 + tail.length : 0) > limit) return i;
+  items.forEach((item, i) => {
+    const next = line(item);
+    const tail = tailFor([...skipped, ...items.slice(i + 1), ...named]);
+    if (length + 1 + next.length + (tail ? 1 + tail.length : 0) > limit) { skipped.push(item); return; }
+    fitted.push(item);
     length += 1 + next.length;
-  }
-  return items.length;
+  });
+  return fitted;
 }
 
 // Items in full while they fit, then the rest and `named` by title only.
 function renderDelivery({ label, items, named = [], limit = LIMIT }) {
   if (!items?.length && !named.length) return '';
-  const out = [header(label)];
-  let length = out[0].length;
-  // The tail of each candidate line names everything after it, `named` included.
-  const shown = Math.min(fitCount({ label, items: [...items, ...named], limit }), items.length);
-  for (const item of items.slice(0, shown)) { const next = line(item); out.push(next); length += 1 + next.length; }
-  const rest = [...items.slice(shown), ...named];
+  const fitted = fitItems({ label, items, named, limit });
+  const out = [header(label), ...fitted.map(line)];
+  const length = out.join('\n').length;
+  const rest = [...items.filter(item => !fitted.includes(item)), ...named];
   if (rest.length) {
     const tail = tailFor(rest);
     out.push(tail.length + length + 1 <= limit ? tail : tail.slice(0, Math.max(0, limit - length - 2)));
@@ -61,4 +64,4 @@ function renderDelivery({ label, items, named = [], limit = LIMIT }) {
   return out.join('\n');
 }
 
-module.exports = { LIMIT, staleEvidence, fitCount, renderDelivery };
+module.exports = { LIMIT, staleEvidence, fitItems, renderDelivery };

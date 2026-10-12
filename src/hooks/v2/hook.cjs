@@ -31,7 +31,7 @@ function deliverFor(root, event, session) {
   const fired = index ? matchEvent(prepareIndex(index), event) : [];
   if (!fired.length) return '';
   const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
-  const { fitCount, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
+  const { fitItems, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
   const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
   const done = ledger ? ledger.delivered() : new Set();
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
@@ -43,10 +43,10 @@ function deliverFor(root, event, session) {
   const candidates = fresh.map(hit => ({ id: hit.id, ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '',
     stale: staleEvidence(root, bodies[hit.id]?.evidence) }));
   // Only what fits whole is claimed; the rest is named and arrives at its next event.
-  const fits = candidates.slice(0, fitCount({ label, items: candidates }));
+  const fits = fitItems({ label, items: candidates });
   const won = ledger ? new Set(ledger.claim(fits.map(item => item.id))) : new Set(fits.map(item => item.id));
   const items = fits.filter(item => won.has(item.id));
-  const named = candidates.slice(fits.length);
+  const named = candidates.filter(item => !fits.includes(item));
   if (!items.length && !named.length) return '';
   return renderDelivery({ label, items, named });
 }
