@@ -23,7 +23,11 @@ const TEXT_MAX = 300;
 const identifiersOf = text => [...new Set(String(text ?? '').match(IDENTIFIER) ?? [])].slice(0, MAX_IDENTIFIERS);
 const clean = text => redactSecrets(sanitizeText(text)).slice(0, TEXT_MAX);
 
-export function toolEntry(payload, { root, claudeCode = false, now = new Date() } = {}) {
+// When this hook process started: post-tool hooks are async, so a slower one may
+// append after the next tool's hook, but each starts in the order of its tool.
+const hookStarted = () => new Date(performance.timeOrigin);
+
+export function toolEntry(payload, { root, claudeCode = false, now = hookStarted() } = {}) {
   const tool = String(payload.tool_name ?? '');
   const event = toolEvent(tool, payload.tool_input ?? {}, root, payload.cwd || root);
   if (!event) return null;
@@ -40,7 +44,7 @@ export function toolEntry(payload, { root, claudeCode = false, now = new Date() 
   return entry;
 }
 
-export function correctionEntry(payload, { now = new Date() } = {}) {
+export function correctionEntry(payload, { now = hookStarted() } = {}) {
   const observation = observationFromPrompt(payload);
   return observation ? { t: 'correction', id: newId(), at: now.toISOString(), preview: observation.raw_preview.slice(0, TEXT_MAX) } : null;
 }
@@ -53,7 +57,9 @@ export function appendFootprint(path, entry) {
 export function readFootprint(path) {
   let text;
   try { text = readFileSync(path, 'utf8'); } catch { return []; }
-  return text.split('\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+  const entries = text.split('\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+  // Stable: entries with the same start time, or none, keep their file order.
+  return entries.map((entry, i) => [entry, i]).sort(([a, i], [b, j]) => String(a.at ?? '').localeCompare(String(b.at ?? '')) || i - j).map(([entry]) => entry);
 }
 
 const isRepoPath = path => Boolean(path) && path !== '.' && !path.startsWith('.dd/') && !path.startsWith('../') && !path.startsWith('/') && !/^[A-Za-z]:/.test(path);
