@@ -41,23 +41,9 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
   const configPath = join(projectRoot, '.codex', 'config.toml');
   const config = await optionalText(configPath);
   if (!config.includes(configStart) && /^\s*\[mcp_servers\.(?:dd|"dd"|'dd')(?:\]|\.)/m.test(config)) throw new Error('existing_dd_server_requires_review');
-  // Per-tool preferences are user-owned even inside an older DD managed block.
-  const managedFrom = config.indexOf(configStart), managedUntil = config.indexOf(configEnd);
-  const managedConfig = managedFrom >= 0 && managedUntil > managedFrom
-    ? config.slice(managedFrom + configStart.length, managedUntil) : '';
-  const toolPreferences = managedConfig.split(/(?=^\s*\[)/m)
-    .filter(table => /^\s*\[mcp_servers\.(?:dd|"dd"|'dd')\.tools(?:\.[^\]\r\n]+)?\]/.test(table))
-    .map(table => table.trim()).join('\n\n');
-  const configBody = `[mcp_servers.dd]
-command = ${JSON.stringify(slash(process.execPath))}
-args = [${JSON.stringify(slash(join(pluginRoot, 'src/mcp/server.js')))}]
-cwd = ${JSON.stringify(slash(projectRoot))}
-startup_timeout_sec = 30
-tool_timeout_sec = 30
-
-[mcp_servers.dd.env]
-DD_PROJECT_DIR = ${JSON.stringify(slash(projectRoot))}
-DD_DATA = ${JSON.stringify(slash(dataDir))}${toolPreferences ? `\n\n${toolPreferences}` : ''}`;
+  // v2 runs no MCP server: the managed block that registered it is emptied, and
+  // per-tool preferences for that server go with it (plan 7 rewrites this installer).
+  const configBody = '# DD v2 delivers through hooks and runs no MCP server.';
   await plan(configPath, managedBlock(config, configStart, configEnd, configBody), config);
 
   const hookPath = join(projectRoot, '.codex', 'hooks.json');
@@ -65,7 +51,7 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}${toolPreferences ? `\n\n${toolPrefer
   const hooks = hookText ? JSON.parse(hookText) : { description: 'DeltaDictum project orientation, conditional recall and selective capture.', hooks: {} };
   hooks.hooks ??= {};
   for (const [event, command] of [['SessionStart', 'session-start'], ['PreToolUse', 'pre-tool'], ['UserPromptSubmit', 'prompt'], ['PostToolUse', 'observe'], ['Stop', 'stop']]) {
-    const args = [slash(process.execPath), slash(join(pluginRoot, 'src/hooks/run.js')), command, '--codex', '--data', slash(dataDir)];
+    const args = [slash(process.execPath), slash(join(pluginRoot, 'hooks/run.cjs')), command, '--codex', '--data', slash(dataDir)];
     const handler = { type: 'command', command: args.map(quote).join(' '),
       commandWindows: `& ${args.map(psQuote).join(' ')}`, timeout: 10,
       // SessionStart carries the memory map (up to MAP_BUDGET = 5000 tokens, grouped past it), so its limit is wider.
@@ -74,7 +60,7 @@ DD_DATA = ${JSON.stringify(slash(dataDir))}${toolPreferences ? `\n\n${toolPrefer
     // a new Node path or DD directory (a source checkout moved to a global install) would
     // otherwise leave the old handler beside the new one and run DD twice per event.
     const owned = previous => typeof previous?.command === 'string'
-      && slash(previous.command).includes(`src/hooks/run.js' '${command}' '--codex'`);
+      && [`src/hooks/run.js' '${command}' '--codex'`, `hooks/run.cjs' '${command}' '--codex'`].some(owned => slash(previous.command).includes(owned));
     let installed = false;
     const groups = (hooks.hooks[event] ?? []).filter(group => {
       if (!Array.isArray(group?.hooks) || !group.hooks.some(owned)) return true;

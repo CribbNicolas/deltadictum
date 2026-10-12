@@ -68,3 +68,17 @@ test('reinstalling over a 0.3.x Codex install replaces the skills DD wrote', asy
   await writeFile(join(project, '.agents', 'skills', 'dd-review', 'SKILL.md'), '---\nname: my-review\n---\nMine.\n');
   await assert.rejects(planCodexInstall(project), /existing_skill_requires_review/);
 });
+
+// Until plan 7 maps Codex payloads, a Codex install must stay silent, not fail:
+// its hooks name the v2 entry point and it registers no MCP server (v2 has none).
+test('the Codex installer points its hooks at hooks/run.cjs and registers no MCP server', async () => {
+  const project = await mkdtemp(join(tmpdir(), 'dd-codex-v2-'));
+  await mkdir(join(project, '.git'));
+  const plan = await planCodexInstall(project);
+  const content = suffix => String(plan.operations.find(op => op.path.replaceAll('\\', '/').endsWith(suffix))?.content ?? '');
+  const hooks = JSON.parse(content('.codex/hooks.json'));
+  const commands = Object.values(hooks.hooks).flat().flatMap(group => group.hooks).map(hook => hook.command);
+  assert.ok(commands.length > 0);
+  for (const command of commands) assert.match(command, /hooks\/run\.cjs' '[a-z-]+' '--codex'/);
+  assert.doesNotMatch(content('.codex/config.toml'), /\[mcp_servers\.dd\]/);
+});
