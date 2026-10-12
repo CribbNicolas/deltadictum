@@ -57,3 +57,14 @@ test('a command check counts the runs it would speak in', () => {
   ] };
   assert.deepEqual(scoreCommandCheck(SPIKE_COMMAND_CHECKS[0], fixture), { memory: SPIKE_COMMAND_CHECKS[0].memory, fired: 1, runs: ['a'] });
 });
+
+test('the production check module scores the spike checks with no false positive and examples that hold', async () => {
+  const { loadFixture } = await import('../../../src/eval/v2bench/fixture.js');
+  const fixture = await loadFixture();
+  for (const spec of SPIKE_CHECKS) {
+    const score = scoreCheck(spec, fixture);
+    assert.equal(score.examples_hold, true, spec.memory);
+    assert.equal(score.fp, 0, spec.memory);
+    assert.equal(score.engine, 'production');
+  }
+});
