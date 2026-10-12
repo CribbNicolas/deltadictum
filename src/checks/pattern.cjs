@@ -65,7 +65,8 @@ function patternProblem(source) {
     } else if (c === '[') {
       i += 1;
       if (text[i] === '^') i += 1;
-      if (text[i] === ']') i += 1;
+      // JavaScript, unlike PCRE: `[]` is an empty class and `[^]` any character,
+      // so a `]` right after `[` or `[^` closes the class.
       while (i < text.length && text[i] !== ']') i += text[i] === '\\' ? 2 : 1;
       i += 1;
     } else i += 1;
