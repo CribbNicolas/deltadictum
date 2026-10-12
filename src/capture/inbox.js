@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { compilePattern } from '../checks/pattern.cjs';
+import { exampleProblems } from '../checks/check.cjs';
+import { createMatcher } from '../checks/pattern.cjs';
 import { codeSymbols, compileProject, repoFilesOf, triggerWarnings } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { words } from '../engine/text.cjs';
@@ -66,20 +67,8 @@ function resolveEvidence(root, cited, footprint) {
 }
 
 // A check must flag its violating example and pass its passing one (spec section 6).
-function violates(check, text) {
-  const test = source => { const pattern = compilePattern(source); if (!pattern) throw new Error('pattern'); return pattern.test(text); };
-  const matched = [check.if_content, check.if_command].filter(Boolean).some(test);
-  return matched && ![check.unless_content, check.unless_command].filter(Boolean).some(test);
-}
-function checkReasons(check) {
-  if (!check?.examples) return [];
-  try {
-    const reasons = [];
-    if (!violates(check, String(check.examples.violates))) reasons.push('check_misses_its_violating_example');
-    if (violates(check, String(check.examples.passes))) reasons.push('check_flags_its_passing_example');
-    return reasons;
-  } catch { return ['check_pattern_invalid']; }
-}
+// An invalid pattern is reported by the schema; here only examples are judged.
+const checkReasons = check => (check?.examples ? exampleProblems(check, createMatcher()) : []);
 
 // A live memory on another topic that says nearly the same on the same anchors.
 function duplicateOf(memory, live) {
