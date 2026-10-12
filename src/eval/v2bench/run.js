@@ -10,6 +10,7 @@ import { compileIndex, writeCompiled } from '../../engine/compile.js';
 import { localPaths } from '../../engine/locate.cjs';
 import { loadIndex } from '../../engine/index-file.cjs';
 import { matchEvent, prepareIndex } from '../../engine/match.cjs';
+import { toolEvent } from '../../hooks/v2/events.cjs';
 import { synthesizeMemories } from './synth.js';
 import { convertV1 } from '../../memory/convert-v1.js';
 import { productionEngine } from './engine.js';
@@ -104,22 +105,32 @@ if (!('no-latency' in args)) {
     // event would time one path under the other's label.
     const quietCandidates = [{ kind: 'read', paths: ['bench-quiet/untouched.txt'] }, { kind: 'run', paths: [], text: 'echo dd-bench-quiet' }];
     const fixtureReads = fixture.runs.flatMap(run => run.events).filter(e => e.kind === 'read');
+    // What Claude Code sends for an event, so the timing covers the real entry
+    // point (hooks/run.cjs): payload parsing, the project root and normalization.
+    const payloadFor = (scale, e, session) => ({ session_id: session, cwd: scale.root, hook_event_name: 'PreToolUse',
+      ...(e.kind === 'run' ? { tool_name: 'Bash', tool_input: { command: e.text } } : { tool_name: 'Read', tool_input: { file_path: join(scale.root, e.paths[0]) } }) });
+    const fires = (scale, e) => matchEvent(scale.runtime, toolEvent(payloadFor(scale, e).tool_name, payloadFor(scale, e).tool_input, scale.root)).length > 0;
     for (const [name, scale] of Object.entries(scales)) {
-      scale.quiet = quietCandidates.find(e => !matchEvent(scale.runtime, e).length);
-      scale.fires = [JSON.parse(event), ...fixtureReads].find(e => matchEvent(scale.runtime, e).length);
+      scale.quiet = quietCandidates.find(e => !fires(scale, e));
+      scale.fires = [JSON.parse(event), ...fixtureReads].find(e => fires(scale, e));
       if (!scale.quiet || !scale.fires) throw new Error(`bench_events_unusable:${name}`);
     }
-    const real = fileURLToPath(new URL('./hook-real.cjs', import.meta.url));
+    const hook = fileURLToPath(new URL('../../../hooks/run.cjs', import.meta.url));
+    const bare = join(dir, 'no-dd');
+    mkdirSync(join(bare, '.git'), { recursive: true });
     // Interleaved so drift hits every series alike.
-    const series = { node: { prepare: () => ['-e', ''] } };
+    const series = { node: { prepare: () => ['-e', ''] },
+      no_dd: { prepare: () => [hook, 'pre-tool'], input: JSON.stringify({ session_id: 's', cwd: bare, tool_name: 'Read', tool_input: { file_path: join(bare, 'a.js') } }) } };
     for (const [name, scale] of Object.entries(scales)) {
-      series[`${name}_nothing_fires`] = { prepare: i => [real, scale.root, `quiet-${i}`], input: JSON.stringify(scale.quiet) };
-      series[`${name}_fires`] = { prepare: i => [real, scale.root, `fire-${i}`], input: JSON.stringify(scale.fires) };
+      series[`${name}_nothing_fires`] = { prepare: () => [hook, 'pre-tool'], input: JSON.stringify(payloadFor(scale, scale.quiet, 'quiet')) };
+      // A fresh session per run, so every run delivers.
+      series[`${name}_fires`] = { prepare: i => [hook, 'pre-tool'], inputFor: i => JSON.stringify(payloadFor(scale, scale.fires, `fire-${i}`)) };
     }
     const timed = timeInterleaved(series);
     const over = name => Math.round((timed[name].p50 - timed.node.p50) * 10) / 10;
     report.latency.production = Object.fromEntries(Object.entries(scales).map(([name, scale]) => [name, { memories: scale.count,
       overhead_nothing_fires_ms: over(`${name}_nothing_fires`), overhead_fires_ms: over(`${name}_fires`) }]));
+    report.latency.production.no_dd_ms = over('no_dd');
     report.latency.production.timed = timed;
   } finally { rmSync(dir, { recursive: true, force: true }); }
   report.staleness = await stalenessTiming();
@@ -141,7 +152,8 @@ const lines = [
   `Command checks: ${report.command_checks.map(c => `${c.memory} fired in ${c.fired} runs`).join('; ')}`,
   `Classification: ${JSON.stringify(report.classification.counts)}; review issues: ${JSON.stringify(report.review_issues)}`,
   report.latency ? `Latency (ms): node start ${JSON.stringify(report.latency.node_start)}, hook ${JSON.stringify(report.latency.hook)}` : 'Latency: skipped',
-  ...(report.latency ? ['project', 'synthetic'].map(name => { const r = report.latency.production[name]; return `Production hook overhead over node start (ms, p50, interleaved), ${r.memories} memories: nothing fires ${r.overhead_nothing_fires_ms}, fires ${r.overhead_fires_ms}`; }) : []),
+  ...(report.latency ? ['project', 'synthetic'].map(name => { const r = report.latency.production[name]; return `hooks/run.cjs pre-tool overhead over node start (ms, p50, interleaved), ${r.memories} memories: nothing fires ${r.overhead_nothing_fires_ms}, fires ${r.overhead_fires_ms}`; }) : []),
+  report.latency ? `hooks/run.cjs pre-tool in a project without DD: ${report.latency.production.no_dd_ms} ms over node start` : '',
   `Production engine equals reference: ${report.production_equals_reference}`,
   report.staleness ? `Staleness at ${report.staleness.files} files (ms): stat all ${JSON.stringify(report.staleness.stat_all)}, manifest ${JSON.stringify(report.staleness.manifest)}` : '',
 ];

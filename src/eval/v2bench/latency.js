@@ -35,7 +35,7 @@ export function timeInterleaved(specs, { runs = 40 } = {}) {
     for (const [name, spec] of Object.entries(specs)) {
       const argv = spec.prepare(i);
       const start = performance.now();
-      const result = spawnSync(process.execPath, argv, { input: spec.input ?? '', windowsHide: true });
+      const result = spawnSync(process.execPath, argv, { input: spec.inputFor ? spec.inputFor(i) : spec.input ?? '', windowsHide: true });
       times[name].push(performance.now() - start);
       if (result.status !== 0) throw new Error(`spawn_failed:${name}:${result.status}:${String(result.stderr ?? '').slice(0, 200)}`);
     }
