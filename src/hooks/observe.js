@@ -18,7 +18,7 @@ const RUNNER = new RegExp('^(?:\\w+=\\S*\\s+)*(?:'
   + '|node\\s+(?:\\S+\\s+)*--test|(?:cargo|go|dotnet|deno|swift|mvn|(?:\\.\\/)?gradlew|gradle)\\s+(?:\\S+\\s+)*test'
   + '|make\\s+(?:test|check|lint)|rspec|phpunit'
   + ')(?:\\s|$)');
-function runsValidation(command) {
+export function runsValidation(command) {
   const plain = String(command).replace(/'[^']*'|"(?:\\.|[^"\\])*"/g, '""');
   const parts = plain.split(/(&&|\|\||;|\n)/);
   for (let i = 0; i < parts.length; i += 2) {

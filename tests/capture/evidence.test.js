@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { findEvidence, suggestTriggers } from '../../src/capture/footprint.js';
 
-const fail = (id, extra = {}) => ({ t: 'tool', id, kind: 'run', paths: [], command: 'npm test -- tests/config.test.js', outcome: 'failure',
+const fail = (id, extra = {}) => ({ t: 'tool', id, kind: 'run', runner: true, paths: [], command: 'npm test -- tests/config.test.js', outcome: 'failure',
   preview: 'Failed (PostToolUseFailure). TypeError: parseConfig is not a function', output_identifiers: ['TypeError', 'parseConfig', 'function'], ...extra });
 const edit = (id, path, identifiers = []) => ({ t: 'tool', id, kind: 'edit', paths: [path], identifiers });
 const pass = id => ({ t: 'tool', id, kind: 'run', paths: [], command: 'npm test', outcome: 'validation', preview: 'Validation passed (exit 0).' });
@@ -21,6 +21,15 @@ test('evidence already asked about is left out unless asked for', () => {
     { t: 'asked', ids: ['f1', 'v1', 'c1'] }];
   assert.deepEqual(findEvidence(entries), { fixes: [], corrections: [] });
   assert.equal(findEvidence(entries, { includeAsked: true }).fixes.length, 1);
+});
+
+// Routine tool errors are not what a fix fixes: a failed Edit, a missing file, a
+// grep that found nothing. Only a failing test, lint or type-check run counts.
+test('only a failing validation run starts a fix, not a routine tool error', () => {
+  const edit1 = edit('x1', 'src/config.js');
+  assert.deepEqual(findEvidence([{ t: 'tool', id: 'e0', kind: 'edit', paths: ['src/config.js'], outcome: 'failure', preview: 'String to replace not found' }, edit1, pass('v1')]).fixes, []);
+  assert.deepEqual(findEvidence([fail('g1', { runner: false, command: 'grep -r TODO_XYZ src' }), edit1, pass('v1')]).fixes, []);
+  assert.equal(findEvidence([fail('f1'), edit1, pass('v1')]).fixes.length, 1);
 });
 
 test('edits to DD files do not make a fix', () => {

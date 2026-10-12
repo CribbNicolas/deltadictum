@@ -49,6 +49,14 @@ test('a passing validation is recorded; an ordinary success has no outcome', t =
   assert.equal(toolEntry({ tool_name: 'TodoWrite', tool_input: {} }, { root }), null);
 });
 
+test('a run records whether its command is a test, lint or type-check run', t => {
+  const root = scratch(t);
+  const run = command => toolEntry({ tool_name: 'Bash', tool_input: { command } }, { root });
+  assert.equal(run('npm test').runner, true);
+  assert.equal(run('node --test tests/a.test.js').runner, true);
+  assert.equal(run('grep -r TODO src').runner, undefined);
+});
+
 test('a user correction is recorded; an ordinary prompt is not', () => {
   assert.match(correctionEntry({ prompt: 'No, that is wrong: use the store in t.after instead' }).preview, /User correction/);
   assert.equal(correctionEntry({ prompt: 'Add a test for the parser' }), null);

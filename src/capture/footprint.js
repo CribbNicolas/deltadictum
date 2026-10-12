@@ -5,7 +5,7 @@ import { ledgerPath } from '../engine/ledger.cjs';
 import { localPaths } from '../engine/locate.cjs';
 import { containsSecret, redactSecrets, sanitizeText } from '../engine/v2/sanitizer.js';
 import { toolEvent } from '../hooks/v2/events.cjs';
-import { observationFromPrompt, observationFromTool } from '../hooks/observe.js';
+import { observationFromPrompt, observationFromTool, runsValidation } from '../hooks/observe.js';
 
 // A session's footprint (spec section 7): what the agent touched and ran, and
 // what failed, passed or was corrected. Paths, redacted commands, identifiers and
@@ -40,7 +40,10 @@ export function toolEntry(payload, { root, claudeCode = false, now = hookStarted
   const event = toolEvent(tool, payload.tool_input ?? {}, root, payload.cwd || root);
   if (!event) return null;
   const entry = { t: 'tool', id: newId(), at: now.toISOString(), tool, kind: event.kind, paths: event.paths.filter(Boolean).slice(0, 12) };
-  if (event.kind === 'run') entry.command = clean(event.text);
+  if (event.kind === 'run') {
+    entry.command = clean(event.text);
+    if (runsValidation(event.text)) entry.runner = true;
+  }
   if (event.kind === 'search') entry.pattern = clean(event.text);
   if (event.kind === 'edit' || event.kind === 'write') entry.identifiers = identifiersOf(event.text);
   const observation = observationFromTool(payload, { claudeCode });
@@ -83,7 +86,9 @@ export function findEvidence(entries, { includeAsked = false } = {}) {
   let edits = [];
   for (const entry of entries) {
     if (entry.t !== 'tool') continue;
-    if (entry.outcome === 'failure') { failures.push(entry); continue; }
+    // A fix starts at a failing test, lint or type-check run; a failed Edit, a
+    // missing file or a grep that found nothing is routine, not a failure to fix.
+    if (entry.outcome === 'failure') { if (entry.kind === 'run' && entry.runner) failures.push(entry); continue; }
     if (failures.length && changesRepo(entry)) edits.push(entry);
     if (entry.outcome === 'validation') {
       if (failures.length && edits.length && !asked.has(entry.id)) fixes.push({ failures, edits, validation: entry });
