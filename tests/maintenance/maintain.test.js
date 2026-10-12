@@ -34,6 +34,8 @@ test('a maintenance run rolls up and records when it ran', async t => {
   writeFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), `${JSON.stringify({ t: 'claim', m: 'm1', n: 0, k: 'a' })}\n`);
   const result = await maintain(root);
   assert.deepEqual(result.rolled, { files: 1, lines: 1 });
+  assert.deepEqual(result.similarity, { rebuilt: true });
+  assert.deepEqual((await maintain(root)).similarity, { rebuilt: false });
   assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'maintenance.json'), 'utf8')).state, 'finished');
 });
 
