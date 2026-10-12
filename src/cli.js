@@ -23,14 +23,14 @@ Usage: deltadictum [command]
   status              Knowledge counts by lifecycle state, and where the project's files live
   health              The deterioration report (crowding, disputes, unreadable knowledge files)
   orient [ACTION]     Project facts and source pointers, with knowledge for ACTION when given
-  maintain            Prune local observations and telemetry to their retention limits
+  maintain            Roll session files up into local telemetry, then prune them (runs daily on its own)
   reindex             Rebuild the local SQLite index from the project's .dd/ files
   help                Show this help
   version             Print the version`;
 
 // Commands that open the project's store in the current directory. Anything
 // else is refused before a store is opened, so a typo creates no .dd/ there.
-const PROJECT_COMMANDS = ['orient', 'maintain', 'reindex', 'status', 'health'];
+const PROJECT_COMMANDS = ['orient', 'reindex', 'status', 'health'];
 
 async function runInstall(args) {
   const hostIdx = args.indexOf('--host');
@@ -64,6 +64,11 @@ async function main() {
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'install') return runInstall(rest);
   if (command === 'migrate') return runMigrate(rest);
+  if (command === 'maintain') {
+    const { maintain } = await import('./maintenance/maintain.js');
+    console.log(JSON.stringify(await maintain(await findRepoRoot(process.cwd())), null, 2));
+    return;
+  }
   if (command === 'compile') {
     console.log(JSON.stringify(await compileProject(await findRepoRoot(process.cwd())), null, 2));
     return;
@@ -77,11 +82,6 @@ async function main() {
   const { store, projectId, ddDir, dataDir } = await openStore();
   if (command === 'orient') {
     console.log(JSON.stringify(await orientProject({ action: rest.join(' ') || undefined }, { store, projectId })));
-    store.close(); return;
-  }
-  if (command === 'maintain') {
-    await store.prune();
-    console.log('Local observations and telemetry pruned to configured retention limits.');
     store.close(); return;
   }
   if (command === 'reindex') {

@@ -68,9 +68,18 @@ function delivery(root, index, event, fired, ledger, bodies) {
 async function sessionStart(root, payload, session) {
   const paths = localPaths(root);
   if (!existsSync(paths.memories)) return '';
-  const { ledgerPath, openLedger, pruneSessions } = require('../../engine/ledger.cjs');
+  const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
   if (session && ['compact', 'clear'].includes(payload.source)) openLedger(ledgerPath(paths.sessions, session.id, session.agent)).newEpoch(payload.source);
-  pruneSessions(paths.sessions);
+  // Maintenance (roll-up, then pruning) runs detached at most once a day; session
+  // start never waits for it.
+  const { maintenanceDue } = require('../../maintenance/due.cjs');
+  // DD_MAINTENANCE=0 turns it off (tests, CI).
+  if (process.env.DD_MAINTENANCE !== '0' && maintenanceDue(root)) {
+    try {
+      const { spawn } = require('node:child_process');
+      spawn(process.execPath, [join(__dirname, '..', '..', 'cli.js'), 'maintain'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    } catch { /* maintenance is best effort */ }
+  }
   const { loadIndex, needsCompile } = require('../../engine/index-file.cjs');
   if (needsCompile(loadIndex(root), root)) {
     const { compileProject } = await import(pathToFileURL(join(__dirname, '..', '..', 'engine', 'compile.js')).href);

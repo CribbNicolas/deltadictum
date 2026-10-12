@@ -12,3 +12,8 @@ if (!process.env.DD_TEST_DATA_BASE) {
   process.env.CLAUDE_PLUGIN_DATA = process.env.DD_TEST_DATA_BASE;
   delete process.env.GROK_PLUGIN_DATA;
 }
+
+// Session start spawns detached maintenance once a day; in a test it would hold
+// files in a temporary project the test is about to delete. Tests of maintenance
+// turn it back on for the processes they spawn.
+process.env.DD_MAINTENANCE = '0';
