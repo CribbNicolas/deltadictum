@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ledgerPath, openLedger, pruneSessions, TAIL_BYTES } from '../../../src/engine/ledger.cjs';
+import { ledgerPath, openLedger, pruneSessions, REPORT_LIMIT, TAIL_BYTES } from '../../../src/engine/ledger.cjs';
 
 function dir(t) {
   const d = mkdtempSync(join(tmpdir(), 'dd-ledger-'));
@@ -64,4 +64,19 @@ test('sessions older than the limit are pruned, recent ones kept', t => {
   assert.equal(existsSync(join(d, 'old.jsonl')), false);
   assert.equal(existsSync(join(d, 'new.jsonl')), true);
   assert.equal(pruneSessions(join(d, 'missing'), {}), 0);
+});
+
+// A violation is reported at most twice per file per epoch (spec section 6).
+test('violations are counted per memory and file in the current epoch', t => {
+  const ledger = openLedger(join(dir(t), 's.jsonl'));
+  assert.equal(ledger.reported('m1', 'src/a.js'), 0);
+  ledger.report('m1', 'src/a.js');
+  ledger.report('m1', 'src/a.js');
+  ledger.report('m1', 'src/b.js');
+  assert.equal(ledger.reported('m1', 'src/a.js'), 2);
+  assert.equal(ledger.reported('m1', 'src/b.js'), 1);
+  assert.deepEqual([...ledger.delivered()], []);
+  ledger.newEpoch('compact');
+  assert.equal(ledger.reported('m1', 'src/a.js'), 0);
+  assert.equal(REPORT_LIMIT, 2);
 });
