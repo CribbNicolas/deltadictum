@@ -91,7 +91,7 @@ test('the migration keeps derived files out of git', async t => {
   const dd = v1Store(t);
   writeFileSync(join(dd, '.gitignore'), 'ui.json\n');
   await migrateProject({ ddDir: dd });
-  assert.equal(readFileSync(join(dd, '.gitignore'), 'utf8'), 'ui.json\nlocal/\nmemories/manifest.json\n');
+  assert.equal(readFileSync(join(dd, '.gitignore'), 'utf8'), 'ui.json\nlocal/\nmemories/manifest.json\ninbox/\n');
 });
 
 test('a second run finds nothing to migrate', async t => {

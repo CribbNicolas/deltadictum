@@ -74,7 +74,12 @@ async function handle(command, payload) {
   if (!(EVENT_NAMES[command] || CAPTURE.includes(command)) || !payload || typeof payload !== 'object') return '';
   const root = findProjectRoot(payload.cwd || process.cwd());
   if (CAPTURE.includes(command)) {
-    if (!existsSync(localPaths(root).memories)) return '';
+    // The inbox hook runs after every write; only a JSON file in .dd/inbox/ loads
+    // capture, and it may create the project's first memory.
+    if (command === 'inbox') {
+      const file = String(payload.tool_input?.file_path ?? '');
+      if (!/^\.dd\/inbox\/[^/]+\.json$/i.test(require('./events.cjs').relativize(file, root))) return '';
+    } else if (!existsSync(localPaths(root).memories)) return '';
     const capture = await import(pathToFileURL(join(__dirname, '..', '..', 'capture', 'hooks.js')).href);
     return respond(command, await capture.run(command, root, payload));
   }
