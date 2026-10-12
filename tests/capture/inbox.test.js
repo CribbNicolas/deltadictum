@@ -132,6 +132,18 @@ test('without git, triggers cannot be verified and nothing auto-activates', asyn
   assert.match(reply, /triggers_unverified/);
 });
 
+// Once stored, the inbox file goes: writing it again must not revise the memory
+// it just became, even when the index could not be rebuilt.
+test('a memory stored when the index cannot be rebuilt is still reported, and its file removed', async t => {
+  const root = repo(t);
+  const file = write(root, 'a.json', proposal());
+  const { reply, stored } = await ingestInboxFile({ root, file, sessionId: 's1', compile: async () => { throw new Error('EPERM'); } });
+  assert.equal(stored.status, 'active');
+  assert.match(reply, /stored and active/);
+  assert.match(reply, /index is rebuilt at the next session start/);
+  assert.equal(existsSync(file), false);
+});
+
 test('a file over 16,000 characters is rejected unread', async t => {
   const root = repo(t);
   const file = write(root, 'big.json', `{"body":"${'x'.repeat(INBOX_MAX)}"}`);

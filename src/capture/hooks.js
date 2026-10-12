@@ -1,6 +1,5 @@
-import { isAbsolute, join } from 'node:path';
+import { basename, isAbsolute, join } from 'node:path';
 import { appendFootprint, correctionEntry, footprintPath, toolEntry } from './footprint.js';
-import { ingestInboxFile } from './inbox.js';
 import { stopRequest } from './stop.js';
 
 // The capture side of DD's hooks (spec section 7), loaded only for these commands.
@@ -25,7 +24,14 @@ export async function run(command, root, payload) {
   if (command === 'inbox') {
     const raw = String(payload.tool_input?.file_path ?? '');
     const file = isAbsolute(raw) ? raw : join(payload.cwd || root, raw);
-    return (await ingestInboxFile({ root, file, sessionId: payload.session_id })).reply;
+    // The agent was told DD answers in the same turn: a failure says so too.
+    try {
+      const { ingestInboxFile } = await import('./inbox.js');
+      return (await ingestInboxFile({ root, file, sessionId: payload.session_id })).reply;
+    } catch (err) {
+      const reason = String(err?.code ?? err?.message ?? 'error').replace(/\s+/g, ' ').slice(0, 120);
+      return `DD - .dd/inbox/${basename(file)} not stored (${reason}); write it again.`;
+    }
   }
   return '';
 }
