@@ -16,3 +16,17 @@ test('a path, a symbol, a command, a flag or a value makes it specific', () => {
     assert.deepEqual(genericReasons(m(body)), [], body);
   }
 });
+
+// With the repository at hand, a name counts only if the repository has it:
+// "tests and/or docs" names no path, "`fooBarBaz`" no symbol of this code.
+test('with the repository at hand, named paths and symbols must exist in it', () => {
+  const repoFiles = ['src/config.js', 'tests/config.test.js'];
+  const symbolExists = name => name === 'parseConfig';
+  const judge = body => genericReasons(m(body, 'A rule'), { repoFiles, symbolExists });
+  assert.deepEqual(judge('Write tests and/or docs before changing code.'), ['generic_advice']);
+  assert.deepEqual(judge('Call `fooBarBaz` before saving.'), ['generic_advice']);
+  assert.deepEqual(judge('Call `parseConfig` before saving.'), []);
+  assert.deepEqual(judge('Run the files under tests/ serially.'), []);
+  assert.deepEqual(judge('Keep src/config.js free of side effects.'), []);
+  assert.deepEqual(judge('Hooks time out after 10 s.'), []);
+});

@@ -11,7 +11,7 @@ import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from
 import { createMemoryFiles } from '../memory/store.js';
 import { autoAcceptEnabled, autoAcceptReasons } from './auto-accept.js';
 import { findEvidence, footprintPath, readFootprint, suggestTriggers } from './footprint.js';
-import { genericReasons } from './generic.js';
+import { genericReasons, namedSymbols } from './generic.js';
 
 // The inbox (spec section 7): the agent writes a proposal to .dd/inbox/<name>.json
 // and DD answers in the same turn. Nothing the agent wrote is trusted: evidence is
@@ -188,7 +188,10 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
     created: now.toISOString(), updated: now.toISOString() };
   // Held to the rules of a live memory: it may activate below.
   reasons.push(...validateMemory({ ...memory, status: 'active' }));
-  if (typeof memory.body === 'string') reasons.push(...genericReasons(memory));
+  if (typeof memory.body === 'string') {
+    const known = listing ? codeSymbols(root, namedSymbols(memory)) : null;
+    reasons.push(...genericReasons(memory, { repoFiles: listing ? [...listing.all] : null, symbolExists: known ? name => known.has(name) : null }));
+  }
   reasons.push(...checkReasons(memory.check));
   const repoFiles = reasons.length ? null : listing?.tracked ?? null;
   const found = repoFiles ? codeSymbols(root, [...new Set(triggers.flatMap(clause => clause.symbols ?? []))]) : null;
