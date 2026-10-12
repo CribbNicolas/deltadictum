@@ -3,7 +3,7 @@ import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { ledgerPath } from '../engine/ledger.cjs';
 import { localPaths } from '../engine/locate.cjs';
-import { redactSecrets, sanitizeText } from '../engine/v2/sanitizer.js';
+import { containsSecret, redactSecrets, sanitizeText } from '../engine/v2/sanitizer.js';
 import { toolEvent } from '../hooks/v2/events.cjs';
 import { observationFromPrompt, observationFromTool } from '../hooks/observe.js';
 
@@ -20,7 +20,15 @@ const newId = () => `e${randomBytes(4).toString('hex')}`;
 const IDENTIFIER = /[A-Za-z_$][\w$]{3,}/g;
 const MAX_IDENTIFIERS = 40;
 const TEXT_MAX = 300;
-const identifiersOf = text => [...new Set(String(text ?? '').match(IDENTIFIER) ?? [])].slice(0, MAX_IDENTIFIERS);
+const IDENTIFIER_MAX = 64;
+// A value assigned to a key that names a credential (DB_PASSWORD=..., "apiToken": ...).
+const SECRET_VALUE = /([\w.-]*(?:pass(?:wd|word)?|secret|token|api[_-]?key|access[_-]?key|private[_-]?key|credential)[\w.-]*["']?\s*[=:]\s*)["']?[^\s"',;]+["']?/gi;
+// Names from written content, never the secrets in it: credentials in their
+// issuers' shapes and values assigned to credential-named keys are removed first.
+function identifiersOf(text) {
+  const safe = redactSecrets(String(text ?? '')).replace(SECRET_VALUE, '$1[redacted]');
+  return [...new Set(safe.match(IDENTIFIER) ?? [])].filter(id => id.length <= IDENTIFIER_MAX && !containsSecret(id)).slice(0, MAX_IDENTIFIERS);
+}
 const clean = text => redactSecrets(sanitizeText(text)).slice(0, TEXT_MAX);
 
 // When this hook process started: post-tool hooks are async, so a slower one may
