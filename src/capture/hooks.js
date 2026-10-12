@@ -1,4 +1,5 @@
 import { appendFootprint, correctionEntry, footprintPath, toolEntry } from './footprint.js';
+import { stopRequest } from './stop.js';
 
 // The capture side of DD's hooks (spec section 7), loaded only for these commands.
 export async function run(command, root, payload) {
@@ -13,5 +14,6 @@ export async function run(command, root, payload) {
     if (entry) appendFootprint(path, entry);
     return '';
   }
+  if (command === 'stop') return stopRequest(root, payload);
   return '';
 }
