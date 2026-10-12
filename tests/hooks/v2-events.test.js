@@ -11,6 +11,17 @@ test('Claude Code paths become repository-relative, whatever their case or slash
   assert.equal(relativize('D:\\other\\b.js', ROOT), 'D:/other/b.js');
 });
 
+// Claude Code may start in a monorepo folder, and Bash keeps its folder after a cd:
+// a relative path means the session's folder, not the repository root.
+test('relative paths in a command, a search or a read are resolved from the session folder', () => {
+  const api = `${ROOT}\\packages\\api`;
+  assert.deepEqual(bashPaths('node --test tests/x.test.js ../shared/y.js', ROOT, api), ['packages/api/tests/x.test.js', 'packages/shared/y.js']);
+  assert.deepEqual(toolEvent('Grep', { pattern: 'x', path: 'src' }, ROOT, api).paths, ['packages/api/src']);
+  assert.deepEqual(toolEvent('Read', { file_path: 'src/a.js' }, ROOT, api).paths, ['packages/api/src/a.js']);
+  assert.deepEqual(toolEvent('Read', { file_path: `${ROOT}\\src\\a.js` }, ROOT, api).paths, ['src/a.js']);
+  assert.deepEqual(bashPaths('cat ./a.js', ROOT), ['a.js']);
+});
+
 test('every tool DD listens to becomes an event with its full text', () => {
   assert.deepEqual(TOOL_EVENTS, ['Read', 'Edit', 'MultiEdit', 'NotebookEdit', 'Write', 'Bash', 'Grep', 'Glob']);
   const big = 'x'.repeat(5000);
