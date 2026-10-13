@@ -11,15 +11,15 @@ fails one of them is rejected on that basis alone, however good the idea is:
 | | Limit |
 |---|---|
 | L1 | Hooks are ephemeral Node processes; `PreToolUse` runs on every tool call |
-| L2 | DD requires one resident process per machine, shared by all projects; without it DD is inactive (never blocking) and says why |
-| L3 | Three required dependencies (`@modelcontextprotocol/sdk`, `zod`, `@huggingface/transformers`) on Node ≥ 22.16 (node:sqlite with FTS5); the model loads only in the resident, never on the hot path |
-| L4 | The hook contract differs per harness; a veto is not portable |
+| L2 | No resident process: DD runs in the hook, in a daily detached maintenance run, and in a review UI a person starts |
+| L3 | No runtime dependency; Node ≥ 22.16 (node:sqlite with FTS5 for telemetry and similarity, off the hot path); no model |
+| L4 | The hook contract differs per harness; adapters translate events and output formats only |
 | L5 | A hook failure must never block the host |
-| L6 | Single-developer data volumes (90 days or 2000 telemetry rows) — no online learning |
-| L7 | Local-first: git plus a derived SQLite index, nothing leaves the machine |
+| L6 | Single-developer data volumes (session files kept seven days, counted rules) — no online learning |
+| L7 | Local-first: memories in git, everything derived in `.dd/local/`, nothing leaves the machine |
 
 Do not propose PostgreSQL, Qdrant, an external vector store, an inference server, a hosted model,
-federation, multi-tenancy or RBAC. Vectors live in the SQLite index. Documents describing those belonged to an earlier system and were removed.
+federation, multi-tenancy or RBAC. Memories fire by rule matching over a compiled index, not by similarity.
 
 ## Where the truth is
 
@@ -32,29 +32,29 @@ federation, multi-tenancy or RBAC. Vectors live in the SQLite index. Documents d
 
 ## Non-negotiable properties
 
-- Model output never mutates state. Promotion happens through local human review, or through auto-accept
-  when evidence DD verified itself reaches the project's threshold (on by default, configurable per project).
-- A reported success is telemetry. It never raises authority, confidence or promotion status.
+- Model output never mutates state on its own authority. Activation happens through a person in the review
+  UI, or through auto-accept when DD verified the candidate's evidence itself (on by default,
+  `"auto_accept": false` in `.dd/config.json` turns it off).
+- A reported success is telemetry. It never activates a memory.
 - Evidence verification establishes integrity, never that a claim follows from it.
-- Retrieval is project-scoped first, always. There is no global search and no cross-project fallback.
-- Injected knowledge is advisory content, never a command, and never outranks the host or the user.
+- Delivery and recall are project-scoped, always. There is no global search and no cross-project fallback.
+- Delivered knowledge is advisory content, never a command, and never outranks the host or the user.
 
 ## Language
 
 Everything in this repository is written in English: code, comments, documentation, plans, commit
 messages, prompts and memories, whatever language the conversation uses. Spanish appears only as data
-the code needs to understand Spanish input: correction patterns (`src/hooks/observe.js`), the concept
-vocabulary (`src/engine/activation.js`), the language detector (`src/engine/language.js`) and test or
+the code needs to understand Spanish input: correction patterns (`src/hooks/observe.js`) and test or
 benchmark inputs that exercise them.
 
 ## Verification before claiming anything works
 
 ```bash
-npm test          # full suite
-npm run eval      # deterministic retrieval replay; CI gate is f1 >= 0.9 and exact >= 90%
+npm test          # full suite, including the engine's equivalence with the bench reference
 npm run test:stress
+npm run bench:v2  # delivery over the recorded trial and hook latency; read its report
 ```
 
 The hot path is `PreToolUse`, once per tool call, with the cost dominated by Node start-up. Measure
-ranking or gate changes there, not in a microbenchmark. Check changes to the hook contract against both
-Claude Code and the `--codex` path in `src/hooks/run.js`.
+matching changes there (`npm run bench:v2` reports it), not in a microbenchmark. Check changes to the hook
+contract against Claude Code, the `--codex` path (`src/hooks/v2/codex.cjs`) and the OpenCode adapter.
