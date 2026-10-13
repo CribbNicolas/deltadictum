@@ -157,5 +157,4 @@ test('tools, projects and inputs DD has nothing for stay silent and create nothi
   assert.equal(torn.status, 0);
   assert.equal(torn.stdout, '');
   assert.equal(hook('observe', read(root, 's1')).stdout, '');
-  assert.equal(hook('pre-tool', read(root, 's9'), ['--codex']).stdout, '');
 });

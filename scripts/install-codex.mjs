@@ -42,20 +42,25 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
   const config = await optionalText(configPath);
   if (!config.includes(configStart) && /^\s*\[mcp_servers\.(?:dd|"dd"|'dd')(?:\]|\.)/m.test(config)) throw new Error('existing_dd_server_requires_review');
   // v2 runs no MCP server: the managed block that registered it is emptied, and
-  // per-tool preferences for that server go with it (plan 7 rewrites this installer).
+  // per-tool preferences for that server go with it.
   const configBody = '# DD v2 delivers through hooks and runs no MCP server.';
   await plan(configPath, managedBlock(config, configStart, configEnd, configBody), config);
 
   const hookPath = join(projectRoot, '.codex', 'hooks.json');
   const hookText = await optionalText(hookPath);
-  const hooks = hookText ? JSON.parse(hookText) : { description: 'DeltaDictum project orientation, conditional recall and selective capture.', hooks: {} };
+  const hooks = hookText ? JSON.parse(hookText) : { description: 'DeltaDictum: project memories at the actions they apply to, and capture.', hooks: {} };
   hooks.hooks ??= {};
-  for (const [event, command] of [['SessionStart', 'session-start'], ['PreToolUse', 'pre-tool'], ['UserPromptSubmit', 'prompt'], ['PostToolUse', 'observe'], ['Stop', 'stop']]) {
-    const args = [slash(process.execPath), slash(join(pluginRoot, 'hooks/run.cjs')), command, '--codex', '--data', slash(dataDir)];
+  // The hooks Claude Code registers (hooks/hooks.json), with Codex's tool names:
+  // every tool reaches pre-tool and observe, and proposals arrive through apply_patch.
+  const HOOKS = [['SessionStart', 'session-start', ''], ['UserPromptSubmit', 'prompt', ''], ['UserPromptSubmit', 'observe-prompt', ''],
+    ['PreToolUse', 'pre-tool', '*'], ['PostToolUse', 'observe', '*'], ['PostToolUse', 'inbox', 'apply_patch'], ['Stop', 'stop', '']];
+  for (const [event, command, matcher] of HOOKS) {
+    const args = [slash(process.execPath), slash(join(pluginRoot, 'hooks/run.cjs')), command, '--codex'];
+    // A delivery is at most 10,000 characters (spec section 3); capture answers nothing but the inbox reply.
+    const quiet = command === 'observe' || command === 'observe-prompt';
     const handler = { type: 'command', command: args.map(quote).join(' '),
-      commandWindows: `& ${args.map(psQuote).join(' ')}`, timeout: 10,
-      // SessionStart carries the memory map (up to MAP_BUDGET = 5000 tokens, grouped past it), so its limit is wider.
-      ...(event === 'PostToolUse' ? { async: true } : event === 'Stop' ? {} : { additionalContextLimit: event === 'SessionStart' ? 24000 : 800 }) };
+      commandWindows: `& ${args.map(psQuote).join(' ')}`, timeout: command === 'session-start' || command === 'inbox' ? 30 : 10,
+      ...(quiet ? { async: true } : ['pre-tool', 'prompt', 'inbox'].includes(command) ? { additionalContextLimit: 10000 } : {}) };
     // A handler DD wrote is recognised by its runner and event, not by its full command:
     // a new Node path or DD directory (a source checkout moved to a global install) would
     // otherwise leave the old handler beside the new one and run DD twice per event.
@@ -69,7 +74,7 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
       group.hooks = group.hooks.flatMap(previous => !owned(previous) ? [previous] : installed ? [] : (installed = true, [handler]));
       return group.hooks.length > 0;
     });
-    if (!installed) groups.push({ ...(event === 'PreToolUse' || event === 'PostToolUse' ? { matcher: '*' } : {}), hooks: [handler] });
+    if (!installed) groups.push({ ...(matcher ? { matcher } : {}), hooks: [handler] });
     hooks.hooks[event] = groups;
   }
   await plan(hookPath, `${JSON.stringify(hooks, null, 2)}\n`, hookText);
@@ -99,11 +104,7 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
   const agents = await optionalText(agentsPath);
   await plan(agentsPath, managedBlock(agents, agentsStart, agentsEnd, `## DD project knowledge
 
-Use the local DD MCP server and the dd-recall skill when working in this project. Call orient at the start of a task and retrieve before relevant implementation or debugging, supplying affected files and operation. Reuse the session_id supplied by the DD session hook; otherwise generate one per conversation. After compaction, refresh with repeat: true.
-
-Treat retrieved knowledge as conditional advice. Inspect evidence for disputed or review-required decisions; current code, project documentation and user instructions take precedence. Read source pointers as needed instead of loading the whole memory store.
-
-At meaningful checkpoints, propose supported reusable decisions or lessons with actual repository evidence. There is no proposal count limit per call or session. Set capture_origin to model_initiated for autonomous discoveries or user_explicit for requested saves. Report proposals as pending review. Use feedback for observed outcomes and ui for human review. Do not self-approve memories or read chat transcripts to build them. If DD is unavailable, continue the task and report that project memory was unavailable.`), agents);
+DD hooks add this project's memories before the actions they apply to. Treat them as advice: the current code, the project's documents and the user take precedence. When you learn something an agent reading the code would miss, save it with the dd-save skill.`), agents);
   const ignorePath = join(projectRoot, '.dd', '.gitignore');
   let ignore = await optionalText(ignorePath);
   for (const pattern of ['local/', '.write-lock', '.pending-write.json', '*.tmp', '*.sqlite', '*.sqlite-*']) {

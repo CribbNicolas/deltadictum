@@ -13,9 +13,13 @@ const EVENT_NAMES = { 'session-start': 'SessionStart', prompt: 'UserPromptSubmit
 // Capture (spec section 7) is ES modules off the PreToolUse path, loaded only for these.
 const CAPTURE = ['observe', 'observe-prompt', 'stop', 'inbox'];
 
-function respond(command, text) {
-  return text ? JSON.stringify({ hookSpecificOutput: { hookEventName: EVENT_NAMES[command], additionalContext: text } }) : '';
+// Codex takes Stop's message as a block with the reason (spec section 5), as v1 did.
+function respond(command, text, host = 'claude') {
+  if (!text) return '';
+  if (host === 'codex' && command === 'stop') return JSON.stringify({ decision: 'block', reason: text });
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: EVENT_NAMES[command], additionalContext: text } });
 }
+const INBOX_FILE = /^\.dd\/inbox\/[^/]+\.json$/i;
 
 // What the delivery is about: the event's first paths, never a list that fills the field.
 const LABEL_PATHS = 3;
@@ -100,26 +104,34 @@ async function sessionStart(root, payload, session) {
   return '';
 }
 
-async function handle(command, payload) {
+async function handle(command, payload, { host = 'claude' } = {}) {
   if (!(EVENT_NAMES[command] || CAPTURE.includes(command)) || !payload || typeof payload !== 'object') return '';
+  if (host === 'codex') payload = require('./codex.cjs').codexPayload(payload);
   const root = findProjectRoot(payload.cwd || process.cwd());
   if (CAPTURE.includes(command)) {
+    const capturePath = pathToFileURL(join(__dirname, '..', '..', 'capture', 'hooks.js')).href;
     // The inbox hook runs after every write; only a JSON file in .dd/inbox/ loads
-    // capture, and it may create the project's first memory.
+    // capture, and it may create the project's first memory. A patch may add several.
     if (command === 'inbox') {
-      const file = String(payload.tool_input?.file_path ?? '');
-      if (!/^\.dd\/inbox\/[^/]+\.json$/i.test(require('./events.cjs').relativize(file, root))) return '';
-    } else if (!existsSync(localPaths(root).memories)) return '';
-    const capture = await import(pathToFileURL(join(__dirname, '..', '..', 'capture', 'hooks.js')).href);
-    return respond(command, await capture.run(command, root, payload));
+      const event = require('./events.cjs').toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
+      const files = (event?.paths ?? []).filter(path => INBOX_FILE.test(path));
+      if (!files.length) return '';
+      const capture = await import(capturePath);
+      const replies = [];
+      for (const file of files) replies.push(await capture.run(command, root, { ...payload, tool_input: { file_path: join(root, file) } }));
+      return respond(command, replies.filter(Boolean).join('\n'), host);
+    }
+    if (!existsSync(localPaths(root).memories)) return '';
+    const capture = await import(capturePath);
+    return respond(command, await capture.run(command, root, payload), host);
   }
   const session = payload.session_id ? { id: payload.session_id, agent: payload.agent_id } : null;
-  if (command === 'session-start') return respond(command, await sessionStart(root, payload, session));
+  if (command === 'session-start') return respond(command, await sessionStart(root, payload, session), host);
   if (!existsSync(localPaths(root).index)) return '';
   const event = command === 'prompt'
     ? { kind: 'prompt', paths: [], text: String(payload.prompt ?? '') }
     : require('./events.cjs').toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
-  return respond(command, deliverFor(root, event, session, payload));
+  return respond(command, deliverFor(root, event, session, payload), host);
 }
 
 module.exports = { handle, deliverFor, respond };
