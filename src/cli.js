@@ -22,7 +22,7 @@ Usage: deltadictum [command]
   status              Memory counts by status, and topics with more than one live memory
   health              Each memory's health: dead triggers, idle, hubs, central paths, stale evidence, false alarms
   maintain            Roll session files up into local telemetry, prune them, retire unused memories (runs daily on its own)
-  resident            The audit UI (alias: ui), until the v2 review UI replaces it
+  ui [--port N]       The review UI for this project, until interrupted (default port 7733)
   help                Show this help
   version             Print the version`;
 
@@ -85,13 +85,28 @@ async function main() {
     console.log(JSON.stringify(await compileProject(findProjectRoot(process.cwd())), null, 2));
     return;
   }
-  if (!command || command === 'ui' || command === 'resident') return runUi(rest);
+  if (!command) { console.log(USAGE); return; }
+  if (command === 'ui') return runUi(rest);
   console.error(`Unknown command: ${command}\n\n${USAGE}`);
   process.exitCode = 1;
 }
 
-// The review UI (plan 6b, Task 7).
-async function runUi() { throw new Error('ui_unavailable_until_task_7'); }
+// The review UI for the project in the current folder, until interrupted. A busy
+// port falls back to a free one: the printed address is the one that answers.
+async function runUi(args) {
+  const { startReviewServer } = await import('./ui/server.js');
+  const root = findProjectRoot(process.cwd());
+  const portAt = args.indexOf('--port');
+  const port = portAt >= 0 ? Number(args[portAt + 1]) || 0 : 7733;
+  const server = await startReviewServer({ root, port }).catch(err => {
+    if (err.code === 'EADDRINUSE') return startReviewServer({ root, port: 0 });
+    throw err;
+  });
+  console.log(`DD - review UI: ${server.url}`);
+  const stop = async () => { await server.close(); process.exit(0); };
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
+}
 
 main().catch(err => {
   console.error(err.message);
