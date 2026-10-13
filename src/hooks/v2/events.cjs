@@ -1,8 +1,8 @@
 'use strict';
 
 // A harness's tool call as the normalized event of spec section 3:
-// { kind, paths, text }. Claude Code tool names here; other harnesses map their
-// own payloads to the same events (plan 7).
+// { kind, paths, text }. Claude Code tool names here, plus the names Codex
+// payloads are mapped to (codex.cjs).
 const TOOL_EVENTS = ['Read', 'Edit', 'MultiEdit', 'NotebookEdit', 'Write', 'Bash', 'Grep', 'Glob'];
 
 // A path under the project root, made repository-relative. Windows spells the
@@ -38,6 +38,15 @@ function bashPaths(command, root, cwd = root) {
     .map(token => relativize(fromFolder(cwd, token), root)))];
 }
 
+// The files an apply_patch names in its headers, and the lines it adds. A patch
+// that only adds files writes; one that changes or deletes any edits.
+function patchEvent(patch, path) {
+  const headers = [...String(patch ?? '').matchAll(/^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/gm)];
+  const added = String(patch ?? '').split('\n').filter(line => line.startsWith('+')).map(line => line.slice(1)).join('\n');
+  const kind = headers.length && headers.every(([, action]) => action === 'Add File') ? 'write' : 'edit';
+  return { kind, paths: [...new Set(headers.map(([, , file]) => path(file.trim())))], text: added };
+}
+
 function toolEvent(name, input, root, cwd = root) {
   const path = p => relativize(fromFolder(cwd, p), root);
   const text = value => String(value ?? '');
@@ -50,6 +59,10 @@ function toolEvent(name, input, root, cwd = root) {
     case 'Bash': return { kind: 'run', paths: bashPaths(input.command, root, cwd), text: text(input.command) };
     case 'Grep': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: text(input.pattern) };
     case 'Glob': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: text(input.pattern) };
+    // Codex (codex.cjs names them): shell commands that only read or search, and patches.
+    case 'ShellRead': return { kind: 'read', paths: bashPaths(input.command, root, cwd), text: text(input.command) };
+    case 'ShellSearch': return { kind: 'search', paths: bashPaths(input.command, root, cwd), text: text(input.command) };
+    case 'apply_patch': return patchEvent(input.patch, path);
     default: return null;
   }
 }
