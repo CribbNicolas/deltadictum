@@ -9,16 +9,21 @@ const { createMatcher } = require('./pattern.cjs');
 // Checks that speak at the tool call (spec section 6): command checks, before the
 // command runs, and `when: edit` checks on the file as the edit would leave it.
 // Turn checks wait for Stop.
-function contentAfter(root, payload) {
+// The file as it is before the call, or null (a new file). Git for Windows checks
+// files out with CRLF and the Edit tool matches with plain newlines: the text is
+// judged with plain newlines too.
+function contentBefore(root, payload) {
+  const file = String(payload.tool_input?.file_path ?? '');
+  try { return readFileSync(isAbsolute(file) ? file : join(payload.cwd || root, file), 'utf8').replace(/\r\n/g, '\n'); } catch { return null; }
+}
+
+function contentAfter(root, payload, before) {
   const input = payload.tool_input ?? {};
   const name = payload.tool_name;
   if (name === 'Write') return typeof input.content === 'string' ? input.content : null;
   if (name !== 'Edit' && name !== 'MultiEdit') return null;
-  const file = String(input.file_path ?? '');
-  let text;
-  // Git for Windows checks files out with CRLF and the Edit tool matches with plain
-  // newlines: the text is judged with plain newlines too.
-  try { text = readFileSync(isAbsolute(file) ? file : join(payload.cwd || root, file), 'utf8').replace(/\r\n/g, '\n'); } catch { return null; }
+  let text = before;
+  if (text === null) return null;
   const edits = name === 'Edit' ? [input] : (Array.isArray(input.edits) ? input.edits : []);
   for (const edit of edits) {
     const from = String(edit.old_string ?? '').replace(/\r\n/g, '\n');
@@ -46,9 +51,12 @@ function toolViolations({ root, event, index, payload, ledger, checks, bodiesOf 
       result = evaluateCommand(check, event.text, match());
     } else {
       target = event.paths[0];
-      const content = contentAfter(root, payload);
+      const before = contentBefore(root, payload);
+      const content = contentAfter(root, payload, before);
       if (content === null) continue;
       result = evaluateContent(check, content, match());
+      // Only a violation the call introduces is reported (owner, 2026-10-13).
+      if (result.violated && before !== null && evaluateContent(check, before, match()).violated) continue;
     }
     if (!result.violated) continue;
     if (ledger && ledger.reported(check.m, target) >= REPORT_LIMIT) continue;

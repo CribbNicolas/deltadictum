@@ -55,6 +55,14 @@ test('an edit check judges the file as the edit would leave it', async t => {
   assert.match(write, /without closing it in t\.after/);
 });
 
+test('an edit to a file that already broke the rule is not reported: the edit did not introduce it', async t => {
+  const root = await project(t, [store]);
+  writeFileSync(join(root, 'tests', 'old.test.js'), 'const s = await createMemoryStore(d);\n');
+  const edit = context(hook({ session_id: 's1', cwd: root, tool_name: 'Edit',
+    tool_input: { file_path: join(root, 'tests', 'old.test.js'), old_string: 'const s', new_string: 'const store' } }));
+  assert.equal(edit, '');
+});
+
 // Git for Windows checks files out with CRLF, and the Edit tool's old_string
 // comes with plain newlines.
 test('an edit check judges a multi-line Edit on a CRLF file', async t => {

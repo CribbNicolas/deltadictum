@@ -41,9 +41,10 @@ corrected.
 - Its `violates` and `passes` examples must behave as stated, or the compiler leaves it out. Unsafe patterns are
   refused, and evaluation runs under a time limit.
 - `when: turn` (the default for files) runs at Stop over the final state of the files the turn changed;
-  `when: edit` runs at the edit; command checks run at the command. A violation is reported at most twice per
-  file per epoch, and a check that fired on a file the agent then left unchanged is recorded as a suspected
-  false alarm.
+  `when: edit` runs at the edit; command checks run at the command. Only a violation the change introduced is
+  reported: one already in the last commit (turn checks) or in the file before the call (edit checks) is not.
+  A violation is reported at most twice per file per epoch, and a check that fired on a file the agent then
+  left unchanged is recorded as a suspected false alarm.
 
 ## Capture
 
