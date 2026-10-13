@@ -21,6 +21,9 @@ export function openTelemetry(root) {
   const local = localPaths(root).local;
   mkdirSync(local, { recursive: true });
   const db = new DatabaseSync(join(local, 'telemetry.sqlite'));
+  // The detached maintenance run, the review UI and the CLI open it from different
+  // processes: a writer waits out another's short transaction instead of failing.
+  db.exec('PRAGMA busy_timeout = 5000');
   db.exec(SCHEMA);
   return db;
 }

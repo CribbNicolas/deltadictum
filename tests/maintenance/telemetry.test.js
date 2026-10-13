@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -62,6 +63,25 @@ test('only rolled-up session files older than the limit are deleted', t => {
   assert.equal(pruneRolled(root, db), 1);
   assert.equal(existsSync(old), false);
   assert.equal(existsSync(pending), true);
+});
+
+test('a write waits for another process holding the telemetry lock instead of failing', async t => {
+  const root = project();
+  const db = open(t, root);
+  // Another process (the detached maintenance run) holds a write transaction for a moment.
+  const holder = spawn(process.execPath, ['-e', `
+    const { DatabaseSync } = require('node:sqlite');
+    const other = new DatabaseSync(process.argv.at(-1));
+    other.exec('BEGIN IMMEDIATE');
+    other.exec("INSERT OR REPLACE INTO meta VALUES ('holder', '1')");
+    console.log('locked');
+    setTimeout(() => { other.exec('COMMIT'); other.close(); }, 300);
+  `, join(root, '.dd', 'local', 'telemetry.sqlite')], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const exited = new Promise(resolve => holder.once('exit', resolve));
+  await new Promise(resolve => holder.stdout.once('data', resolve));
+  db.prepare("INSERT OR REPLACE INTO meta VALUES ('ui', '1')").run();
+  assert.equal(await exited, 0);
+  assert.equal(count(db, "SELECT COUNT(*) AS n FROM meta WHERE key IN ('holder', 'ui')"), 2);
 });
 
 test('check telemetry is rolled up too', t => {
