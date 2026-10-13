@@ -26,7 +26,7 @@ federation, multi-tenancy or RBAC. Memories fire by rule matching over a compile
 - `docs/DD.md` — the behavioural contract DD guarantees today.
 - `docs/architecture/plugin-constraints.md` — the boundary everything operates inside.
 - `docs/architecture/invariants.md` — properties that must never break.
-- `docs/memory/roadmap.md` — what comes next, and what was cut for being unreachable.
+- `docs/architecture/history.md` — where v1 went wrong, the mistakes not to repeat, and what comes next.
 - **`src/` is authoritative over every document.** Where a document and the code disagree, the code is
   what DD does; fix the document.
 
