@@ -54,6 +54,11 @@ export async function editMemory(root, id, changes) {
   if (refused.length) throw new ReviewError(refused.map(key => `not_editable:${key}`));
   const next = { ...memory, ...changes, origin: 'user_explicit', updated: now() };
   if (changes.check === null) delete next.check;
+  // A migrated memory waits for a person to say why the code does not show it
+  // (spec section 9). Once one does, its v2 review is done and v2's rules apply.
+  if (next.review?.migrated && String(next.not_derivable ?? '').trim()) {
+    next.review = { ...next.review, migrated: false, issues: (next.review.issues ?? []).filter(issue => issue !== 'not_derivable_missing') };
+  }
   const problems = problemsOf(root, next);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [next]);
