@@ -6,15 +6,8 @@ import { join } from 'node:path';
 import * as adapter from '../../adapters/opencode/index.js';
 
 const DeltaDictum = adapter.default;
-import { useTempRegistry } from '../helpers/resident.js';
-
-// The adapter must not start a resident DD process here (src/resident.js).
-process.env.DD_RESIDENT = '0';
-// Nor reach the machine's own resident through its registry.
-await useTempRegistry();
 
 async function fixture(t) {
-  await useTempRegistry(t);
   const base = await mkdtemp(join(tmpdir(), 'dd-opencode-'));
   const root = join(base, 'project');
   await mkdir(root);
