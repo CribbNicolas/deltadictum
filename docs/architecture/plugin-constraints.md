@@ -3,11 +3,10 @@ artifact_class: authored
 owner_domain: architecture
 artifact_type: reference
 stability: stable
-last_validated: 2026-09-30
+last_validated: 2026-10-13
 used_by:
   - DD.md
-  - architecture/project-cognition.md
-  - memory/roadmap.md
+  - CLAUDE.md
 do_not_co_load_with: []
 ---
 
@@ -15,123 +14,65 @@ do_not_co_load_with: []
 
 **DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.**
 
-This is the governing constraint of the project. It is not a phase, a deployment choice or a temporary
-limitation to be lifted later. A design that needs a server, a database engine, a model runtime or a
-background worker is not a smaller version of DD: it is a different product.
+This is the governing constraint of the project. A design that needs a server, a database engine, a model
+runtime or a background worker is not a smaller version of DD: it is a different product.
 
-Every proposal is measured against the seven limits below before its merits are discussed. A proposal
-that fails one of them is rejected on that basis alone, however good the idea is.
+Every proposal is measured against the seven limits below before its merits are discussed. A proposal that
+fails one of them is rejected on that basis alone. v2 rewrote several of them (no resident process, no model,
+no dependency); each is stated here as the code holds it today.
 
 ## The seven limits
 
 ### L1 — Hooks are ephemeral processes
 
-One Node process is spawned per hook event (`hooks/run.cjs` → `src/hooks/run.js`). `PreToolUse` runs on
-**every tool call** the host makes; its declared timeout is 10 s but the real cost is dominated by Node
-start-up, not by the work.
+Every hook is a new Node process, and `PreToolUse` runs on every tool call. Its cost is dominated by Node's
+start-up, so the hot path (`hooks/run.cjs`, `src/hooks/v2/*.cjs`, `src/engine/*.cjs`) is CommonJS and loads
+lazily: a project without a compiled index loads no matching code, and a tool call where nothing fires loads
+only the matcher. Measure a ranking or matching change on that path, not in a microbenchmark.
 
-Forbidden: loading a model, an index or any warm state on the hot path. Amortising a cost "after the
-first call" does not work, because there is no second call in the same process.
+### L2 — No resident process
 
-### L2 — DD requires its resident process; without it DD is inactive, never blocking
+DD runs inside the hook process, in a maintenance process session start detaches at most once a day, and in the
+review UI a person starts with `deltadictum ui`. None of them is required for delivery; nothing waits for any of
+them.
 
-One resident process per machine, shared by every project and session, holds the embedding model and
-answers hooks and the audit UI for each project from that project's own store (`src/resident.js`,
-`src/ui/server.js`). The first session or MCP server that finds none starts it; it is found through
-`~/.dd-data/resident.json`. Revised 2026-09-23: embeddings are required, so until the resident answers
-with its model loaded, DD is inactive — hooks inject nothing and SessionStart tells the person why and how
-to fix it. The earlier wording (2026-09-22) fell back to lexical retrieval.
+### L3 — No runtime dependency
 
-Hooks reach it over HTTP on `127.0.0.1` with a 250 ms timeout for `pre-tool` and 1500 ms otherwise
-(`src/hooks/bridge.js`), and accept an answer only from a resident running the same source tree whose code
-has not changed since it started. A session start that launches the resident waits up to 5 s for it to
-listen, within the hook's own time limit and never in `pre-tool`, so that session can already name the
-audit UI (`src/hooks/run.js`).
-
-Forbidden: a hook that blocks, errors or answers wrongly because the resident is missing (L5). Missing
-means inactive and said so, nothing more. `DD_RETRIEVAL=lexical` exists only for tests and evaluation.
-
-### L3 — Three required dependencies, one of them a local model runtime
-
-`@modelcontextprotocol/sdk`, `zod` and `@huggingface/transformers` (ONNX, `Xenova/multilingual-e5-small`),
-on Node ≥ 22.16 (`package.json`): the store is `node:sqlite` with FTS5, which earlier 22.x releases lack
-(measured 2026-09-30: 22.12 has no `node:sqlite`, 22.13-22.15 have it without FTS5). On an older Node the
-session start says so (`hooks/node-support.cjs`). The model is loaded only by the resident process (L2), once per machine,
-never on the hot path (L1): a cached model takes about 0.5 s to load. `DD_EMBED_MODEL` can pick
-`Xenova/multilingual-e5-base` instead (about 0.7 s to load, +175 MB resident; it tied e5-small on the
-golden sets on 2026-09-28).
-
-Revised 2026-09-22 and 2026-09-23. The earlier text forbade local embeddings outright, because
-embeddings were assumed to be a separate service; an in-process runtime is a package, not a service.
-Still forbidden: a hosted or remote model, an inference server, a GPU requirement.
-
-The limit is on packages, not on local models: another ONNX model on the same runtime (a reranker, a
-larger embedding model) is allowed in the resident when it earns its memory and latency. Measured
-2026-09-28: the only multilingual cross-encoder transformers.js loads (`bge-reranker-v2-m3`) took 2.7 s
-to rerank 20 candidates and 778 MB of memory, and moved the golden sets' AUC in opposite directions
-(0.60 -> 0.56, 0.34 -> 0.53), so DD does not load it.
-
-A host may copy the plugin without these packages (Grok Build does). The first session or MCP server to
-find them missing installs them into the plugin directory in a detached process (`src/deps.js`,
-`scripts/install-deps.mjs`, `npm ci --omit=dev --ignore-scripts`); DD is inactive and says so until then
-(L2, L5).
+DD needs Node.js 22.16 or later and nothing else. `node:sqlite` with FTS5 holds local telemetry and the
+similarity index, off the hot path. There is no embedding model and no vector store: memories fire by rule
+matching over the compiled index.
 
 ### L4 — The hook contract differs per harness
 
-Codex rejects `decision: 'allow'` and requires `decision: 'block'` to inject context at `Stop`
-(`src/hooks/run.js`). What is a veto in one harness may not exist in another.
-
-Consequence: any capability beyond "return advisory context" is negotiated per harness and must
-degrade — a veto becomes a warning where vetoes are unavailable. It is never assumed.
+Claude Code, Codex, OpenCode and Grok Build send different payloads and accept different answers. An adapter
+translates a harness's events and output format into DD's events (`src/hooks/v2/events.cjs`,
+`src/hooks/v2/codex.cjs`, `adapters/opencode/`); the matcher, ledger, checks and capture are shared. A capability
+one harness lacks (OpenCode has no hook that adds context before a tool runs, nor a Stop hook) is not emulated.
 
 ### L5 — Failures must not block the host
 
-Stated in `hooks/hooks.json`. A hook that throws, hangs or returns malformed output damages the user's
-session in a way no memory benefit repays.
-
-Consequence: every new gate needs a defined failure direction, and the default is to stay out of the way.
+A hook that fails for any reason, including a module that does not load, ends with exit 0 and no output.
 
 ### L6 — Single-developer data volumes
 
-Telemetry retention is 90 days or **2000 rows**, whichever comes first (`src/store/paths.js`).
+DD sees one developer's sessions: a handful a day, session files kept seven days, counters rolled up after that.
+No policy is learned online. Thresholds are counted rules (a memory unused in 20 sessions that touched its paths
+is retired), not statistics.
 
-Forbidden as a requirement: contextual bandits, reinforcement learning, per-condition conformal
-calibration, Shapley attribution — anything needing thousands of labelled events per arm or per
-stratum. The data does not exist and will not accumulate. Methods that work from tens of observations,
-or that need no observations at all, are the ones available.
+### L7 — Local-first, nothing leaves the machine
 
-### L7 — Local-first, no external telemetry
+Memories are files in the project's git repository; everything derived lives in `.dd/local/`, git-ignored.
+DD makes no network request, and the review UI listens on a loopback port only.
 
-The store is git plus a derived SQLite index. Nothing leaves the machine.
-
-Forbidden: any mechanism that needs aggregation across users, a shared model, or a hosted service.
-
-## What this rules out permanently
+## What this rules out
 
 - PostgreSQL, Qdrant, any external database or vector store.
 - An inference server, a GPU requirement, a hosted or remote model.
 - Federation, multi-tenancy, RBAC, organisation-level vaults.
-- Background conservation workers and scheduled jobs. (A resident process for retrieval is allowed, L2.)
+- A process every project must keep running.
 - Importance scores or rankings learned online from user traffic.
-
-Documents describing these have been removed rather than left as aspiration, because an unreachable roadmap misleads every reader and every agent that loads it.
-
-## What to change so DD works better as a plugin
-
-These are the directions the constraints open rather than close. Each is tracked in
-[the roadmap](../memory/roadmap.md).
-
-| Direction | Why the plugin shape favours it |
-|---|---|
-| Make deterministic matching carry more weight — anchors, trigger variants, alias expansion, concept grouping, near-duplicate suppression | The dense arm lives only in the resident (L2, L3) and similarity measures topic, not applicability, so exact signals decide delivery. They are also deterministic, auditable and free at the hot path |
-| Move cost off the hot path and into review time | L1 charges per tool call; the audit UI (L2) is where an expensive computation is affordable and where a human is present anyway |
-| Evaluate offline against recorded decisions rather than learning online | L6 forbids online policies, but the recorded events are enough to *compare* two deterministic rankings |
-| Prefer provenance and structure over statistics | Source reliability, scope, evidence and authority are available on the first observation; statistical signal needs volume DD will never have |
-| Treat every capability beyond advisory context as negotiated per harness | L4 makes portability a design input, not an afterthought |
-| Keep the human in the write path and spend the effort on making review fast | Review is the scarce resource, so the throughput problem is queue ordering and merge quality, not model capability |
 
 ## Relation to the rest of the documentation
 
-`DD.md` states the current behavioural contract. `architecture/project-cognition.md` describes the
-implemented architecture. `architecture/invariants.md` lists the invariants. This document states the
-boundary all of them operate inside.
+`DD.md` states the current behavioural contract. `invariants.md` lists the properties that must never break.
+This document states the boundary all of them operate inside.

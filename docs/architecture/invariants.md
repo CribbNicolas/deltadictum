@@ -1,130 +1,69 @@
----
-artifact_class: authored
-owner_domain: architecture
-artifact_type: reference
-stability: stable
-last_validated: 2026-09-30
-depends_on:
-  - architecture/plugin-constraints.md
-do_not_co_load_with: []
----
-
 # Invariants
 
-Properties that must remain true at all times. Violating one is a system-level failure, not a
-regression to be traded off.
-
-> The earlier version of this file carried invariants about a llama.cpp inference service, a separate
-> embedding service and a Docker Compose stack. DD is a harness plugin and has none of those; those
-> invariants were removed rather than restated. See
-> [plugin constraints](plugin-constraints.md).
+Properties that must remain true at all times. Violating one is a system-level failure, not a regression to be
+traded off. Each names what enforces it in v2; where this file and `src/` disagree, the code is what DD does
+and this file is corrected.
 
 ## INV-01: Project isolation is mandatory
 
-Every project has an isolated knowledge scope. Knowledge from one project must never reach another
-project's retrieval. The project identifier is resolved from the repository and is the first filter on
-every read and every write, not a field applied afterwards.
+A project's knowledge lives in its own `.dd/` and reaches no other project. The project root is resolved from
+the folder the harness reports (`findProjectRoot` in `src/engine/locate.cjs`), and evidence and trigger paths
+are repository-relative paths that cannot leave it (`validRelativePath` in `src/memory/schema.js`).
 
-**Enforced by:** `project_id` on every store query; `validateExplicitContradiction` refuses a
-cross-project pair; evidence paths are confined to the repository root; and `findRepoRoot` never
-resolves to the user's home, so no ancestor can capture unrelated work beneath it.
+## INV-02: Delivery and recall are project-scoped
 
-## INV-02: Retrieval is project-scoped first
-
-Retrieval never searches without a project filter. The order is fixed: project filter → lifecycle and
-type filter → candidate generation → applicability gate → ranking → budgeted injection. There is no
-global search and no cross-project fallback.
+A hook matches events against the project's own compiled index; `recall` searches the project's own similarity
+index. There is no global search and no cross-project fallback.
 
 ## INV-03: Memory is not chat history
 
-Knowledge is conditional engineering guidance: when it applies, what to do differently, why, and on
-what evidence. It is not a transcript, not raw model output, and not a dump of everything observed.
+A memory is knowledge an agent cannot derive from the code: it states why (`not_derivable`), when it applies
+(triggers) and on what evidence. Ingestion refuses generic advice, and the footprint keeps no prompt text
+beyond a short preview of a detected correction.
 
-## INV-04: Model output never mutates state
+## INV-04: Model output never mutates state on its own authority
 
-A model proposes; deterministic code validates and commits. No MCP argument, no proposal field and no
-reported outcome can set lifecycle state, authority, confidence or approval. Promotion happens only
-through local human review.
-
-A store change the model asks for (archive, restore, delete, legacy, merge, split, retopic, resolve) is
-an action: a pending request that changes nothing until a person applies it in the audit UI. Applying it
-first checks every target against the snapshot taken when it was filed, and writes all of it or none.
-
-**One exception (2026-09-28):** an `anchor` action changes only retrieval metadata (anchors and trigger
-variants): when a memory is delivered, never what it advises, its authority or its confidence. Once it
-passes anchor validation it applies itself, logged as `auto:retrieval-metadata`, unless the project sets
-`auto_apply_retrieval_metadata: false`. It exists because recall improves by enriching how memories are
-found (contextual indexing, document expansion), and a review round per keyword stalled that work. Git
-keeps every version, so a bad anchor is reverted like any other change.
-
-**A second exception, by configuration:** the auto-accept sweep (`src/engine/auto-accept.js`) admits a
-candidate without a person when the evidence DD verifies for it at that moment earns a reliability
-ceiling at or above the project's `auto_accept.confidence_threshold`. It is on by default at 0.765 (a
-repository file DD hashed, behind a model-initiated proposal) and a reviewer turns it off in the audit
-UI. It takes only the newest candidate per topic, never admits one a reviewer sent back, one flagged as
-a suspected duplicate, or a replacement whose target has a pending action, and records an
-`Auto-accepted` rationale on each memory it admits. Model output still sets nothing: the decision rests
-on evidence DD hashed itself, never on a field the model supplied.
-
-**Enforced by:** `normalizeProposal` overwrites every epistemic field; `admitMemory`, `applyAction`,
-`rejectAction` and `requestRevision` require a capability that no transport can construct; the MCP `act`
-tool only writes a pending file (`fileActions`); `recordOutcome` writes telemetry only.
+The agent proposes through `.dd/inbox/`; deterministic code validates and writes. A proposal becomes a
+candidate, and it activates without a person only by auto-accept, which rests on evidence DD verified itself (a
+file it hashed, a correction it recorded), never on a field the model supplied or a success it reported
+(`src/capture/auto-accept.js`). The agent's requests to archive or revise wait for a person. Everything else
+that changes a memory's status happens in the review UI, by a person.
 
 ## INV-05: Evidence establishes integrity, not support
 
-A verified reference means the artifact exists and its bytes were checked. It never means the claim
-follows from it. Only review establishes support.
+A verified reference means the file existed with the bytes DD hashed; a changed hash marks the memory's
+evidence stale. It never means the memory's claim follows from it.
 
-## INV-06: One live memory per topic key
+## INV-06: One live memory per topic
 
-At most one memory per project and topic key is `active` or `contested`. A replacement supersedes;
-it never silently coexists.
+At most one memory per topic is `active` or `contested`. A revision supersedes the memory it replaces in the
+same commit; it never silently coexists.
 
-Supersession is not confined to a shared topic key: a candidate may name a colliding memory on another
-topic in `replaces`, and approving it retires that memory. What the invariant fixes is the ceiling of
-one live memory per key, not the identity of what a replacement may retire.
+**Enforced by:** `commit` in `src/memory/store.js` refuses a write that would leave two live memories on a topic
+it makes live (`live_topic_conflict`); a conflict a git merge brings in is reported by `conflicts()` and blocks
+writes to that topic only.
 
-**Enforced by:** a unique partial index in the store, and a matching guard in the git file store.
-`admitMemory` resolves the named replacement by id and refuses the promotion if it is no longer
-effective, so a supersession is never applied against a store the reviewer did not see.
+## INV-07: Delivered knowledge is advisory
 
-## INV-07: Injected context is advisory and self-consistent
-
-Retrieved knowledge is content, never a command, and can never raise its own priority above the host's
-instructions or the user's intent. An injected pack never carries both sides of a known contradiction.
+Delivered memories are content, never commands, and never outrank the host's instructions, the user's intent or
+the current code. On OpenCode, where the text travels inside a tool result, it is framed as such
+(`adapters/opencode/frame.js`).
 
 ## INV-08: The host is never blocked
 
-A hook that fails, times out or returns malformed output must degrade to silence. No memory benefit
-justifies damaging the session it runs in.
+A hook that fails, times out or meets malformed input ends silently with exit 0 (`hooks/run.cjs`). No memory
+benefit justifies damaging the session it runs in.
 
 ## INV-09: Archiving is not deleting
 
-Retirement removes a memory from the effective set; it never removes the knowledge. An archived memory
-keeps its git file, can be read, and can be restored to `active` by a reviewer. Deletion is a separate,
-manual, explicitly confirmed action, with a second confirmation for canonical memories, and no
-automatic path reaches it.
+Retirement and archiving keep the memory's file; a person restores it in the review UI. Deletion happens only
+in the review UI, confirmed by the person; no automatic path reaches it. Retirement by disuse never touches a
+memory a person reviewed, nor one a pending candidate revises (`src/maintenance/retire.js`).
 
-Retirement is also bounded by what review protects: only `inferred` and `observed` memories are
-reachable, and only by disuse — never activated, past a minimum age, and with enough retrievals after
-the memory was written that its trigger had real chances to fire. Age alone retires nothing. Nothing
-currently before a reviewer is retired either: a contested memory, or one a pending candidate names in
-`replaces`, is left effective.
+## INV-10: Git is the authority; `.dd/local/` is derived
 
-Every archived memory states why, in words: the disuse sweep names the retrievals that passed it by, a
-merge names the memory it went into, and an archive action carries the reason the agent gave. A `legacy`
-memory (a practice the project abandoned) is also restorable, and is recalled only as a warning that never
-outranks current knowledge.
-
-**Enforced by:** `archiveMemory` refuses a missing reason, any authority above `observed` and any state
-but `active`; `restoreMemory` requires the local review capability; deletion lives only on the audit UI's
-DELETE path and on a `delete` action a person applies, which reaches only archived, rejected or candidate
-memories.
-
-## INV-10: Git is the authority, SQLite is derived
-
-Knowledge lives in git-tracked files. The SQLite index is a rebuildable projection plus local
-telemetry. Losing the index must never lose knowledge.
+Memories are git-tracked files under `.dd/memories/`. The compiled index, session files and telemetry under
+`.dd/local/` are git-ignored and rebuildable or disposable: losing them never loses knowledge.
 
 ## Authority resolution order
 
