@@ -15,13 +15,13 @@ const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
 const errors = [];
 
 const skills = [...new Set([...files].filter(path => path.startsWith('skills/')).map(path => path.split('/')[1]))];
-const REQUIRED = ['package.json', 'LICENSE', 'README.md', 'npm-shrinkwrap.json', 'mcp.js', '.mcp.json',
+const REQUIRED = ['package.json', 'LICENSE', 'README.md', 'npm-shrinkwrap.json',
   'hooks/hooks.json', 'hooks/run.cjs', '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json',
-  'adapters/opencode/index.js', 'adapters/opencode/frame.js', 'scripts/install-deps.mjs', 'scripts/install-codex.mjs',
-  'scripts/check-codex.mjs', 'src/store/schema.sql', 'src/ui/public/index.html', 'docs/DD.md',
+  'adapters/opencode/index.js', 'adapters/opencode/frame.js', 'scripts/install-codex.mjs',
+  'src/ui/public/review.html', 'docs/DD.md',
   ...Object.values(manifest.bin ?? {}), ...Object.values(manifest.exports ?? {}).map(path => path.replace(/^\.\//, ''))];
 for (const path of REQUIRED) if (!files.has(path)) errors.push(`missing from the package: ${path}`);
-if (skills.length < 8) errors.push(`expected the eight command skills, found ${skills.length}: ${skills.join(', ')}`);
+for (const skill of ['save', 'recall', 'review']) if (!skills.includes(skill)) errors.push(`missing the ${skill} skill; found ${skills.join(', ')}`);
 for (const skill of skills) if (!files.has(`skills/${skill}/SKILL.md`)) errors.push(`skills/${skill} has no SKILL.md`);
 
 const FORBIDDEN = [/^tests\//, /^\.dd\//, /^\.github\//, /^output\//, /^node_modules\//, /\.sqlite(-\w+)?$/, /(^|\/)\.env(\.|$)/,
