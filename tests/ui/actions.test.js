@@ -18,6 +18,18 @@ test('an edit by a person is validated, marks the origin and recompiles', async 
   await assert.rejects(editMemory(root, 'm1', { id: 'x', status: 'archived' }), err => err.problems.includes('not_editable:id'));
 });
 
+test('a person supplying not_derivable completes a migrated memory\'s review, and its exemption ends', async t => {
+  const migrated = memory('m1', { not_derivable: '', review: { migrated: true, issues: ['not_derivable_missing', 'folder_scope'] } });
+  const root = await project(t, [migrated]);
+  const reviewed = await editMemory(root, 'm1', { not_derivable: 'Hidden from the code.' });
+  assert.equal(reviewed.review.migrated, false);
+  assert.deepEqual(reviewed.review.issues, ['folder_scope']);
+  await assert.rejects(editMemory(root, 'm1', { not_derivable: '' }), err => err.problems.includes('not_derivable_required'));
+  // An edit that leaves not_derivable empty is not that review: the memory stays migrated and queued.
+  const other = await project(t, [migrated]);
+  assert.equal((await editMemory(other, 'm1', { title: 'Renamed' })).review.migrated, true);
+});
+
 test('accepting a revision supersedes what it replaces, in one commit', async t => {
   const root = await project(t, [memory('old'), memory('new', { topic: 'ui/old', status: 'candidate', replaces: 'old' })]);
   await acceptMemory(root, 'new');
