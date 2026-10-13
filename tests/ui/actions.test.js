@@ -67,3 +67,9 @@ test('a memory a person writes is active and accepted by a person; merge and re-
   assert.equal((await retopicMemory(root, 'keep', 'ui/kept')).topic, 'ui/kept');
   await assert.rejects(retopicMemory(root, 'keep', 'ui/new'), err => err.problems.some(p => p.startsWith('live_topic_conflict')));
 });
+
+test('a merge into a memory that is not live is refused: the merged knowledge would stop being delivered', async t => {
+  const root = await project(t, [memory('old', { status: 'archived' }), memory('drop', { topic: 'ui/drop' })]);
+  await assert.rejects(mergeMemories(root, 'old', 'drop'), err => err.problems.includes('merge_into_archived'));
+  assert.equal((await list(root)).drop.status, 'active');
+});

@@ -121,6 +121,8 @@ export async function mergeMemories(root, keepId, dropId) {
   const keep = await find(root, keepId);
   const drop = await find(root, dropId);
   if (keep.id === drop.id) throw new ReviewError(['merge_into_itself']);
+  // The kept memory carries the merged knowledge on: one that is not live would drop it.
+  if (!LIVE_STATUSES.includes(keep.status) && keep.status !== 'candidate') throw new ReviewError([`merge_into_${keep.status}`]);
   const issues = [...new Set([...(drop.review?.issues ?? []), `merged_into:${keep.id}`])];
   await save(root, [{ ...drop, status: 'archived', updated: now(), review: { ...drop.review, issues } }]);
   return keep;
