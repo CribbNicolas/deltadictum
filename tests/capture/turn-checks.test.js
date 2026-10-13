@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -37,6 +38,26 @@ test('at Stop, a turn check judges the final state of the files the turn changed
   assert.match(text, /^DD - check \(Close stores in t\.after\): This test opens a store without closing it in t\.after\. \(tests\/a\.test\.js\)/);
   assert.match(text, /Close stores in t\.after, always\./);
   assert.doesNotMatch(text, /b\.test\.js/);
+});
+
+test('only violations the work introduced are reported: one already in the last commit is left alone', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-turn-git-'));
+  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const git = (...args) => spawnSync('git', ['-C', root, '-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { encoding: 'utf8' });
+  git('init', '-q');
+  mkdirSync(join(root, 'tests'));
+  writeFileSync(join(root, 'tests', 'old.test.js'), 'const s = await createMemoryStore(d);\n');
+  git('add', '-A');
+  git('commit', '-q', '-m', 'old');
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [memory] });
+  await compileProject(root);
+  writeFileSync(join(root, 'tests', 'old.test.js'), 'const s = await createMemoryStore(d);\nconst x = 1;\n');
+  writeFileSync(join(root, 'tests', 'new.test.js'), 'const s = await createMemoryStore(d);\n');
+  edited(root, 'tests/old.test.js', '2026-10-12T00:00:01.000Z');
+  edited(root, 'tests/new.test.js', '2026-10-12T00:00:02.000Z');
+  const text = turnViolations(root, { session_id: 's1' });
+  assert.match(text, /tests\/new\.test\.js/);
+  assert.doesNotMatch(text, /old\.test\.js/);
 });
 
 test('a file the turn deleted, or did not touch, is not judged', async t => {

@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { appendFootprint, footprintPath, readFootprint } from '../capture/footprint.js';
@@ -30,6 +31,14 @@ function readSmall(file) {
   try { return statSync(file).size > CONTENT_MAX * 4 ? null : readFileSync(file, 'utf8'); } catch { return null; }
 }
 
+// The file as the last commit has it, or null (a new file, no git). A violation
+// already there is not the turn's doing and is not reported (owner, 2026-10-13):
+// the agent is not sent to fix old code outside its task.
+function committedContent(root, file) {
+  const shown = spawnSync('git', ['-C', root, 'show', `HEAD:${file}`], { encoding: 'utf8', windowsHide: true, maxBuffer: CONTENT_MAX * 8 });
+  return shown.status === 0 ? shown.stdout : null;
+}
+
 export function turnViolations(root, payload, { now = new Date() } = {}) {
   const path = footprintPath(root, payload.session_id);
   if (!path) return '';
@@ -59,8 +68,11 @@ export function turnViolations(root, payload, { now = new Date() } = {}) {
       if (!relevant.length) continue;
       const content = readSmall(join(root, file));
       if (content === null) continue;
+      let committed;
+      const before = () => (committed === undefined ? (committed = committedContent(root, file)) : committed);
       for (const check of relevant) {
         if (!evaluateContent(check, content, matcher).violated) continue;
+        if (before() !== null && evaluateContent(check, before(), matcher).violated) continue;
         reportedNow.add(`${check.m}\0${file}`);
         if (ledger.reported(check.m, file) >= REPORT_LIMIT) continue;
         ledger.report(check.m, file);
