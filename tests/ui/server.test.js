@@ -1,462 +1,58 @@
-import { describe, test } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { createMemoryStore } from '../../src/store/create-store.js';
-import { startUiServer as startServer } from '../../src/ui/server.js';
-import { uiCookie } from '../helpers/resident.js';
-import { proposeMemory } from '../../src/engine/write.js';
-import { archiveMemory } from '../../src/engine/lifecycle.js';
-import { RELIABILITY_CAP } from '../../src/engine/reliability.js';
-import { Script } from 'node:vm';
+import { request } from 'node:http';
+import { startReviewServer } from '../../src/ui/server.js';
+import { memory, project } from '../helpers/review.js';
 
-// These tests act as a browser that opened the UI through its printed address:
-// every request to a server they started carries its cookie. The key itself is
-// tested on its own below.
-const cookies = new Map();
-const plainFetch = globalThis.fetch;
-globalThis.fetch = (url, opts = {}) => {
-  const cookie = cookies.get(new URL(url).port);
-  return plainFetch(url, cookie && !opts.headers?.cookie ? { ...opts, headers: { ...opts.headers, ...cookie } } : opts);
-};
-async function startUiServer(options) {
-  const ui = await startServer(options);
-  cookies.set(String(ui.port), uiCookie(ui));
-  return ui;
-}
-
-async function json(url, opts) {
-  const res = await fetch(url, opts);
-  return { status: res.status, body: await res.json() };
-}
-
-// The review token is only delivered in the served page, which is the path a
-// reviewer actually takes. `startUiServer` resolves `hookToken`, not this one,
-// so reading it off the server object silently yields undefined and every
-// non-GET request 403s while the test still looks green.
-async function reviewHeaders(base) {
-  const html = await (await fetch(base + '/')).text();
-  return { 'content-type': 'application/json',
-    'x-dd-review-token': html.match(/name="dd-review-token" content="([a-f0-9]+)"/)[1] };
-}
-
-describe('audit UI HTTP', () => {
-  test('local review approves candidates and editing preserves the effective version', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-'));
-    const store = await createMemoryStore({
-      ddDir: join(root, '.dd'),
-      dataDir: join(root, 'data'),
+// Raw requests: fetch() rewrites Host and cannot send a foreign one.
+function call(server, path, { method = 'GET', headers = {}, body } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = request({ host: '127.0.0.1', port: server.port, path, method, headers: { host: `127.0.0.1:${server.port}`, ...headers } }, res => {
+      let text = '';
+      res.on('data', chunk => { text += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, text }));
     });
-    const written = await proposeMemory({
-      project_id: 'demo',
-      capture_origin: 'model_initiated',
-      memory_type: 'lesson',
-      title: 'Require trigger',
-      trigger: 'before writing durable memory',
-      behavior_delta: 'validate trigger first',
-      what: 'Durable memory needs a trigger.',
-      why: 'Stops unstructured dumps.',
-      topic_key: 'memory/admission/required-fields',
-      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
-      retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
-    }, { store });
-
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const base = ui.url;
-
-    const home = await fetch(base + '/');
-    assert.equal(home.status, 200);
-    const html = await home.text();
-    // Only the page's own script runs: any markup an escaping mistake let in
-    // cannot carry a script the browser executes.
-    const csp = home.headers.get('content-security-policy');
-    const nonce = csp.match(/script-src 'nonce-([A-Za-z0-9+/=]+)'/)?.[1];
-    assert.ok(nonce, csp);
-    assert.doesNotMatch(csp.match(/script-src[^;]*/)[0], /unsafe-inline/);
-    assert.ok([...html.matchAll(/<script\b([^>]*)>/gi)].every(tag => tag[1].includes(`nonce="${nonce}"`)));
-    assert.doesNotMatch(html, /\son[a-z]+\s*=\s*["']/i);
-    assert.notEqual((await fetch(base + '/')).headers.get('content-security-policy'), csp);
-    assert.match(html, /DeltaDictum audit/);
-    assert.match(html, /id="origin-filter"/);
-    for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) new Script(script[1]);
-    const token = html.match(/name="dd-review-token" content="([a-f0-9]+)"/)[1];
-    const headers = { 'content-type': 'application/json', 'x-dd-review-token': token };
-
-    const list = await json(base + '/api/atoms');
-    assert.equal(list.status, 200);
-    assert.equal(list.body.length, 1);
-    assert.equal(list.body[0].capture_origin, 'model_initiated');
-
-    const denied = await json(base + '/api/atoms/' + written.atom.id + '/admit', { method: 'POST' });
-    assert.equal(denied.status, 403);
-    const wrongOrigin = await json(base + '/api/atoms/' + written.atom.id + '/admit', { method: 'POST',
-      headers: { ...headers, origin: 'http://unrelated.example' }, body: JSON.stringify({ rationale: 'Cross-origin request' }) });
-    assert.equal(wrongOrigin.status, 403);
-    const admitted = await json(base + '/api/atoms/' + written.atom.id + '/admit', { method: 'POST', headers, body: JSON.stringify({ rationale: 'Reviewed against the gate.' }) });
-    assert.equal(admitted.body.lifecycle_state, 'active');
-    assert.equal(admitted.body.capture_origin, 'model_initiated');
-    assert.equal(admitted.body.capture_source, 'agent');
-
-    const patched = await json(base + '/api/atoms/' + written.atom.id, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ why: 'A newly reviewed reason.', capture_origin: 'model_initiated', capture_source: 'agent' }),
-    });
-    assert.equal(patched.status, 200);
-    assert.equal(patched.body.atom.lifecycle_state, 'candidate');
-    assert.equal(patched.body.atom.capture_origin, 'user_explicit');
-    assert.equal(patched.body.atom.capture_source, 'local_ui');
-    assert.equal((await store.getAtom(written.atom.id, 'demo')).lifecycle_state, 'active');
-    const filtered = await json(base + '/api/atoms?capture_origin=user_explicit&lifecycle=candidate');
-    assert.deepEqual(filtered.body.map(a => a.id), [patched.body.atom.id]);
-    assert.deepEqual((await json(base + '/api/atoms?capture_origin=user_explicit&lifecycle=active')).body, []);
-
-    const deleted = await json(base + '/api/atoms/' + patched.body.atom.id, { method: 'DELETE', headers });
-    assert.equal(deleted.body.deleted, true);
-
-    const empty = await json(base + '/api/atoms');
-    assert.equal(empty.body.length, 1);
-    assert.equal(empty.body[0].id, written.atom.id);
+    req.on('error', reject);
+    if (body !== undefined) req.write(body);
+    req.end();
   });
-  test('review grants the authority the reviewer chose, and only canonical lifts the source cap', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-authority-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    // No verified artifact: the source ladder caps this at its bottom rung.
-    const propose = topic_key => proposeMemory({
-      project_id: 'demo', memory_type: 'lesson', title: 'Reported instruction',
-      trigger: 'when retrying payments', behavior_delta: 'Reuse the idempotency key.',
-      what: 'Retries reuse the key.', why: 'Avoid duplicate charges.', topic_key,
-      evidence_refs: [{ source_type: 'user_statement', source_ref: 'the user said so', summary: 'Reported' }],
-      retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the idempotency key on retry.' },
-    }, { store });
-    const plain = await propose('payments/retry/plain');
-    const lifted = await propose('payments/retry/lifted');
+}
 
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const headers = await reviewHeaders(ui.url);
-    const admit = (id, body) => json(`${ui.url}/api/atoms/${id}/admit`,
-      { method: 'POST', headers, body: JSON.stringify(body) });
+async function serve(t, memories = [memory('m1'), memory('c1', { status: 'candidate', topic: 'ui/c1' })]) {
+  const root = await project(t, memories);
+  const server = await startReviewServer({ root, port: 0 });
+  t.after(() => server.close());
+  const entry = await call(server, `/?key=${server.key}`);
+  const cookie = String(entry.headers['set-cookie'] ?? '').split(';')[0];
+  return { root, server, cookie, entry };
+}
 
-    const validated = await admit(plain.atom.id, { rationale: 'Reviewed; the claim is plausible.', authority: 'validated' });
-    assert.equal(validated.body.authority, 'validated');
-    assert.equal(validated.body.confidence, RELIABILITY_CAP.agent_claim);
-
-    const canonical = await admit(lifted.atom.id, { rationale: 'Reviewed; I stand behind this regardless of the evidence.', authority: 'canonical' });
-    assert.equal(canonical.body.authority, 'canonical');
-    assert.equal(canonical.body.confidence, 1);
-  });
-
-  test('a contested atom shows the ranking recommendation without resolving anything', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-dispute-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    const propose = topic_key => proposeMemory({
-      project_id: 'demo', memory_type: 'decision', title: 'Retry policy',
-      trigger: 'when retrying payment requests', behavior_delta: 'Reuse the idempotency key.',
-      what: 'Retries reuse the key.', why: 'Avoid duplicate charges.', topic_key,
-      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/write.js', summary: 'write path' }],
-      retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the idempotency key on retry.' },
-    }, { store });
-    const first = await propose('payments/retry/keys');
-    const second = await propose('payments/retry/manual');
-
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const headers = await reviewHeaders(ui.url);
-
-    for (const written of [first, second]) {
-      const admitted = await json(`${ui.url}/api/atoms/${written.atom.id}/admit`,
-        { method: 'POST', headers, body: JSON.stringify({ rationale: 'Reviewed against the write path.' }) });
-      assert.equal(admitted.status, 200);
-      assert.equal(admitted.body.lifecycle_state, 'active');
-    }
-    await store.commitAtoms([], [{ source_atom_id: first.atom.id, relation_type: 'contradicts', target_atom_id: second.atom.id }]);
-    for (const written of [first, second]) {
-      const atom = await store.getAtom(written.atom.id, 'demo');
-      await store.commitAtoms([{ ...atom, lifecycle_state: 'contested', contested_at: new Date().toISOString() }]);
-    }
-
-    const viewed = await json(`${ui.url}/api/atoms/${first.atom.id}`);
-    assert.equal(viewed.status, 200);
-    assert.equal(viewed.body.opponents.length, 1);
-    const recommendation = viewed.body.opponents[0].recommendation;
-    assert.ok(recommendation, 'the reviewer is shown which side the ranking order favours');
-    assert.ok('basis' in recommendation && 'winner_id' in recommendation && 'tie' in recommendation);
-    if (!recommendation.tie) {
-      assert.ok([first.atom.id, second.atom.id].includes(recommendation.winner_id));
-      assert.ok(['evidence', 'recency', 'authority', 'predominance'].includes(recommendation.basis));
-    }
-
-    // Showing a recommendation must not resolve anything on its own.
-    assert.equal((await store.getAtom(first.atom.id, 'demo')).lifecycle_state, 'contested');
-    assert.equal((await store.getAtom(second.atom.id, 'demo')).lifecycle_state, 'contested');
-  });
-
-});
-
-describe('audit UI recorded evidence', () => {
-  // The stage that started recording user corrections claimed they would be
-  // "visible in the audit UI". Nothing rendered any observation, host ones
-  // included, so the claim was false for every source until this panel existed.
-  test('observations are listed read-only, project-scoped, and offer no action', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-evidence-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const headers = await reviewHeaders(ui.url);
-    await store.putObservation({ project_id: 'demo', source_type: 'user_correction', source_ref: 'UserPromptSubmit',
-      raw_preview: 'User correction. No, that is wrong - retrieval is project-scoped first.',
-      metadata: { provenance: 'user_correction', signal: 'correction', session_id: 'current' } });
-    await store.putObservation({ project_id: 'demo', source_type: 'validation', source_ref: 'Bash',
-      raw_preview: 'Validation passed (exit 0). Checks passed.', metadata: { provenance: 'host', session_id: 'current' } });
-    await store.putObservation({ project_id: 'other', source_type: 'validation', source_ref: 'Bash',
-      raw_preview: 'Another project.', metadata: { provenance: 'host', session_id: 'current' } });
-
-    const listed = await json(ui.url + '/api/observations', { headers });
-    assert.equal(listed.status, 200);
-    assert.equal(listed.body.length, 2);
-    assert.deepEqual(listed.body.map(o => o.source_type).sort(), ['user_correction', 'validation']);
-    assert.equal(listed.body.every(o => o.project_id === undefined || o.project_id === 'demo'), true);
-    assert.match(listed.body.find(o => o.source_type === 'user_correction').raw_preview, /project-scoped first/);
-    assert.equal(listed.body.find(o => o.source_type === 'user_correction').metadata.provenance, 'user_correction');
-    assert.equal(listed.body.some(o => /Another project/.test(o.raw_preview)), false);
-
-    // Evidence is not promotable, so the panel has nothing to submit to.
-    for (const method of ['POST', 'PATCH', 'DELETE']) {
-      assert.equal((await json(ui.url + '/api/observations', { method, headers })).status, 404);
-    }
-    const html = await (await fetch(ui.url + '/')).text();
-    assert.match(html, /id="evidence-list"/);
-    assert.match(html, /Recorded evidence/);
-    for (const script of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) new Script(script[1]);
-  });
-});
-
-describe('audit UI retirement', () => {
-  test('archived memories are listed and a reviewer can restore one', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-archive-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    const written = await proposeMemory({
-      project_id: 'demo',
-      memory_type: 'lesson',
-      title: 'Reuse the idempotency key',
-      trigger: 'when retrying payment requests',
-      behavior_delta: 'Reuse the original idempotency key.',
-      what: 'Retries must not double charge.',
-      why: 'One logical payment is charged once.',
-      topic_key: 'payments/retry/idempotency',
-      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/write.js', summary: 'Write path' }],
-      retrieval_forms: { micro: 'Reuse the key.', short: 'Reuse the original idempotency key on retry.' },
-    }, { store });
-    await store.putAtom({ ...written.atom, lifecycle_state: 'active', authority: 'inferred' });
-    await archiveMemory(written.atom.id, { store, projectId: 'demo', reason: 'Archived by the test.' });
-
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const base = ui.url;
-    const headers = await reviewHeaders(base);
-
-    const archived = await json(base + '/api/atoms?lifecycle=archived');
-    assert.equal(archived.status, 200);
-    assert.deepEqual(archived.body.map(a => a.id), [written.atom.id]);
-    assert.equal(archived.body[0].archived_reason, 'Archived by the test.');
-
-    const anonymous = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST' });
-    assert.equal(anonymous.status, 403);
-
-    const restored = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST', headers });
-    assert.equal(restored.status, 200);
-    assert.equal(restored.body.lifecycle_state, 'active');
-
-    // Restoring is not deletion in reverse either: a second restore has nothing
-    // to act on and says so rather than reporting success.
-    const again = await json(base + '/api/atoms/' + written.atom.id + '/restore', { method: 'POST', headers });
-    assert.equal(again.status, 409);
-    assert.equal(again.body.error, 'archived_memory_required');
-  });
-});
-
-describe('auto-accept config', () => {
-  test('defaults to disabled, round-trips a valid update, rejects an out-of-range threshold', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-config-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const base = ui.url;
-    const headers = await reviewHeaders(base);
-
-    const initial = await json(base + '/api/config');
-    assert.deepEqual(initial.body.auto_accept, { enabled: true, confidence_threshold: 0.765 });
-
-    const updated = await json(base + '/api/config/auto-accept', { method: 'POST', headers,
-      body: JSON.stringify({ enabled: true, confidence_threshold: 0.6 }) });
-    assert.equal(updated.status, 200);
-    assert.deepEqual(updated.body.auto_accept, { enabled: true, confidence_threshold: 0.6 });
-    assert.deepEqual((await json(base + '/api/config')).body.auto_accept, { enabled: true, confidence_threshold: 0.6 });
-
-    const invalid = await json(base + '/api/config/auto-accept', { method: 'POST', headers,
-      body: JSON.stringify({ enabled: true, confidence_threshold: 1.5 }) });
-    assert.equal(invalid.status, 409);
-  });
-});
-
-describe('seen tracking', () => {
-  test('a candidate is unseen until its detail view is fetched, and stays seen after', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-seen-'));
-    const dataDir = await mkdtemp(join(tmpdir(), 'dd-seen-userdata-'));
-    const previous = process.env.CLAUDE_PLUGIN_DATA;
-    process.env.CLAUDE_PLUGIN_DATA = dataDir;
-    t.after(() => { if (previous === undefined) delete process.env.CLAUDE_PLUGIN_DATA; else process.env.CLAUDE_PLUGIN_DATA = previous; });
-
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    const written = await proposeMemory({
-      project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
-      title: 'Require trigger', trigger: 'before writing durable memory', behavior_delta: 'validate trigger first',
-      what: 'Durable memory needs a trigger.', why: 'Stops unstructured dumps.', topic_key: 'memory/admission/required-fields',
-      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
-      retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
-    }, { store });
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const base = ui.url;
-    const headers = await reviewHeaders(base);
-
-    const beforeList = await json(base + '/api/atoms');
-    assert.equal(beforeList.body[0].seen, false);
-
-    const detail = await json(base + '/api/atoms/' + written.atom.id, { headers });
-    assert.equal(detail.body.seen, true);
-
-    const afterList = await json(base + '/api/atoms');
-    assert.equal(afterList.body[0].seen, true);
-  });
-});
-
-describe('audit UI live updates', () => {
-  test('a store mutation reaches an already-connected SSE client as a changed event', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-sse-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    t.after(async () => { await ui.close(); store.close(); });
-    const base = ui.url;
-
-    const controller = new AbortController();
-    t.after(() => controller.abort());
-    const res = await fetch(base + '/api/events', { signal: controller.signal });
-    assert.equal(res.status, 200);
-    assert.match(res.headers.get('content-type'), /text\/event-stream/);
-
-    // Read the stream in the background until a 'changed' event shows up, or
-    // time out — a client that never hears about a mutation it should have
-    // heard about is the actual regression this guards against.
-    let buffered = '';
-    let resolveChanged;
-    const changed = new Promise(resolve => { resolveChanged = resolve; });
-    (async () => {
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) return;
-        buffered += decoder.decode(value, { stream: true });
-        if (buffered.includes('event: changed')) return resolveChanged();
-      }
-    })().catch(() => {});
-
-    await proposeMemory({
-      project_id: 'demo', capture_origin: 'model_initiated', memory_type: 'lesson',
-      title: 'Require trigger', trigger: 'before writing durable memory', behavior_delta: 'validate trigger first',
-      what: 'Durable memory needs a trigger.', why: 'Stops unstructured dumps.', topic_key: 'memory/admission/required-fields',
-      evidence_refs: [{ source_type: 'file', source_ref: 'src/engine/v2/admission.js', summary: 'gate' }],
-      retrieval_forms: { micro: 'Require trigger.', short: 'Validate trigger before active memory.' },
-    }, { store });
-
-    await Promise.race([
-      changed,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timed out waiting for the SSE changed event')), 2000)),
-    ]);
-  });
-
-  test('closing the UI server ends any open SSE connection', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'dd-ui-sse-close-'));
-    const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-    t.after(() => store.close());
-    const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-    const base = ui.url;
-
-    const res = await fetch(base + '/api/events');
-    assert.equal(res.status, 200);
-    const reader = res.body.getReader();
-    await reader.read(); // the leading ':ok' comment, proving the stream opened
-
-    await ui.close();
-    const { done } = await Promise.race([
-      reader.read(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SSE connection was not closed by ui.close()')), 2000)),
-    ]);
-    assert.equal(done, true);
-  });
-});
-
-test('retrying a busy port loads the embedding model once, not once per attempt', async t => {
-  const { createServer } = await import('node:net');
-  const { mkdtemp } = await import('node:fs/promises');
-  const { tmpdir } = await import('node:os');
-  const { join } = await import('node:path');
-  const { createMemoryStore } = await import('../../src/store/create-store.js');
-  const { startUiServer } = await import('../../src/ui/server.js');
-  const busy = createServer();
-  await new Promise(resolve => busy.listen(0, '127.0.0.1', resolve));
-  const port = busy.address().port;
-  const root = await mkdtemp(join(tmpdir(), 'dd-port-'));
-  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-  let created = 0;
-  const createRetrieve = () => { created += 1; const retrieve = async () => ({ memories: [] }); retrieve.warm = async () => false; return retrieve; };
-  const ui = await startUiServer({ store, projectId: 'demo', port, semantic: true, createRetrieve });
-  t.after(async () => { await ui.close(); busy.close(); store.close(); });
-  assert.notEqual(ui.port, port);
-  assert.equal(created, 1);
-});
-
-// Any account on the machine can reach a loopback port. Without the key the UI
-// serves neither the page (which carries the review token) nor any data.
-test('the audit UI answers only a browser holding its key', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'dd-ui-key-'));
-  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data') });
-  const ui = await startServer({ store, projectId: 'demo', port: 0 });
-  t.after(async () => { await ui.close(); store.close(); });
-  for (const path of ['/', '/api/atoms', '/api/observations', '/api/projects', '/api/events', '/api/status']) {
-    const res = await plainFetch(ui.url + path);
-    assert.equal(res.status, 403, path);
-    assert.doesNotMatch(await res.text(), /dd-review-token/);
-  }
-  assert.equal((await plainFetch(ui.url + '/?key=' + 'f'.repeat(64), { redirect: 'manual' })).status, 403);
-  assert.equal((await plainFetch(ui.url + '/', { headers: { cookie: `dd_ui_${ui.port}=${'f'.repeat(64)}` } })).status, 403);
-
-  // The printed address trades its key for a cookie and reloads without it.
-  const opened = await plainFetch(ui.projectUrl(root), { redirect: 'manual' });
-  assert.equal(opened.status, 303);
-  assert.doesNotMatch(opened.headers.get('location'), /key=/);
-  const cookie = opened.headers.get('set-cookie');
-  assert.match(cookie, /HttpOnly/);
-  assert.match(cookie, /SameSite=Strict/);
-  const page = await plainFetch(ui.url + opened.headers.get('location'), { headers: { cookie: cookie.split(';')[0] } });
+test('the key becomes a strict cookie, and nothing answers without it or to another host', async t => {
+  const { server, cookie, entry } = await serve(t);
+  assert.equal(entry.status, 303);
+  assert.match(cookie, /^dd_review_\d+=[0-9a-f]+$/);
+  assert.match(String(entry.headers['set-cookie']), /SameSite=Strict/);
+  assert.equal((await call(server, '/api/overview')).status, 403);
+  assert.equal((await call(server, '/api/overview', { headers: { cookie, host: 'evil.example' } })).status, 403);
+  const page = await call(server, '/', { headers: { cookie } });
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /dd-review-token/);
-  // A cut or outdated key in a browser that already holds the cookie still opens the UI.
-  const reopened = await plainFetch(ui.url + '/?project=x&key=' + ui.uiKey.slice(0, 20), { redirect: 'manual', headers: { cookie: cookie.split(';')[0] } });
-  assert.equal(reopened.status, 303);
-  assert.equal(reopened.headers.get('location'), '/?project=x');
-  // Without the cookie, a bad key gets a page that says why, not bare JSON.
-  const truncated = await plainFetch(ui.url + '/?key=' + ui.uiKey.slice(0, 20));
-  assert.equal(truncated.status, 403);
-  assert.match(truncated.headers.get('content-type'), /text\/html/);
-  assert.match(await truncated.text(), /incomplete/);
-  const api = await plainFetch(ui.url + '/api/atoms');
-  assert.match(api.headers.get('content-type'), /application\/json/);
-  // Hooks and the resident probe keep their own authentication.
-  assert.equal((await plainFetch(ui.url + '/api/resident')).status, 200);
-  assert.equal((await plainFetch(ui.url + '/api/hooks/prompt', { method: 'POST', body: '{}' })).status, 403);
+  assert.match(page.headers['content-security-policy'], /script-src 'nonce-[0-9a-f]+'/);
+});
+
+test('reads and actions go through the API; mutations take JSON only', async t => {
+  const { server, cookie } = await serve(t);
+  const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
+  const overview = JSON.parse((await json('/api/overview')).text);
+  assert.equal(overview.queues.candidates, 1);
+  const detail = JSON.parse((await json('/api/memories/m1')).text);
+  assert.equal(detail.memory.id, 'm1');
+  assert.equal((await json('/api/memories/c1/accept', { method: 'POST', body: '{}' })).status, 200);
+  const refused = await json('/api/memories/m1', { method: 'PUT', body: JSON.stringify({ not_derivable: '' }) });
+  assert.equal(refused.status, 400);
+  assert.ok(JSON.parse(refused.text).problems.includes('not_derivable_required'));
+  // A cross-site form post cannot send JSON.
+  const form = await call(server, '/api/memories/m1/archive', { method: 'POST', headers: { cookie, 'content-type': 'application/x-www-form-urlencoded' }, body: 'reason=x' });
+  assert.equal(form.status, 415);
+  assert.equal((await json('/api/memories/nope')).status, 404);
+  assert.equal((await json('/api/memories?queue=bogus')).status, 400);
 });

@@ -9,9 +9,6 @@ import { createMemoryStore } from '../../src/store/create-store.js';
 import { proposeMemory } from '../../src/engine/write.js';
 import { admitMemory, HUMAN_REVIEW } from '../../src/engine/lifecycle.js';
 import { retrieveMemories } from '../../src/engine/retrieve.js';
-import { startUiServer } from '../../src/ui/server.js';
-import { registerResident } from '../helpers/resident.js';
-import { callRunningStore } from '../../src/hooks/bridge.js';
 
 // One project reached by two spellings: through a symlink (macOS /tmp and /var
 // are symlinks to /private; projects often live behind one) and by its physical
@@ -61,13 +58,4 @@ test('a file given by its physical path still matches a scope under a symlinked 
   const file = join(target, 'src', 'domain', 'Rules.cs');
   const result = await retrieveMemories({ project_id: 'demo', action: `Edit ${file}`, files: [file], operation: 'edit', telemetry: false }, { store });
   assert.equal(result.memories.length, 1);
-});
-
-test('a hook sending one spelling is answered by a resident started with the other', async t => {
-  const { target, link } = await linkedProject();
-  const store = await createMemoryStore({ ddDir: join(target, '.dd'), dataDir: join(target, 'data'), repoRoot: target });
-  const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-  t.after(async () => { await ui.close(); store.close(); });
-  await registerResident(t, ui);
-  assert.notEqual(await callRunningStore('retrieve', { action: 'edit the parser' }, link), null);
 });
