@@ -71,7 +71,8 @@ function delivery(root, index, event, fired, ledger, bodies) {
     stale: staleEvidence(root, bodies[hit.id]?.evidence) }));
   // Only what fits whole is claimed; the rest is named and arrives at its next event.
   const fits = fitItems({ label, items: candidates });
-  const won = ledger ? new Set(ledger.claim(fits.map(item => item.id))) : new Set(fits.map(item => item.id));
+  const claims = { kind: event.kind, viaOf: id => fired.find(hit => hit.id === id)?.via };
+  const won = ledger ? new Set(ledger.claim(fits.map(item => item.id), claims)) : new Set(fits.map(item => item.id));
   const items = fits.filter(item => won.has(item.id));
   const named = candidates.filter(item => !fits.includes(item));
   if (!items.length && !named.length) return '';

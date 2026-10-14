@@ -13,6 +13,7 @@ import { createMemoryFiles } from '../memory/store.js';
 import { autoAcceptEnabled, autoAcceptReasons } from './auto-accept.js';
 import { findEvidence, footprintPath, readFootprint, suggestTriggers } from './footprint.js';
 import { genericReasons, namedSymbols } from './generic.js';
+import { appendTelemetry } from './telemetry.js';
 
 // The inbox (spec section 7): the agent writes a proposal to .dd/inbox/<name>.json
 // and DD answers in the same turn. Nothing the agent wrote is trusted: evidence is
@@ -150,7 +151,7 @@ function storeRequest(root, file, proposal, now) {
   writeFileSync(join(dir, `${id}.json`), `${JSON.stringify({ id, request: proposal.request, target: proposal.target.slice(0, 100),
     why: proposal.why.slice(0, 500), at: now.toISOString() }, null, 2)}\n`);
   rmSync(file, { force: true });
-  return { reply: `DD - request ${id} (${proposal.request} ${proposal.target.slice(0, 100)}) waits for a person in the review UI.` };
+  return { reply: `DD - request ${id} (${proposal.request} ${proposal.target.slice(0, 100)}) waits for a person in the review UI.`, request: id };
 }
 
 function storedReply(memory, { suggested, warnings, accept }) {
@@ -165,7 +166,20 @@ function storedReply(memory, { suggested, warnings, accept }) {
   return lines.join('\n');
 }
 
-export async function ingestInboxFile({ root, file, sessionId, now = new Date(), compile = compileProject }) {
+// Every ingestion leaves one telemetry line (its outcome and reasons, never the
+// content), so health can say whether capture works: asked, proposed, stored,
+// rejected and why.
+export async function ingestInboxFile(options) {
+  const result = await ingest(options);
+  const outcome = result.stored ? result.stored.status : result.rejected ? 'rejected' : result.request ? 'request' : null;
+  if (outcome) {
+    appendTelemetry(options.root, 'inbox.jsonl', { at: (options.now ?? new Date()).toISOString(), outcome,
+      reasons: result.rejected ?? result.accept ?? [], origin: result.stored?.origin ?? result.origin ?? null, session: options.sessionId ?? null });
+  }
+  return result;
+}
+
+async function ingest({ root, file, sessionId, now = new Date(), compile = compileProject }) {
   const name = basename(file);
   let size;
   try { size = statSync(file).size; } catch { return { reply: '' }; }
@@ -176,8 +190,10 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   try { proposal = JSON.parse(readFileSync(file, 'utf8')); } catch { return reject(name, ['invalid_json']); }
   if (!proposal || typeof proposal !== 'object' || Array.isArray(proposal)) return reject(name, ['invalid_proposal']);
   if ('request' in proposal) return storeRequest(root, file, proposal, now);
+  // Who proposed it, for the telemetry of a rejection: the agent on its own, or a person's request.
+  const origin = typeof proposal.origin === 'string' ? proposal.origin : 'model_initiated';
   const unknown = Object.keys(proposal).filter(key => !PROPOSAL_FIELDS.includes(key));
-  if (unknown.length) return reject(name, unknown.map(key => `unknown_field:${key}`));
+  if (unknown.length) return { ...reject(name, unknown.map(key => `unknown_field:${key}`)), origin };
 
   const config = readConfig(root);
   const store = createMemoryFiles(localPaths(root).dd);
@@ -225,7 +241,7 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   const found = repoFiles ? codeSymbols(root, [...new Set(triggers.flatMap(clause => clause.symbols ?? []))]) : null;
   const warnings = repoFiles ? triggerWarnings(memory, repoFiles, found ? symbol => found.has(symbol) : null) : [];
   for (const warning of warnings) if (warning.kind.startsWith('dead_')) reasons.push(`${warning.kind}:${warning.value}`);
-  if (reasons.length) return reject(name, reasons, hint);
+  if (reasons.length) return { ...reject(name, reasons, hint), origin };
 
   const duplicate = duplicateOf(memory, live);
   const verified = { files: relevantFiles(files, triggers, footprint).length,
@@ -246,5 +262,5 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   rmSync(file, { force: true });
   let reply = storedReply(stored, { suggested, warnings, accept });
   try { await compile(root); } catch { reply += '\nThe index could not be rebuilt now; the index is rebuilt at the next session start.'; }
-  return { reply, stored };
+  return { reply, stored, accept };
 }

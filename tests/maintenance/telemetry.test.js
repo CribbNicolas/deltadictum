@@ -84,6 +84,30 @@ test('a write waits for another process holding the telemetry lock instead of fa
   assert.equal(count(db, "SELECT COUNT(*) AS n FROM meta WHERE key IN ('holder', 'ui')"), 2);
 });
 
+// Health reads which dimension fired a memory and at which event (claim lines
+// carry them), how often Stop asked, corrections and violations, and what the
+// inbox did with each proposal.
+test('fire dimensions, capture asks, corrections and inbox outcomes are rolled up', t => {
+  const root = project();
+  writeFileSync(join(sessions(root), 's1.jsonl'), line({ t: 'claim', m: 'm1', n: 0, k: 'a', e: 'read', v: ['paths'], at: '2026-10-14T10:00:00.000Z' })
+    + line({ t: 'claim', m: 'm2', n: 0, k: 'b', e: 'prompt', v: ['keywords'], at: '2026-10-14T10:00:01.000Z' }));
+  writeFileSync(join(sessions(root), 's1.footprint.jsonl'), line({ t: 'asked', at: 'x', ids: ['f1'] }) + line({ t: 'correction', id: 'c1', at: 'x' })
+    + line({ t: 'violation', m: 'm1', path: 'src/a.js', at: 'x' }));
+  mkdirSync(join(root, '.dd', 'local', 'telemetry'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'local', 'telemetry', 'inbox.jsonl'), line({ at: 'x', outcome: 'active', reasons: [], origin: 'model_initiated', session: 's1' })
+    + line({ at: 'y', outcome: 'rejected', reasons: ['generic_advice', 'dead_glob:docs/x.md'], origin: 'model_initiated', session: 's1' }));
+  const db = open(t, root);
+  rollUp(root, db);
+  rollUp(root, db);
+  assert.deepEqual(db.prepare('SELECT memory, via, kind, at FROM fire_events ORDER BY at').all().map(r => ({ ...r })),
+    [{ memory: 'm1', via: 'paths', kind: 'read', at: '2026-10-14T10:00:00.000Z' }, { memory: 'm2', via: 'keywords', kind: 'prompt', at: '2026-10-14T10:00:01.000Z' }]);
+  assert.deepEqual(db.prepare("SELECT kind, count FROM signals WHERE session = 's1' ORDER BY kind").all().map(r => [r.kind, r.count]),
+    [['asked', 1], ['correction', 1], ['violation', 1]]);
+  assert.equal(count(db, "SELECT COUNT(*) AS n FROM events WHERE session = 's1'"), 0);
+  assert.deepEqual(db.prepare('SELECT outcome, reasons FROM inbox ORDER BY at').all().map(r => [r.outcome, JSON.parse(r.reasons)]),
+    [['active', []], ['rejected', ['generic_advice', 'dead_glob:docs/x.md']]]);
+});
+
 test('check telemetry is rolled up too', t => {
   const root = project();
   mkdirSync(join(root, '.dd', 'local', 'telemetry'), { recursive: true });

@@ -13,9 +13,16 @@ CREATE TABLE IF NOT EXISTS fires (memory TEXT NOT NULL, session TEXT NOT NULL, P
 CREATE TABLE IF NOT EXISTS touches (session TEXT NOT NULL, path TEXT NOT NULL, kind TEXT NOT NULL, PRIMARY KEY (session, path, kind));
 CREATE TABLE IF NOT EXISTS events (session TEXT NOT NULL, kind TEXT NOT NULL, count INTEGER NOT NULL, PRIMARY KEY (session, kind));
 CREATE TABLE IF NOT EXISTS checks (memory TEXT NOT NULL, path TEXT, outcome TEXT NOT NULL, at TEXT);
+CREATE TABLE IF NOT EXISTS fire_events (memory TEXT NOT NULL, session TEXT NOT NULL, via TEXT, kind TEXT, at TEXT);
+CREATE TABLE IF NOT EXISTS signals (session TEXT NOT NULL, kind TEXT NOT NULL, count INTEGER NOT NULL, PRIMARY KEY (session, kind));
+CREATE TABLE IF NOT EXISTS inbox (at TEXT, outcome TEXT NOT NULL, reasons TEXT, origin TEXT, session TEXT);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 `;
 const CHECKS_KEY = 'telemetry/checks.jsonl';
+const INBOX_KEY = 'telemetry/inbox.jsonl';
+// Footprint lines that are not tool calls but capture signals: how often Stop
+// asked for a memory, corrections recorded, violations reported.
+const SIGNALS = new Set(['asked', 'correction', 'violation']);
 
 export function openTelemetry(root) {
   const local = localPaths(root).local;
@@ -64,6 +71,9 @@ export function rollUp(root, db) {
     first_at = COALESCE(MIN(first_at, excluded.first_at), first_at, excluded.first_at),
     last_at = COALESCE(MAX(last_at, excluded.last_at), last_at, excluded.last_at)`);
   const check = db.prepare('INSERT INTO checks (memory, path, outcome, at) VALUES (?, ?, ?, ?)');
+  const fireEvent = db.prepare('INSERT INTO fire_events (memory, session, via, kind, at) VALUES (?, ?, ?, ?, ?)');
+  const signal = db.prepare('INSERT INTO signals (session, kind, count) VALUES (?, ?, 1) ON CONFLICT(session, kind) DO UPDATE SET count = count + 1');
+  const inbox = db.prepare('INSERT INTO inbox (at, outcome, reasons, origin, session) VALUES (?, ?, ?, ?, ?)');
   let files = 0;
   let lines = 0;
   db.exec('BEGIN');
@@ -76,19 +86,33 @@ export function rollUp(root, db) {
       seen.run(session, null, null);
       for (const entry of found) {
         if (footprint) {
+          if (SIGNALS.has(entry.t)) { signal.run(session, entry.t); continue; }
           if (entry.t !== 'tool') continue;
           for (const path of entry.paths ?? []) touch.run(session, String(path), String(entry.kind));
           event.run(session, String(entry.kind));
           if (entry.at) seen.run(session, String(entry.at), String(entry.at));
-        } else if (entry.t === 'claim' && entry.m) fire.run(String(entry.m), session);
+        } else if (entry.t === 'claim' && entry.m) {
+          fire.run(String(entry.m), session);
+          // Claims written since the dimension was recorded say what fired and when.
+          if (entry.v !== undefined || entry.e !== undefined) {
+            fireEvent.run(String(entry.m), session, Array.isArray(entry.v) ? entry.v.map(String).join('+') : String(entry.v ?? ''),
+              entry.e === undefined ? null : String(entry.e), entry.at === undefined ? null : String(entry.at));
+          }
+        }
       }
       setOffset.run(name, end);
       files += 1;
       lines += found.length;
     }
-    const { lines: reported, end } = appended(join(localPaths(root).local, 'telemetry', 'checks.jsonl'), offsetOf.get(CHECKS_KEY)?.offset ?? 0);
+    const telemetry = join(localPaths(root).local, 'telemetry');
+    const { lines: reported, end } = appended(join(telemetry, 'checks.jsonl'), offsetOf.get(CHECKS_KEY)?.offset ?? 0);
     for (const entry of reported) check.run(String(entry.m), entry.path ?? null, String(entry.outcome), entry.at ?? null);
     if (reported.length) setOffset.run(CHECKS_KEY, end);
+    const ingested = appended(join(telemetry, 'inbox.jsonl'), offsetOf.get(INBOX_KEY)?.offset ?? 0);
+    for (const entry of ingested.lines) {
+      inbox.run(entry.at ?? null, String(entry.outcome), JSON.stringify(Array.isArray(entry.reasons) ? entry.reasons.map(String) : []), entry.origin ?? null, entry.session ?? null);
+    }
+    if (ingested.lines.length) setOffset.run(INBOX_KEY, ingested.end);
     db.exec('COMMIT');
   } catch (err) { db.exec('ROLLBACK'); throw err; }
   return { files, lines };

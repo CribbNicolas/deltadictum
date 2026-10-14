@@ -30,7 +30,7 @@
     header { flex: 0 0 auto; min-height: 50px; padding: 8px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
       border-bottom: 1px solid var(--border); background: var(--panel); }
     header h1 { font-size: 14px; font-weight: 600; margin: 0; }
-    #summary { color: var(--muted); font-size: 12.5px; }
+    #summary, #capture { color: var(--muted); font-size: 12.5px; }
     #conflicts { color: var(--warn); font-size: 12.5px; }
     main { flex: 1; min-height: 0; display: grid; grid-template-columns: 210px 330px 1fr; }
     nav { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 2px; }
@@ -106,6 +106,7 @@
   <header>
     <h1>DD review</h1>
     <span id="summary"></span>
+    <span id="capture"></span>
     <span id="conflicts"></span>
   </header>
   <div id="msg"></div>
@@ -119,8 +120,9 @@
   // Every string from the store reaches the DOM through text nodes or attributes,
   // never as markup; every handler is attached here (the CSP allows no other script).
   const QUEUE_LABELS = {
-    candidates: 'Candidates', requests: 'Agent requests', stale: 'Stale evidence', hubs: 'Hubs', dead: 'Dead triggers',
+    candidates: 'Candidates', auto_accepted: 'Accepted by DD', requests: 'Agent requests', stale: 'Stale evidence', hubs: 'Hubs', dead: 'Dead triggers',
     false_alarms: 'Suspected false alarms', duplicates: 'Duplicates', missing_not_derivable: 'Missing not_derivable', all: 'All memories',
+    activity: 'Recent deliveries',
   };
   const KINDS = ['decision', 'trap', 'failed_approach', 'fact', 'procedure'];
   const state = { queue: 'candidates', selected: null, overview: null, rows: [] };
@@ -182,26 +184,31 @@
   // Queues and counts.
   async function loadOverview() {
     try { state.overview = await api('/api/overview'); } catch (err) { refused('Reading the overview', err); return; }
-    const { status, queues } = state.overview;
+    const { status, queues, capture } = state.overview;
     const parts = [`${status.total} memories`, ...Object.entries(status.by_status).map(([name, n]) => `${n} ${name}`)];
     $('summary').textContent = parts.join(' · ');
+    // The capture funnel, as the roll-up last saw it: does asking for memories work?
+    $('capture').textContent = capture
+      ? `Capture: ${capture.asked} asked · ${capture.corrections} corrections · ${capture.proposals} proposals (${capture.active} active, ${capture.candidates} candidates, ${capture.rejected} rejected)` : '';
     $('conflicts').textContent = status.conflicts.length
       ? `Topics with more than one live memory: ${status.conflicts.map(c => c.topic).join(', ')}` : '';
     renderQueues(queues);
   }
 
   function renderQueues(queues) {
+    const countOf = queue => (queue === 'activity' ? (state.overview?.recent?.length ?? 0) : queues[queue] ?? 0);
     const buttons = Object.keys(QUEUE_LABELS).map(queue => h('button', {
       type: 'button', 'aria-current': state.queue === queue ? 'true' : 'false',
       on: { click: () => { state.queue = queue; state.selected = null; quiet(); renderQueues(queues); loadList(); showEmpty(); } },
-    }, h('span', {}, QUEUE_LABELS[queue]), h('span', { class: `count${queues[queue] ? '' : ' zero'}` }, queues[queue] ?? 0)));
-    $('queues').replaceChildren(...buttons.slice(0, 2), h('hr'), ...buttons.slice(2),
+    }, h('span', {}, QUEUE_LABELS[queue]), h('span', { class: `count${countOf(queue) ? '' : ' zero'}` }, countOf(queue))));
+    $('queues').replaceChildren(...buttons.slice(0, 3), h('hr'), ...buttons.slice(3),
       h('hr'), h('button', { type: 'button', on: { click: showCreate } }, h('span', {}, '+ New memory')));
   }
 
   async function loadList() {
     const list = $('list');
     if (state.queue === 'requests') return loadRequests();
+    if (state.queue === 'activity') return loadActivity();
     let rows;
     try { rows = await api(`/api/memories?queue=${encodeURIComponent(state.queue)}`); } catch (err) { refused('Reading the queue', err); return; }
     state.rows = rows;
@@ -218,6 +225,16 @@
   }
 
   function showEmpty() { $('detail').replaceChildren(h('p', { class: 'empty' }, 'Select a memory, or a request.')); }
+
+  // The last deliveries the roll-up saw: which memory, at which event, by which
+  // dimension, in which session. A hub shows here before it shows in a count.
+  function loadActivity() {
+    const recent = state.overview?.recent ?? [];
+    if (!recent.length) { $('list').replaceChildren(h('p', { class: 'empty' }, 'No delivery rolled up yet.')); return; }
+    $('list').replaceChildren(...recent.map(fire => h('button', { type: 'button', class: 'item', on: { click: () => { quiet(); openMemory(fire.memory); } } },
+      h('div', {}, fire.title ?? fire.memory),
+      h('span', { class: 'meta' }, [fire.at, fire.kind, fire.via, fire.session].filter(Boolean).join(' · ')))));
+  }
 
   // Agent requests: the agent asked; a person acts on the memory and closes the request.
   async function loadRequests() {
@@ -298,6 +315,8 @@
       m.status === 'candidate' ? h('button', { type: 'button', class: 'act danger', on: { click: change('Reject', '/reject', () => ({ reason: reason.value })) } }, 'Reject') : null,
       live ? h('button', { type: 'button', class: 'act', on: { click: change('Archive', '/archive', () => ({ reason: reason.value })) } }, 'Archive') : null,
       m.status === 'archived' ? h('button', { type: 'button', class: 'act ok', on: { click: change('Restore', '/restore') } }, 'Restore') : null,
+      // DD accepted it on its own: a person who read it says so, and it leaves that queue.
+      live && m.review?.accepted?.by === 'dd' ? h('button', { type: 'button', class: 'act', on: { click: change('Mark as reviewed', '/reviewed') } }, 'Mark as reviewed') : null,
       m.status === 'candidate' || live ? reason : null,
       h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'),
       remove);
@@ -368,7 +387,8 @@
       dryOut,
 
       h('h3', {}, 'Use'),
-      h('p', {}, `Fired in ${detail.fired} of ${detail.opportunity} sessions with an opportunity.`),
+      h('p', {}, `Fired in ${detail.fired} of ${detail.opportunity} sessions with an opportunity.`,
+        Object.keys(detail.by_dimension ?? {}).length ? ` By dimension: ${Object.entries(detail.by_dimension).map(([via, n]) => `${via} ${n}`).join(', ')}.` : ''),
       detail.signals.length ? h('ul', { class: 'plain' }, detail.signals.map(s => h('li', {}, h('span', { class: 'badge warn' }, s.signal),
         s.value !== undefined ? h('span', { class: 'mono' }, String(s.value)) : null))) : h('p', { class: 'mono' }, 'No health signal.'),
 
@@ -439,11 +459,12 @@
         h('label', { for: 'n-check' }, 'Check (JSON, empty for none)'), f.check));
   }
 
-  // Open on what waits for a person: candidates, else requests, else everything.
+  // Open on what waits for a person: candidates, else requests, else what DD
+  // accepted on its own, else everything.
   (async () => {
     await loadOverview();
     const queues = state.overview?.queues;
-    if (queues && !queues.candidates) { state.queue = queues.requests ? 'requests' : 'all'; renderQueues(queues); }
+    if (queues && !queues.candidates) { state.queue = queues.requests ? 'requests' : queues.auto_accepted ? 'auto_accepted' : 'all'; renderQueues(queues); }
     await loadList();
   })();
   </script>

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,6 +38,10 @@ test('a read of a scoped file delivers the memory once per session and once per 
   assert.equal(first.status, 0);
   assert.equal(JSON.parse(first.stdout).hookSpecificOutput.hookEventName, 'PreToolUse');
   assert.match(context(first), /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores - Close stores, always\.$/);
+  // The claim says what fired it, at which event, and when: health reads that.
+  const claim = JSON.parse(readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n')[0]);
+  assert.deepEqual([claim.m, claim.e, claim.v], ['m1', 'read', ['paths']]);
+  assert.match(claim.at, /^\d{4}-\d\d-\d\dT/);
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
   assert.match(context(hook('pre-tool', read(root, 's2'))), /Close stores/);
   assert.match(context(hook('pre-tool', read(root, 's1', { agent_id: 'sub-1' }))), /Close stores/);

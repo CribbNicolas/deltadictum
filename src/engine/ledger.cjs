@@ -64,15 +64,18 @@ function openLedger(path) {
   return {
     epoch: () => { try { return read().epoch; } catch { return 0; } },
     delivered: () => { try { return new Set(read().first.keys()); } catch { return new Set(); } },
-    claim(ids) {
+    // A claim also says what fired the memory (`v`, the dimensions, or `check`),
+    // at which event kind (`e`) and when (`at`): health reads them from the roll-up.
+    claim(ids, { kind = null, viaOf = null, at = new Date().toISOString() } = {}) {
       let before;
       try { before = read(); } catch { return [...ids]; }
       const wanted = [...new Set(ids)].filter(id => !before.first.has(id));
       if (!wanted.length) return [];
       // Unique per claim among concurrent hooks; node:crypto would cost a hook 2 ms to load.
       const token = `${process.pid.toString(36)}.${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 12)}`;
+      const line = id => JSON.stringify({ t: 'claim', m: id, n: before.epoch, k: token, ...(kind ? { e: kind } : {}), ...(viaOf ? { v: viaOf(id) ?? [] } : {}), at });
       try {
-        append(wanted.map(id => `${JSON.stringify({ t: 'claim', m: id, n: before.epoch, k: token })}\n`).join(''));
+        append(wanted.map(id => `${line(id)}\n`).join(''));
         const after = read();
         if (after.epoch !== before.epoch) return wanted;
         return wanted.filter(id => after.first.get(id) === token);

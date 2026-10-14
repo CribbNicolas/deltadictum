@@ -62,7 +62,7 @@ function toolViolations({ root, event, index, payload, ledger, checks, bodiesOf 
     if (ledger && ledger.reported(check.m, target) >= REPORT_LIMIT) continue;
     if (ledger) ledger.report(check.m, target);
     const body = !ledger || !ledger.delivered().has(check.m) ? bodiesOf()?.[check.m]?.body : null;
-    if (body && ledger) ledger.claim([check.m]);
+    if (body && ledger) ledger.claim([check.m], { kind, viaOf: () => ['check'] });
     const title = index.memories[check.m]?.title ?? check.m;
     lines.push(`DD - check (${title}): ${check.say}${kind === 'run' ? '' : ` (${target})`}${body ? `\n${body}` : ''}`);
   }
