@@ -29,8 +29,8 @@ while developing. Every hook is a new process, so an edit to `src/` takes effect
 Tests run with `--import ./tests/helpers/isolate-data.js` (the npm scripts add it), which turns off the
 daily maintenance run a session start would otherwise detach.
 
-Plans, specs and other working notes written while developing stay out of the repository:
-`docs/plans/`, `docs/specs/` and `docs/superpowers/` are ignored by git.
+Plans, specs, research notes and other working notes written while developing stay out of the repository:
+`docs/plans/`, `docs/specs/`, `docs/superpowers/` and `docs/research/` are ignored by git.
 
 ## Checks
 

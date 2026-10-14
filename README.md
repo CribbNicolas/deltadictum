@@ -49,11 +49,27 @@ You need [Node.js](https://nodejs.org) 22.16 or later.
    /plugin install dd@deltadictum
    ```
 
-2. Work as usual. When a fix teaches the agent something the code does not show, DD asks it, at the end of
+2. Opt the project in: commit a `.dd/config.json` (`{}` is enough), or save a first memory with
+   `/dd:save`. A project without a `.dd/` folder is left alone.
+3. Work as usual. When a fix teaches the agent something the code does not show, DD asks it, at the end of
    the turn, to save a memory; you can also ask for one (`/dd:save`, or "save this as a trap").
-3. Review what was saved with `/dd:review`, which opens the local review UI.
+4. Review what was saved with `/dd:review`, which opens the local review UI.
 
 From then on, a memory reaches the agent when it touches what the memory covers.
+
+## Next to what Claude Code already has
+
+Claude Code loads `CLAUDE.md` every session, loads a `.claude/rules/` file when the agent reads a file its
+`paths` name, and keeps auto memory, the notes it writes itself from your corrections, per user and
+repository. DD is for what those leave out:
+
+- knowledge shared with the team through git, not notes on one machine;
+- delivered at the action, once per session, instead of at every session start: a memory about one file
+  costs nothing in the sessions that never touch it, and a prompt, a command or a symbol can trigger it too;
+- captured with evidence DD verified (a file it hashed, a correction it recorded) and kept in review
+  queues, instead of free-form notes;
+- rules DD checks itself, retirement of what never fires, and one store for the other harnesses as they
+  are verified.
 
 ## How it works
 
@@ -82,7 +98,7 @@ More in [How DD works](docs/guide/how-it-works.md).
 | Claude Code | Supported and measured |
 | Codex | Adapter written and unit-tested against recorded payloads; not yet verified in a live session |
 | OpenCode | Adapter written (memories arrive with the tool result); not yet verified in a live session |
-| Grok Build | Runs Claude Code's hooks; its payloads are not yet verified |
+| Grok Build | Registers Claude Code's hooks; its payload shapes are not yet verified |
 
 Support for other harnesses is added one at a time, after Claude Code. **Requirements:** Node.js 22.16 or
 later on Windows, Linux or macOS (macOS passes CI but has not been used in a real session).
@@ -135,10 +151,12 @@ show it. Details: [CHANGELOG](CHANGELOG.md).
 | `/dd:recall <topic>` | Shows what DD knows on a topic |
 | `/dd:review` | Opens the review UI |
 
-The review UI (`npx deltadictum ui`) lists candidates, stale or unused memories, duplicates and the agent's
-requests; shows each memory's evidence, breadth and use; dry-runs a memory's triggers over recent sessions;
-and edits, accepts, archives, merges or restores. On the command line: `deltadictum recall`, `status`,
-`health` and `maintain`.
+The review UI (`npx deltadictum ui`) lists candidates, memories DD accepted on its own, stale or unused
+memories, duplicates, the agent's requests and the last deliveries; shows each memory's evidence, breadth
+and use (by the trigger dimension that fired it); dry-runs a memory's triggers over recent sessions; and
+edits, accepts, archives, merges or restores. Its header shows the capture funnel: how often DD asked for
+a memory, and how many proposals were stored, activated or rejected. On the command line: `deltadictum
+recall`, `status`, `health` and `maintain`.
 
 ## Memory types
 
@@ -154,7 +172,8 @@ Fields, statuses and triggers: [Memories](docs/guide/memories.md).
 
 ## Configuration
 
-Project settings live in `.dd/config.json`, committed with the project.
+Project settings live in `.dd/config.json`, committed with the project. The file's presence (or a first
+memory) is what turns DD on for the project; every key is optional.
 
 | Setting | Default | What it does |
 |---|---|---|

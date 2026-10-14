@@ -12,8 +12,9 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
    the agent's context, once per session and subagent; a compaction or `/clear` re-arms them.
 3. **Check.** Commands and edits are checked against the rules memories carry; at the end of the turn, the
    files the turn changed are checked once in their final state.
-4. **Capture.** DD records a footprint of the session: paths, redacted commands, outcomes, corrections. At
-   the end of a turn that held a failure followed by a fix, or a correction from you, it asks the agent to
+4. **Capture.** In a project that opted in (a `.dd/` folder: a committed `.dd/config.json`, or a first
+   memory), DD records a footprint of the session: paths, redacted commands, outcomes, corrections. At the
+   end of a turn that held a failure followed by a fix, or a correction from you, it asks the agent to
    save what it learned.
 5. **Maintain.** Once a day, detached, DD rolls the session files up into local counters, prunes them after
    seven days and retires memories that never fire although their files keep being touched.
@@ -43,7 +44,10 @@ ingests it in the same turn and answers:
 - **rejected** with reasons, for example generic advice, a missing `not_derivable` or a secret in the text.
 
 When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive or
-revise a memory wait for a person in the review UI.
+revise a memory wait for a person in the review UI, and what DD activated on its own waits in the "Accepted
+by DD" queue until a person marks it reviewed. The review UI's header shows the capture funnel (asks,
+proposals, stored, activated, rejected), and `deltadictum health` adds the rejection reasons and each
+memory's fires by the trigger dimension that matched.
 
 ## Commands
 

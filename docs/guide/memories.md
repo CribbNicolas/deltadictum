@@ -54,7 +54,7 @@ definition is `src/memory/schema.js`.
 A trigger clause names the events it applies to in `on`: `prompt`, `read`, `edit`, `write`, `search` or
 `run`. At least one more field narrows it:
 
-- `paths`: globs of repository files the event touches;
+- `paths`: globs of repository files the event touches (`*`, `**`, `?` and `{a,b}` alternatives);
 - `symbols`: identifiers the edited or written text contains;
 - `commands`: words of a command the agent runs;
 - `keywords`: words or phrases of the prompt or tool call;
@@ -78,7 +78,8 @@ A check states a rule DD verifies itself:
 | `say` | What the agent is told, up to 200 characters |
 | `examples` | `violates` and `passes` samples, required: a check whose examples fail is left out |
 
-DD reports only violations the change introduced, at most twice per file per session, and never runs code.
+DD reports only violations the change introduced, at most twice per file per epoch (a session until its
+next compaction or `/clear`), and never runs code.
 
 ## Statuses
 
