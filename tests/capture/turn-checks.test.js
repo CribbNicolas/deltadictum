@@ -60,6 +60,23 @@ test('only violations the work introduced are reported: one already in the last 
   assert.doesNotMatch(text, /old\.test\.js/);
 });
 
+test('a violation already committed is left alone also when the project is a subfolder of the repository', async t => {
+  const repoRoot = mkdtempSync(join(tmpdir(), 'dd-turn-sub-'));
+  t.after(() => rmSync(repoRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const git = (...args) => spawnSync('git', ['-C', repoRoot, '-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { encoding: 'utf8' });
+  git('init', '-q');
+  const root = join(repoRoot, 'app');
+  mkdirSync(join(root, 'tests'), { recursive: true });
+  writeFileSync(join(root, 'tests', 'old.test.js'), 'const s = await createMemoryStore(d);\n');
+  git('add', '-A');
+  git('commit', '-q', '-m', 'old');
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [memory] });
+  await compileProject(root);
+  writeFileSync(join(root, 'tests', 'old.test.js'), 'const s = await createMemoryStore(d);\nconst x = 1;\n');
+  edited(root, 'tests/old.test.js', '2026-10-12T00:00:01.000Z');
+  assert.doesNotMatch(turnViolations(root, { session_id: 's1' }), /old\.test\.js/);
+});
+
 test('a file the turn deleted, or did not touch, is not judged', async t => {
   const root = await project(t);
   writeFileSync(join(root, 'tests', 'c.test.js'), 'createMemoryStore(d)\n');

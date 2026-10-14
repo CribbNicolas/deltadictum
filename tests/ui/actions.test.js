@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, mergeMemories, rejectMemory, restoreMemory, retopicMemory, ReviewError } from '../../src/ui/actions.js';
 import { loadIndex } from '../../src/engine/index-file.cjs';
@@ -87,4 +88,12 @@ test('a merge into a memory that is not live is refused: the merged knowledge wo
   const root = await project(t, [memory('old', { status: 'archived' }), memory('drop', { topic: 'ui/drop' })]);
   await assert.rejects(mergeMemories(root, 'old', 'drop'), err => err.problems.includes('merge_into_archived'));
   assert.equal((await list(root)).drop.status, 'active');
+});
+
+test('a memory a person writes in an empty store takes the project id from .dd/config.json', async t => {
+  const root = await project(t, []);
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'acme' }));
+  const made = await createMemory(root, { topic: 'ui/new', kind: 'fact', title: 'New', body: 'Ports below 1024 need admin on src/a.js servers.',
+    not_derivable: 'Hidden from the code.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }] });
+  assert.equal(made.project_id, 'acme');
 });

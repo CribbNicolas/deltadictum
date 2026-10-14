@@ -21,7 +21,7 @@ function commandText(command) {
 // into a file, an in-place sed, any other program.
 function shellKind(script) {
   const text = String(script ?? '');
-  if (/(?:^|[^>&\d])>/.test(text) || /\btee\b/.test(text)) return null;
+  if (/(?:^|[^>&\d])>|&>/.test(text) || /\btee\b/.test(text)) return null;
   let kind = null;
   for (const step of text.split(/&&|\|\||;|\n/)) {
     const words = step.split('|')[0].trim().split(/\s+/).filter(Boolean);

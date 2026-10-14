@@ -108,6 +108,7 @@ export async function startReviewServer({ root, port = 0, host = '127.0.0.1' }) 
       return result === undefined ? send(res, 404, { error: 'not_found' }) : send(res, 200, result);
     } catch (err) {
       if (err instanceof ReviewError) return send(res, err.problems.includes('memory_not_found') ? 404 : 400, { error: 'refused', problems: err.problems });
+      if (err instanceof URIError) return send(res, 400, { error: 'refused', problems: ['invalid_path'] });
       if (['request_not_found', 'invalid_outcome'].includes(err?.message)) return send(res, 400, { error: 'refused', problems: [err.message] });
       return send(res, 500, { error: 'internal', message: String(err?.message ?? err).slice(0, 200) });
     }
