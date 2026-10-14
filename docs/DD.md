@@ -25,13 +25,15 @@ corrected.
 ## Delivery
 
 - A memory fires when one of its trigger clauses matches an event: `on` names the event kinds (`prompt`,
-  `read`, `edit`, `write`, `run`, `search`), and paths (globs), symbols, commands or prompt keywords narrow it.
-  Matching is rule matching over the compiled index (`src/engine/match.cjs`), not similarity search.
+  `read`, `edit`, `write`, `run`, `search`), and paths (globs with `*`, `**`, `?` and `{a,b}`), symbols,
+  commands or prompt keywords narrow it. Matching is rule matching over the compiled index
+  (`src/engine/match.cjs`), not similarity search.
 - Delivery happens in the harness's hooks: at the prompt and before each tool call. Session start injects
   nothing. There is no MCP server.
 - Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);
-  a compaction or `/clear` starts a new epoch. A delivery is at most 10,000 characters: what does not fit
-  whole is named and arrives at its next event. Stale evidence and disputed memories are marked.
+  a compaction or `/clear` starts a new epoch. The ledger's claim records the dimension that fired the
+  memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters: what does not
+  fit whole is named and arrives at its next event. Stale evidence and disputed memories are marked.
 - Delivered text is advisory project knowledge. It never outranks the host, the user or the current code.
 
 ## Checks
@@ -48,6 +50,8 @@ corrected.
 
 ## Capture
 
+- A project opts in with its `.dd/` folder: a committed `.dd/config.json`, or its first memory. Without
+  it, hooks record nothing and ask nothing (`src/hooks/v2/hook.cjs`).
 - Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
   Prompt text is not kept, except a short preview of a prompt detected as a user correction.
 - At Stop, DD asks the agent for a memory only when the turn holds evidence (a failure followed by a fix, or a
@@ -56,7 +60,8 @@ corrected.
   turn: it validates the proposal, suggests triggers from the session when none are given, refuses generic
   advice, and answers with the result. A proposal becomes a candidate, or an active memory when auto-accept
   applies. A proposal on a topic whose candidate is still pending replaces it; the replaced candidate is
-  archived, never deleted.
+  archived, never deleted. Every ingestion leaves one telemetry line with its outcome and reasons
+  (`.dd/local/telemetry/inbox.jsonl`), never the content.
 - Auto-accept (on by default; `.dd/config.json` `"auto_accept": false` turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
@@ -71,11 +76,14 @@ corrected.
   is archived. A memory a person reviewed is never retired this way, nor one a pending candidate revises.
   Archiving keeps the file.
 - `deltadictum health` reports dead triggers, memories with no opportunity or none used despite it, hubs,
-  triggers only on central paths, suspected false alarms and stale evidence. `recall` and `status` read the store.
-- `deltadictum ui` serves the review UI for one project on a loopback port, until interrupted: queues, a memory
-  with its breadth, evidence, use and similar memories, a dry run of its triggers over recorded sessions, and
-  every edit and status change, each validated as ingestion validates and followed by a recompile. It answers
-  only its own Host, only a browser holding its key, and takes changes only as JSON.
+  triggers only on central paths, suspected false alarms and stale evidence; for each memory, its fires by
+  the dimension that matched; the capture funnel (asks, corrections, proposals stored, activated or rejected,
+  rejections by reason) and the last deliveries. `recall` and `status` read the store.
+- `deltadictum ui` serves the review UI for one project on a loopback port, until interrupted: queues
+  (among them the memories DD accepted on its own, until a person marks each as reviewed), a memory with its
+  breadth, evidence, use and similar memories, a dry run of its triggers over recorded sessions, and every
+  edit and status change, each validated as ingestion validates and followed by a recompile. It answers only
+  its own Host, only a browser holding its key, and takes changes only as JSON.
 
 ## Harnesses
 

@@ -15,10 +15,11 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# Development plans, specs and working notes stay out of the repository.
+# Development plans, specs, research notes and working notes stay out of the repository.
 docs/plans/
 docs/specs/
 docs/superpowers/
+docs/research/
 
 # Claude Code project settings written by a local plugin install.
 .claude/settings.json

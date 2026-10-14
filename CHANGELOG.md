@@ -50,8 +50,20 @@ project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% 
   `deltadictum health`, `recall`, `status`, `compile` and `migrate`.
 - The review UI, `deltadictum ui`: queues, evidence, breadth, use, a dry run of triggers over recent
   sessions, and every edit and status change.
+- A project opts in with its `.dd/` folder (a committed `.dd/config.json`, or a first memory): DD records
+  its footprint and asks for memories from the first session, not from the first memory.
+- Health and the review UI show each memory's fires by the trigger dimension that matched, the capture
+  funnel (asks, corrections, proposals stored, activated or rejected, rejections by reason) and the last
+  deliveries; memories DD accepted on its own wait in their own queue until a person marks them reviewed.
+- Trigger globs accept `{a,b}` alternatives (`src/**/*.{js,ts}`).
 - Codex delivery through shell reads and `apply_patch`, and OpenCode delivery with the tool result; both
   are not yet verified in a live session.
+
+### Fixed
+- The `recall` and `review` skills ran `npx deltadictum`, which fetched the published package from npm (a
+  network request, and possibly another version than the hooks); they run the installed plugin's own CLI.
+- The Grok manifests registered a subset of the hooks (no inbox, so `/dd:save` was never ingested there; no
+  corrections, no failures); they mirror Claude Code's.
 
 ## [0.8.6] - 2026-10-06
 
