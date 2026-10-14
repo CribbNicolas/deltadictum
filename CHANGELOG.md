@@ -220,7 +220,11 @@ project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% 
 - The published package works in Claude Code, Grok Build, OpenCode and Codex; the audit UI is closed to
   other accounts on the machine.
 
-[0.8.3]: https://github.com/CribbNicolas/deltadictum/compare/696f567...HEAD
+[0.9.0]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.6...v0.9.0
+[0.8.6]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.5...v0.8.6
+[0.8.5]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.4...v0.8.5
+[0.8.4]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.3...v0.8.4
+[0.8.3]: https://github.com/CribbNicolas/deltadictum/compare/696f567...v0.8.3
 [0.8.2]: https://github.com/CribbNicolas/deltadictum/compare/7606bcd...cc871cf
 [0.8.1]: https://github.com/CribbNicolas/deltadictum/compare/932d275...7606bcd
 [0.8.0]: https://github.com/CribbNicolas/deltadictum/compare/43c555c...932d275

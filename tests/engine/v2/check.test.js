@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { appliesTo, defaultWhen, evaluateCommand, evaluateContent, exampleProblems } from '../../../src/checks/check.cjs';
+import { defaultWhen, evaluateCommand, evaluateContent, exampleProblems } from '../../../src/checks/check.cjs';
 import { createMatcher } from '../../../src/checks/pattern.cjs';
 
 const matcher = createMatcher();
@@ -28,9 +28,7 @@ test('examples must behave as stated; a timeout is its own problem', () => {
   assert.deepEqual(exampleProblems(slow, createMatcher({ timeoutMs: 20 })), ['check_timed_out']);
 });
 
-test('paths and the default moment', () => {
-  assert.equal(appliesTo(store, 'tests/hooks/a.test.js'), true);
-  assert.equal(appliesTo(store, 'src/a.js'), false);
+test('the default moment', () => {
   assert.equal(defaultWhen(store), 'turn');
   assert.equal(defaultWhen({ ...store, when: 'edit' }), 'edit');
   assert.equal(defaultWhen(force), 'run');

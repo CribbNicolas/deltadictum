@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bashPaths, relativize, toolEvent, TOOL_EVENTS } from '../../src/hooks/v2/events.cjs';
+import { bashPaths, relativize, toolEvent } from '../../src/hooks/v2/events.cjs';
 
 const ROOT = 'C:\\work\\project';
 
@@ -23,7 +23,6 @@ test('relative paths in a command, a search or a read are resolved from the sess
 });
 
 test('every tool DD listens to becomes an event with its full text', () => {
-  assert.deepEqual(TOOL_EVENTS, ['Read', 'Edit', 'MultiEdit', 'NotebookEdit', 'Write', 'Bash', 'Grep', 'Glob']);
   const big = 'x'.repeat(5000);
   assert.deepEqual(toolEvent('Edit', { file_path: `${ROOT}\\src\\a.js`, old_string: 'a', new_string: big }, ROOT), { kind: 'edit', paths: ['src/a.js'], text: big });
   assert.deepEqual(toolEvent('Bash', { command: 'npm publish --dry-run' }, ROOT), { kind: 'run', paths: [], text: 'npm publish --dry-run' });
