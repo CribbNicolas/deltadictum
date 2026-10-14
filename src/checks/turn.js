@@ -35,7 +35,8 @@ function readSmall(file) {
 // already there is not the turn's doing and is not reported (owner, 2026-10-13):
 // the agent is not sent to fix old code outside its task.
 function committedContent(root, file) {
-  const shown = spawnSync('git', ['-C', root, 'show', `HEAD:${file}`], { encoding: 'utf8', windowsHide: true, maxBuffer: CONTENT_MAX * 8 });
+  // `./` makes the path relative to the project, which may be a subfolder of the repository.
+  const shown = spawnSync('git', ['-C', root, 'show', `HEAD:./${file}`], { encoding: 'utf8', windowsHide: true, maxBuffer: CONTENT_MAX * 8 });
   return shown.status === 0 ? shown.stdout : null;
 }
 

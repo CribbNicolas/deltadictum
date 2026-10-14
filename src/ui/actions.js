@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
 import { codeSymbols, compileProject, repoFilesOf, triggerWarnings } from '../engine/compile.js';
@@ -18,6 +20,14 @@ export class ReviewError extends Error {
 
 const EDITABLE = ['title', 'body', 'kind', 'not_derivable', 'triggers', 'check', 'revisit_when'];
 const now = () => new Date().toISOString();
+// The project id a new memory carries, as ingestion picks it (src/capture/inbox.js):
+// .dd/config.json, then the existing memories, then the folder's name.
+async function projectIdOf(root) {
+  let configured = null;
+  try { configured = JSON.parse(readFileSync(join(localPaths(root).dd, 'config.json'), 'utf8')).project_id; } catch { /* no config */ }
+  if (typeof configured === 'string' && configured.trim()) return configured;
+  return (await storeOf(root).list())[0]?.project_id ?? basename(root);
+}
 // A person who edits, restores or re-topics a live memory has reviewed it:
 // retirement by disuse spares what a person reviewed (src/maintenance/retire.js).
 const reviewedByPerson = (memory, at) => (LIVE_STATUSES.includes(memory.status)
@@ -115,7 +125,7 @@ export async function deleteMemory(root, id) {
 
 export async function createMemory(root, fields = {}) {
   const at = now();
-  const memory = { schema_version: SCHEMA_VERSION, id: randomUUID(), project_id: (await storeOf(root).list())[0]?.project_id ?? 'project',
+  const memory = { schema_version: SCHEMA_VERSION, id: randomUUID(), project_id: await projectIdOf(root),
     topic: fields.topic, kind: fields.kind, status: 'active', title: fields.title, body: fields.body,
     not_derivable: String(fields.not_derivable ?? '').trim(), triggers: fields.triggers ?? [], ...(fields.check ? { check: fields.check } : {}),
     evidence: fields.evidence ?? [], origin: 'user_explicit', replaces: null, revisit_when: [],

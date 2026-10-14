@@ -59,6 +59,7 @@ test('shell commands are read, search or run by every step they take', () => {
   assert.equal(shellKind('Get-Content src/a.js'), 'read');
   assert.equal(shellKind('npm test'), null);
   assert.equal(shellKind('cat a.js > b.js'), null);
+  assert.equal(shellKind('cat a.js &> b.txt'), null);
   assert.equal(shellKind('cat a.js && npm test'), null);
   assert.equal(shellKind('cd src'), null);
 });

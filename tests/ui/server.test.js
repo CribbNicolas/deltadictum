@@ -56,3 +56,9 @@ test('reads and actions go through the API; mutations take JSON only', async t =
   assert.equal((await json('/api/memories/nope')).status, 404);
   assert.equal((await json('/api/memories?queue=bogus')).status, 400);
 });
+
+test('a malformed percent-encoding in an API path is refused, not an internal error', async t => {
+  const { server, cookie } = await serve(t);
+  const bad = await call(server, '/api/memories/%E0%A4%A', { headers: { cookie } });
+  assert.equal(bad.status, 400);
+});
