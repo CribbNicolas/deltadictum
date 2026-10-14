@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { appendFootprint, footprintPath, readFootprint } from '../capture/footprint.js';
+import { appendTelemetry, telemetryDir } from '../capture/telemetry.js';
 import { PATH_FLAGS } from '../engine/clause.cjs';
 import { loadIndex, readBodies } from '../engine/index-file.cjs';
 import { ledgerPath, openLedger, REPORT_LIMIT } from '../engine/ledger.cjs';
@@ -12,12 +13,9 @@ import { createMatcher } from './pattern.cjs';
 // Turn checks (spec section 6): at Stop, once, over the final state of the files
 // the turn changed — its edits and writes, and files its commands named that git
 // reports as changed. Intermediate states never raise an alarm.
-const telemetryDir = root => join(localPaths(root).local, 'telemetry');
-const telemetryPath = root => join(telemetryDir(root), 'checks.jsonl');
-
-function record(root, entry) {
-  try { mkdirSync(telemetryDir(root), { recursive: true }); appendFileSync(telemetryPath(root), `${JSON.stringify(entry)}\n`); } catch { /* telemetry is best effort */ }
-}
+const CHECKS_FILE = 'checks.jsonl';
+const telemetryPath = root => join(telemetryDir(root), CHECKS_FILE);
+const record = (root, entry) => appendTelemetry(root, CHECKS_FILE, entry);
 
 // Modified since `since` (ms): a command that names a file changed it only if the
 // file's modification time says so. Running a test file does not change it.
@@ -79,7 +77,7 @@ export function turnViolations(root, payload, { now = new Date() } = {}) {
         ledger.report(check.m, file);
         appendFootprint(path, { t: 'violation', m: check.m, path: file, at: now.toISOString() });
         const body = !ledger.delivered().has(check.m) ? bodies[check.m]?.body : null;
-        if (body) ledger.claim([check.m]);
+        if (body) ledger.claim([check.m], { kind: 'turn', viaOf: () => ['check'] });
         lines.push(`DD - check (${index.memories[check.m]?.title ?? check.m}): ${check.say} (${file})${body ? `\n${body}` : ''}`);
       }
     }

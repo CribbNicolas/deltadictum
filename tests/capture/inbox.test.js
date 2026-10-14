@@ -207,6 +207,23 @@ test('a proposal on a topic whose candidate is still pending replaces that candi
   assert.ok(replaced.review.issues.includes(`replaced_by_candidate:${second.stored.id}`));
 });
 
+// Whether capture works in real use is measured from here: every ingestion
+// leaves one telemetry line with its outcome and reasons, never the content.
+test('every ingestion records its outcome for health: active, candidate, rejected with reasons, request', async t => {
+  const root = repo(t);
+  await ingestInboxFile({ root, file: write(root, 'a.json', proposal()), sessionId: 's1' });
+  await ingestInboxFile({ root, file: write(root, 'b.json', proposal({ topic: 'config/other', evidence: [{ type: 'file', path: 'README.md' }],
+    body: 'Return {} from `parseConfig` for empty text in src/config.js; callers expect an object.' })), sessionId: 's1' });
+  await ingestInboxFile({ root, file: write(root, 'c.json', proposal({ body: 'Write tests before changing code.', title: 'Tests' })), sessionId: 's1' });
+  await ingestInboxFile({ root, file: write(root, 'q.json', { request: 'archive', target: 'x', why: 'Replaced.' }), sessionId: 's1' });
+  const lines = readFileSync(join(root, '.dd', 'local', 'telemetry', 'inbox.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.deepEqual(lines.map(line => [line.outcome, line.reasons, line.origin, line.session]), [
+    ['active', [], 'model_initiated', 's1'], ['candidate', ['no_verified_evidence'], 'model_initiated', 's1'],
+    ['rejected', ['generic_advice'], 'model_initiated', 's1'], ['request', [], null, 's1']]);
+  assert.doesNotMatch(JSON.stringify(lines), /parseConfig|Replaced/);
+  assert.ok(lines.every(line => /^\d{4}-\d\d-\d\dT/.test(line.at)));
+});
+
 test('a check whose examples disagree with it is rejected', async t => {
   const root = repo(t);
   const check = { on: ['edit'], paths: ['src/*.js'], if_content: 'JSON\\.parse\\(', unless_content: 'try', say: 'Guard JSON.parse.',

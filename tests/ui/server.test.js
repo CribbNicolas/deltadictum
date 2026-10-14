@@ -47,6 +47,8 @@ test('reads and actions go through the API; mutations take JSON only', async t =
   const detail = JSON.parse((await json('/api/memories/m1')).text);
   assert.equal(detail.memory.id, 'm1');
   assert.equal((await json('/api/memories/c1/accept', { method: 'POST', body: '{}' })).status, 200);
+  assert.equal((await json('/api/memories/m1/reviewed', { method: 'POST', body: '{}' })).status, 200);
+  assert.equal(JSON.parse((await json('/api/memories/m1')).text).memory.review.accepted.by, 'person');
   const refused = await json('/api/memories/m1', { method: 'PUT', body: JSON.stringify({ not_derivable: '' }) });
   assert.equal(refused.status, 400);
   assert.ok(JSON.parse(refused.text).problems.includes('not_derivable_required'));

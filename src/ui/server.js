@@ -2,7 +2,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, mergeMemories, rejectMemory, restoreMemory, retopicMemory, ReviewError } from './actions.js';
+import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, ReviewError } from './actions.js';
 import { dryRun } from './dry-run.js';
 import { closeRequest, listRequests } from './requests.js';
 import { listMemories, memoryDetail, overview, QUEUES } from './views.js';
@@ -74,6 +74,7 @@ async function route(root, req, url, body) {
     if (action === 'reject') return rejectMemory(root, id, body.reason);
     if (action === 'archive') return archiveMemory(root, id, body.reason);
     if (action === 'restore') return restoreMemory(root, id);
+    if (action === 'reviewed') return markReviewed(root, id);
     if (action === 'retopic') return retopicMemory(root, id, body.topic);
     if (action === 'dry-run') {
       const triggers = Array.isArray(body.triggers) ? body.triggers : (await memoryDetail(root, id))?.memory.triggers ?? [];

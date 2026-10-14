@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, mergeMemories, rejectMemory, restoreMemory, retopicMemory, ReviewError } from '../../src/ui/actions.js';
+import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, ReviewError } from '../../src/ui/actions.js';
 import { loadIndex } from '../../src/engine/index-file.cjs';
 import { createMemoryFiles } from '../../src/memory/store.js';
 import { memory, project } from '../helpers/review.js';
@@ -82,6 +82,19 @@ test('restoring, editing or re-topicking a live memory records the person, so re
   assert.equal((await retopicMemory(root, 'r1', 'ui/r1-moved')).review.accepted.by, 'person');
   const candidate = await project(t, [memory('c1', { status: 'candidate' })]);
   assert.equal((await editMemory(candidate, 'c1', { title: 'Still a candidate' })).review.accepted, undefined);
+});
+
+// Auto-accept activates a memory without a person. What DD accepted stays
+// reviewable: a person marks one as seen without changing it, and retirement then
+// spares it like any memory a person reviewed.
+test('a memory DD accepted can be marked as reviewed by a person, unchanged; a candidate cannot', async t => {
+  const root = await project(t, [memory('auto', { review: { migrated: false, issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } }),
+    memory('c1', { topic: 'ui/c1', status: 'candidate' })]);
+  const seen = await markReviewed(root, 'auto');
+  assert.equal(seen.review.accepted.by, 'person');
+  assert.equal(seen.body, 'Close the store in t.after (auto).');
+  assert.equal(seen.origin, 'model_initiated');
+  await assert.rejects(markReviewed(root, 'c1'), err => err instanceof ReviewError && err.problems.includes('not_live'));
 });
 
 test('a merge into a memory that is not live is refused: the merged knowledge would stop being delivered', async t => {

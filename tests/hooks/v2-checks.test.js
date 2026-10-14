@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +37,9 @@ test('a command check speaks with the command, with the body the first time, at 
   const first = run('s1');
   assert.match(first, /DD - check \(Never force-exit tests\): --test-force-exit crashes the resident tests on Windows\./);
   assert.match(first, /Never force-exit tests, always\./);
+  // The body came with a check, not a trigger: the claim says so.
+  const claim = JSON.parse(readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n').find(line => line.includes('"claim"')));
+  assert.deepEqual([claim.m, claim.e, claim.v], ['force', 'run', ['check']]);
   const second = run('s1');
   assert.match(second, /DD - check/);
   assert.doesNotMatch(second, /always\./);

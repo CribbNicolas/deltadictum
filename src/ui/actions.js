@@ -117,6 +117,15 @@ export async function restoreMemory(root, id) {
   return save(root, [next]);
 }
 
+// A memory DD accepted on its own, seen by a person and left as it is: the review
+// it waited for, so it leaves the auto_accepted queue and retirement spares it.
+export async function markReviewed(root, id) {
+  const memory = await find(root, id);
+  if (!LIVE_STATUSES.includes(memory.status)) throw new ReviewError(['not_live']);
+  const at = now();
+  return save(root, [reviewedByPerson({ ...memory, updated: at }, at)]);
+}
+
 export async function deleteMemory(root, id) {
   await find(root, id);
   await save(root, [], [id]);

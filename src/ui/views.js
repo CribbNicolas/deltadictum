@@ -16,7 +16,7 @@ const { staleEvidence } = createRequire(import.meta.url)('../engine/deliver.cjs'
 
 // What the review UI reads (spec section 8): queues from health, a memory with
 // its breadth, its check and its evidence. Nothing here writes.
-export const QUEUES = ['candidates', 'stale', 'hubs', 'dead', 'false_alarms', 'duplicates', 'missing_not_derivable', 'requests', 'all'];
+export const QUEUES = ['candidates', 'auto_accepted', 'stale', 'hubs', 'dead', 'false_alarms', 'duplicates', 'missing_not_derivable', 'requests', 'all'];
 const SIGNAL_QUEUES = { stale: 'stale_evidence', hubs: 'hub', dead: 'dead_trigger', false_alarms: 'suspected_false_alarm' };
 
 async function snapshot(root) {
@@ -36,6 +36,7 @@ async function snapshot(root) {
 function queueIds({ memories, health, signals, pairs }, queue) {
   if (queue === 'all') return memories.map(m => m.id);
   if (queue === 'candidates') return health.queues.candidates;
+  if (queue === 'auto_accepted') return health.queues.auto_accepted;
   if (queue === 'missing_not_derivable') return health.queues.migrated_without_not_derivable;
   if (queue === 'duplicates') return [...new Set(pairs.flatMap(pair => [pair.a, pair.b]))];
   const signal = SIGNAL_QUEUES[queue];
@@ -45,7 +46,7 @@ function queueIds({ memories, health, signals, pairs }, queue) {
 export async function overview(root) {
   const snap = await snapshot(root);
   const queues = Object.fromEntries(QUEUES.filter(q => q !== 'requests').map(q => [q, queueIds(snap, q).length]));
-  return { status: await status(root), queues: { ...queues, requests: listRequests(root).length } };
+  return { status: await status(root), queues: { ...queues, requests: listRequests(root).length }, capture: snap.health.capture, recent: snap.health.recent };
 }
 
 export async function listMemories(root, { queue = 'all' } = {}) {
@@ -77,7 +78,7 @@ export async function memoryDetail(root, id) {
     suggested = suggestTriggersFor(memory, { repoFiles, symbolExists: name => Boolean(found?.has(name)) });
   }
   return {
-    memory, breadth, fired: health?.fired ?? 0, opportunity: health?.opportunity ?? 0, signals: health?.signals ?? [],
+    memory, breadth, fired: health?.fired ?? 0, opportunity: health?.opportunity ?? 0, signals: health?.signals ?? [], by_dimension: health?.by_dimension ?? {},
     check: { problems: memory.check ? exampleProblems(memory.check, createMatcher()) : [] },
     stale: staleEvidence(root, memory.evidence.filter(entry => entry.type === 'file' && entry.sha256)),
     similar: similar.map(hit => ({ id: hit.id, title: titles.get(hit.id) })), suggested_triggers: suggested,
