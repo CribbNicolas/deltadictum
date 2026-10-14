@@ -38,9 +38,12 @@ export function validTopic(topic) {
   return parts.length >= 2 && parts.length <= 4 && parts.every(part => SEGMENT.test(part));
 }
 
-// A repository-relative path or glob: no absolute path, drive or parent segment.
+// A repository-relative path or glob: no absolute path, drive or parent segment,
+// and at most three `**`: each one more multiplies the work of matching a path
+// the glob misses, on every tool call.
 export const validRelativePath = path => typeof path === 'string' && path.length > 0 && path.length <= LIMITS.glob
-  && !path.startsWith('/') && !path.includes(':') && !path.replaceAll('\\', '/').split('/').includes('..');
+  && !path.startsWith('/') && !path.includes(':') && !path.replaceAll('\\', '/').split('/').includes('..')
+  && (path.match(/\*\*/g) ?? []).length <= 3;
 
 function clauseProblems(clause) {
   if (!isObject(clause)) return ['invalid_trigger'];
