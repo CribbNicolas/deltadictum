@@ -59,7 +59,7 @@ function resolveEvidence(root, cited, footprint, listing) {
   const reasons = [];
   const evidence = [];
   const files = [];
-  let corrections = 0;
+  const corrections = [];
   const byId = new Map(footprint.filter(e => e.id).map(e => [e.id, e]));
   for (const entry of Array.isArray(cited) ? cited : []) {
     if (entry?.type === 'file') {
@@ -78,7 +78,7 @@ function resolveEvidence(root, cited, footprint, listing) {
       const type = found?.t === 'correction' ? 'correction' : 'observation';
       if (!found || (found.t !== 'tool' && found.t !== 'correction') || type !== entry.type) { reasons.push(`evidence_ref_unknown:${entry.ref ?? ''}`); continue; }
       evidence.push({ type, summary: String(found.preview ?? '').slice(0, 500) });
-      if (type === 'correction') corrections += 1;
+      if (type === 'correction') corrections.push(found);
     } else if (entry?.type === 'note' && typeof entry.summary === 'string' && entry.summary.trim()) {
       evidence.push({ type: 'note', summary: entry.summary.slice(0, 500) });
     } else reasons.push('invalid_evidence_type');
@@ -93,6 +93,31 @@ function relevantFiles(files, triggers, footprint) {
   const touched = new Set(footprint.filter(e => e.t === 'tool').flatMap(e => e.paths ?? []));
   const globs = triggers.flatMap(clause => clause.paths ?? []).map(glob => globToRegExp(glob));
   return files.filter(path => touched.has(path) || globs.some(regex => regex.test(path)));
+}
+
+// The same holds for a recorded correction, whose detection is a pattern with
+// false positives ("No, gracias"). It is verified evidence only when it is about
+// the memory — it names one of its files or symbols, or shares two content words
+// with it — and corrects work: the agent did something before it (owner,
+// 2026-10-13). A "No," that opens the session answers a question.
+const FUNCTION_WORDS = new Set(['that', 'this', 'with', 'from', 'when', 'what', 'which', 'have', 'there', 'then', 'they',
+  'como', 'para', 'pero', 'esto', 'esta', 'este', 'porque', 'cuando', 'donde', 'tiene', 'hace', 'gracias', 'dale', 'bien']);
+const contentWords = text => new Set(words(text).filter(word => word.length > 3 && !FUNCTION_WORDS.has(word)));
+function relevantCorrections(corrections, memory, files, footprint) {
+  const mine = contentWords(`${memory.title} ${memory.body}`);
+  const names = [...memory.triggers.flatMap(clause => [...(clause.symbols ?? []),
+    ...(clause.paths ?? []).filter(glob => !/[*?[{]/.test(glob)).map(path => path.split('/').pop())]),
+    ...files.map(path => path.split('/').pop())].filter(name => name.length > 2).map(name => name.toLowerCase());
+  return corrections.filter(correction => {
+    const text = String(correction.preview ?? '').replace(/^User correction\.\s*/, '');
+    const lower = text.toLowerCase();
+    const about = names.some(name => lower.includes(name)) || [...contentWords(text)].filter(word => mine.has(word)).length >= 2;
+    if (!about) return false;
+    for (let i = footprint.indexOf(correction) - 1; i >= 0 && footprint[i].t !== 'correction'; i -= 1) {
+      if (footprint[i].t === 'tool') return true;
+    }
+    return false;
+  });
 }
 
 // A check must flag its violating example and pass its passing one (spec section 6).
@@ -203,7 +228,8 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
   if (reasons.length) return reject(name, reasons, hint);
 
   const duplicate = duplicateOf(memory, live);
-  const verified = { files: relevantFiles(files, triggers, footprint).length, corrections };
+  const verified = { files: relevantFiles(files, triggers, footprint).length,
+    corrections: relevantCorrections(corrections, memory, files, footprint).length };
   const accept = autoAcceptReasons({ memory, verified, warnings, duplicateOf: duplicate, enabled: autoAcceptEnabled(config),
     triggersVerified: Boolean(repoFiles && found) });
   // A rewrite replaces the candidates still pending on its topic, in the same commit.
