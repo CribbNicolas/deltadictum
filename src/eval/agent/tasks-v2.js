@@ -231,7 +231,9 @@ export const TASKS = [
       const root = await tempProject(dir);
       try {
         const [{ maintain }] = await importFrom(dir, 'maintenance/maintain.js');
-        const known = /[\\/]\.dd[\\/](?:local[\\/](?:v2[\\/]|sessions[\\/]|telemetry\.sqlite|telemetry[\\/](?:checks|inbox)\.jsonl|maintenance\.json)|memories[\\/]|config\.json|\.gitignore|\.write-lock|\.pending-write\.json)/;
+        // What a maintenance run writes today; a new file is anything else. The marker is
+        // maintenance.json exactly: a maintenance.jsonl beside it is a new file.
+        const known = /[\\/]\.dd[\\/](?:local[\\/](?:v2[\\/]|sessions[\\/]|telemetry\.sqlite|telemetry[\\/](?:checks|inbox)\.jsonl$|maintenance\.json$)|memories[\\/]|config\.json$|\.gitignore$|\.write-lock$|\.pending-write\.json$)/;
         const before = new Set(await walk(join(root, '.dd')));
         await maintain(root);
         await maintain(root);
