@@ -6,13 +6,15 @@ const { dirname, join, resolve } = require('node:path');
 
 const same = (a, b) => (process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b);
 
-// The nearest folder at or above `start` that holds .dd/memories or .git, never
-// the stop folder (the user's home) or above it: the home contains everything.
+// The nearest folder at or above `start` that holds .dd or .git, never the stop
+// folder (the user's home) or above it: the home contains everything. A project
+// opts into DD with its .dd/ folder: its memories, or only a committed
+// .dd/config.json before the first memory.
 function findProjectRoot(start, { stopAt = homedir() } = {}) {
   const boundary = resolve(stopAt);
   let dir = resolve(start);
   while (!same(dir, boundary)) {
-    if (existsSync(join(dir, '.dd', 'memories')) || existsSync(join(dir, '.git'))) return dir;
+    if (existsSync(join(dir, '.dd')) || existsSync(join(dir, '.git'))) return dir;
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;

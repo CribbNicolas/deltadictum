@@ -80,11 +80,12 @@ function delivery(root, index, event, fired, ledger, bodies) {
 
 // Session start injects nothing (spec section 1): it re-arms the ledger after a
 // compaction or /clear, starts the daily maintenance (which prunes old session
-// files), and compiles a missing or stale index
-// so the first tool call is served. A project without DD memories is left alone.
+// files), and compiles a missing or stale index so the first tool call is
+// served. A project without a .dd/ folder is left alone: the folder (a
+// committed .dd/config.json, or the memories themselves) is the opt-in.
 async function sessionStart(root, payload, session) {
   const paths = localPaths(root);
-  if (!existsSync(paths.memories)) return '';
+  if (!existsSync(paths.dd)) return '';
   const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
   if (session && ['compact', 'clear'].includes(payload.source)) openLedger(ledgerPath(paths.sessions, session.id, session.agent)).newEpoch(payload.source);
   // Maintenance (roll-up, then pruning) runs detached at most once a day; session
@@ -122,7 +123,9 @@ async function handle(command, payload, { host = 'claude' } = {}) {
       for (const file of files) replies.push(await capture.run(command, root, { ...payload, tool_input: { file_path: join(root, file) } }));
       return respond(command, replies.filter(Boolean).join('\n'), host);
     }
-    if (!existsSync(localPaths(root).memories)) return '';
+    // Footprint, corrections and Stop requests belong to a project that opted in,
+    // from its first session on: a memory is not needed for DD to ask for one.
+    if (!existsSync(localPaths(root).dd)) return '';
     const capture = await import(capturePath);
     return respond(command, await capture.run(command, root, payload), host);
   }
