@@ -4,7 +4,7 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
-## [Unreleased] - DD v2
+## [0.9.0] - 2026-10-14 (DD v2)
 
 DD v2 replaces the core. Memories fire by rules (their triggers) at the action they apply to instead of
 being searched for by similarity on every prompt and tool call, so DD costs about what the agent costs alone:
