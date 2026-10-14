@@ -1,6 +1,36 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { engineeringGuide, guideSection } from '../../../src/eval/agent/guide.js';
+import { engineeringGuide, engineeringGuideV2, guideSection, guideSectionV2 } from '../../../src/eval/agent/guide.js';
+
+// A v2 memory, as the trial store holds it (src/eval/agent/trial-memories.js).
+const v2 = (over = {}) => ({
+  schema_version: 8, id: '0a1b2c3d-0000-4000-8000-000000000000', topic: 'testing/sqlite-handle-before-rm', kind: 'trap', status: 'active',
+  title: 'Close every node:sqlite handle before removing its folder', body: 'On Windows, rmSync of a folder with an open handle fails with EPERM.',
+  not_derivable: 'Linux removes the folder with the handle open.',
+  triggers: [{ on: ['read'], paths: ['tests/maintenance/*.test.js'] }, { on: ['edit', 'write'], paths: ['tests/maintenance/**'], symbols: ['openTelemetry'] },
+    { on: ['run'], commands: ['node -e'] }, { on: ['prompt', 'search'], keywords: ['telemetry test'], not: ['no telemetry'] }],
+  evidence: [{ type: 'file', path: 'tests/maintenance/telemetry.test.js', sha256: 'a'.repeat(64), summary: 'Closes the handle in t.after.' }],
+  ...over,
+});
+
+test('a v2 guide section carries the body, when it applies, why the code does not show it and the references, nothing DD-internal', () => {
+  const text = guideSectionV2(v2());
+  assert.match(text, /^### Close every node:sqlite handle before removing its folder$/m);
+  assert.match(text, /\*Trap\.\* \*\*Applies when:\*\* reading `tests\/maintenance\/\*\.test\.js`; editing or writing `tests\/maintenance\/\*\*` with `openTelemetry`; running `node -e`; a prompt or a search mentioning "telemetry test", unless "no telemetry"\./);
+  assert.match(text, /^On Windows, rmSync of a folder with an open handle fails with EPERM\.$/m);
+  assert.match(text, /\*\*Why the code does not show it:\*\* Linux removes the folder with the handle open\./);
+  assert.match(text, /- `tests\/maintenance\/telemetry\.test\.js`: Closes the handle in t\.after\./);
+  assert.doesNotMatch(text, /aaaaaaaa|sqlite-handle-before-rm|0a1b2c3d|schema_version|not_derivable/);
+});
+
+test('the v2 guide groups live memories by the first segment of their topic and skips the rest', () => {
+  const guide = engineeringGuideV2([v2(), v2({ id: 'b', topic: 'engine/compiled-index-version', title: 'Bump INDEX_VERSION', kind: 'procedure' }),
+    v2({ id: 'c', topic: 'engine/old', title: 'Retired rule', status: 'archived' })]);
+  assert.match(guide, /^# Engineering guide$/m);
+  assert.deepEqual([...guide.matchAll(/^## (.+)$/gm)].map(m => m[1]), ['Engine', 'Testing']);
+  assert.match(guide, /\*Procedure\.\*/);
+  assert.doesNotMatch(guide, /Retired rule/);
+});
 
 const atom = (over = {}) => ({
   id: '19a1686f-66d6-4d5f-88f9-cfe3b46d6f1b', topic_key: 'dd/engine/auto-accept-threshold-reachable-ceilings', memory_type: 'lesson',

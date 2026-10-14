@@ -32,6 +32,17 @@ test('stream metrics read what DD injected and whether session start found DD ac
   assert.equal(streamMetrics(hook('SessionStart', 'DD - Inactive: the resident DD process is loading'), null).dd_inactive, true);
 });
 
+// v2 names a delivered memory by its title; the list tells the key memory from the noise.
+test('v2 deliveries are listed by title, once each, so the key memory and the noise can be told apart', () => {
+  const stream = [hook('PreToolUse', 'DD - project knowledge (src/a.js):\n[TRAP] Close stores - Close them in t.after.\n[DECISION] Keep CJS - Because it is faster.'),
+    hook('UserPromptSubmit', 'DD - project knowledge (prompt):\n[FACT] Codex shapes - Recorded from sessions.\n... and 1 more: Other rule'),
+    hook('PreToolUse', 'DD - project knowledge (src/b.js):\n[TRAP] Close stores - Close them in t.after.')].join('\n');
+  const m = streamMetrics(stream, { id: 'x', title: 'Close stores' });
+  assert.deepEqual(m.delivered_titles, ['Close stores', 'Keep CJS', 'Codex shapes']);
+  assert.equal(m.memories_pushed, 3);
+  assert.equal(m.key_memory.pushed, true);
+});
+
 test('the key memory counts as pushed, pointed or pulled by how it reached the agent', () => {
   const pushed = streamMetrics(hook('PreToolUse', `[LESSON ${KEY}] [anchor: threshold] Use a reachable ceiling.`), KEY);
   assert.deepEqual(pushed.key_memory, { pushed: true, pointed: false, pulled: false });
