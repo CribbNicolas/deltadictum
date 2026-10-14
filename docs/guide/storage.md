@@ -5,6 +5,7 @@ Everything DD keeps for a project lives in its `.dd/` folder.
 | Path | In git | Holds |
 |---|---|---|
 | `.dd/memories/<id>.json` | Yes | The memories: the knowledge itself |
+| `.dd/memories/manifest.json` | No | A count and hash of the memories, rebuilt when they change |
 | `.dd/config.json` | Yes | Project settings ([Configuration](configuration.md)) |
 | `.dd/.gitignore` | Yes | Keeps the paths below out of git; DD writes it |
 | `.dd/inbox/` | No | Proposals the agent writes; DD deletes each one it stores and keeps a rejected one for the agent to fix |

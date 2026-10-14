@@ -79,7 +79,8 @@ function delivery(root, index, event, fired, ledger, bodies) {
 }
 
 // Session start injects nothing (spec section 1): it re-arms the ledger after a
-// compaction or /clear, prunes old ledgers, and compiles a missing or stale index
+// compaction or /clear, starts the daily maintenance (which prunes old session
+// files), and compiles a missing or stale index
 // so the first tool call is served. A project without DD memories is left alone.
 async function sessionStart(root, payload, session) {
   const paths = localPaths(root);

@@ -3,8 +3,6 @@
 // A harness's tool call as the normalized event of spec section 3:
 // { kind, paths, text }. Claude Code tool names here, plus the names Codex
 // payloads are mapped to (codex.cjs).
-const TOOL_EVENTS = ['Read', 'Edit', 'MultiEdit', 'NotebookEdit', 'Write', 'Bash', 'Grep', 'Glob'];
-
 // A path under the project root, made repository-relative. Windows spells the
 // root in any letter case and with either slash.
 function relativize(path, root) {
@@ -67,4 +65,4 @@ function toolEvent(name, input, root, cwd = root) {
   }
 }
 
-module.exports = { TOOL_EVENTS, relativize, bashPaths, toolEvent };
+module.exports = { relativize, bashPaths, toolEvent };

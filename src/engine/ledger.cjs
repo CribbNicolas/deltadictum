@@ -1,6 +1,6 @@
 'use strict';
 
-const { appendFileSync, closeSync, fstatSync, mkdirSync, openSync, readdirSync, readSync, rmSync, statSync } = require('node:fs');
+const { appendFileSync, closeSync, fstatSync, mkdirSync, openSync, readSync } = require('node:fs');
 const { dirname, join } = require('node:path');
 
 // A session's delivery ledger (spec section 4): which memories were delivered in
@@ -88,17 +88,4 @@ function openLedger(path) {
   };
 }
 
-function pruneSessions(dir, { maxAgeMs = 7 * 24 * 60 * 60 * 1000, now = Date.now() } = {}) {
-  let names;
-  try { names = readdirSync(dir); } catch { return 0; }
-  let pruned = 0;
-  for (const name of names) {
-    if (!name.endsWith('.jsonl')) continue;
-    try {
-      if (now - statSync(join(dir, name)).mtimeMs > maxAgeMs) { rmSync(join(dir, name), { force: true }); pruned += 1; }
-    } catch { /* gone or locked: the next session prunes it */ }
-  }
-  return pruned;
-}
-
-module.exports = { TAIL_BYTES, REPORT_LIMIT, ledgerPath, openLedger, pruneSessions };
+module.exports = { TAIL_BYTES, REPORT_LIMIT, ledgerPath, openLedger };

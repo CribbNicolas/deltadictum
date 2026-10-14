@@ -35,6 +35,7 @@
   },
   "files": [
     "src",
+    "!src/eval",
     ".claude-plugin",
     "adapters",
     "docs/DD.md",

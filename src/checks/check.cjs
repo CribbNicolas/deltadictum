@@ -1,6 +1,5 @@
 'use strict';
 
-const { globToRegExp } = require('../engine/clause.cjs');
 
 // A check (spec section 6) says when a rule is broken: the `if_` pattern matches
 // and the `unless_` pattern, when stated, does not. Patterns only; at most the
@@ -21,7 +20,6 @@ function violation(check, text, matcher, kind) {
 
 const evaluateContent = (check, text, matcher) => violation(check, text, matcher, 'content');
 const evaluateCommand = (check, command, matcher) => violation(check, command, matcher, 'command');
-const appliesTo = (check, path) => (check.paths ?? []).some(glob => globToRegExp(glob).test(String(path)));
 // `turn` for file checks unless the memory says `edit`; command checks run with their command.
 const defaultWhen = check => (check.if_content ? (check.when === 'edit' ? 'edit' : 'turn') : 'run');
 
@@ -34,4 +32,4 @@ function exampleProblems(check, matcher) {
   return [...(bad.violated ? [] : ['check_misses_its_violating_example']), ...(good.violated ? ['check_flags_its_passing_example'] : [])];
 }
 
-module.exports = { CONTENT_MAX, evaluateContent, evaluateCommand, appliesTo, defaultWhen, exampleProblems };
+module.exports = { CONTENT_MAX, evaluateContent, evaluateCommand, defaultWhen, exampleProblems };
