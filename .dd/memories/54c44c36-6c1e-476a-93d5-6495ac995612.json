@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "54c44c36-6c1e-476a-93d5-6495ac995612",
+  "project_id": "supermem",
+  "topic": "development/resident/isolate-test-installs",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Testing another DD install replaces the machine's resident",
+  "body": "Set DD_RESIDENT_REGISTRY to a temporary file (or DD_RESIDENT=0), or HOME/USERPROFILE to a scratch dir, and stop the resident it started afterwards.\n\nWhy: There is one resident per machine and a resident from another build is retired and replaced at session start, so a test copy kills the user's working resident and invalidates the audit UI address they were given (seen 2026-09-23 when a Grok test copy's installer replaced it).",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/resident.js",
+        "scripts/install-deps.mjs",
+        "scripts/check-codex.mjs"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/resident.js",
+      "sha256": "1567ae62564fe8cc55d85a0af51a74ec8229a0e915ccf994605ecdf3e7fb09aa",
+      "summary": "ensureResident starts a replacement for any resident whose build differs; registryPath honors DD_RESIDENT_REGISTRY"
+    },
+    {
+      "type": "file",
+      "path": "TODO.md",
+      "sha256": "73a0b65fc9885acc6caa93665853fc8faeb7b8687ea112e3d678efd8e3899181",
+      "summary": "Item 4 records the replacement conflict between installs"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "Before running hooks, the MCP server, check-codex or the OpenCode adapter from any DD copy other than this checkout (plugin cache, npm install, test copy)"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T11:41:56.083Z"
+    }
+  },
+  "created": "2026-09-24T02:05:12.258Z",
+  "updated": "2026-09-27T14:57:14.798Z"
+}

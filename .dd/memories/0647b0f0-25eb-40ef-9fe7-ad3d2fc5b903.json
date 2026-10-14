@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "0647b0f0-25eb-40ef-9fe7-ad3d2fc5b903",
+  "project_id": "supermem",
+  "topic": "integrations/opencode/bun-runtime",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "OpenCode runs plugins in Bun: the adapter must import no DD module",
+  "body": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.\n\nWhy: OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/index.js",
+        "adapters/opencode/frame.js",
+        "package.json"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "adapters/opencode/index.js",
+      "sha256": "ce7c0642e4ce926363e1a9ff2a31f6619ea16442b1a1dea53330bb515adf7f1b",
+      "summary": "Header comment records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design"
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/opencode.test.js",
+      "sha256": "f8ac7d50fac978e5994c2f62a0641a7385e6b615154aa2ffde0e382439ff5522",
+      "summary": "Test asserts the adapter imports only node:child_process, node:url and ./frame.js, exports only default, and package.json has ./server"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "Before editing adapters/opencode/index.js or adding an import or export to it"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T11:41:56.208Z"
+    }
+  },
+  "created": "2026-09-24T02:05:12.058Z",
+  "updated": "2026-09-27T14:57:33.366Z"
+}

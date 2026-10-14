@@ -1,0 +1,88 @@
+{
+  "schema_version": 8,
+  "id": "6da7702e-46c1-4ff7-8184-2c0762191ca3",
+  "project_id": "supermem",
+  "topic": "eval/agent-trial/effectiveness-numbers",
+  "kind": "fact",
+  "status": "active",
+  "title": "DD's measured effectiveness lives in the agent trial, and its time gain is one outlier",
+  "body": "Quote the agent trial from output/eval/agent-results.json (claude-sonnet-5, 6 tasks x 3 repeats, fresh clone per run, 2026-09-23): 15/18 passed without DD, 18/18 with DD, cost about equal (7.02 vs 7.13 USD). Do not claim a speedup from its summary minutes (72.4 vs 37.3): nearly all of that gap is the retrieve-title task, where one no-DD run hit the 25-minute timeout and another took 11 minutes; other tasks took similar time. Disclose the bias: the tasks were picked because a memory holds what the code does not show (commit 6cb6acd). agent-results-pruned.json is the DD condition with some memories removed (16/18), not a no-DD baseline. The 84% token saving comes from authored replay scenarios and measures context cost, not task success.\n\nWhy: No document cites this trial: docs/evaluation/model-evaluation.md still calls quality and speed gains hypotheses, so an agent asked for evidence either misses it or reads the summary block and reports a 2x speedup that one timeout produces.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "output/eval/agent-results.json",
+        "docs/evaluation/model-evaluation.md",
+        "README.md"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "agent trial",
+        "speedup",
+        "agent-results",
+        "retrieve-title"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "output/eval/agent-results.json",
+      "sha256": "10bf48aa2f54c2e7eda2bfa139acb5aa2b8d4cddfccef6d1eb5a70ffb16b3ddc",
+      "summary": "summary without_dd 15/18 passed, 72.4 min, 7.0163 USD; with_dd 18/18, 37.3 min, 7.1337 USD; retrieve-title no-DD rows include a 25.0 min timeout and an 11.0 min run"
+    },
+    {
+      "type": "file",
+      "path": "output/eval/agent-results-pruned.json",
+      "sha256": "041dacd9f834bddf2ea227b1381bbea973fdf23e6351852a0859f7535e498293",
+      "summary": "with_dd only, 16/18 passed, no without_dd runs"
+    },
+    {
+      "type": "file",
+      "path": "docs/evaluation/model-evaluation.md",
+      "sha256": "2cf83e7842967a1060209ffa08a9f9ce594146ac58099e0961f8c0f743ab382b",
+      "summary": "line 84 says cross-model quality and development-speed gains remain hypotheses to measure; the agent trial is not mentioned"
+    },
+    {
+      "type": "file",
+      "path": "src/eval/agent/run.js",
+      "sha256": "48a48f07f89dd2925b947167ac68362c0e2eae8bb6b2ad2f5680a1667a0d506c",
+      "summary": "harness: fresh clone per run, headless Claude Code, 20-minute timeout, DD condition adds hooks and MCP server"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "A new agent trial run replaces these numbers",
+      "path": "output/eval/agent-results.json",
+      "hash": "10bf48aa2f54c2e7eda2bfa139acb5aa2b8d4cddfccef6d1eb5a70ffb16b3ddc"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When stating whether DD measurably helps (README, release notes, posts, docs/evaluation), or quoting the with-DD vs without-DD agent trial numbers"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-11T20:01:22.821Z"
+    }
+  },
+  "created": "2026-10-07T16:48:38.405Z",
+  "updated": "2026-10-11T20:01:22.828Z"
+}

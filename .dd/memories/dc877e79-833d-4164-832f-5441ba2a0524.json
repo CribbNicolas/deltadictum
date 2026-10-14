@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "dc877e79-833d-4164-832f-5441ba2a0524",
+  "project_id": "supermem",
+  "topic": "distribution/harness-native-install-mechanisms",
+  "kind": "fact",
+  "status": "active",
+  "title": "Native plugin/install mechanism per coding-agent harness (2026) -- revised: OpenCode has no per-tool context-injection hook",
+  "body": "Inject OpenCode context only through experimental.chat.system.transform; it has no per-tool-call hook like PreToolUse. Supersedes the OpenCode row of the prior version of this memory (id 23b85e93), which assumed tool.execute.before/session.created/session.idle could carry DD's advisory context the way Claude Code's PreToolUse does. Confirmed false by reading @opencode-ai/plugin@1.18.31's actual .d.ts and a real installed plugin's source (opencode-helicone-session): tool.execute.before's output is {args} only, no text-injection field; event (session lifecycle) returns void, no output object at all. The ONLY OpenCode hook that accepts injectable text is experimental.chat.system.transform: (input:{sessionID?,model}, output:{system:string[]}), firing once per chat turn, not once per tool call -- there is no OpenCode hook shaped like Claude Code's PreToolUse. tool.execute.after's output ({title,output,metadata}) also has no structured exit/error signal, so wiring tool-execution observation there risks misclassifying results rather than skipping them as unknown. The other three rows (Claude Code marketplace, Grok Build marketplace mirroring it almost exactly including auto-discovery of root-level skills/ and .mcp.json, Codex having no marketplace/npm-pull at all) held up under implementation and stay as originally recorded.\n\nWhy: Verified 2026-09-19 while implementing adapters/opencode/index.js for docs/plans/2026-09-19-harness-native-install-plan.md Task 4. The first version of this memory was written from doc-summary research only (WebFetch of opencode.ai/docs/plugins/, which described hook *names* but not exact signatures); this revision is from reading the actual published type definitions and a real plugin's compiled source before writing any code, exactly the verification step the plan's own Task 4 Step 1 required.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "OpenCode",
+        "Grok Build",
+        "Codex",
+        "marketplace",
+        "install mechanism"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "adapters/opencode/index.js",
+      "sha256": "ce7c0642e4ce926363e1a9ff2a31f6619ea16442b1a1dea53330bb515adf7f1b",
+      "summary": "Header comment cites the exact @opencode-ai/plugin version and real reference plugin read before writing the shim; the shim itself only wires experimental.chat.system.transform, nothing per-tool."
+    },
+    {
+      "type": "file",
+      "path": "docs/integrations/opencode.md",
+      "sha256": "5a3c8cc549c482efbf74309f89425ccd148f2227a9092a78f54c0461f0587db9",
+      "summary": "States the confirmed hook-signature findings and what was/wasn't verified (opencode debug startup ran clean; live mid-conversation firing not verified)."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "1b8bdaba-9f19-489e-a2e1-56b8f1c7ecf4",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "body_too_long"
+    ],
+    "v1": {
+      "trigger": "Designing or implementing how DD is installed/distributed into a target project for Claude Code, Grok Build, OpenCode, or Codex."
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-29T19:41:34.750Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.857Z",
+  "updated": "2026-10-06T18:21:23.363Z"
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 8,
+  "id": "a723154d-3652-46ff-8fcb-6c6f3b510dd3",
+  "project_id": "supermem",
+  "topic": "development/resident/stale-after-edit",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "A resident keeps its old code after a src/ edit",
+  "body": "Restart the resident before verifying: run node src/cli.js ui (it retires the stale one) or pipe a session-start payload into node hooks/run.cjs session-start, then check that GET /api/resident reports stale:false. index.html is read on every GET / and needs only a browser refresh. The resident is not part of the session's MCP server: stopping it keeps the mcp__dd__* tools; reconnect the MCP server with /mcp when its own answers say its code is stale. A restart changes the audit UI key, so give the user the new address.\n\nWhy: The resident fingerprints src/ and refuses hooks once it changes (409 build_stale), but keeps serving UI routes with its old code until the next prompt or session start replaces it, and the prompt that triggers the replacement gets no recall. A new route then returns 404, or a new field reads as undefined in the page, while the source is correct.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/resident.js",
+        "src/hooks/run.js",
+        "src/ui/server.js",
+        "src/mcp/server.js",
+        "src/ui/public/index.html"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/resident.js",
+      "sha256": "911fd74ce6a54df1f6d1774d21f43bbde4537b7d2389fd810ed5f4657f2efd19",
+      "summary": "One resident per machine, found through ~/.dd-data/resident.json; ensureResident replaces a stale one."
+    },
+    {
+      "type": "file",
+      "path": "src/ui/server.js",
+      "sha256": "a34c515c46e59bc136b2a0f1701959446fc591bdeddfcf5e3df786a8d7a5d6de",
+      "summary": "staleCode() guards hook calls only (409 build_stale); UI routes keep answering with the loaded code; uiKey is random per start."
+    },
+    {
+      "type": "file",
+      "path": "src/mcp/server.js",
+      "sha256": "94718a1ef176da285a812b32e9bbf34a9a213f5b207a3151800c2b95b3e0dd49",
+      "summary": "The MCP server calls ensureResident and does not host the UI in-process."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "After editing src/ in a DD checkout while a resident is running, or when a route or field just added to src/ui/server.js is missing from the running audit UI (404, or 'Cannot read properties of undefined' in the browser console)"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T21:38:22.600Z"
+    }
+  },
+  "created": "2026-09-24T21:38:22.606Z",
+  "updated": "2026-09-27T14:57:34.128Z"
+}

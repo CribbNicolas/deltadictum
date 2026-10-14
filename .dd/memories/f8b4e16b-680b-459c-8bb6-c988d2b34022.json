@@ -1,0 +1,63 @@
+{
+  "schema_version": 8,
+  "id": "f8b4e16b-680b-459c-8bb6-c988d2b34022",
+  "project_id": "supermem",
+  "topic": "tooling/scripted-edits-lose-escapes",
+  "kind": "trap",
+  "status": "active",
+  "title": "Edit code containing regex or escapes with the Edit tool, not generated JS strings",
+  "body": "Use the Edit tool for any replacement whose new text contains backslashes (regex classes like \\s, \\n literals, Windows paths). String-replacement scripts written in heredocs and template literals drop one level of escaping silently, and CRLF files make exact-match replacements fail.\n\nWhy: On 2026-09-22 heredoc-generated edits turned /\\s+/ into /s+/ in src/engine/retrieve.js and broke two other regexes; the previous version of this memory carried a project-wide src/** scope, which injected it into every task in the benchmark, so this version has no file scope.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "heredoc",
+        "backslashes",
+        "escapes",
+        "regular expressions",
+        "eof"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/engine/retrieve.js",
+      "sha256": "7f936a72f5d1ec1391969ab1956e691c502982c740fb65872c79b1aba9291fd1",
+      "summary": "headline() regexes that were corrupted and then fixed"
+    },
+    {
+      "type": "file",
+      "path": "src/eval/bench/supermem.scenarios.json",
+      "sha256": "747e60fa9ba5997b4f17580bafb6f7267acd52dcf9a350505ae98f02aacb2939",
+      "summary": "benchmark where the src/** scope made this memory noise in every task"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "6abc175a-4533-4aba-81f1-b372af7ef21c",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when about to change source through a node -e or heredoc script whose new text contains backslashes, regular expressions or newline literals"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.872Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.325Z",
+  "updated": "2026-10-06T18:21:23.581Z"
+}

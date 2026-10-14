@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "e82ba814-47e6-4401-b96e-ae01aec268cc",
+  "project_id": "supermem",
+  "topic": "development/claude-code/live-session-probe",
+  "kind": "procedure",
+  "status": "superseded",
+  "title": "Verify the Claude Code plugin in a real session with --plugin-dir",
+  "body": "Start a resident first (node src/cli.js ui as a background task) and wait until GET /api/resident reports retrieval semantic. Then, in a scratch git project, run claude -p \"<prompt>\" --plugin-dir <checkout> --allowedTools Bash --output-format stream-json --verbose < /dev/null and read hook_response events and assistant text from the JSONL. Read recorded observations from ~/.claude/plugins/data/dd-inline/<project-key>/index.sqlite (table memory_observations), and delete that directory afterwards (stop the resident first; it holds the file open).\n\nWhy: --plugin-dir loads hooks/hooks.json exactly as the marketplace install does, for that run only. A resident that a hook starts inside a Bash tool call dies when the call ends, and while it loads DD is inactive: session start then omits the retrieve/propose guidance and project context, so a probe without a ready resident looks like a regression. Text output mode shows only the reply to the Stop reminder, hiding the rest.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "hooks/hooks.json",
+        "src/hooks/session-start.js",
+        "src/hooks/observe.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/session-start.js",
+      "sha256": "8937610f618d0768b368825347f73b8302cc9d6e74b3db50b568d3ceb0c5bda4",
+      "summary": "An inactive resident returns only the banner and residentNotice; PULL_GUIDANCE and advisory context are added only when active."
+    },
+    {
+      "type": "file",
+      "path": "hooks/hooks.json",
+      "sha256": "db8153d7734b88de66c5ea16db597ae77885dd9a83fffa24e7d564b4ce78a6f1",
+      "summary": "Plugin hooks anchored at ${CLAUDE_PLUGIN_ROOT}, including PostToolUseFailure."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When a change to hooks, session start or capture must be confirmed in a real Claude Code session, without installing the plugin into the user's global config"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T22:02:38.108Z"
+    }
+  },
+  "created": "2026-09-24T21:56:28.258Z",
+  "updated": "2026-09-27T14:57:34.597Z"
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": 8,
+  "id": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f",
+  "project_id": "supermem",
+  "topic": "tooling/install-codex/managed-block-drops-manual-fields",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "install-codex.mjs regen wipes custom fields inside managed block",
+  "body": "Diff the hand-edited managed block against the template and warn the user before regenerating it. Fields like [mcp_servers.dd.tools.orient]/retrieve approval_mode = \"approve\" that a user added inside BEGIN/END DD MANAGED CONFIG are not part of configBody in scripts/install-codex.mjs and get silently deleted on regen, since managedBlock() replaces everything between the markers verbatim. Surface this before applying, don't just apply and move on.\n\nWhy: Observed live: Project-Patriark's .codex/config.toml had approval_mode=\"approve\" for orient and retrieve inside the managed block. Running the installer to refresh/update dropped both, reverting Codex to default (interactive) approval prompts for those two tools without the user asking for that change.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "scripts/install-codex.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "managed block",
+        "install-codex",
+        "config.toml",
+        "configBody"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "scripts/install-codex.mjs",
+      "sha256": "c0ad094e3e7b31d948076846b5e9ac03698e3953356312ae56a00f793ff64319",
+      "summary": "configBody template (lines ~43-52) has no tools.*.approval_mode fields; managedBlock() fully replaces prior BEGIN/END content with this template"
+    },
+    {
+      "type": "observation",
+      "ref": "C:/dev/Project-Patriark/.codex/config.toml",
+      "summary": "Post-install file lost [mcp_servers.dd.tools.orient] and [mcp_servers.dd.tools.retrieve] approval_mode=\"approve\" blocks that were present pre-install"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "ccf342a4-8a20-4fff-83ed-e0722cbe3650",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "Before re-running scripts/install-codex.mjs (or dd install --host codex) against a project whose .codex/config.toml managed DD block was hand-edited"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-29T19:41:34.750Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.483Z",
+  "updated": "2026-10-06T19:08:52.131Z"
+}

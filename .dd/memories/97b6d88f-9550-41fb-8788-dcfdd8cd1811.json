@@ -1,0 +1,81 @@
+{
+  "schema_version": 8,
+  "id": "97b6d88f-9550-41fb-8788-dcfdd8cd1811",
+  "project_id": "supermem",
+  "topic": "eval/headless/claude-p-with-dd-hooks",
+  "kind": "trap",
+  "status": "active",
+  "title": "Measuring DD in headless Claude Code sessions: warm the resident and read the report before the Stop hook",
+  "body": "Do not set DD_RESIDENT=0 in the agent's environment; give each run its own DD_RESIDENT_REGISTRY, start its resident, and probe readiness by piping a session-start payload into hooks/run.cjs until the output has additionalContext without 'DD - Inactive'. Register hooks from the plugin's hooks/hooks.json, not by hand. Read the agent's task report from the stream-json events (--verbose --include-hook-events): the assistant text after its last tool call and before the Stop hook_response that adds context; the result event's text is the reply to DD's Stop-hook capture reminder. Treat the 20 ms timing test in tests/hooks/resident.test.js as flaky in fresh clones when using the suite as a regression signal.\n\nWhy: In the 2026-10-07 smoke run the agent's SessionStart said 'DD - Inactive: ... DD_RESIDENT=0' while prompt and pre-tool hooks still delivered memories, so the September trial likely measured DD without its session start. With DD hooks the final result was \"I'm not proposing a memory from this turn\", which a blind judge read as the task report, penalizing DD and revealing it. The resident timing test failed in four fresh clones across both conditions and passed 3/3 once warm.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/eval/agent/run.js",
+        "src/eval/agent/metrics.js",
+        "src/eval/bench/pull.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "headless",
+        "stream-json",
+        "stop hook",
+        "task report"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/eval/agent/run.js",
+      "sha256": "48a48f07f89dd2925b947167ac68362c0e2eae8bb6b2ad2f5680a1667a0d506c",
+      "summary": "startResident warm-up via session-start hook, per-run DD_RESIDENT_REGISTRY, ddSettings from hooks/hooks.json, KNOWN_FLAKY, taskReport used for check and judge"
+    },
+    {
+      "type": "file",
+      "path": "src/eval/agent/metrics.js",
+      "sha256": "b5a7dfce41f74aef058b577926d46ff5af8e75562649eaf6caf6255af32f2d08",
+      "summary": "taskReport stops at a Stop hook_response that adds context; tested in tests/engine/cognition/agent-metrics.test.js"
+    },
+    {
+      "type": "file",
+      "path": "src/hooks/session-start.js",
+      "sha256": "a8c035bccb0d0d036e706b1f27c381482f6afe41ece29f4090031c11014bf067",
+      "summary": "residentNotice returns 'DD - Inactive: the resident DD process is disabled (DD_RESIDENT=0)' for state disabled"
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/resident.test.js",
+      "sha256": "5e165a0e20363eb79f6d02a4f78d9fd2c4479addbdfbad11f671cdf8e1af4289",
+      "summary": "the first-prompt test waits setTimeout 20 ms for the model-loaded transition"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When running Claude Code headless with DD's hooks to measure or evaluate DD, in src/eval/agent/run.js or any new harness or benchmark"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-11T20:01:22.723Z"
+    }
+  },
+  "created": "2026-10-07T17:41:31.384Z",
+  "updated": "2026-10-11T20:01:22.730Z"
+}

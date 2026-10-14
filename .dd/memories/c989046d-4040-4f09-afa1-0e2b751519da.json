@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "c989046d-4040-4f09-afa1-0e2b751519da",
+  "project_id": "supermem",
+  "topic": "development/resident/stale-after-edit",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "After editing src/, the first prompt pays for replacing the resident",
+  "body": "Expect the next prompt after a src/ edit to have no recall: the stale resident refuses it, that prompt replaces it, and the model loads before later prompts are answered. To avoid losing that prompt, restart it directly by piping a session-start payload into node hooks/run.cjs session-start (a detached spawn from the Bash tool dies with the tool call), and reconnect the MCP server with /mcp, whose answers say when its code is stale.\n\nWhy: The resident fingerprints src/ and refuses hooks once it changes. Until 2026-09-24 only a session start replaced it, which left long stretches without recall; the prompt hook now replaces it, but only after one prompt has gone unanswered.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/resident.js",
+        "src/hooks/run.js",
+        "src/mcp/server.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/run.js",
+      "sha256": "2c1cf2140140c61db89ecf3019f923eb57b4bd2bc979379bfdd5e2b71ae420e3",
+      "summary": "Prompt path calls ensureResident when the bridge does not answer."
+    },
+    {
+      "type": "file",
+      "path": "src/mcp/server.js",
+      "sha256": "94718a1ef176da285a812b32e9bbf34a9a213f5b207a3151800c2b95b3e0dd49",
+      "summary": "MCP answers carry a reconnect notice once the source tree changed."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "4b675f10-0d9a-4e3f-a2e1-07d065993a34",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "after editing src/ in a DD checkout during a session that uses DD"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T16:49:24.517Z"
+    }
+  },
+  "created": "2026-09-24T12:07:09.596Z",
+  "updated": "2026-09-24T21:38:22.606Z"
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": 8,
+  "id": "7ce7be63-61a7-4ee9-b627-43a31bd61d7c",
+  "project_id": "supermem",
+  "topic": "integrations/codex/project-trust-gates-config",
+  "kind": "trap",
+  "status": "active",
+  "title": "Codex ignores a project's .codex config until the project is trusted",
+  "body": "Expect the dd MCP server and hooks to be absent until the user trusts the project in an interactive Codex session and trusts the hooks in /hooks; project skills in .agents/skills still load. Do not try to force trust from the agent: a -c projects.'<path>'.trust_level=\"trusted\" override did not make codex exec or codex mcp list load the project layer. Ask the user to open the project in codex once, accept trust, approve the hooks, then run the live check.\n\nWhy: On 2026-09-24 (codex-cli 0.154.0) a scratch project with a correct DD block in .codex/config.toml ran codex exec with a working model, loaded the dd-* skills, but reported the dd MCP tools unavailable and no DD lines, with and without the -c trust override. Trusted project keys in ~/.codex/config.toml are lowercase Windows paths.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "scripts/install-codex.mjs",
+        "scripts/check-codex.mjs",
+        "docs/integrations/codex.md"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "codex exec",
+        "codex mcp list",
+        "trust",
+        "trusted",
+        "trust_level"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/integrations/codex.md",
+      "sha256": "484cbb3a01bf15b06090f434c6ed9f189db4326c6455a19b684d6e9054bc2fab",
+      "summary": "Codex loads project MCP configuration only for trusted projects; each hook needs trust in /hooks."
+    },
+    {
+      "type": "file",
+      "path": "README.md",
+      "sha256": "df7f54bcd83954a3e2a1c74b4cd7a4b7cc0ae215a07d0f6287e211377396e77b",
+      "summary": "Codex install steps include trusting the project and hooks; status recorded as partly tested."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "f2ba3a65-0f71-4ac4-8bb6-384203348702",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When verifying a Codex install of DD from the command line (codex exec, codex mcp list)"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.285Z"
+    }
+  },
+  "created": "2026-09-27T02:37:08.753Z",
+  "updated": "2026-10-06T22:43:40.141Z"
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 8,
+  "id": "38c30338-16d3-4ba1-bb74-ef5cbdfeb383",
+  "project_id": "supermem",
+  "topic": "tooling/windows/junction-delete-follows",
+  "kind": "trap",
+  "status": "active",
+  "title": "Unlink a node_modules junction before deleting the tree that holds it",
+  "body": "Unlink the junction first (fs.unlink on the link path, which Node reports as a symbolic link), then delete the tree. Never run git worktree remove --force on a worktree whose node_modules is a junction to the main checkout. If the main node_modules was emptied anyway, restore it with npm ci from npm-shrinkwrap.json; the embedding model lives in the data directory, not node_modules, so it survives.\n\nWhy: On 2026-10-07 git worktree remove --force followed the node_modules junction and emptied the main checkout's node_modules (0 entries left). Node's fs.unlink on the junction followed by fs.rm recursive on the parent kept the target intact in a scratch test, and src/eval/agent/run.js now unlinks its junction before removing each clone.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/eval/agent/run.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "junction",
+        "worktree remove",
+        "node_modules junction"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/eval/agent/run.js",
+      "sha256": "48a48f07f89dd2925b947167ac68362c0e2eae8bb6b2ad2f5680a1667a0d506c",
+      "summary": "unlinks the shared node_modules junction before rm of the clone, with a comment naming git worktree remove --force as the cause"
+    },
+    {
+      "type": "file",
+      "path": "src/semantic/embedder.js",
+      "sha256": "fa2bea4eb052f10fbf2d6e6aa413334fd8193b0e0d829caac91e5211b1c4164d",
+      "summary": "model cacheDir is join(resolveDataBase(), 'models'), outside node_modules"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When removing a git worktree or a scratch clone on Windows that links the repository's node_modules through a junction"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-11T20:01:22.778Z"
+    }
+  },
+  "created": "2026-10-07T17:16:04.532Z",
+  "updated": "2026-10-11T20:01:22.785Z"
+}
