@@ -47,6 +47,10 @@ const { TASKS } = await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js'
 const MODEL = args.model ?? 'claude-sonnet-5-5';
 // --effort=high passes the effort level to every agent session.
 const EFFORT = args.effort ?? null;
+// The results file names the model and effort its rows ran with: a --recheck or
+// --resume that omits --model keeps them instead of writing the defaults.
+const resultsFile = rows => ({ model: args.model ?? rows[0]?.model ?? MODEL, effort: args.effort ?? rows[0]?.effort ?? EFFORT,
+  taskset: TASKSET, base: BASE, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows });
 const REPEAT = Number(args.repeat ?? 2);
 const ONLY = args.tasks ? args.tasks.split(',') : null;
 // --prune=a,b removes those memories (id prefixes) from the DD clone, to measure
@@ -416,7 +420,7 @@ if (RECHECK) {
     console.log(JSON.stringify({ run_id: row.run_id, was: row.passed, passed: rows[i].passed, detail: rows[i].detail }));
   }
   await writeFile(ROWS, rows.map(row => `${JSON.stringify(row)}\n`).join(''));
-  await writeFile(OUT, JSON.stringify({ model: MODEL, effort: EFFORT, taskset: TASKSET, base: BASE, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows }, null, 2));
+  await writeFile(OUT, JSON.stringify(resultsFile(rows), null, 2));
   process.exit(0);
 }
 const done = new Set();
@@ -450,5 +454,5 @@ async function worker() {
 }
 await Promise.all(Array.from({ length: Number(args.conc ?? 1) }, worker));
 const rows = (await readFile(ROWS, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
-await writeFile(OUT, JSON.stringify({ model: MODEL, effort: EFFORT, taskset: TASKSET, base: BASE, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows }, null, 2));
+await writeFile(OUT, JSON.stringify(resultsFile(rows), null, 2));
 console.log(JSON.stringify({ model: MODEL, effort: EFFORT, taskset: TASKSET, runs: rows.length, report: OUT }, null, 2));
