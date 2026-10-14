@@ -69,6 +69,32 @@ test('reinstalling over a 0.3.x Codex install replaces the skills DD wrote', asy
   await assert.rejects(planCodexInstall(project), /existing_skill_requires_review/);
 });
 
+// A marketplace install is a checkout in Claude Code's plugin cache with no
+// `deltadictum` on PATH: `npx deltadictum` would fetch the published package from
+// npm (a network request, and possibly another version than the hooks). Claude
+// Code substitutes ${CLAUDE_PLUGIN_ROOT} in a skill's body.
+test('the recall and review skills run the CLI of the installed plugin, never npx', async () => {
+  for (const [name, command] of [['recall', 'recall'], ['review', 'ui']]) {
+    const text = await read(`skills/${name}/SKILL.md`);
+    assert.match(text, new RegExp(`node "\\$\\{CLAUDE_PLUGIN_ROOT\\}/src/cli\\.js" ${command}\\b`), name);
+    assert.doesNotMatch(text, /npx/, name);
+  }
+});
+
+// Codex substitutes nothing: its copies name the directory DD runs from, the
+// same one the hooks name.
+test('the Codex copies of the skills name the plugin root in place of CLAUDE_PLUGIN_ROOT', async () => {
+  const project = await mkdtemp(join(tmpdir(), 'dd-codex-skill-root-'));
+  await mkdir(join(project, '.git'));
+  const plan = await planCodexInstall(project);
+  const root = plan.pluginRoot.replaceAll('\\', '/');
+  for (const [name, command] of [['recall', 'recall'], ['review', 'ui']]) {
+    const content = String(plan.operations.find(op => op.path.replaceAll('\\', '/').endsWith(`dd-${name}/SKILL.md`)).content);
+    assert.ok(content.includes(`node "${root}/src/cli.js" ${command}`), content);
+    assert.doesNotMatch(content, /CLAUDE_PLUGIN_ROOT|npx/);
+  }
+});
+
 // Until plan 7 maps Codex payloads, a Codex install must stay silent, not fail:
 // its hooks name the v2 entry point and it registers no MCP server (v2 has none).
 test('the Codex installer points its hooks at hooks/run.cjs and registers no MCP server', async () => {
