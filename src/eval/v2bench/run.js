@@ -2,7 +2,7 @@
 // trial's recorded runs replayed through trigger matching, with no agent runs.
 //   node src/eval/v2bench/run.js [--fixture=PATH] [--no-latency] [--out=output/eval/v2bench-report.json]
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,12 +12,12 @@ import { loadIndex } from '../../engine/index-file.cjs';
 import { matchEvent, prepareIndex } from '../../engine/match.cjs';
 import { toolEvent } from '../../hooks/v2/events.cjs';
 import { synthesizeMemories } from './synth.js';
-import { convertV1 } from '../../memory/convert-v1.js';
 import { productionEngine } from './engine.js';
 import { scoreCheck, scoreCommandCheck } from './checks.js';
 import { classifyMemory } from './classify.js';
 import { loadFixture } from './fixture.js';
 import { stalenessTiming, timeInterleaved, timeSpawn } from './latency.js';
+import { loadBenchMemories } from './memories.js';
 import { benchMetrics } from './metrics.js';
 import { replay } from './replay.js';
 import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from './spike-checks.js';
@@ -25,18 +25,6 @@ import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from './spike-checks.js';
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
 const OUT = resolve(REPO, args.out ?? 'output/eval/v2bench-report.json');
-
-async function readV1(ddDir) {
-  const atoms = [];
-  const walk = async dir => {
-    for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
-      if (entry.isDirectory()) await walk(join(dir, entry.name));
-      else if (entry.name.endsWith('.json')) atoms.push(JSON.parse(await readFile(join(dir, entry.name), 'utf8')));
-    }
-  };
-  for (const sub of ['atoms', 'legacy']) await walk(join(ddDir, sub));
-  return atoms.filter(atom => ['active', 'contested', 'legacy'].includes(atom.lifecycle_state));
-}
 
 // Trigger variants the decisions compare (spec section 3, review note on clause breadth).
 export const VARIANTS = {
@@ -46,10 +34,8 @@ export const VARIANTS = {
   'keywords-only': memory => ({ ...memory, triggers: memory.triggers.filter(c => c.keywords) }),
 };
 
-const v1 = await readV1(join(REPO, '.dd'));
-const titles = new Map(v1.map(atom => [atom.id, atom.title]));
-const liveByTopic = new Map(v1.filter(atom => atom.lifecycle_state !== 'legacy').map(atom => [atom.topic_key, atom.title]));
-const memories = v1.map(atom => convertV1(atom, { titles, liveByTopic }));
+const memories = await loadBenchMemories(join(REPO, '.dd'));
+if (!memories.length) throw new Error('bench_no_memories: nothing live under .dd/atoms, .dd/legacy or .dd/memories');
 const fixture = await loadFixture(args.fixture ? resolve(REPO, args.fixture) : undefined);
 const conditions = [...new Set(fixture.runs.map(run => run.condition))];
 
