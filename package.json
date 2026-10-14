@@ -7,7 +7,6 @@
     "codex",
     "grok",
     "opencode",
-    "mcp",
     "coding-agents",
     "agent-memory"
   ],
@@ -42,7 +41,6 @@
     "docs/guide",
     "docs/architecture",
     "docs/integrations",
-    "docs/evaluation",
     "skills",
     "hooks",
     "scripts",

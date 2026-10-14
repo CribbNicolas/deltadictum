@@ -8,8 +8,6 @@ node_modules/
 *.sqlite-shm
 .dd/.write-lock
 .dd/.pending-write.json
-.dd-install.lock
-.dd-install.failed
 tmp/
 output/eval/
 *.log
