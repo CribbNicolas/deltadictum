@@ -55,7 +55,8 @@ corrected.
 - The agent saves knowledge by writing `.dd/inbox/<name>.json` (the `save` skill). DD ingests it in the same
   turn: it validates the proposal, suggests triggers from the session when none are given, refuses generic
   advice, and answers with the result. A proposal becomes a candidate, or an active memory when auto-accept
-  applies.
+  applies. A proposal on a topic whose candidate is still pending replaces it; the replaced candidate is
+  archived, never deleted.
 - Auto-accept (on by default; `.dd/config.json` `"auto_accept": false` turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.

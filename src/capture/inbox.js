@@ -232,13 +232,16 @@ export async function ingestInboxFile({ root, file, sessionId, now = new Date(),
     corrections: relevantCorrections(corrections, memory, files, footprint).length };
   const accept = autoAcceptReasons({ memory, verified, warnings, duplicateOf: duplicate, enabled: autoAcceptEnabled(config),
     triggersVerified: Boolean(repoFiles && found) });
-  // A rewrite replaces the candidates still pending on its topic, in the same commit.
+  // A rewrite replaces the candidates still pending on its topic, in the same
+  // commit. They are archived, not deleted (INV-09): a person can restore one.
   const pending = all.filter(other => other.status === 'candidate' && other.topic === memory.topic);
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
     review: { migrated: false, issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)],
       // Who accepted it: DD here; a person through the review UI.
       ...(accept.length ? {} : { accepted: { by: 'dd', at: memory.created } }) } };
-  await store.commit({ put: [stored], remove: pending.map(other => other.id) });
+  const replaced = pending.map(other => ({ ...other, status: 'archived', updated: memory.created,
+    review: { ...other.review, issues: [...new Set([...(other.review?.issues ?? []), `replaced_by_candidate:${stored.id}`])] } }));
+  await store.commit({ put: [stored, ...replaced] });
   // Stored: the file goes now, so writing it again never revises what it just became.
   rmSync(file, { force: true });
   let reply = storedReply(stored, { suggested, warnings, accept });

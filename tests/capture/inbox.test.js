@@ -191,7 +191,8 @@ test('a proposal on a live topic becomes a revision and waits for a person', asy
 
 // A rewrite of a proposal still waiting for review replaces it: a topic never
 // holds a pending candidate beside an active memory a person could not accept over.
-test('a proposal on a topic whose candidate is still pending replaces that candidate', async t => {
+// Archiving is not deleting (INV-09): the replaced candidate keeps its file.
+test('a proposal on a topic whose candidate is still pending replaces that candidate, which is archived', async t => {
   const root = repo(t);
   const first = await ingestInboxFile({ root, file: write(root, 'a.json', proposal({ evidence: [{ type: 'note', summary: 'Seen while debugging.' }] })), sessionId: 's1' });
   assert.equal(first.stored.status, 'candidate');
@@ -200,7 +201,10 @@ test('a proposal on a topic whose candidate is still pending replaces that candi
   assert.deepEqual(second.stored.review.issues, [`supersedes_candidate:${first.stored.id}`]);
   assert.match(second.reply, new RegExp(`replaces the pending candidate ${first.stored.id}`));
   const onTopic = (await createMemoryFiles(join(root, '.dd')).list()).filter(m => m.topic === 'config/parse-config');
-  assert.deepEqual(onTopic.map(m => m.id), [second.stored.id]);
+  assert.deepEqual(onTopic.map(m => m.id).sort(), [first.stored.id, second.stored.id].sort());
+  const replaced = onTopic.find(m => m.id === first.stored.id);
+  assert.equal(replaced.status, 'archived');
+  assert.ok(replaced.review.issues.includes(`replaced_by_candidate:${second.stored.id}`));
 });
 
 test('a check whose examples disagree with it is rejected', async t => {
