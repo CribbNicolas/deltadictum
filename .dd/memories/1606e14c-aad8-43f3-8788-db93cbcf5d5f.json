@@ -1,0 +1,88 @@
+{
+  "schema_version": 8,
+  "id": "1606e14c-aad8-43f3-8788-db93cbcf5d5f",
+  "project_id": "supermem",
+  "topic": "memory/retrieval/embeddings-resident-only",
+  "kind": "decision",
+  "status": "superseded",
+  "title": "Embeddings allowed only in the resident process, lexical stays the fallback",
+  "body": "Load embedding models only in the resident DD process (the audit UI started by src/resident.js), never in a hook process, and keep lexical FTS retrieval working on its own as the fallback. Store vectors in the SQLite index, not an external vector store. Keep trigger activation, applicability gates and abstention; embeddings only widen candidates and add a calibrated activation.\n\nWhy: The earlier ban came from removing the Orquesta system, whose embeddings were a separate service. An in-process ONNX runtime (@huggingface/transformers, optional dependency) measured 0.5 s cached load and 3 ms per query, so it cannot run per hook (L1) but works in a long-lived process. On the supermem benchmark semantic retrieval beat lexical on every metric (must recall 0.83 vs 0.67, precision 0.86 vs 0.80, all negatives quiet).",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/semantic/**",
+        "src/resident.js",
+        "src/engine/retrieve.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "embeddings",
+        "embedding",
+        "vector search",
+        "model runtime",
+        "vectors",
+        "semantic floor",
+        "floor semantico"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/plans/2026-09-22-semantic-retrieval-plan.md",
+      "summary": "Measurements and prod-a vs prod-b benchmark results"
+    },
+    {
+      "type": "file",
+      "path": "docs/architecture/plugin-constraints.md",
+      "sha256": "b38b832e3ec27da205e46749a5a8fcd4218319c495a820e6f3bc79f5bd51415c",
+      "summary": "L2 and L3 revised to allow an optional runtime in the resident process"
+    },
+    {
+      "type": "correction",
+      "ref": "c3eb6bb3-f166-411f-86f0-269156145dfa",
+      "summary": "User direction to revisit why embeddings were ruled out and build the real architecture"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "43053f0a-e4cd-49c4-816b-fa643229d887",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "calibration or provider design changes",
+      "path": "src/semantic/provider.js",
+      "hash": "d6132b57a141b764bfd55738bc0f69312394367fa09d5283ac71019bac8816da"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when adding embeddings, vector search or any model runtime to DD retrieval"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.441Z"
+    }
+  },
+  "created": "2026-09-27T02:37:08.853Z",
+  "updated": "2026-10-06T19:08:51.999Z"
+}

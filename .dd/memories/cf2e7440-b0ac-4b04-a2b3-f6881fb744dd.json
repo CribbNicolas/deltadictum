@@ -1,0 +1,73 @@
+{
+  "schema_version": 8,
+  "id": "cf2e7440-b0ac-4b04-a2b3-f6881fb744dd",
+  "project_id": "supermem",
+  "topic": "distribution/npm-hoisted-dependency-check",
+  "kind": "trap",
+  "status": "active",
+  "title": "Check a dependency's presence with require.resolve, not a literal node_modules path",
+  "body": "Do not check `join(pluginRoot, 'node_modules', '<pkg>', 'package.json')` with fs.access -- it only exists for a dev checkout with its own local node_modules. Use `createRequire(import.meta.url).resolve('<pkg>/package.json')` instead: it walks up through node_modules the same way the real `import` elsewhere in the codebase will resolve at runtime, so it succeeds under hoisting and still throws the same way (MODULE_NOT_FOUND) when genuinely absent.\n\nWhy: Found and fixed 2026-09-19 in scripts/install-codex.mjs's planCodexInstall during docs/plans/2026-09-19-harness-native-install-plan.md's own done-when verification: `npm pack` + install into a scratch project (deliberately not `npm link`, which would have hidden this by preserving a direct node_modules layout) reproduced a real ENOENT that never showed up in the dev-checkout test suite.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "scripts/install-codex.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "require.resolve",
+        "createRequire",
+        "hoisting",
+        "hoists",
+        "node_modules"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "scripts/install-codex.mjs",
+      "sha256": "4c6f9492b4953b32ea0ff0177c79e4afc2917aa40539a7a53e9799556e563ff2",
+      "summary": "planCodexInstall's dependency-presence check, fixed from fs.access on a literal path to require.resolve."
+    },
+    {
+      "type": "note",
+      "ref": "commit 39af05c",
+      "summary": "fix: resolve the SDK dependency check through node_modules hoisting -- includes the require.resolve replacement and the commit message documenting the reproduction steps."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "8724c2f2-f06c-42c2-a178-ec99672aa7ad",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "evidence_not_a_path"
+    ],
+    "v1": {
+      "trigger": "Writing or reviewing an installer/CLI script that verifies one of its own npm dependencies is present before doing work, for a package meant to be run both from a dev checkout (own local node_modules) and as an installed dependency elsewhere (npx / npm install, where npm hoists deps to the consumer's top-level node_modules)."
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:10.769Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.825Z",
+  "updated": "2026-10-06T18:21:23.732Z"
+}

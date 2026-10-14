@@ -1,0 +1,75 @@
+{
+  "schema_version": 8,
+  "id": "a9fe1f6b-036d-4a63-9805-2462ed5dc6a4",
+  "project_id": "supermem",
+  "topic": "testing/store-handle-hangs-node-test",
+  "kind": "trap",
+  "status": "active",
+  "title": "Failing store tests hang node --test; --test-force-exit breaks resident tests on Windows",
+  "body": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit.\n\nWhy: A failing assertion before store.close() kept tests/mcp/tools.test.js alive past the 120 s timeout with no output (2026-09-22); --test-force-exit revealed it, but the same flag crashed the resident tests on Windows, so it is not a safe default.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "tests/hooks/resident.test.js",
+        "tests/mcp/tools.test.js",
+        "src/store/create-store.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "never finishes",
+        "hang",
+        "test-force-exit",
+        "SQLite handle",
+        "se cuelga"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "TODO.md",
+      "sha256": "f8bfaaf4cea52536d626b0e98017a741f2ec6b3dfc05aa84ce60e266e70a5cb4",
+      "summary": "Item 9 records that --test-force-exit crashes the resident tests on Windows."
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/resident.test.js",
+      "sha256": "5e165a0e20363eb79f6d02a4f78d9fd2c4479addbdfbad11f671cdf8e1af4289",
+      "summary": "Resident tests start UI servers and close them in t.after."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when a single DD test file run with node --test never finishes, or when choosing flags to run test files"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.750Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.031Z",
+  "updated": "2026-10-06T22:43:49.537Z"
+}

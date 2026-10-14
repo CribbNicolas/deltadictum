@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "61bc43e7-196f-4f2b-a11c-3f3cf2ddf9c9",
+  "project_id": "supermem",
+  "topic": "engine/retrieval/token-cost-lives-in-get",
+  "kind": "decision",
+  "status": "superseded",
+  "title": "MCP tools return model-facing views, not engine records",
+  "body": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?]}; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.\n\nWhy: Measured 2026-09-22: ~4.2 KB of the ~7 KB get payload was exact duplication of authored text plus evidence hashes. The compact view cut get by 60.9% (7158 to 2796 B avg over 35 active atoms) with no authored content removed. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/mcp/tools.js",
+        "src/mcp/definition.js",
+        "src/engine/retrieve.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/mcp/tools.js",
+      "sha256": "b7e1d1295ff7d4766136e041f5594161aaca0fa36cf447ce82f42b952889a6be",
+      "summary": "retrieveView/atomView with HIT_FIELDS and ENGINE_FIELDS; get accepts verbose"
+    },
+    {
+      "type": "file",
+      "path": "tests/mcp/tools.test.js",
+      "sha256": "92ca90f8b6a84e28366cb4f4d03f483b29a3dbadce6611529206387935d1e62f",
+      "summary": "asserts exact retrieve keys, compact get fields, evidence status and verbose raw atom"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "9ecd7282-056a-4612-b8b7-5cf7129488c6",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "model-facing view definitions change",
+      "path": "src/mcp/tools.js",
+      "hash": "b7e1d1295ff7d4766136e041f5594161aaca0fa36cf447ce82f42b952889a6be"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When adding fields to retrieve results or atoms, or changing what MCP retrieve/get return"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-22T19:59:37.563Z"
+    }
+  },
+  "created": "2026-09-22T19:46:25.435Z",
+  "updated": "2026-09-27T14:57:14.203Z"
+}

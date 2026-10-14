@@ -1,0 +1,67 @@
+{
+  "schema_version": 8,
+  "id": "d1266d25-70a8-45a4-ae3a-58909a46df3c",
+  "project_id": "supermem",
+  "topic": "release/npm/bin-path",
+  "kind": "trap",
+  "status": "active",
+  "title": "npm 11 drops a bin path written with ./",
+  "body": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output.\n\nWhy: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "package.json"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "npm publish",
+        "bin path",
+        "publishing",
+        "packed tarball",
+        "npm pack"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "package.json",
+      "sha256": "ffa5bb239e4526c934a491b7ed3dc74276b7997362a8a44442b981cea3b05801",
+      "summary": "bin now reads {\"deltadictum\": \"src/cli.js\"}"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "Before publishing deltadictum or editing bin in package.json"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-29T19:41:34.750Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.235Z",
+  "updated": "2026-10-06T22:47:45.259Z"
+}

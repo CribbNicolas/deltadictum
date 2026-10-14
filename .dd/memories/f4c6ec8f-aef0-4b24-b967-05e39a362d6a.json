@@ -1,0 +1,62 @@
+{
+  "schema_version": 8,
+  "id": "f4c6ec8f-aef0-4b24-b967-05e39a362d6a",
+  "project_id": "supermem",
+  "topic": "hooks/observe/validation-false-positives",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "A 'validation' observation does not prove a test passed",
+  "body": "Do not cite a 'validation' observation as proof of a pass without reading its raw_preview: reject it as evidence when the preview shows failure markers (fail 1+, not ok, ✖, AssertionError) or when the command only read a test file. Run the tests without a pipe instead when a pass must be shown.\n\nWhy: observationFromTool (src/hooks/observe.js) marks any Claude Code Bash call whose command contains a word like test or check and whose PostToolUse reports interrupted:false as 'Validation passed'. A piped test run exits with the pipe's last status, and a grep or sed over a *.test.js file matches the regex, so on 2026-09-24 failing runs and plain file reads were recorded as passes.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/hooks/observe.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/observe.js",
+      "sha256": "50a54ff3d463c4dacf9283a1f5073378f44f1a69576f873dcfecb8ab83a6023f",
+      "summary": "Line 27: validation = !failed && succeeded && /\\b(test|pytest|jest|vitest|lint|typecheck|tsc|check)\\b/i.test(command)."
+    },
+    {
+      "type": "file",
+      "path": "TODO.md",
+      "sha256": "174c615ff6fc7bd1fda98e48d5485f410834c26e49d3c2a3f8009b945c6d5f22",
+      "summary": "Item 4 records the two false positives seen in this project's observations on 2026-09-24."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "Retire this once observationFromTool stops recording piped runs and file reads as validations (TODO.md item 4).",
+      "path": "src/hooks/observe.js",
+      "hash": "50a54ff3d463c4dacf9283a1f5073378f44f1a69576f873dcfecb8ab83a6023f"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When citing a host 'validation' observation as evidence that tests passed, or reading observation counts as a success rate"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T21:41:38.053Z"
+    }
+  },
+  "created": "2026-09-24T21:41:37.935Z",
+  "updated": "2026-09-27T14:57:34.412Z"
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 8,
+  "id": "c9f35b2d-3356-4d7d-94c0-806277499139",
+  "project_id": "supermem",
+  "topic": "engine/retrieval/token-cost-lives-in-get",
+  "kind": "decision",
+  "status": "active",
+  "title": "MCP tools return model-facing views, not engine records",
+  "body": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?], pointers?} where each pointer is its one rendered line; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.\n\nWhy: Measured 2026-09-22: about 4.2 KB of the 7 KB get payload was duplicated authored text plus evidence hashes; the compact view cut get by 60.9% with no authored content removed. Pointers joined the retrieve view with pull-first delivery, as rendered lines rather than records. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/mcp/tools.js",
+        "src/mcp/definition.js",
+        "src/engine/retrieve.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "HIT_FIELDS",
+        "ENGINE_FIELDS",
+        "retrieve results",
+        "model-facing",
+        "MCP retrieve"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/mcp/tools.js",
+      "sha256": "d7b584464d538cfa9713f7a731147cdac83ed8d925bd474bab3ffbfa7bda322e",
+      "summary": "retrieveView returns abstained, memories with HIT_FIELDS and pointers as lines; atomView drops ENGINE_FIELDS; get accepts verbose."
+    },
+    {
+      "type": "file",
+      "path": "tests/mcp/tools.test.js",
+      "sha256": "923fd9851cd6804f177b92796d72d68b572b6ab3d414ed0cdf5db78c8779fe61",
+      "summary": "Asserts the retrieve keys, compact get fields, evidence status and the verbose raw atom."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "3a840cef-bce7-4b05-87be-3b91f9710b8b",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "model-facing view definitions change",
+      "path": "src/mcp/tools.js",
+      "hash": "d7b584464d538cfa9713f7a731147cdac83ed8d925bd474bab3ffbfa7bda322e"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When adding fields to retrieve results or atoms, or changing what MCP retrieve/get return"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-06T19:08:51.820Z"
+    }
+  },
+  "created": "2026-10-06T17:40:50.617Z",
+  "updated": "2026-10-06T19:08:51.829Z"
+}

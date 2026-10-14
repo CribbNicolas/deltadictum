@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "31c07973-1037-4544-bb82-610a41d415d5",
+  "project_id": "supermem",
+  "topic": "integrations/grok/manifest-traps",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Grok Build plugin manifest traps",
+  "body": "Point mcpServers in .grok-plugin/plugin.json at a file path (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}; never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`.\n\nWhy: Grok 1.0.41 ignored an inline mcpServers object and fell back to the root .mcp.json, whose relative mcp.js resolved in the user's project; it expands ${VAR} but not ${VAR:-default}; its marketplace rejects \"./\" as 'marketplace path is empty'. grok plugin validate passed on all of these.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        ".grok-plugin/plugin.json",
+        ".grok-plugin/marketplace.json",
+        ".grok-plugin/mcp.json"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/integrations/grok-build.md",
+      "sha256": "bbb5cb7537b17fbebc2caf17c48c178d1ffd55b02d73dcd486b7288ec86fffa0",
+      "summary": "Section 'How the manifest is laid out, and why' records each finding from grok mcp doctor on 2026-09-23"
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/install.test.js",
+      "sha256": "6d580cee9a3a84a482adfd32a4a5db33558b8e89e833b34cc434c3491073d9bb",
+      "summary": "Test pins the file-path mcpServers, the GROK_PLUGIN_ROOT anchor and the url marketplace source"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "Before changing .grok-plugin/plugin.json, .grok-plugin/marketplace.json or .grok-plugin/mcp.json"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T11:41:56.163Z"
+    }
+  },
+  "created": "2026-09-24T02:05:12.114Z",
+  "updated": "2026-09-27T14:57:14.915Z"
+}

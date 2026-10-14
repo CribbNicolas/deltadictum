@@ -1,0 +1,83 @@
+{
+  "schema_version": 8,
+  "id": "7143dacb-38b1-4506-ac68-1d94f1ad1bcb",
+  "project_id": "supermem",
+  "topic": "hooks/observe/claude-code-outcomes",
+  "kind": "trap",
+  "status": "active",
+  "title": "Claude Code reports tool outcomes by event, not exit code",
+  "body": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.\n\nWhy: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/hooks/observe.js",
+        "src/hooks/run.js",
+        "hooks/hooks.json",
+        "docs/integrations/grok-build.md"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "PostToolUseFailure",
+        "tool outcomes",
+        "tool_response",
+        "interrupted",
+        "hook_event_name",
+        "PostToolUse"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/observe.js",
+      "sha256": "bcc9dcade473a025001b6dcda8d25665b1a5842a6ec515e0b038d0c9fc27c17d",
+      "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then."
+    },
+    {
+      "type": "file",
+      "path": "hooks/hooks.json",
+      "sha256": "db8153d7734b88de66c5ea16db597ae77885dd9a83fffa24e7d564b4ce78a6f1",
+      "summary": "PostToolUseFailure is registered to the observe command."
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/stop.test.js",
+      "sha256": "8d7b6559fed4f25b19fde69a3bb1d48033064ca02c1eb55a25f9b6f8925b4cec",
+      "summary": "Stop asks after a PostToolUseFailure or an exit-code-less PostToolUse under CLAUDECODE=1 only."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "354338bf-10ee-40df-998c-744c227affd4",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when changing how observe classifies tool results, or when registering DD hooks for Claude Code by hand"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.121Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.061Z",
+  "updated": "2026-09-28T06:47:11.126Z"
+}

@@ -1,0 +1,76 @@
+{
+  "schema_version": 8,
+  "id": "ee8ae98a-c6f6-4598-a3b1-79ff38d1f552",
+  "project_id": "supermem",
+  "topic": "hooks/build-id-windows-path-case",
+  "kind": "decision",
+  "status": "active",
+  "title": "Compare and hash paths only through src/paths.js",
+  "body": "Use samePath/normalizePath for comparisons and hashes and projectRelative for scope paths, all from src/paths.js; never compare resolve() strings. normalizePath resolves symlinks (through the nearest existing parent) and folds case on win32 and darwin; it is a key, not a path to open, so read or walk files by physicalPath.\n\nWhy: Processes spell one project differently: the MCP server uses process.cwd() (physical), hooks pass the harness cwd (possibly a symlink such as macOS /tmp -> /private/tmp), and Windows and default macOS volumes ignore case. Unnormalized comparisons split data directories, made the bridge reject the resident and broke file scopes; covered by tests/hooks/paths.test.js with real symlinks.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/paths.js",
+        "src/project.js",
+        "src/hooks/build.js",
+        "src/ui/server.js",
+        "src/engine/retrieve.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "samePath",
+        "normalizePath",
+        "projectRelative",
+        "build id"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/paths.js",
+      "sha256": "66b5a3160e4a93447331018fd08598f3da77f9ec68d8ced108a6c8f56788c7a2",
+      "summary": "physicalPath, normalizePath, samePath, projectRelative"
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/paths.test.js",
+      "sha256": "6ab0ffd3f58fbd7f8178d956a6390fd6f2cc2c6b05ba643b167f5861d098943e",
+      "summary": "symlink and case tests"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "ad3fdaa9-6571-4812-a5d1-9f1714723442",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when comparing, hashing or relativizing a filesystem path that another process may spell differently (project root, data directory name, build id, repo_root in the bridge, file scopes)"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.040Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.295Z",
+  "updated": "2026-09-28T06:47:11.045Z"
+}
