@@ -17,8 +17,29 @@ const FOLD_CASE = process.platform === 'win32' || process.platform === 'darwin';
 const PATH_FLAGS = FOLD_CASE ? 'i' : '';
 
 const globs = new Map();
-// A glob over repository-relative paths: `**/` crosses any number of folders, a
-// trailing `**` matches the rest, `*` and `?` stay within one segment.
+// The regular expression source of one glob: `**/` crosses any number of
+// folders, a trailing `**` matches the rest, `*` and `?` stay within one segment,
+// and `{a,b}` lists alternatives, each a glob of its own (`src/**/*.{js,ts}` is
+// the first shape most agents write). An unmatched brace is a literal character.
+function globSource(text) {
+  let out = '';
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text[i];
+    if (c === '*' && text[i + 1] === '*') {
+      i += 1;
+      if (text[i + 1] === '/') { i += 1; out += '(?:.*/)?'; } else out += '.*';
+    } else if (c === '*') out += '[^/]*';
+    else if (c === '?') out += '[^/]';
+    else if (c === '{' && text.indexOf('}', i) > i + 1) {
+      const end = text.indexOf('}', i);
+      out += `(?:${text.slice(i + 1, end).split(',').map(globSource).join('|')})`;
+      i = end;
+    } else out += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  return out;
+}
+
+// A glob over repository-relative paths, compiled once per process.
 function globToRegExp(glob) {
   // A run of `**/` means what one does; compiled one by one, each becomes an
   // optional group, and a chain of them backtracks exponentially on a path it
@@ -26,17 +47,7 @@ function globToRegExp(glob) {
   const source = String(glob).replaceAll('\\', '/').replace(/^\.\//, '')
     .replace(/(?:\*\*\/)+/g, '**/').replace(/(?:\*\*\/)+\*\*(?=$|\/)/g, '**').replace(/\*{3,}/g, '**');
   if (globs.has(source)) return globs.get(source);
-  let out = '';
-  for (let i = 0; i < source.length; i += 1) {
-    const c = source[i];
-    if (c === '*' && source[i + 1] === '*') {
-      i += 1;
-      if (source[i + 1] === '/') { i += 1; out += '(?:.*/)?'; } else out += '.*';
-    } else if (c === '*') out += '[^/]*';
-    else if (c === '?') out += '[^/]';
-    else out += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-  }
-  const regex = new RegExp(`^${out}$`, PATH_FLAGS);
+  const regex = new RegExp(`^${globSource(source)}$`, PATH_FLAGS);
   globs.set(source, regex);
   return regex;
 }

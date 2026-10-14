@@ -29,6 +29,20 @@ test('globs cross folders with ** and stay in one segment with * and ?', () => {
   assert.ok(!globToRegExp('package.json').test('xpackage.json'));
 });
 
+// `src/**/*.{js,ts}` is the first shape most agents write: braces list
+// alternatives, each a glob of its own. An unmatched brace is a literal character.
+test('braces list alternatives inside one glob; an unmatched brace is literal', () => {
+  const both = globToRegExp('src/**/*.{js,ts}');
+  assert.ok(both.test('src/a/b.ts'));
+  assert.ok(both.test('src/c.js'));
+  assert.ok(!both.test('src/a/b.md'));
+  assert.ok(globToRegExp('{src,lib}/*.js').test('lib/x.js'));
+  assert.ok(!globToRegExp('{src,lib}/*.js').test('docs/x.js'));
+  assert.ok(globToRegExp('a/{b,c/*}.js').test('a/c/d.js'));
+  assert.ok(globToRegExp('weird{name.js').test('weird{name.js'));
+  assert.ok(!globToRegExp('weird{name.js').test('weirdname.js'));
+});
+
 test('a path clause matches the event kinds it lists and the files it names', () => {
   const clause = { on: ['read', 'edit'], paths: ['src/store/paths.js'] };
   assert.deepEqual(clauseMatches(clause, ev('read', ['src/store/paths.js'])), { matched: true, via: ['paths'] });
