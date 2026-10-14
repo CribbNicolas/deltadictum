@@ -387,11 +387,23 @@ await ensureBaseDeps();
 // --check-only runs every task's check on an untouched clone: each must fail,
 // or the check passes work that was never done. No agent runs.
 if ('check-only' in args) {
-  for (const task of TASKS.filter(t => !ONLY || ONLY.includes(t.id))) {
+  const tasks = TASKS.filter(t => !ONLY || ONLY.includes(t.id));
+  for (const task of tasks) {
     const dir = await prepareClone(task, 'none');
     try {
       const check = await task.check(dir, '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
       console.log(JSON.stringify({ task: task.id, passed: check.passed, requirements: check.requirements ?? {}, detail: check.detail }));
+    } finally { await removeClone(dir); }
+  }
+  // Each condition's clone, as the first task would get it.
+  for (const condition of CONDITIONS) {
+    const dir = await prepareClone(tasks[0], condition);
+    try {
+      const guide = await readFile(join(dir, 'docs', 'engineering-guide.md'), 'utf8').catch(() => null);
+      const claude = await readFile(join(dir, 'CLAUDE.md'), 'utf8').catch(() => '');
+      const index = JSON.parse(await readFile(join(dir, '.dd', 'local', 'v2', 'index.json'), 'utf8').catch(() => 'null'));
+      console.log(JSON.stringify({ condition, dd_dir: existsSync(join(dir, '.dd')), guide_chars: guide?.length ?? null, guide_sections: guide ? (guide.match(/^### /gm) ?? []).length : null,
+        claude_md_names_guide: /engineering-guide/.test(claude), index_memories: index ? Object.keys(index.memories).length : null, index_clauses: index?.clauses?.length ?? null }));
     } finally { await removeClone(dir); }
   }
   process.exit(0);
