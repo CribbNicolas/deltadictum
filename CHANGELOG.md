@@ -64,6 +64,8 @@ project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% 
   network request, and possibly another version than the hooks); they run the installed plugin's own CLI.
 - The Grok manifests registered a subset of the hooks (no inbox, so `/dd:save` was never ingested there; no
   corrections, no failures); they mirror Claude Code's.
+- `npm run bench:v2` read the v1 atoms the migration removed and failed before its first number; it reads
+  the live memories of the v2 store when no atom is left.
 
 ## [0.8.6] - 2026-10-06
 
