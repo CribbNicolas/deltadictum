@@ -25,7 +25,9 @@ function v1Store(t, extra = []) {
   put('actions/act1.json', { id: 'act1', project_id: 'p', action: 'archive' });
   put('registry/topics.json', { entries: [], aliases: [], vocabularies: [] });
   put('relations.json', []);
-  put('config.json', { project_id: 'p' });
+  put('config.json', { project_id: 'p', budget_tokens: 600, auto_accept: { enabled: false, confidence_threshold: 0.765 } });
+  put('data/index.sqlite', 'v1 index');
+  put('ui.json', { port: 7735 });
   for (const [path, value] of extra) put(path, value);
   return dd;
 }
@@ -39,16 +41,19 @@ test('a dry run reports the conversion and writes nothing', async t => {
   assert.deepEqual(report.by_kind, { trap: 4, failed_approach: 1 });
   assert.deepEqual(report.failures, []);
   assert.equal(report.dropped_actions, 1);
-  assert.deepEqual(report.would_remove, ['atoms', 'candidates', 'archive', 'legacy', 'registry', 'actions']);
+  assert.deepEqual(report.would_remove, ['atoms', 'candidates', 'archive', 'legacy', 'registry', 'actions', 'relations.json', 'data', 'ui.json']);
   assert.equal(existsSync(join(dd, 'memories')), false);
   assert.equal(existsSync(join(dd, 'atoms')), true);
 });
 
-test('a migration writes every memory, removes the v1 directories and keeps config and relations', async t => {
+test('a migration writes every memory, removes what only v1 read, and keeps the settings v2 reads', async t => {
   const dd = v1Store(t);
   const report = await migrateProject({ ddDir: dd });
-  assert.deepEqual(report.removed, ['atoms', 'candidates', 'archive', 'legacy', 'registry', 'actions']);
-  assert.deepEqual(report.kept, ['relations.json', 'config.json']);
+  assert.deepEqual(report.removed, ['atoms', 'candidates', 'archive', 'legacy', 'registry', 'actions', 'relations.json', 'data', 'ui.json']);
+  assert.deepEqual(report.kept, ['config.json']);
+  // v1's settings are dropped; a project that had turned auto-accept off keeps it off.
+  assert.deepEqual(JSON.parse(readFileSync(join(dd, 'config.json'), 'utf8')), { project_id: 'p', auto_accept: false });
+  assert.deepEqual(report.config_dropped, ['budget_tokens', 'auto_accept.confidence_threshold']);
   const store = createMemoryFiles(dd);
   const all = await store.list();
   assert.deepEqual(all.map(m => m.id).sort(), ['bare', 'cand', 'gone', 'live', 'old']);
@@ -57,7 +62,7 @@ test('a migration writes every memory, removes the v1 directories and keeps conf
   assert.equal(all.find(m => m.id === 'bare').status, 'candidate');
   assert.equal(all.find(m => m.id === 'live').updated, '2026-09-02T00:00:00.000Z');
   assert.equal((await store.manifest()).count, 5);
-  assert.deepEqual(readdirSync(dd).sort(), ['.gitignore', 'config.json', 'memories', 'relations.json']);
+  assert.deepEqual(readdirSync(dd).sort(), ['.gitignore', 'config.json', 'memories']);
 });
 
 test('a legacy memory with no recorded replacement names the live memory on its topic', async t => {
