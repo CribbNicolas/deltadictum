@@ -1,4 +1,4 @@
-import { access, readdir, readFile, rm } from 'node:fs/promises';
+import { access, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { createWriteLock, recoverTransaction } from '../store/transactions.js';
 import { convertV1 } from './convert-v1.js';
@@ -13,9 +13,28 @@ import { createMemoryFiles } from './store.js';
 // write lock and applies any pending v1 write first, so nothing a v1 process
 // committed is deleted unconverted.
 const KNOWLEDGE_DIRS = ['atoms', 'candidates', 'archive', 'legacy'];
-const V1_DIRS = [...KNOWLEDGE_DIRS, 'registry', 'actions'];
-const KEPT_FILES = ['relations.json', 'config.json'];
+// Everything only v1 read: its knowledge, registry and actions, its relations
+// (v2 records a supersession on the memory), and the local files its resident
+// kept (an index, observations, the UI's address).
+const V1_DIRS = [...KNOWLEDGE_DIRS, 'registry', 'actions', 'relations.json', 'data', 'observations', 'ui.json'];
+const KEPT_FILES = ['config.json'];
 const JOURNAL = '.pending-write.json';
+
+// v1's settings as v2 reads them: the project id, auto-accept (off stays off;
+// on is the default) and retirement. Every other key is v1's and is dropped.
+function v2Config(config) {
+  const next = {};
+  const dropped = [];
+  for (const [key, value] of Object.entries(config ?? {})) {
+    if (key === 'project_id' || key === 'retire') next[key] = value;
+    else if (key === 'auto_accept' && value && typeof value === 'object') {
+      if (value.enabled === false) next.auto_accept = false;
+      dropped.push(...Object.keys(value).filter(inner => inner !== 'enabled').map(inner => `auto_accept.${inner}`));
+    } else if (key === 'auto_accept') next.auto_accept = value;
+    else dropped.push(key);
+  }
+  return { config: next, dropped };
+}
 
 // Every file under dir, sorted, so a report names the same files on every platform.
 async function filesUnder(dir) {
@@ -65,9 +84,13 @@ async function planMigration(ddDir, { dryRun }) {
   for (const dir of V1_DIRS) if (await exists(join(ddDir, dir))) present.push(dir);
   const kept = [];
   for (const file of KEPT_FILES) if (await exists(join(ddDir, file))) kept.push(file);
+  let settings = null;
+  try { settings = v2Config(JSON.parse(await readFile(join(ddDir, 'config.json'), 'utf8'))); } catch { /* none, or not JSON: left as it is */ }
   return {
     memories,
+    settings,
     report: {
+      config_dropped: settings?.dropped ?? [],
       dry_run: dryRun, converted: memories.length, by_status: tally(memories, 'status'), by_kind: tally(memories, 'kind'),
       review_issues: memories.flatMap(m => m.review.issues).reduce((counts, issue) => ({ ...counts, [issue]: (counts[issue] ?? 0) + 1 }), {}),
       failures, unreadable, unexpected, pending_journal: await exists(join(ddDir, JOURNAL)),
@@ -80,9 +103,10 @@ export async function migrateProject({ ddDir, dryRun = false } = {}) {
   if (dryRun || !await exists(ddDir)) return (await planMigration(ddDir, { dryRun })).report;
   return createWriteLock(ddDir)(async () => {
     await recoverTransaction(ddDir);
-    const { memories, report } = await planMigration(ddDir, { dryRun });
+    const { memories, settings, report } = await planMigration(ddDir, { dryRun });
     if (report.failures.length || report.unreadable.length || report.unexpected.length) return report;
     if (memories.length) await createMemoryFiles(ddDir).commit({ put: memories, preserveDates: true });
+    if (settings) await writeFile(join(ddDir, 'config.json'), `${JSON.stringify(settings.config, null, 2)}\n`);
     await ensureIgnored(ddDir);
     for (const dir of report.would_remove) await rm(join(ddDir, dir), { recursive: true, force: true });
     return { ...report, removed: report.would_remove, would_remove: [] };
