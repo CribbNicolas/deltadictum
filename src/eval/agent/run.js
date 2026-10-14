@@ -3,13 +3,16 @@
 // under different ways of holding the project's knowledge, compared on outcome,
 // quality and what it cost. Each condition gets the knowledge through one
 // channel only:
-//   dd      DD's store, hooks and MCP server
+//   dd      DD v1's store, hooks and MCP server, from the clone itself
+//   dd2     the same store migrated to DD v2, with this checkout's v2 hooks
 //   doc     the same knowledge as one document, docs/engineering-guide.md
 //           (src/eval/agent/guide.js), which nothing points to
 //   docref  that document, named in CLAUDE.md
 //   none    no project knowledge (no .dd/, no guide)
 //
-// Each run gets a fresh clone of the current commit. Claude Code runs headless
+// Each run gets a fresh clone of the base commit (--base): the tasks are written
+// against v1's code, so every condition works on the codebase the 2026-10 trial
+// used, and a v2 run is compared with that trial's rows. Claude Code runs headless
 // with only project settings: no user plugins, hooks or MCP servers. The DD
 // condition adds DD's hooks and MCP server explicitly and starts the resident
 // process first, so the first prompt already gets semantic retrieval. The
@@ -22,9 +25,10 @@
 //
 // This spends real model usage. It runs only when invoked:
 //   node src/eval/agent/run.js [--model=claude-sonnet-5-5] [--repeat=2] [--tasks=a,b] [--conditions=dd,doc,docref]
-//     [--out=name.json] [--runs=dir] [--conc=1] [--resume]
+//     [--base=1a406d9] [--out=name.json] [--runs=dir] [--conc=1] [--resume]
 //   node src/eval/agent/run.js --out=name.json --runs=dir --recheck=a,b|all
 import { spawn, execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { appendFile, mkdtemp, mkdir, readFile, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -44,7 +48,12 @@ const ONLY = args.tasks ? args.tasks.split(',') : null;
 // a store without them.
 const PRUNE = args.prune ? args.prune.split(',') : [];
 const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
-if (CONDITIONS.some(c => !['dd', 'none', 'doc', 'docref'].includes(c))) throw new Error(`unknown condition in ${args.conditions}`);
+if (CONDITIONS.some(c => !['dd', 'dd2', 'none', 'doc', 'docref'].includes(c))) throw new Error(`unknown condition in ${args.conditions}`);
+// The codebase the tasks run on: 0.8.6, the commit the 2026-10 trial cloned.
+const BASE = execFileSync('git', ['-C', REPO, 'rev-parse', args.base ?? '1a406d9']).toString().trim();
+// v1's dependencies for the base's own suite and DD v1, installed once beside the
+// trial's output: this checkout (v2) has none to share.
+const BASE_DEPS = join(REPO, 'output', 'eval', `deps-${BASE.slice(0, 7)}`);
 const TIMEOUT_MS = 20 * 60 * 1000;
 const SUITE_TIMEOUT_MS = 10 * 60 * 1000;
 const LINT_TIMEOUT_MS = 5 * 60 * 1000;
@@ -71,13 +80,13 @@ const median = values => { const s = [...values].sort((a, b) => a - b); return s
 
 // The hot path as the host pays it: a fresh hook process per tool call, against
 // the warm resident, next to a bare Node start for reference.
-async function hookLatency(dir, env) {
+async function hookLatency(dir, env, runner = join(dir, 'hooks', 'run.cjs')) {
   const payload = JSON.stringify({ cwd: dir, session_id: 'eval-latency', hook_event_name: 'PreToolUse', tool_name: 'Read',
     tool_input: { file_path: join(dir, 'src', 'engine', 'retrieve.js') } });
   const time = async (argv, input) => { const t = performance.now(); await run(process.execPath, argv, { cwd: dir, env, input, timeout: 30000 }); return performance.now() - t; };
   const hook = [], node = [];
   for (let i = 0; i < 10; i += 1) {
-    hook.push(await time([join(dir, 'hooks', 'run.cjs'), 'pre-tool'], payload));
+    hook.push(await time([runner, 'pre-tool'], payload));
     node.push(await time(['-e', '']));
   }
   return { hook_ms: Math.round(median(hook)), node_ms: Math.round(median(node)) };
@@ -86,11 +95,29 @@ async function hookLatency(dir, env) {
 async function cloneRepo() {
   const dir = join(await mkdtemp(join(tmpdir(), 'dd-agent-')), 'supermem');
   execFileSync('git', ['clone', '-q', REPO, dir]);
-  execFileSync('git', ['-C', dir, 'checkout', '-q', execFileSync('git', ['-C', REPO, 'rev-parse', 'HEAD']).toString().trim()]);
+  execFileSync('git', ['-C', dir, 'checkout', '-q', BASE]);
   // Dependencies are shared, not copied (~500 MB); a junction works without admin on Windows,
   // and the type is ignored elsewhere. No shell: the paths come from the environment.
-  await symlink(join(REPO, 'node_modules'), join(dir, 'node_modules'), 'junction');
+  await symlink(join(BASE_DEPS, 'node_modules'), join(dir, 'node_modules'), 'junction');
   return dir;
+}
+
+// The base commit's dependencies, from its own lockfile, installed once.
+async function ensureBaseDeps() {
+  if (existsSync(join(BASE_DEPS, 'node_modules'))) return;
+  await mkdir(BASE_DEPS, { recursive: true });
+  for (const file of ['package.json', 'npm-shrinkwrap.json']) await writeFile(join(BASE_DEPS, file), git(REPO, 'show', `${BASE}:${file}`));
+  const out = await run('npm', ['ci', '--no-audit', '--no-fund'], { cwd: BASE_DEPS, shell: true, timeout: SUITE_TIMEOUT_MS });
+  if (out.code !== 0) throw new Error(`base dependencies failed to install: ${String(out.out ?? '').slice(-500)}`);
+}
+
+// DD v2 on the clone: its v1 store migrated and compiled by this checkout's CLI,
+// as `deltadictum migrate` does for a user.
+async function migrateToV2(dir) {
+  for (const command of ['migrate', 'compile']) {
+    const out = await run(process.execPath, [join(REPO, 'src', 'cli.js'), command], { cwd: dir, env: { ...HOST_ENV, DD_MAINTENANCE: '0' }, timeout: 120000 });
+    if (out.code !== 0) throw new Error(`dd2 ${command} failed: ${String(out.out ?? '').slice(-500)}`);
+  }
 }
 
 // Each clone gets its own resident, found through its own registry file, so runs
@@ -160,11 +187,12 @@ function failedTests(output) {
   return [...new Set([...tail.matchAll(/^✖ (.+?) \([\d.]+m?s\)$/gm)].map(m => m[1]))].slice(0, 20);
 }
 
-// The plugin's own registration, anchored at the clone: async observe,
-// PostToolUseFailure and the timeouts are what a marketplace install gets.
-async function ddSettings(dir) {
-  const { hooks } = JSON.parse(await readFile(join(dir, 'hooks', 'hooks.json'), 'utf8'));
-  return { hooks: JSON.parse(JSON.stringify(hooks).replaceAll('${CLAUDE_PLUGIN_ROOT}', dir.replaceAll('\\', '/'))) };
+// The plugin's own registration, anchored at its root (the clone for v1, this
+// checkout for v2): async observe, PostToolUseFailure and the timeouts are what a
+// marketplace install gets.
+async function ddSettings(root) {
+  const { hooks } = JSON.parse(await readFile(join(root, 'hooks', 'hooks.json'), 'utf8'));
+  return { hooks: JSON.parse(JSON.stringify(hooks).replaceAll('${CLAUDE_PLUGIN_ROOT}', root.replaceAll('\\', '/'))) };
 }
 
 // The resident the run started, and the one a hook started in its place: an agent
@@ -194,8 +222,9 @@ async function prepareClone(task, condition) {
   const dir = await cloneRepo();
   if (task.setup) await task.setup(dir);
   if (condition === 'doc' || condition === 'docref') await writeGuide(dir, condition === 'docref');
-  if (condition !== 'dd') await rm(join(dir, '.dd'), { recursive: true, force: true });
-  if (condition === 'dd' && PRUNE.length) await pruneMemories(dir, PRUNE);
+  if (condition !== 'dd' && condition !== 'dd2') await rm(join(dir, '.dd'), { recursive: true, force: true });
+  if ((condition === 'dd' || condition === 'dd2') && PRUNE.length) await pruneMemories(dir, PRUNE);
+  if (condition === 'dd2') await migrateToV2(dir);
   git(dir, 'add', '-A');
   git(dir, '-c', 'user.name=eval', '-c', 'user.email=eval@localhost', 'commit', '-q', '--allow-empty', '--no-verify', '-m', 'eval baseline');
   return dir;
@@ -238,6 +267,16 @@ Run every command in the foreground and wait for it to finish before your final 
     await writeFile(mcp, JSON.stringify({ mcpServers: { dd: { type: 'stdio', command: process.execPath, args: [join(dir, 'mcp.js')],
       env: { DD_DATA: env.DD_DATA, DD_RESIDENT_REGISTRY: env.DD_RESIDENT_REGISTRY } } } }));
     argv.push('--settings', settings, '--mcp-config', mcp);
+  }
+  if (condition === 'dd2') {
+    // No resident, no MCP server: the hooks are the whole plugin. The daily
+    // maintenance run is off, as in the suite: it is detached work, not the task's.
+    env.DD_MAINTENANCE = '0';
+    ddReady = existsSync(join(dir, '.dd', 'local', 'v2', 'index.json'));
+    if (ddReady) latency = { ...await hookLatency(dir, env, join(REPO, 'hooks', 'run.cjs')).catch(() => ({})), latency_before_agent: true };
+    const settings = join(dir, '..', 'dd-settings.json');
+    await writeFile(settings, JSON.stringify(await ddSettings(REPO)));
+    argv.push('--settings', settings);
   }
   const started = Date.now();
   let result, stream = '', timedOut = false;
@@ -283,7 +322,7 @@ Run every command in the foreground and wait for it to finish before your final 
   }
   const regressions = baseline ? failedTwice.filter(name => !baseline.failed.includes(name)) : [];
   const usage = result.usage ?? {};
-  const row = { run_id: runId, task: task.id, kind: task.kind, condition, dd: withDd, dd_ready: ddReady,
+  const row = { run_id: runId, task: task.id, kind: task.kind, condition, base: BASE, model: MODEL, dd: withDd, dd_ready: ddReady,
     passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
     // No regression: the suite passed, failed only on known timing tests, or every
     // test that failed twice also fails without the change.
@@ -319,6 +358,7 @@ async function recheck(row) {
 }
 
 await mkdir(RUNS, { recursive: true });
+await ensureBaseDeps();
 if (RECHECK) {
   const rows = (await readFile(ROWS, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
   for (const [i, row] of rows.entries()) {

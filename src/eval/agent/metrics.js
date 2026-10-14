@@ -63,7 +63,8 @@ export function parseNumstat(text) {
 // What would tell a judge which change had DD: the delivery lines DD's hooks
 // write, memory ids, pointers and phrases naming a recalled memory. Project
 // vocabulary (memory_atoms, DD_DATA) stays: this repository is DD itself.
-const DELIVERY_LINE = /^.*(?:DD - |\[(?:LESSON|DECISION|CLAIM|PROCEDURE|ANTI)\b).*$/gm;
+// v1 labels, then v2's (src/engine/deliver.cjs).
+const DELIVERY_LINE = /^.*(?:DD - |\[(?:LESSON|DECISION|CLAIM|PROCEDURE|ANTI|TRAP|FACT|ABANDONED)\b).*$/gm;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 const POINTER = /\(get [0-9a-f]{6,}\)/gi;
 const RECALL = /\b(?:the |a |this |that )?(?:retrieved|recalled|pushed|injected|stored|project|dd)\s+(?:memory|memories|lesson|lessons|knowledge)\b/gi;
@@ -91,16 +92,22 @@ function hookContexts(all) {
 }
 
 const PUSHED = /\[(?:LESSON|DECISION|CLAIM|PROCEDURE|ANTI)\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]/g;
+// v2 names a delivered memory by its title: "[KIND] title - body", with " [DISPUTED]" after the kind.
+const PUSHED_V2 = /^\[(?:TRAP|DECISION|FACT|ABANDONED|PROCEDURE)\](?: \[DISPUTED\])? (.+?) - /gm;
 const resultText = r => (typeof r.content === 'string' ? r.content : (r.content ?? []).map(part => part.text ?? '').join(''));
 
 // What the agent did and what DD gave it, from its stream-json events
-// (claude -p --verbose --include-hook-events). memoryId: the task's key memory.
-export function streamMetrics(stream, memoryId) {
+// (claude -p --verbose --include-hook-events). key: the task's key memory, its
+// id or { id, title } (v2 deliveries carry the title, not the id).
+export function streamMetrics(stream, key) {
+  const memoryId = typeof key === 'string' ? key : key?.id;
+  const title = typeof key === 'string' ? null : key?.title;
   const all = events(stream);
   const calls = all.filter(e => e.type === 'assistant').flatMap(e => e.message?.content ?? []).filter(c => c.type === 'tool_use');
   const results = all.filter(e => e.type === 'user').flatMap(e => e.message?.content ?? []).filter(c => c.type === 'tool_result');
   const contexts = hookContexts(all);
   const pushed = new Set(contexts.flatMap(c => [...c.text.matchAll(PUSHED)].map(m => m[1])));
+  const pushedTitles = new Set(contexts.flatMap(c => [...c.text.matchAll(PUSHED_V2)].map(m => m[1])));
   const ddCalls = new Set(calls.filter(c => c.name.startsWith('mcp__dd__')).map(c => c.id));
   const short = memoryId?.slice(0, 8);
   // One event per content block repeats a message's usage: count each message once.
@@ -122,10 +129,10 @@ export function streamMetrics(stream, memoryId) {
     dd_tool_calls: ddCalls.size,
     dd_inactive: contexts.some(c => c.event === 'SessionStart' && c.text.includes('DD - Inactive')),
     injected_tokens: contexts.reduce((n, c) => n + estimateTokens(c.text), 0),
-    memories_pushed: pushed.size,
+    memories_pushed: pushed.size + pushedTitles.size,
     // Pointed: a pointer line during the work; the session-start map names every memory.
     key_memory: memoryId ? {
-      pushed: pushed.has(memoryId),
+      pushed: pushed.has(memoryId) || Boolean(title && pushedTitles.has(title)),
       pointed: contexts.some(c => c.event !== 'SessionStart' && c.text.includes(`(get ${short})`)),
       pulled: calls.some(c => c.name === 'mcp__dd__get' && String(c.input?.id ?? '').startsWith(short))
         || results.some(r => ddCalls.has(r.tool_use_id) && resultText(r).includes(memoryId)),
