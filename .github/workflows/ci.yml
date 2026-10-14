@@ -93,8 +93,15 @@ jobs:
       - name: Check the published file list
         run: node .github/scripts/check-pack.mjs
       - run: npm ci --ignore-scripts
+      # DD has no runtime dependency today, and npm refuses to audit an empty tree;
+      # the check runs again as soon as package.json declares one.
       - name: Verify registry signatures of the dependency tree
-        run: npm audit signatures
+        run: |
+          if node -e "process.exit(Object.keys(require('./package.json').dependencies ?? {}).length ? 0 : 1)"; then
+            npm audit signatures
+          else
+            echo "No dependencies to verify."
+          fi
 
   version:
     # Dependabot PRs carry no release; a skipped required check counts as passed.
