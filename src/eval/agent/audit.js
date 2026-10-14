@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // The owner's audit of the blind judge, blind as well: one Markdown file per
 // judged run with the task, the requirements, the judge's verdict, the
-// developer's report and the diff, numbered at random, with the condition and the
-// names DD or the guide use redacted; key.json maps the numbers back.
-//   node src/eval/agent/audit.js --in=trial-v2-opus.json            writes <in>.audit/NN.md and key.json
+// developer's report and the diff, named by a hash of the run, with the condition
+// and the names DD or the guide use redacted; key.json maps the names back.
+//   node src/eval/agent/audit.js --in=trial-v2-opus.json            writes <in>.audit/<hash>.md and key.json
 //   node src/eval/agent/audit.js --in=trial-v2-opus.json --apply=verdicts.jsonl
-// --apply reads lines {"n":NN,"requirements":{...},"notes":"..."} and writes the
+// --apply reads lines {"n":"<hash>","requirements":{...},"notes":"..."} and writes the
 // audited verdicts into <in>.judge.json, keeping the judge's originals beside
 // them, so report.js reads the audited ones and every override is on record.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -29,7 +29,7 @@ const judgedRequirements = task => [...(task.requirements ?? []).filter(r => !r.
 if (args.apply) {
   const verdicts = (await readFile(resolve(REPO, 'output', 'eval', args.apply), 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
   const key = JSON.parse(await readFile(join(DIR, 'key.json'), 'utf8'));
-  const byRun = new Map(verdicts.map(v => [key[String(v.n).padStart(2, '0')], v]));
+  const byRun = new Map(verdicts.map(v => [key[String(v.n)], v]));
   let overrides = 0;
   for (const judgment of judge.judgments) {
     const verdict = byRun.get(judgment.run_id);
@@ -46,13 +46,14 @@ if (args.apply) {
   process.exit(0);
 }
 
-// A fixed shuffle, so the numbering is the same on every run and tells nothing.
-const order = [...judge.judgments].filter(j => !j.error).sort((a, b) => hash(a.run_id) - hash(b.run_id));
-function hash(text) { let h = 2166136261; for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
+// Each run is named by a hash of its id: the same name every time the package is
+// built, whatever else is in it, and nothing a reader can map to a condition.
+function hash(text) { let h = 2166136261; for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0).toString(16).padStart(8, '0'); }
+const order = [...judge.judgments].filter(j => !j.error).sort((a, b) => hash(a.run_id).localeCompare(hash(b.run_id)));
 await mkdir(DIR, { recursive: true });
 const key = {};
-for (const [i, judgment] of order.entries()) {
-  const n = String(i + 1).padStart(2, '0');
+for (const judgment of order) {
+  const n = hash(judgment.run_id);
   key[n] = judgment.run_id;
   const row = results.rows.find(r => r.run_id === judgment.run_id);
   const task = TASKS.find(t => t.id === row.task);
