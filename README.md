@@ -7,20 +7,36 @@
 [![node](https://img.shields.io/node/v/deltadictum)](package.json)
 [![license](https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue)](LICENSE)
 
-DeltaDictum (DD) gives coding agents the engineering knowledge your code does not show:
+DeltaDictum (DD) gives a coding agent the engineering knowledge your code does not show, right before it
+acts:
 
-- the decisions behind it;
-- the traps you already fell into;
+- the decisions behind the code;
+- the traps someone already fell into;
 - the steps nothing enforces.
 
-It recalls the right piece before the agent acts. Each memory says when it applies, what to do
-differently, why, and the evidence behind it. A person reviews it before it counts.
+Each memory says when it applies (its triggers), what to do, and why the code alone would not tell the
+agent. DD delivers it when the agent reads, edits or runs something the memory covers, once per session,
+and stays silent otherwise.
 
-DD is a **plugin** for Claude Code, Codex, Grok Build and OpenCode, not a service. Knowledge lives as
-reviewed JSON files in your repository, retrieval runs on your machine, and nothing leaves it: no cloud
-account, no model calls, no external database.
+DD is a **plugin**, not a service. Memories are JSON files in your repository, shared through git;
+everything else stays on your machine. No account, no model calls, no background process, no dependencies.
 
-<p align="center"><img src="docs/assets/audit-ui.gif" width="800" alt="The DD audit UI: memories listed by type, a decision with its rationale and evidence, a pending candidate to admit or reject, and the auto-accept setting"></p>
+## What it measured
+
+On this repository's 15 agent tasks (Claude Code, Claude Sonnet 5.5, 30 runs with DD against 15 without,
+same day, code quality scored by a blind Claude Opus judge):
+
+| | Agent alone | With DD |
+|---|---|---|
+| Tasks resolved | 93% | 93% |
+| Code quality | 70% | 77% |
+| The project's own requirements met | 78% | 100% |
+| Context | 27.2k tokens | 27.2k tokens |
+| Cost per task | $0.090 | $0.090 |
+
+The earlier version of DD, which searched its memories by similarity, reached similar quality at 46% more
+cost. These numbers come from one project, one model and a small sample; they say DD is on track, not that
+it will do the same on yours. Details: [how it is measured](docs/guide/how-it-works.md#how-it-is-measured).
 
 ## Quickstart (Claude Code)
 
@@ -33,55 +49,43 @@ You need [Node.js](https://nodejs.org) 22.16 or later.
    /plugin install dd@deltadictum
    ```
 
-2. Start a new session in your project. Its first message gives you the **audit UI** address, where you
-   review what DD learns. The first session on a machine downloads the embedding model (about 130 MB);
-   until it is loaded DD says it is inactive, then it turns on by itself.
-3. Give the agent a first task:
+2. Work as usual. When a fix teaches the agent something the code does not show, DD asks it, at the end of
+   the turn, to save a memory; you can also ask for one (`/dd:save`, or "save this as a trap").
+3. Review what was saved with `/dd:review`, which opens the local review UI.
 
-   > Use DD to orient yourself in this project. Read the README and the main architecture documents,
-   > and propose the decisions and lessons worth keeping, with evidence.
-
-4. Open the audit UI to approve, reject or send back what it proposed. From then on, the agent receives
-   the memories that apply before each prompt and tool call.
-
-For other harnesses, see [Install](#install).
+From then on, a memory reaches the agent when it touches what the memory covers.
 
 ## How it works
 
-1. **Capture.** While it works, the agent proposes what an agent reading the code would miss. DD
-   validates the proposal, hashes its evidence and files it as a candidate.
-2. **Review.** You approve, reject or send back each candidate in the local audit UI. Candidates backed by
-   evidence DD verified itself are auto-accepted by default; this is [configurable](#configuration).
-3. **Recall.** Before each prompt and tool call, hooks push the memories whose keywords or meaning match,
-   within a token budget, and point at near misses the agent can pull. Disputed, stale or abandoned advice
-   arrives flagged, never silently.
+1. **Triggers, not search.** Each memory names the events it applies to: a prompt mentioning some words, a
+   read or edit of certain files, a command, a symbol. DD compiles them into an index and matches every
+   tool call against it. A memory that does not match is never sent.
+2. **Delivery at the action.** Hooks add the memories that match to the prompt or the tool call, once per
+   session (again after a compaction). Session start adds nothing.
+3. **Capture with evidence.** DD records what the agent touched and how commands ended. After a failure
+   followed by a fix, or a correction from you, it asks the agent to save what it learned. The agent writes
+   a proposal; DD validates it, rejects generic advice, and stores it.
+4. **Review.** A proposal backed by evidence DD verified itself (a file it hashed, a correction it
+   recorded) becomes active at once; that is the default, and [configurable](#configuration). The rest wait
+   for you in the review UI.
+5. **Checks.** A memory can carry a rule (a pattern a changed file or a command must not match). DD reports
+   only violations the change introduced, and never runs code.
+6. **Maintenance.** Once a day DD rolls up what it recorded and retires memories that never fire although
+   their files keep being touched.
 
 More in [How DD works](docs/guide/how-it-works.md).
 
 ## Compatibility
 
-| Harness | Status | Install |
-|---|---|---|
-| Claude Code | Tested (2.1.282) | [Plugin marketplace](#claude-code) |
-| Codex | Partly tested: installer and MCP server verified; a live session with trusted hooks is not | [`deltadictum install`](#codex) |
-| Grok Build | Not tested yet: install and MCP handshake checked | [Plugin marketplace](#grok-build) |
-| OpenCode | Not tested yet: plugin loading checked | [`opencode.json`](#opencode) |
-| Other MCP hosts | Tools only, no hooks | [Guide](docs/integrations/other-hosts.md) |
+| Harness | Status |
+|---|---|
+| Claude Code | Supported and measured |
+| Codex | Adapter written and unit-tested against recorded payloads; not yet verified in a live session |
+| OpenCode | Adapter written (memories arrive with the tool result); not yet verified in a live session |
+| Grok Build | Runs Claude Code's hooks; its payloads are not yet verified |
 
-**Requirements**
-
-- **Node.js 22.16 or later.** DD stores its index with `node:sqlite` and FTS5. On an older Node the
-  session start says DD is inactive and why.
-- **Operating system.**
-  - Windows and Linux are tested.
-  - macOS passes the test suite in CI but has not been used in a real session.
-  - Alpine/musl cannot run the embedding runtime.
-- **Resources.** One background process per machine, shared by every project and session:
-  - about 640 MB of RAM;
-  - about 610 MB of disk, including the model;
-  - ports 7733-7742 on `127.0.0.1`.
-
-  See [the resident process](docs/guide/resident.md).
+Support for other harnesses is added one at a time, after Claude Code. **Requirements:** Node.js 22.16 or
+later on Windows, Linux or macOS (macOS passes CI but has not been used in a real session).
 
 ## Install
 
@@ -92,156 +96,89 @@ More in [How DD works](docs/guide/how-it-works.md).
 /plugin install dd@deltadictum
 ```
 
-Start a new session. The `/dd:*` commands and the `dd` MCP tools are available, and the first message
-names the audit UI. Claude Code installs DD's packages itself and updates the plugin from `/plugin`.
+The `/dd:save`, `/dd:recall` and `/dd:review` commands become available in new sessions. Update the plugin
+from `/plugin`.
 
-### Codex
+### Codex (not yet verified live)
 
 Codex has no plugin marketplace, so DD writes the project's Codex configuration:
 
-1. Install DD globally, so Codex points at a directory that stays:
+```bash
+npm install -g deltadictum
+deltadictum install --host codex --project "<absolute-project-path>"
+```
 
-   ```bash
-   npm install -g deltadictum
-   ```
-
-2. Write the configuration into the project, then check it:
-
-   ```bash
-   deltadictum install --host codex --project "<absolute-project-path>"
-   node "$(npm root -g)/deltadictum/scripts/check-codex.mjs" --project "<absolute-project-path>"
-   ```
-
-3. Open the project in Codex and trust it, then trust DD's five hooks in `/hooks`. Codex ignores a
-   project's `.codex/` configuration until the project is trusted.
-
-After `npm update -g deltadictum`, run the install command again. It refreshes DD's own settings and keeps
-everything else. Commands are installed as `dd-<name>` skills. Details:
+Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`. Details:
 [Codex guide](docs/integrations/codex.md).
 
-### Grok Build
+### OpenCode and Grok Build
+
+See the [OpenCode guide](docs/integrations/opencode.md) and the [Grok Build guide](docs/integrations/grok-build.md).
+
+### Upgrading from DD 0.8 or earlier
+
+DD v2 replaces the memory format. Convert a project's store once, then commit the result:
 
 ```bash
-grok plugin marketplace add CribbNicolas/deltadictum
-grok plugin install deltadictum@deltadictum --trust
+npx deltadictum migrate --dry-run   # what would change
+npx deltadictum migrate
 ```
 
-`--trust` is required for the hooks and the MCP server to load.
-
-Grok copies the plugin without its packages, so the first session installs them in the background and
-says DD is inactive until they are ready. Details: [Grok Build guide](docs/integrations/grok-build.md).
-
-### OpenCode
-
-Add DD to the project's `opencode.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["deltadictum"],
-  "mcp": {
-    "dd": {
-      "type": "local",
-      "command": ["npx", "-y", "deltadictum", "mcp"],
-      "environment": { "DD_PROJECT_DIR": "<absolute-project-path>" },
-      "enabled": true
-    }
-  }
-}
-```
-
-OpenCode has no per-tool-call hook, so DD's context arrives once per session and recall goes through the
-`dd` tools. Details: [OpenCode guide](docs/integrations/opencode.md).
+Every converted memory keeps its id and waits in the review UI for one line saying why the code does not
+show it. Details: [CHANGELOG](CHANGELOG.md).
 
 ## Using DD
 
-- **The audit UI** is where knowledge is admitted. Every session start gives its address, and the agent can
-  return it at any time (ask for "the DD audit link"). There you can:
-  - approve, reject or send back candidates with a reason the agent receives on its next prompt;
-  - apply the store changes the agent requested;
-  - change the project's settings.
-- **Commands** manage knowledge from the chat. Every change they make is a pending proposal or action for
-  you to apply.
-
 | Command | Does |
 |---|---|
-| `/dd:save` | Saves a lesson or decision from the conversation |
-| `/dd:recall` | Recalls the knowledge for the current task |
-| `/dd:review [id]` | Works through revision requests and memories whose evidence changed |
-| `/dd:compact` | Finds memories that overlap and files merges |
-| `/dd:clean` | Reviews the archive and files restores or deletions |
-| `/dd:prospect <area>` | Looks for new knowledge in one area of the project |
-| `/dd:init` | Deep first survey of a project; states its cost and waits for a yes |
-| `/dd:audit` | Inspects knowledge, evidence and outcomes, and opens the audit UI |
+| `/dd:save` | Saves knowledge from the conversation as a memory |
+| `/dd:recall <topic>` | Shows what DD knows on a topic |
+| `/dd:review` | Opens the review UI |
 
-On Codex the same commands are the `dd-<name>` skills. You can also ask in plain words: "save this as a
-lesson", "merge these two", "that practice is dead, mark it legacy".
+The review UI (`npx deltadictum ui`) lists candidates, stale or unused memories, duplicates and the agent's
+requests; shows each memory's evidence, breadth and use; dry-runs a memory's triggers over recent sessions;
+and edits, accepts, archives, merges or restores. On the command line: `deltadictum recall`, `status`,
+`health` and `maintain`.
 
 ## Memory types
 
-| Type | For |
+| Kind | For |
 |---|---|
-| `lesson` (default) | A pattern learned from work: something that broke, and what to do next time |
-| `decision` | An explicit project choice, with the alternatives it beat |
-| `anti_memory` | A practice that must not be done; must be phrased as a prohibition |
-| `procedure` | Steps to follow, in order, for a recurring task |
-| `claim` | A fact about the project or its environment that the code does not show |
+| `trap` | Something that breaks, and how to avoid it |
+| `decision` | A project choice, with why |
+| `failed_approach` | Something tried and abandoned, so nobody tries it again |
+| `procedure` | Steps to follow for a recurring task |
+| `fact` | A fact about the project or its environment that the code does not show |
 
-Each memory moves through a lifecycle: candidate, active, contested, legacy, superseded, archived or
-rejected. Only active, contested (flagged) and legacy (as a warning) memories reach the agent. Fields,
-states, flags and confidence: [Memories](docs/guide/memories.md).
+Fields, statuses and triggers: [Memories](docs/guide/memories.md).
 
 ## Configuration
 
-Project settings live in `.dd/config.json`. DD writes it with every default on first use; commit it to
-share the settings with your team. The audit UI's **Settings** panel changes auto-accept, and a hand edit
-applies within seconds.
+Project settings live in `.dd/config.json`, committed with the project.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `auto_accept.enabled` | `true` | Admit candidates backed by evidence DD verified, without waiting for review |
-| `auto_accept.confidence_threshold` | `0.765` | How strong that evidence must be; `0.765` is a repository file, diff or test log DD hashed |
-| `budget_tokens` | `800` | Estimated tokens of knowledge pushed per prompt or tool call |
-| `anchors.only` | `false` | Deliver a memory only when one of its keywords, files or components matches, never by similarity |
+| `auto_accept` | on | Activate a proposal backed by evidence DD verified; `false` sends every proposal to review |
+| `retire.after_sessions` | `20` | Sessions touching a memory's files without it firing before it is retired |
 
-For example, to review every candidate yourself:
-
-```json
-{ "auto_accept": { "enabled": false } }
-```
-
-Machine-wide behaviour is set with environment variables. For example, `DD_EMBED_MODEL` selects the
-embedding model and `DD_DATA` the local data directory. Every setting, its default and the environment
-variables: [Configuration](docs/guide/configuration.md).
-
-## Troubleshooting
-
-When the first message says **DD is inactive**, it also says why. The usual causes:
-
-- the model is still downloading on the first run;
-- Node is older than 22.16;
-- the background process cannot start.
-
-See [When DD says it is inactive](docs/guide/resident.md#when-dd-says-it-is-inactive). Report other problems
-in [issues](https://github.com/CribbNicolas/deltadictum/issues).
+Every setting and environment variable: [Configuration](docs/guide/configuration.md).
 
 ## Documentation
 
-- [How DD works](docs/guide/how-it-works.md): capture, review, recall, MCP tools, commands, measurements
-- [Memories](docs/guide/memories.md): types, fields, lifecycle, flags
-- [Configuration](docs/guide/configuration.md): every setting and environment variable
-- [The resident process](docs/guide/resident.md): the background process, its cost, troubleshooting
-- [Storage](docs/guide/storage.md): what lives in `.dd/` and what stays local
-- [Security boundary](docs/guide/security.md): what DD protects, and from whom
-- Harness guides: [Codex](docs/integrations/codex.md), [Grok Build](docs/integrations/grok-build.md),
-  [OpenCode](docs/integrations/opencode.md), [other MCP hosts](docs/integrations/other-hosts.md)
-- [Behavioural contract](docs/DD.md) and [plugin constraints](docs/architecture/plugin-constraints.md)
+- [How DD works](docs/guide/how-it-works.md): triggers, delivery, capture, checks, maintenance, measurements
+- [Memories](docs/guide/memories.md): kinds, fields, triggers, statuses
+- [Configuration](docs/guide/configuration.md) and [storage](docs/guide/storage.md)
+- [Security boundary](docs/guide/security.md)
+- Harness guides: [Codex](docs/integrations/codex.md), [OpenCode](docs/integrations/opencode.md),
+  [Grok Build](docs/integrations/grok-build.md)
+- [Behavioural contract](docs/DD.md), [plugin constraints](docs/architecture/plugin-constraints.md) and
+  [where DD came from](docs/architecture/history.md)
 - [Changelog](CHANGELOG.md) and [contributing](CONTRIBUTING.md)
 
 ## Security
 
-The audit UI listens on `127.0.0.1` only, behind a per-machine key. Knowledge files that arrive through a
-commit are checked before they reach the agent, and proposals carrying credentials are refused. Details:
+The review UI listens on a loopback address only, answers only a browser holding the key it prints, and
+accepts changes only as JSON. Proposals carrying credentials or unsafe content are refused. Details:
 [Security boundary](docs/guide/security.md). Report vulnerabilities privately as described in
 [SECURITY.md](SECURITY.md).
 

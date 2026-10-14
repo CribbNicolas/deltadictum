@@ -4,6 +4,55 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [Unreleased] - DD v2
+
+DD v2 replaces the core. Memories fire by rules (their triggers) at the action they apply to instead of
+being searched for by similarity on every prompt and tool call, so DD costs about what the agent costs alone:
+on this repository's 15-task agent trial, the same resolution, 7 more points of code quality and every
+project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% more
+([how it is measured](docs/guide/how-it-works.md#how-it-is-measured),
+[why v2](docs/architecture/history.md)).
+
+### Breaking
+- **New memory format** (schema 8): one file per memory in `.dd/memories/`, with kinds `trap`, `decision`,
+  `failed_approach`, `procedure` and `fact`, triggers, an optional check and a required `not_derivable`.
+- **No MCP server, no resident process, no embedding model, no dependencies.** The `dd` MCP tools, the
+  memory map at session start, anchors, the actions queue and the audit UI are gone.
+- **Commands:** `/dd:save`, `/dd:recall` and `/dd:review` remain; `compact`, `clean`, `prospect`, `init` and
+  `audit` are removed.
+- Settings `auto_accept.confidence_threshold`, `budget_tokens` and `anchors.only` and the environment
+  variables `DD_DATA`, `DD_EMBED_MODEL`, `DD_RESIDENT` and `DD_RETRIEVAL` no longer exist.
+
+### Migrating from 0.8
+1. Update the plugin (Claude Code: `/plugin`), or `npm update -g deltadictum`.
+2. In each project, preview and convert its store, then commit the result:
+   ```bash
+   npx deltadictum migrate --dry-run
+   npx deltadictum migrate
+   git add .dd && git commit -m "Migrate DD memories to v2"
+   ```
+   Every memory keeps its id; `.dd/atoms/`, `candidates/`, `archive/`, `legacy/`, `registry/` and `actions/`
+   are removed once the memories are written. Pending actions are reported and dropped.
+3. Open the review UI (`npx deltadictum ui`). Converted memories wait in the "Missing not_derivable" queue
+   for one line saying why the code does not show them, and "Dead triggers" lists those whose files no
+   longer exist.
+4. Codex: run `deltadictum install --host codex --project <path>` again; it removes the MCP server block.
+5. The old data directory (`~/.dd-data` or the plugin's data folder) is no longer read and can be deleted.
+
+### Added
+- Delivery by triggers (paths, symbols, commands, prompt keywords) compiled into an index, once per session
+  and subagent, re-armed after a compaction.
+- Checks: rules over changed files or commands, reported only when the change introduced the violation.
+- Capture from the session's footprint: at the end of a turn with a failure followed by a fix, or a user
+  correction, DD asks the agent to save what it learned; proposals arrive through `.dd/inbox/` and are
+  answered in the same turn.
+- Daily maintenance (roll-up, pruning, retirement of memories that never fire despite opportunity),
+  `deltadictum health`, `recall`, `status`, `compile` and `migrate`.
+- The review UI, `deltadictum ui`: queues, evidence, breadth, use, a dry run of triggers over recent
+  sessions, and every edit and status change.
+- Codex delivery through shell reads and `apply_patch`, and OpenCode delivery with the tool result; both
+  are not yet verified in a live session.
+
 ## [0.8.6] - 2026-10-06
 
 ### Security

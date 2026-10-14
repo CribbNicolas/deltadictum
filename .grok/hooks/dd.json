@@ -1,5 +1,5 @@
 {
-  "description": "DD capture, budgeted recall, and session banner. Failures must not block the host.",
+  "description": "DD: memories at the actions they apply to, checks and capture. Failures never block the host.",
   "hooks": {
     "SessionStart": [
       {

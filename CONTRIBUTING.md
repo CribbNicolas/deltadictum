@@ -7,8 +7,8 @@ welcome.
 
 DD is a plugin for coding-agent harnesses, not a service. Read
 [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md) first: a proposal
-that breaks one of its seven limits (hooks are ephemeral processes, one resident per machine, three
-dependencies, per-harness hook contracts, never blocking the host, single-developer data volumes,
+that breaks one of its seven limits (hooks are ephemeral processes, no resident process, no runtime
+dependency, per-harness hook contracts, never blocking the host, single-developer data volumes,
 local-first) is out of scope however good it is. [`CLAUDE.md`](CLAUDE.md) lists the properties every
 change keeps, and [`docs/architecture/invariants.md`](docs/architecture/invariants.md) the invariants.
 
@@ -16,27 +16,18 @@ Everything in the repository is written in English: code, comments, documentatio
 
 ## Setup
 
-Node.js 22.16 or later (DD needs `node:sqlite` with FTS5).
-
-```bash
-npm ci
-```
-
-Run DD from the checkout inside Claude Code with `claude --plugin-dir <checkout>`; see
-[Developing DD](#developing-dd) below for the resident process and test isolation.
+Node.js 22.16 or later (DD uses `node:sqlite` with FTS5). DD has no runtime dependency; `npm ci` installs
+nothing it needs to run.
 
 ## Developing DD
 
 Run Claude Code from a checkout as a local plugin, `claude --plugin-dir <checkout>`, so the session gets the
-same hooks, MCP server and skills as a marketplace install. Hooks registered by hand in
-`.claude/settings.local.json` (with the root `.mcp.json`) bring no skills and miss hook events added to
-`hooks/hooks.json` later; do not combine them with `--plugin-dir`, or every hook runs twice.
+same hooks and skills as a marketplace install. Do not also register DD's hooks by hand in
+`.claude/settings.local.json`, or every hook runs twice; disable an installed DD plugin for the project
+while developing. Every hook is a new process, so an edit to `src/` takes effect at the next hook.
 
-After editing `src/`, the resident refuses hooks until it is replaced; the next prompt or session start
-does that. The session's MCP server keeps its old code: its answers say so, and `/mcp` reconnects it.
-
-Tests and install checks that start DD must not replace the machine's resident: set
-`DD_RESIDENT_REGISTRY` to a temporary file (or `DD_RESIDENT=0`) and stop what they started.
+Tests run with `--import ./tests/helpers/isolate-data.js` (the npm scripts add it), which turns off the
+daily maintenance run a session start would otherwise detach.
 
 Plans, specs and other working notes written while developing stay out of the repository:
 `docs/plans/`, `docs/specs/` and `docs/superpowers/` are ignored by git.
@@ -47,14 +38,14 @@ A pull request passes these in CI; run them before pushing:
 
 ```bash
 npm run lint          # undefined and unused names (ESLint, fetched by npx)
-npm test              # full suite
-npm run test:stress   # 2,000 knowledge files, parallel hooks, resident reuse
-npm run eval          # deterministic retrieval replay; gate: f1 >= 0.9, exact >= 90%, abstention f1 >= 0.9
+npm test              # full suite, including the engine's equivalence with the bench reference
+npm run test:stress   # concurrent hook processes claiming the same memories
 ```
 
-A change to ranking, floors or delivery is measured on the golden sets (`npm run bench`,
-`npm run bench:pull`; see [TODO.md](TODO.md)) as well as the replay. A change to the hook contract is
-checked against Claude Code and the `--codex` path in `src/hooks/run.js`.
+A change to matching or delivery is measured with `npm run bench:v2` (delivery over the recorded agent
+trial, and hook latency), and one that may change what agents do, with the agent trial
+(`src/eval/agent/run.js`, which spends model usage). A change to the hook contract is checked against
+Claude Code, the `--codex` path (`src/hooks/v2/codex.cjs`) and the OpenCode adapter.
 
 ## Versions and releases
 
