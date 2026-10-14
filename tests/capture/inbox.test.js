@@ -48,6 +48,26 @@ test('a proposal with a hashed file, live triggers and no check is stored active
   assert.ok(loadIndex(root).memories[stored.id]);
 });
 
+// A correction is verified evidence only when it is about the memory and follows
+// something the agent did (owner, 2026-10-13): "No, gracias" or a "No," that opens
+// the session corrects no work.
+test('a correction activates a memory only when it names the memory and follows an action', async t => {
+  const cases = [
+    { name: 'related, after an action', acted: true, text: 'No, parseConfig has to handle an empty string', status: 'active' },
+    { name: 'unrelated', acted: true, text: 'No, gracias, dale', status: 'candidate' },
+    { name: 'before any action', acted: false, text: 'No, parseConfig has to handle an empty string', status: 'candidate' },
+  ];
+  for (const { name, acted, text, status } of cases) {
+    const root = repo(t);
+    const path = footprintPath(root, 's1');
+    if (acted) appendFootprint(path, { t: 'tool', id: 'e1', at: '2026-10-13T10:00:00.000Z', kind: 'edit', paths: ['src/config.js'], identifiers: [] });
+    appendFootprint(path, { t: 'correction', id: 'c1', at: '2026-10-13T10:01:00.000Z', preview: `User correction. ${text}` });
+    const file = write(root, 'a.json', proposal({ evidence: [{ type: 'correction', ref: 'c1' }] }));
+    const { stored } = await ingestInboxFile({ root, file, sessionId: 's1' });
+    assert.equal(stored?.status, status, name);
+  }
+});
+
 test('without triggers, the footprint suggests them and the reply says so', async t => {
   const root = repo(t);
   const path = footprintPath(root, 's1');

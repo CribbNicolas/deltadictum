@@ -37,7 +37,7 @@ DD - check (Close stores in t.after): This test opens a store without closing it
 The agent saves a memory by writing a JSON file into `.dd/inbox/` (the `save` command tells it how). DD
 ingests it in the same turn and answers:
 
-- **stored as active**, when DD verified the evidence itself (a file it hashed, a correction it recorded),
+- **stored as active**, when DD verified the evidence itself (a file it hashed, or a correction it recorded that names the memory and follows something the agent did),
   every trigger can fire, the memory has no check and duplicates nothing live (auto-accept, on by default);
 - **stored as a candidate** for review, saying which condition was not met;
 - **rejected** with reasons, for example generic advice, a missing `not_derivable` or a secret in the text.
