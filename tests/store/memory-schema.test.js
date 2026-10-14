@@ -59,7 +59,7 @@ test('a clause needs on within the event kinds and one more dimension', () => {
 });
 
 test('globs, symbols and phrases are bounded', () => {
-  for (const glob of ['/etc/passwd', 'C:/x.js', 'a/../b.js', 'g'.repeat(201)]) {
+  for (const glob of ['/etc/passwd', 'C:/x.js', 'a/../b.js', 'g'.repeat(201), '**/a/**/b/**/c/**/d.js']) {
     assert.ok(reasons({ triggers: [{ on: ['read'], paths: [glob] }] }).includes('invalid_trigger_glob'), glob);
   }
   assert.ok(reasons({ triggers: [{ on: ['edit'], paths: ['a.js'], symbols: ['not a symbol'] }] }).includes('invalid_trigger_symbol'));

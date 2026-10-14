@@ -20,7 +20,11 @@ const globs = new Map();
 // A glob over repository-relative paths: `**/` crosses any number of folders, a
 // trailing `**` matches the rest, `*` and `?` stay within one segment.
 function globToRegExp(glob) {
-  const source = String(glob).replaceAll('\\', '/').replace(/^\.\//, '');
+  // A run of `**/` means what one does; compiled one by one, each becomes an
+  // optional group, and a chain of them backtracks exponentially on a path it
+  // misses (16 hung every hook). Collapsed first, `**/**/x` and `**/x` are one.
+  const source = String(glob).replaceAll('\\', '/').replace(/^\.\//, '')
+    .replace(/(?:\*\*\/)+/g, '**/').replace(/(?:\*\*\/)+\*\*(?=$|\/)/g, '**').replace(/\*{3,}/g, '**');
   if (globs.has(source)) return globs.get(source);
   let out = '';
   for (let i = 0; i < source.length; i += 1) {

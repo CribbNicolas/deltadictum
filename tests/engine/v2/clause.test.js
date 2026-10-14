@@ -4,6 +4,19 @@ import { clauseMatches, globToRegExp, hasCommand, hasSymbol, memoryMatch } from 
 
 const ev = (kind, paths = [], text = '') => ({ kind, paths, text });
 
+// Chained `**/` once compiled to nested optional groups that backtrack
+// exponentially on a path they miss: 16 of them hung every hook for minutes.
+test('chained ** segments match as one and stay fast on a path they miss', () => {
+  const chained = globToRegExp(`${'**/'.repeat(16)}*.test.js`);
+  assert.equal(chained.test('a/b/x.test.js'), true);
+  assert.equal(chained.test('x.test.js'), true);
+  const deep = `${Array.from({ length: 22 }, (_, i) => `d${i}`).join('/')}/x.txt`;
+  const started = performance.now();
+  assert.equal(chained.test(deep), false);
+  assert.equal(globToRegExp('src/**/**').test(deep), false);
+  assert.ok(performance.now() - started < 50, `took ${performance.now() - started} ms`);
+});
+
 test('globs cross folders with ** and stay in one segment with * and ?', () => {
   const tests = globToRegExp('tests/**/*.test.js');
   assert.ok(tests.test('tests/a.test.js'));
