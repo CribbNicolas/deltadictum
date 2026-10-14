@@ -108,6 +108,24 @@ test('redaction removes what reveals DD to a blind judge and keeps the engineeri
   assert.match(out, /I set the default to 0\.85 +in src\/store\/paths\.js/);
 });
 
+// DD v2 delivers "[KIND] title - body" lines without ids; its key memory is found by title.
+test('stream metrics count v2 deliveries and find the key memory by its title', () => {
+  const stream = [
+    hook('PreToolUse', 'DD - project knowledge (src/store/paths.js):\n[TRAP] Reachable ceilings - Use a reachable ceiling.\n[ABANDONED] Old cache - It went stale.'),
+    hook('PreToolUse', 'DD - project knowledge (src/a.js):\n[DECISION] [DISPUTED] Ports - Use 7733.'),
+  ].join('\n');
+  const metrics = streamMetrics(stream, { id: KEY, title: 'Reachable ceilings' });
+  assert.equal(metrics.memories_pushed, 3);
+  assert.equal(metrics.key_memory.pushed, true);
+  assert.equal(streamMetrics(stream, { id: KEY, title: 'Something else' }).key_memory.pushed, false);
+});
+
+test('redaction removes v2 delivery lines too', () => {
+  const out = redact('I kept the ceiling reachable.\n[TRAP] Reachable ceilings - Use a reachable ceiling.\n[FACT] Ports - 7733.\nDone in src/store/paths.js.');
+  assert.doesNotMatch(out, /\[TRAP\]|\[FACT\]|Reachable ceilings/);
+  assert.match(out, /I kept the ceiling reachable\.\n+Done in src\/store\/paths\.js\./);
+});
+
 test('redaction removes what reveals the engineering guide to a blind judge', () => {
   const out = redact('As docs/engineering-guide.md says, and per the Engineering Guide, I quoted the globs in package.json.');
   assert.doesNotMatch(out, /engineering[- ]guide/i);

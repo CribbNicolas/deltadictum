@@ -23,21 +23,22 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, 
 const IN = join(REPO, 'output', 'eval', args.in ?? 'agent-results.json');
 const OUT = IN.replace(/\.json$/, '') + '.report.json';
 const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
-const LABELS = { dd: 'With DD', doc: 'Guide, not referenced', docref: 'Guide, referenced in CLAUDE.md', none: 'No project knowledge' };
+const LABELS = { dd: 'With DD v1', dd2: 'With DD v2', doc: 'Guide, not referenced', docref: 'Guide, referenced in CLAUDE.md', none: 'No project knowledge' };
 const GENERAL = new Set(GENERAL_REQUIREMENTS.map(r => r.id));
 
 const results = JSON.parse(await readFile(IN, 'utf8'));
 const judge = JSON.parse(await readFile(IN.replace(/\.json$/, '') + '.judge.json', 'utf8').catch(() => 'null'));
 const judged = new Map((judge?.judgments ?? []).filter(j => !j.error).map(j => [j.run_id, j.requirements]));
 
-// Memory ids by topic, to follow each task's key memory through DD's delivery.
+// Memory ids and titles by topic, to follow each task's key memory through DD's
+// delivery (v1 names it by id, v2 by title; migration keeps both).
 async function memoryIds() {
   const { readdir } = await import('node:fs/promises');
   const ids = new Map();
   const walk = async dir => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       if (entry.isDirectory()) await walk(join(dir, entry.name));
-      else { const atom = JSON.parse(await readFile(join(dir, entry.name), 'utf8')); ids.set(atom.topic_key, atom.id); }
+      else { const atom = JSON.parse(await readFile(join(dir, entry.name), 'utf8')); ids.set(atom.topic_key, { id: atom.id, title: atom.title }); }
     }
   };
   await walk(join(REPO, '.dd', 'atoms'));
@@ -93,16 +94,21 @@ for (const kind of ['memory', 'control', 'all']) {
   const inKind = rows.filter(r => kind === 'all' || r.kind === kind);
   const groups = Object.fromEntries(present.map(c => [c, group(inKind.filter(r => r.condition === c))]));
   const over = key => aboveBest(Object.fromEntries(present.map(c => [c, groups[c][key]])));
-  const withDd = inKind.filter(r => r.condition === 'dd');
-  const delivery = withDd.filter(r => r.key_memory);
-  const timed = withDd.filter(r => r.latency_before_agent);
-  report.by_kind[kind] = { conditions: groups,
-    above_best_pct: { context: over('median_peak_context_tokens'), time: over('median_minutes'), cost: over('mean_cost_usd') },
-    dd_internals: withDd.length ? {
+  // How each DD version delivered: whether the key memory reached the agent, and what it injected.
+  const internals = condition => {
+    const withDd = inKind.filter(r => r.condition === condition);
+    if (!withDd.length) return null;
+    const delivery = withDd.filter(r => r.key_memory);
+    const timed = withDd.filter(r => r.latency_before_agent);
+    return {
       key_memory_reached_pct: percent(delivery.filter(r => r.key_memory.pushed || r.key_memory.pulled).length, delivery.length),
       median_memories_pushed: med(withDd, 'memories_pushed'), median_injected_tokens: med(withDd, 'injected_tokens'),
       median_hook_ms: med(timed, 'hook_ms'), median_node_ms: med(timed, 'node_ms'),
-    } : null };
+    };
+  };
+  report.by_kind[kind] = { conditions: groups,
+    above_best_pct: { context: over('median_peak_context_tokens'), time: over('median_minutes'), cost: over('mean_cost_usd') },
+    dd_internals: internals('dd'), dd2_internals: internals('dd2') };
 }
 report.by_task = Object.fromEntries(TASKS.map(task => [task.id, Object.fromEntries(present.map(c => {
   const list = rows.filter(r => r.task === task.id && r.condition === c);
