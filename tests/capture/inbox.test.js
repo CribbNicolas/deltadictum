@@ -222,6 +222,11 @@ test('every ingestion records its outcome for health: active, candidate, rejecte
     ['rejected', ['generic_advice'], 'model_initiated', 's1'], ['request', [], null, 's1']]);
   assert.doesNotMatch(JSON.stringify(lines), /parseConfig|Replaced/);
   assert.ok(lines.every(line => /^\d{4}-\d\d-\d\dT/.test(line.at)));
+  // The origin is whatever the agent wrote; telemetry keeps a bounded copy.
+  await ingestInboxFile({ root, file: write(root, 'o.json', proposal({ origin: 'x'.repeat(200) })), sessionId: 's1' });
+  const last = JSON.parse(readFileSync(join(root, '.dd', 'local', 'telemetry', 'inbox.jsonl'), 'utf8').trim().split('\n').at(-1));
+  assert.equal(last.outcome, 'rejected');
+  assert.ok(last.origin.length <= 40, `${last.origin.length}`);
 });
 
 test('a check whose examples disagree with it is rejected', async t => {

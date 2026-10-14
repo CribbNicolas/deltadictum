@@ -174,7 +174,8 @@ export async function ingestInboxFile(options) {
   const outcome = result.stored ? result.stored.status : result.rejected ? 'rejected' : result.request ? 'request' : null;
   if (outcome) {
     appendTelemetry(options.root, 'inbox.jsonl', { at: (options.now ?? new Date()).toISOString(), outcome,
-      reasons: result.rejected ?? result.accept ?? [], origin: result.stored?.origin ?? result.origin ?? null, session: options.sessionId ?? null });
+      reasons: result.rejected ?? result.accept ?? [], origin: String(result.stored?.origin ?? result.origin ?? '').slice(0, 40) || null,
+      session: options.sessionId ?? null });
   }
   return result;
 }
