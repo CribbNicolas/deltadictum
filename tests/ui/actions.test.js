@@ -68,6 +68,21 @@ test('a memory a person writes is active and accepted by a person; merge and re-
   await assert.rejects(retopicMemory(root, 'keep', 'ui/new'), err => err.problems.some(p => p.startsWith('live_topic_conflict')));
 });
 
+// Retirement by disuse spares only what a person reviewed (review.accepted.by):
+// a restore, an edit or a re-topic of a live memory is that review, or the next
+// maintenance run archives the memory again.
+test('restoring, editing or re-topicking a live memory records the person, so retirement spares it', async t => {
+  const retired = memory('r1', { status: 'archived', review: { migrated: false, issues: ['retired_by_disuse'], accepted: { by: 'dd', at: '2026-09-01T00:00:00.000Z' } } });
+  const root = await project(t, [retired, memory('e1', { topic: 'ui/e1' })]);
+  const restored = await restoreMemory(root, 'r1');
+  assert.equal(restored.review.accepted.by, 'person');
+  assert.deepEqual(restored.review.issues, []);
+  assert.equal((await editMemory(root, 'e1', { title: 'Renamed rule' })).review.accepted.by, 'person');
+  assert.equal((await retopicMemory(root, 'r1', 'ui/r1-moved')).review.accepted.by, 'person');
+  const candidate = await project(t, [memory('c1', { status: 'candidate' })]);
+  assert.equal((await editMemory(candidate, 'c1', { title: 'Still a candidate' })).review.accepted, undefined);
+});
+
 test('a merge into a memory that is not live is refused: the merged knowledge would stop being delivered', async t => {
   const root = await project(t, [memory('old', { status: 'archived' }), memory('drop', { topic: 'ui/drop' })]);
   await assert.rejects(mergeMemories(root, 'old', 'drop'), err => err.problems.includes('merge_into_archived'));

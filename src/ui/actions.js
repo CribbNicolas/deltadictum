@@ -18,6 +18,10 @@ export class ReviewError extends Error {
 
 const EDITABLE = ['title', 'body', 'kind', 'not_derivable', 'triggers', 'check', 'revisit_when'];
 const now = () => new Date().toISOString();
+// A person who edits, restores or re-topics a live memory has reviewed it:
+// retirement by disuse spares what a person reviewed (src/maintenance/retire.js).
+const reviewedByPerson = (memory, at) => (LIVE_STATUSES.includes(memory.status)
+  ? { ...memory, review: { ...memory.review, accepted: { by: 'person', at } } } : memory);
 const storeOf = root => createMemoryFiles(localPaths(root).dd);
 
 function problemsOf(root, memory) {
@@ -52,7 +56,8 @@ export async function editMemory(root, id, changes) {
   const memory = await find(root, id);
   const refused = Object.keys(changes ?? {}).filter(key => !EDITABLE.includes(key));
   if (refused.length) throw new ReviewError(refused.map(key => `not_editable:${key}`));
-  const next = { ...memory, ...changes, origin: 'user_explicit', updated: now() };
+  const at = now();
+  const next = reviewedByPerson({ ...memory, ...changes, origin: 'user_explicit', updated: at }, at);
   if (changes.check === null) delete next.check;
   // A migrated memory waits for a person to say why the code does not show it
   // (spec section 9). Once one does, its v2 review is done and v2's rules apply.
@@ -93,7 +98,10 @@ export async function restoreMemory(root, id) {
   if (memory.status !== 'archived') throw new ReviewError(['not_archived']);
   const live = (await storeOf(root).list({ statuses: LIVE_STATUSES })).find(other => other.topic === memory.topic);
   if (live) throw new ReviewError([`topic_is_live:${memory.topic}`]);
-  const next = { ...memory, status: 'active', updated: now() };
+  const at = now();
+  const restored = { ...memory, status: 'active', updated: at,
+    review: { ...memory.review, issues: (memory.review?.issues ?? []).filter(issue => issue !== 'retired_by_disuse') } };
+  const next = reviewedByPerson(restored, at);
   const problems = problemsOf(root, next);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [next]);
@@ -130,7 +138,8 @@ export async function mergeMemories(root, keepId, dropId) {
 
 export async function retopicMemory(root, id, topic) {
   const memory = await find(root, id);
-  const next = { ...memory, topic, updated: now() };
+  const at = now();
+  const next = reviewedByPerson({ ...memory, topic, updated: at }, at);
   const problems = validateMemory(next);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [next]);
