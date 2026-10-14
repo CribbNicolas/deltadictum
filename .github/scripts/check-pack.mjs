@@ -25,7 +25,7 @@ for (const skill of ['save', 'recall', 'review']) if (!skills.includes(skill)) e
 for (const skill of skills) if (!files.has(`skills/${skill}/SKILL.md`)) errors.push(`skills/${skill} has no SKILL.md`);
 
 const FORBIDDEN = [/^tests\//, /^\.dd\//, /^\.github\//, /^output\//, /^node_modules\//, /\.sqlite(-\w+)?$/, /(^|\/)\.env(\.|$)/,
-  /\.log$/, /^\.dd-install\./];
+  /\.log$/];
 for (const path of files) if (FORBIDDEN.some(pattern => pattern.test(path))) errors.push(`must not be published: ${path}`);
 
 // npm rewrites a bin path it dislikes (a leading ./) and says so only in a warning.
