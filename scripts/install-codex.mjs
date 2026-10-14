@@ -82,12 +82,15 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
   // a project's own review or init skill is never overwritten.
   // A skill file DD wrote (named dd or dd-*) is DD's to replace on upgrade; any
   // other file at that path is the project's and stops the install for review.
+  // Codex substitutes no ${CLAUDE_PLUGIN_ROOT}: the copies name the directory DD
+  // runs from, as the hooks do.
   const skillName = text => /^---\r?\nname: (.+?)\r?$/m.exec(text ?? '')?.[1]?.trim();
   const ddOwned = text => /^dd(-[a-z]+)?$/.test(skillName(text) ?? '');
   const skills = ['save', 'recall', 'review'];
   for (const skill of skills) {
     const content = (await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8'))
-      .replace(/^(---\r?\nname: )(.+)$/m, `$1dd-${skill}`);
+      .replace(/^(---\r?\nname: )(.+)$/m, `$1dd-${skill}`)
+      .replaceAll('${CLAUDE_PLUGIN_ROOT}', slash(pluginRoot));
     const path = join(projectRoot, '.agents', 'skills', `dd-${skill}`, 'SKILL.md');
     const before = await optionalText(path);
     if (before && before !== content && !ddOwned(before)) throw new Error(`existing_skill_requires_review:${path}`);
