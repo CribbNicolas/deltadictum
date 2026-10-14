@@ -34,14 +34,19 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
-import { engineeringGuide } from './guide.js';
+import { engineeringGuide, engineeringGuideV2 } from './guide.js';
 import { limitWait, taskReport, usageLimited } from './metrics.js';
 import { killTree, run as runProcess } from './proc.js';
-import { TASKS } from './tasks.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
+// --taskset=v2 runs the v2 trial (tasks-v2.js on the v2 codebase, docs/superpowers/
+// specs/2026-10-14-agent-trial-v2.md); the default is the 2026-10 trial on v1's code.
+const TASKSET = args.taskset ?? 'v1';
+const { TASKS } = await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
 const MODEL = args.model ?? 'claude-sonnet-5-5';
+// --effort=high passes the effort level to every agent session.
+const EFFORT = args.effort ?? null;
 const REPEAT = Number(args.repeat ?? 2);
 const ONLY = args.tasks ? args.tasks.split(',') : null;
 // --prune=a,b removes those memories (id prefixes) from the DD clone, to measure
@@ -49,8 +54,9 @@ const ONLY = args.tasks ? args.tasks.split(',') : null;
 const PRUNE = args.prune ? args.prune.split(',') : [];
 const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
 if (CONDITIONS.some(c => !['dd', 'dd2', 'none', 'doc', 'docref'].includes(c))) throw new Error(`unknown condition in ${args.conditions}`);
-// The codebase the tasks run on: 0.8.6, the commit the 2026-10 trial cloned.
-const BASE = execFileSync('git', ['-C', REPO, 'rev-parse', args.base ?? '1a406d9']).toString().trim();
+// The codebase the tasks run on: 0.8.6, the commit the 2026-10 trial cloned, or
+// the v2 trial branch, which carries the trial store in .dd/memories.
+const BASE = execFileSync('git', ['-C', REPO, 'rev-parse', args.base ?? (TASKSET === 'v2' ? 'eval/v2-trial' : '1a406d9')]).toString().trim();
 // v1's dependencies for the base's own suite and DD v1, installed once beside the
 // trial's output: this checkout (v2) has none to share.
 const BASE_DEPS = join(REPO, 'output', 'eval', `deps-${BASE.slice(0, 7)}`);
@@ -98,23 +104,32 @@ async function cloneRepo() {
   execFileSync('git', ['-C', dir, 'checkout', '-q', BASE]);
   // Dependencies are shared, not copied (~500 MB); a junction works without admin on Windows,
   // and the type is ignored elsewhere. No shell: the paths come from the environment.
-  await symlink(join(BASE_DEPS, 'node_modules'), join(dir, 'node_modules'), 'junction');
+  // A base without dependencies (v2) has nothing to share.
+  if (existsSync(join(BASE_DEPS, 'node_modules'))) await symlink(join(BASE_DEPS, 'node_modules'), join(dir, 'node_modules'), 'junction');
   return dir;
 }
 
-// The base commit's dependencies, from its own lockfile, installed once.
+// The base commit's dependencies, from its own lockfile, installed once. A base
+// that declares none (v2) is marked as done, and clones get no node_modules.
 async function ensureBaseDeps() {
-  if (existsSync(join(BASE_DEPS, 'node_modules'))) return;
+  if (existsSync(join(BASE_DEPS, 'node_modules')) || existsSync(join(BASE_DEPS, 'no-dependencies'))) return;
   await mkdir(BASE_DEPS, { recursive: true });
   for (const file of ['package.json', 'npm-shrinkwrap.json']) await writeFile(join(BASE_DEPS, file), git(REPO, 'show', `${BASE}:${file}`));
+  const manifest = JSON.parse(git(REPO, 'show', `${BASE}:package.json`));
+  if (!Object.keys(manifest.dependencies ?? {}).length && !Object.keys(manifest.devDependencies ?? {}).length) {
+    await writeFile(join(BASE_DEPS, 'no-dependencies'), '');
+    return;
+  }
   const out = await run('npm', ['ci', '--no-audit', '--no-fund'], { cwd: BASE_DEPS, shell: true, timeout: SUITE_TIMEOUT_MS });
   if (out.code !== 0) throw new Error(`base dependencies failed to install: ${String(out.out ?? '').slice(-500)}`);
 }
 
 // DD v2 on the clone: its v1 store migrated and compiled by this checkout's CLI,
-// as `deltadictum migrate` does for a user.
+// as `deltadictum migrate` does for a user; a clone that already holds a v2
+// store (the v2 trial branch) is only compiled.
 async function migrateToV2(dir) {
-  for (const command of ['migrate', 'compile']) {
+  const commands = existsSync(join(dir, '.dd', 'memories')) ? ['compile'] : ['migrate', 'compile'];
+  for (const command of commands) {
     const out = await run(process.execPath, [join(REPO, 'src', 'cli.js'), command], { cwd: dir, env: { ...HOST_ENV, DD_MAINTENANCE: '0' }, timeout: 120000 });
     if (out.code !== 0) throw new Error(`dd2 ${command} failed: ${String(out.out ?? '').slice(-500)}`);
   }
@@ -152,12 +167,21 @@ async function pruneMemories(dir, prefixes) {
   }
 }
 
+// The clone's v2 memories (.dd/memories/*.json), when it holds a v2 store.
+async function v2Memories(dir) {
+  const { readdir } = await import('node:fs/promises');
+  const names = (await readdir(join(dir, '.dd', 'memories')).catch(() => [])).filter(name => name.endsWith('.json') && name !== 'manifest.json');
+  return Promise.all(names.map(async name => JSON.parse(await readFile(join(dir, '.dd', 'memories', name), 'utf8'))));
+}
+
 // The documentation conditions: the clone's own memories as one guide, written
 // before .dd/ is removed. docref also names it in CLAUDE.md, which Claude Code
 // loads with the project settings.
 async function writeGuide(dir, referenced) {
-  const atoms = await Promise.all((await atomFiles(dir)).map(async file => JSON.parse(await readFile(file, 'utf8'))));
-  await writeFile(join(dir, 'docs', 'engineering-guide.md'), engineeringGuide(atoms));
+  const guide = existsSync(join(dir, '.dd', 'memories'))
+    ? engineeringGuideV2(await v2Memories(dir))
+    : engineeringGuide(await Promise.all((await atomFiles(dir)).map(async file => JSON.parse(await readFile(file, 'utf8')))));
+  await writeFile(join(dir, 'docs', 'engineering-guide.md'), guide);
   if (!referenced) return;
   const claude = join(dir, 'CLAUDE.md');
   await writeFile(claude, `${(await readFile(claude, 'utf8')).trimEnd()}
@@ -256,6 +280,7 @@ async function runOnce(task, condition, index) {
 Run every command in the foreground and wait for it to finish before your final answer; give test runs a timeout of up to 10 minutes.`;
   const argv = ['-p', prompt, '--model', MODEL, '--output-format', 'stream-json', '--verbose', '--include-hook-events',
     '--no-session-persistence', '--setting-sources', 'project', '--strict-mcp-config', '--allowedTools', ...ALLOWED];
+  if (EFFORT) argv.push('--effort', EFFORT);
   if (withDd) {
     ({ child: resident, ready: ddReady } = await startResident(dir, env));
     // Before the agent edits src/: after that the resident is stale and a hook
@@ -322,7 +347,7 @@ Run every command in the foreground and wait for it to finish before your final 
   }
   const regressions = baseline ? failedTwice.filter(name => !baseline.failed.includes(name)) : [];
   const usage = result.usage ?? {};
-  const row = { run_id: runId, task: task.id, kind: task.kind, condition, base: BASE, model: MODEL, dd: withDd, dd_ready: ddReady,
+  const row = { run_id: runId, task: task.id, kind: task.kind, condition, base: BASE, model: MODEL, effort: EFFORT, taskset: TASKSET, dd: withDd, dd_ready: ddReady,
     passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
     // No regression: the suite passed, failed only on known timing tests, or every
     // test that failed twice also fails without the change.
@@ -359,6 +384,18 @@ async function recheck(row) {
 
 await mkdir(RUNS, { recursive: true });
 await ensureBaseDeps();
+// --check-only runs every task's check on an untouched clone: each must fail,
+// or the check passes work that was never done. No agent runs.
+if ('check-only' in args) {
+  for (const task of TASKS.filter(t => !ONLY || ONLY.includes(t.id))) {
+    const dir = await prepareClone(task, 'none');
+    try {
+      const check = await task.check(dir, '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
+      console.log(JSON.stringify({ task: task.id, passed: check.passed, requirements: check.requirements ?? {}, detail: check.detail }));
+    } finally { await removeClone(dir); }
+  }
+  process.exit(0);
+}
 if (RECHECK) {
   const rows = (await readFile(ROWS, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
   for (const [i, row] of rows.entries()) {
@@ -367,7 +404,7 @@ if (RECHECK) {
     console.log(JSON.stringify({ run_id: row.run_id, was: row.passed, passed: rows[i].passed, detail: rows[i].detail }));
   }
   await writeFile(ROWS, rows.map(row => `${JSON.stringify(row)}\n`).join(''));
-  await writeFile(OUT, JSON.stringify({ model: MODEL, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows }, null, 2));
+  await writeFile(OUT, JSON.stringify({ model: MODEL, effort: EFFORT, taskset: TASKSET, base: BASE, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows }, null, 2));
   process.exit(0);
 }
 const done = new Set();
@@ -401,5 +438,5 @@ async function worker() {
 }
 await Promise.all(Array.from({ length: Number(args.conc ?? 1) }, worker));
 const rows = (await readFile(ROWS, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
-await writeFile(OUT, JSON.stringify({ model: MODEL, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows }, null, 2));
-console.log(JSON.stringify({ model: MODEL, runs: rows.length, report: OUT }, null, 2));
+await writeFile(OUT, JSON.stringify({ model: MODEL, effort: EFFORT, taskset: TASKSET, base: BASE, repeat: REPEAT, pruned: PRUNE, runs: RUNS, rows }, null, 2));
+console.log(JSON.stringify({ model: MODEL, effort: EFFORT, taskset: TASKSET, runs: rows.length, report: OUT }, null, 2));

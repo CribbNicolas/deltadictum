@@ -15,15 +15,19 @@ import { appendFile, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/p
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { guideSection } from './guide.js';
+import { guideSection, guideSectionV2 } from './guide.js';
 import { limitWait, redact, usageLimited } from './metrics.js';
 import { run } from './proc.js';
-import { GENERAL_REQUIREMENTS, TASKS } from './tasks.js';
+import { GENERAL_REQUIREMENTS } from './tasks.js';
+import { TRIAL_MEMORIES } from './trial-memories.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
 const MODEL = args.model ?? 'claude-opus-5-5';
 const IN = join(REPO, 'output', 'eval', args.in ?? 'agent-results.json');
+// The task set the results were made with decides which tasks and guidance apply.
+const TASKSET = JSON.parse(await readFile(IN, 'utf8')).taskset ?? 'v1';
+const { TASKS } = await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
 const OUT = IN.replace(/\.json$/, '') + '.judge.json';
 const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
 const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
@@ -37,6 +41,9 @@ const claude = (prompt, cwd) => run('claude', ['-p', '--model', MODEL, '--output
 
 // The guidance a task's memory carries, as the guide writes it.
 async function guidance() {
+  if (TASKSET === 'v2') {
+    return new Map(TRIAL_MEMORIES.map(m => [m.topic, guideSectionV2({ ...m, status: 'active', evidence: m.evidence.map(e => ({ type: 'file', ...e })) })]));
+  }
   const atoms = [];
   const walk = async dir => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {

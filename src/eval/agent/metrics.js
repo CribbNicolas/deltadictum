@@ -130,6 +130,8 @@ export function streamMetrics(stream, key) {
     dd_inactive: contexts.some(c => c.event === 'SessionStart' && c.text.includes('DD - Inactive')),
     injected_tokens: contexts.reduce((n, c) => n + estimateTokens(c.text), 0),
     memories_pushed: pushed.size + pushedTitles.size,
+    // v2 deliveries by title, once each, in the order they arrived.
+    delivered_titles: [...pushedTitles],
     // Pointed: a pointer line during the work; the session-start map names every memory.
     key_memory: memoryId ? {
       pushed: pushed.has(memoryId) || Boolean(title && pushedTitles.has(title)),

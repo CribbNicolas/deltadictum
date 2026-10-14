@@ -16,7 +16,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { aboveBest, meanCi, median, parseNumstat, percent, qualityScore, streamMetrics, wilson } from './metrics.js';
-import { GENERAL_REQUIREMENTS, TASKS } from './tasks.js';
+import { GENERAL_REQUIREMENTS } from './tasks.js';
+import { TRIAL_MEMORIES, trialMemoryId } from './trial-memories.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
@@ -27,12 +28,15 @@ const LABELS = { dd: 'With DD v1', dd2: 'With DD v2', doc: 'Guide, not reference
 const GENERAL = new Set(GENERAL_REQUIREMENTS.map(r => r.id));
 
 const results = JSON.parse(await readFile(IN, 'utf8'));
+const TASKSET = results.taskset ?? 'v1';
+const { TASKS } = await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
 const judge = JSON.parse(await readFile(IN.replace(/\.json$/, '') + '.judge.json', 'utf8').catch(() => 'null'));
 const judged = new Map((judge?.judgments ?? []).filter(j => !j.error).map(j => [j.run_id, j.requirements]));
 
 // Memory ids and titles by topic, to follow each task's key memory through DD's
 // delivery (v1 names it by id, v2 by title; migration keeps both).
 async function memoryIds() {
+  if (TASKSET === 'v2') return new Map(TRIAL_MEMORIES.map(m => [m.topic, { id: trialMemoryId(m.topic), title: m.title }]));
   const { readdir } = await import('node:fs/promises');
   const ids = new Map();
   const walk = async dir => {
@@ -53,14 +57,22 @@ for (const row of results.rows) {
   const condition = row.condition ?? (row.dd ? 'dd' : 'none');
   const requirements = judged.has(row.run_id) ? { ...row.requirements, ...judged.get(row.run_id) } : null;
   const specific = requirements && Object.fromEntries(Object.entries(requirements).filter(([id]) => !GENERAL.has(id)));
-  const metrics = streamMetrics(stream, task.memory ? ids.get(task.memory) : null);
+  const key = task.memory ? ids.get(task.memory) : null;
+  const metrics = streamMetrics(stream, key);
   // A timeout is a session that never reached its result, not a process that outlived it.
   const timedOut = Boolean(row.timed_out && !metrics.finished);
+  // How DD's knowledge was used: the key memory delivered, applied (its specific
+  // requirements all met) or ignored; the other memories delivered are noise.
+  const delivered = Boolean(metrics.key_memory && (metrics.key_memory.pushed || metrics.key_memory.pulled));
+  const specificValues = specific ? Object.values(specific).filter(v => typeof v === 'boolean') : [];
+  const applied = delivered && specificValues.length > 0 ? specificValues.every(Boolean) : null;
   rows.push({ ...row, condition, ...parseNumstat(row.numstat), ...metrics, timed_out: timedOut,
     lingered: Boolean(row.timed_out && metrics.finished), time_ms: metrics.session_ms ?? row.duration_ms,
     resolved: Boolean(row.passed && row.suite_passed && row.lint_ok === true && !timedOut && !row.error),
     quality: requirements ? qualityScore(requirements) : null,
-    specific_quality: specific ? qualityScore(specific) : null });
+    specific_quality: specific ? qualityScore(specific) : null,
+    key_delivered: metrics.key_memory ? delivered : null, key_applied: applied,
+    noise: (metrics.delivered_titles ?? []).filter(title => title !== key?.title).length });
 }
 
 const med = (list, key) => median(list.map(r => r[key]).filter(v => typeof v === 'number'));
@@ -100,8 +112,14 @@ for (const kind of ['memory', 'control', 'all']) {
     if (!withDd.length) return null;
     const delivery = withDd.filter(r => r.key_memory);
     const timed = withDd.filter(r => r.latency_before_agent);
+    const reached = delivery.filter(r => r.key_delivered);
+    const decided = reached.filter(r => typeof r.key_applied === 'boolean');
     return {
-      key_memory_reached_pct: percent(delivery.filter(r => r.key_memory.pushed || r.key_memory.pulled).length, delivery.length),
+      key_memory_reached_pct: percent(reached.length, delivery.length),
+      // Of the runs the key memory reached and the judge or a check decided: applied, or delivered and ignored.
+      key_memory_applied_pct: percent(decided.filter(r => r.key_applied).length, decided.length),
+      key_memory_ignored_pct: percent(decided.filter(r => !r.key_applied).length, decided.length),
+      median_noise_memories: med(withDd, 'noise'),
       median_memories_pushed: med(withDd, 'memories_pushed'), median_injected_tokens: med(withDd, 'injected_tokens'),
       median_hook_ms: med(timed, 'hook_ms'), median_node_ms: med(timed, 'node_ms'),
     };
@@ -128,6 +146,11 @@ const lines = [`| | ${present.map(c => LABELS[c]).join(' | ')} |`, `|---|${prese
   `| Context (0 = least) | ${present.map(c => `+${all.above_best_pct.context[c]}% (${Math.round(all.conditions[c].median_peak_context_tokens / 100) / 10}k)`).join(' | ')} |`,
   `| Time (0 = fastest) | ${present.map(c => `+${all.above_best_pct.time[c]}% (${all.conditions[c].median_minutes} min)`).join(' | ')} |`,
   `| Cost (0 = cheapest) | ${present.map(c => `+${all.above_best_pct.cost[c]}% ($${all.conditions[c].mean_cost_usd})`).join(' | ')} |`];
+const use = memory.dd2_internals;
+if (use) {
+  lines.push('', `DD v2 memory use on tasks the knowledge bears on: key memory delivered ${use.key_memory_reached_pct}%, applied ${use.key_memory_applied_pct}%, `
+    + `delivered but ignored ${use.key_memory_ignored_pct}%; median memories delivered that bear on no task: ${use.median_noise_memories}.`);
+}
 report.table = lines.join('\n');
 
 await writeFile(OUT, JSON.stringify(report, null, 2));

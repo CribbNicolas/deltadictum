@@ -33,6 +33,50 @@ export function guideSection(atom) {
   return lines.join('\n');
 }
 
+// The same for a v2 memory (schema 8): its body in full, when it applies as the
+// triggers say it in prose, why the code does not show it, and its references.
+// Ids, topics, hashes and review metadata stay out.
+const KIND_LABELS = { trap: 'Trap', decision: 'Decision', failed_approach: 'Abandoned approach', fact: 'Fact', procedure: 'Procedure' };
+const VERBS = { read: 'reading', edit: 'editing', write: 'writing', run: 'running', search: 'a search', prompt: 'a prompt' };
+const code = values => values.map(v => `\`${v}\``).join(', ');
+const quoted = values => values.map(v => `"${v}"`).join(', ');
+
+export function clauseInProse(clause) {
+  const on = (clause.on ?? []).map(kind => VERBS[kind] ?? kind).join(' or ');
+  const parts = [];
+  if (clause.paths?.length) parts.push(code(clause.paths));
+  if (clause.commands?.length) parts.push(code(clause.commands));
+  if (clause.symbols?.length) parts.push(`with ${code(clause.symbols)}`);
+  if (clause.keywords?.length) parts.push(`mentioning ${quoted(clause.keywords)}`);
+  let text = [on, ...parts].join(' ');
+  if (clause.not?.length) text += `, unless ${quoted(clause.not)}`;
+  if (clause.not_paths?.length) text += `, except ${code(clause.not_paths)}`;
+  return text;
+}
+
+export function guideSectionV2(memory) {
+  const lines = [`### ${memory.title}`, '',
+    `*${KIND_LABELS[memory.kind] ?? 'Note'}.* **Applies when:** ${(memory.triggers ?? []).map(clauseInProse).join('; ')}.`, '',
+    memory.body, ''];
+  if (memory.not_derivable) lines.push(`**Why the code does not show it:** ${memory.not_derivable}`, '');
+  const refs = (memory.evidence ?? []).filter(entry => entry.type === 'file' && entry.path);
+  if (refs.length) lines.push('**References:**', ...refs.map(entry => `- \`${entry.path}\`${entry.summary ? `: ${entry.summary}` : ''}`), '');
+  return lines.join('\n');
+}
+
+export function engineeringGuideV2(memories) {
+  const groups = new Map();
+  const live = memories.filter(m => ['active', 'contested'].includes(m.status)).sort((a, b) => a.topic.localeCompare(b.topic));
+  for (const memory of live) {
+    const name = area(memory.topic);
+    groups.set(name, [...(groups.get(name) ?? []), memory]);
+  }
+  const out = ['# Engineering guide', '',
+    'Conventions, pitfalls and decisions for working on this codebase, collected from past work. Each section says when it applies, what to do and why.', ''];
+  for (const name of [...groups.keys()].sort()) out.push(`## ${name}`, '', ...groups.get(name).map(guideSectionV2));
+  return out.join('\n');
+}
+
 export function engineeringGuide(atoms) {
   const groups = new Map();
   for (const atom of atoms.filter(a => a.lifecycle_state === 'active').sort((a, b) => a.topic_key.localeCompare(b.topic_key))) {
