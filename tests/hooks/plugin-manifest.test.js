@@ -36,6 +36,23 @@ test('v2 listens at session start, at prompts and before the tools that carry pr
   assert.match(command('PreToolUse'), / pre-tool$/);
 });
 
+// Grok Build runs Claude Code's hooks (docs/integrations/grok-build.md): both
+// Grok files register the events, matchers and commands hooks/hooks.json does,
+// each with its own root. Found missing: inbox (so /dd:save was never ingested
+// on Grok), observe-prompt and PostToolUseFailure.
+test('the Grok manifests register every hook hooks.json does, with the same matchers and flags', async () => {
+  const shape = manifest => Object.entries(manifest.hooks).flatMap(([event, groups]) => groups.flatMap(group => group.hooks.map(hook =>
+    `${event} ${group.matcher ?? ''} ${/hooks\/run\.cjs"? ([a-z-]+)$/.exec(hook.command)?.[1]} async=${hook.async === true}`))).sort();
+  const expected = shape(JSON.parse(await readFile(join(ROOT, 'hooks', 'hooks.json'), 'utf8')));
+  for (const file of ['.grok-plugin/plugin.json', '.grok/hooks/dd.json']) {
+    assert.deepEqual(shape(JSON.parse(await readFile(join(ROOT, file), 'utf8'))), expected, file);
+  }
+  const plugin = JSON.parse(await readFile(join(ROOT, '.grok-plugin', 'plugin.json'), 'utf8'));
+  for (const hook of Object.values(plugin.hooks).flat().flatMap(group => group.hooks)) {
+    assert.match(hook.command, /^node "\$\{GROK_PLUGIN_ROOT\}\/hooks\/run\.cjs" [a-z-]+$/, hook.command);
+  }
+});
+
 test('DD ships no MCP server and no MCP dependency', async () => {
   const plugin = JSON.parse(await readFile(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
   assert.equal(plugin.mcpServers, undefined);

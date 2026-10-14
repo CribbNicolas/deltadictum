@@ -1,63 +1,32 @@
 {
   "name": "deltadictum",
+  "description": "DD v2 delivery and capture: the hooks hooks/hooks.json registers for Claude Code, assuming Claude Code's payload shape (docs/integrations/grok-build.md). Failures never block the host.",
   "hooks": {
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" session-start",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool",
-            "timeout": 10
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" session-start", "timeout": 30 } ] }
     ],
     "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" prompt",
-            "timeout": 15
-          }
-        ]
-      }
+      { "hooks": [
+        { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" prompt", "timeout": 10 },
+        { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" observe-prompt", "timeout": 10, "async": true }
+      ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" pre-tool", "timeout": 10 } ] }
     ],
     "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" observe",
-            "timeout": 15,
-            "async": true
-          }
-        ]
-      }
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" observe", "timeout": 10, "async": true } ] },
+      { "matcher": "Write|Edit|MultiEdit",
+        "hooks": [ { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" inbox", "timeout": 30 } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" observe", "timeout": 10, "async": true } ] }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" stop",
-            "timeout": 10
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "node \"${GROK_PLUGIN_ROOT}/hooks/run.cjs\" stop", "timeout": 10 } ] }
     ]
   }
 }
