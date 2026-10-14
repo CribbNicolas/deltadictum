@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -142,6 +142,28 @@ test('session start compiles a missing index and says nothing; compaction re-arm
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
   hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'compact' });
   assert.match(context(hook('pre-tool', read(root, 's1'))), /Close stores/);
+});
+
+// A project opts in by having a .dd/ folder (a committed .dd/config.json is the
+// team's way): before its first memory, DD recorded no footprint and never asked
+// at Stop, while the README said it would. The folder also marks the project
+// root, so a hook run from a subfolder of a project without .git finds it.
+test('a project with .dd/ and no memory yet records its footprint, asks at Stop and compiles at session start', t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-optin-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.dd'));
+  writeFileSync(join(root, '.dd', 'config.json'), '{}\n');
+  mkdirSync(join(root, 'src'));
+  const cwd = join(root, 'src');
+  const observe = (tool_name, tool_input, tool_response) => hook('observe', { session_id: 's1', cwd, tool_name, tool_input, tool_response });
+  observe('Bash', { command: 'npm test' }, { exit_code: 1, output: 'FAIL parseConfig is not a function' });
+  observe('Edit', { file_path: join(root, 'src', 'a.js'), new_string: 'parseConfig' }, { exit_code: 0 });
+  observe('Bash', { command: 'npm test' }, { exit_code: 0, output: 'ok' });
+  assert.ok(existsSync(join(root, '.dd', 'local', 'sessions', 's1.footprint.jsonl')));
+  assert.match(context(hook('stop', { session_id: 's1', cwd })), /^DD - This turn fixed a failure/);
+  const start = hook('session-start', { session_id: 's1', cwd, source: 'startup' });
+  assert.equal(start.stdout, '');
+  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
 });
 
 test('tools, projects and inputs DD has nothing for stay silent and create nothing', async t => {
