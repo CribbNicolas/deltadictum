@@ -5,8 +5,8 @@ description: Save project knowledge an agent could not get from the code, when t
 
 # Save project knowledge
 
-With the Write tool, create one JSON file per memory in `.dd/inbox/` (any name ending in `.json`; a file
-made through a shell command is not read). DD validates it at once and answers in the same turn: stored
+With the Write tool (on Codex, `apply_patch`), create one JSON file per memory in `.dd/inbox/` (any name
+ending in `.json`; a file made through a shell command is not read). DD validates it at once and answers in the same turn: stored
 (as a candidate, or active when DD verified its evidence), or rejected with reasons; fix the file and
 write it again.
 
