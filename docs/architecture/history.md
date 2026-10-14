@@ -39,7 +39,8 @@ each memory already named would have delivered the key memory in 30 of 30 runs, 
 
 ## What comes next
 
-1. Plan 9 on Claude Code: the agent trial on the 15 tasks (v2 against no DD, one repetition first) and an
-   external repository, measured against the gates of the v2 spec.
-2. Fresh-context reviews of the whole branch, then this repository's `.dd/` migrated and `v2` proposed for merge.
-3. Codex verified live, then Grok Build (its payloads recorded first), then OpenCode.
+1. Done (2026-10-14): the agent trial on the 15 tasks. Against the agent alone on the same day, v2 resolved
+   as many tasks, scored 7 points more on code quality and met every project requirement, at 1% more cost
+   ([how it is measured](../guide/how-it-works.md#how-it-is-measured)).
+2. Fresh-context reviews of the branch, this repository's `.dd/` migrated, and `v2` merged and released.
+3. Real use on a project, then Codex verified live, then Grok Build (its payloads recorded first), then OpenCode.
