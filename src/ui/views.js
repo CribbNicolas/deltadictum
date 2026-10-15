@@ -1,5 +1,8 @@
 import { createRequire } from 'node:module';
+import { listBatches } from './batches.js';
 import { listRequests } from './requests.js';
+
+export { listBatches };
 import { namedSymbols } from '../capture/generic.js';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
@@ -16,7 +19,9 @@ const { staleEvidence } = createRequire(import.meta.url)('../engine/deliver.cjs'
 
 // What the review UI reads (spec section 8): queues from health, a memory with
 // its breadth, its check and its evidence. Nothing here writes.
-export const QUEUES = ['candidates', 'auto_accepted', 'stale', 'hubs', 'dead', 'false_alarms', 'duplicates', 'missing_not_derivable', 'requests', 'all'];
+export const QUEUES = ['candidates', 'batches', 'auto_accepted', 'stale', 'hubs', 'dead', 'false_alarms', 'duplicates', 'missing_not_derivable', 'requests', 'all'];
+// Queues that list something other than memories: the UI reads them from their own endpoints.
+const OWN_LISTS = ['requests', 'batches'];
 const SIGNAL_QUEUES = { stale: 'stale_evidence', hubs: 'hub', dead: 'dead_trigger', false_alarms: 'suspected_false_alarm' };
 
 async function snapshot(root) {
@@ -45,8 +50,9 @@ function queueIds({ memories, health, signals, pairs }, queue) {
 
 export async function overview(root) {
   const snap = await snapshot(root);
-  const queues = Object.fromEntries(QUEUES.filter(q => q !== 'requests').map(q => [q, queueIds(snap, q).length]));
-  return { status: await status(root), queues: { ...queues, requests: listRequests(root).length }, capture: snap.health.capture, recent: snap.health.recent };
+  const queues = Object.fromEntries(QUEUES.filter(q => !OWN_LISTS.includes(q)).map(q => [q, queueIds(snap, q).length]));
+  return { status: await status(root), queues: { ...queues, requests: listRequests(root).length, batches: (await listBatches(root)).length },
+    capture: snap.health.capture, recent: snap.health.recent };
 }
 
 export async function listMemories(root, { queue = 'all' } = {}) {

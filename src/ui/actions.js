@@ -6,6 +6,8 @@ import { createMatcher } from '../checks/pattern.cjs';
 import { codeSymbols, compileProject, presentFilesOf, triggerWarnings } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory } from '../memory/schema.js';
+import { listBatches } from './batches.js';
+import { closeRequest } from './requests.js';
 import { createMemoryFiles } from '../memory/store.js';
 
 // What a person does in the review UI (spec section 8). Every action validates as
@@ -134,6 +136,42 @@ export async function reverifyEvidence(root, id) {
   const at = now();
   const saved = await save(root, [reviewedByPerson({ ...memory, evidence, updated: at }, at)]);
   return { memory: saved, stale };
+}
+
+// A batch, accepted or rejected whole by a person. Each candidate goes through the
+// same acceptance as alone, so one that is refused (a dead trigger, say) is reported
+// and the rest proceed. An archive request is carried out on its live target and
+// closed; a revise request, or one whose target is not live, is left for a person.
+export async function batchAction(root, name, outcome) {
+  if (!['accept', 'reject'].includes(outcome)) throw new ReviewError(['invalid_outcome']);
+  const batch = (await listBatches(root)).find(b => b.name === name);
+  if (!batch) throw new ReviewError(['batch_not_found']);
+  const result = { name, outcome, accepted: [], rejected: [], refused: [], closed: [], left: [] };
+  for (const { id } of batch.candidates) {
+    try {
+      if (outcome === 'accept') { await acceptMemory(root, id); result.accepted.push(id); }
+      else { await rejectMemory(root, id, `batch ${name} rejected`); result.rejected.push(id); }
+    } catch (err) {
+      if (!(err instanceof ReviewError)) throw err;
+      result.refused.push({ id, problems: err.problems });
+    }
+  }
+  const live = (await storeOf(root).list()).filter(memory => LIVE_STATUSES.includes(memory.status));
+  for (const request of batch.requests) {
+    if (outcome === 'reject') { closeRequest(root, request.id, 'dismissed'); result.closed.push(request.id); continue; }
+    const target = live.find(memory => memory.id === request.target) ?? live.find(memory => memory.topic === request.target);
+    if (request.request !== 'archive') { result.left.push({ id: request.id, reason: 'needs_a_person' }); continue; }
+    if (!target) { result.left.push({ id: request.id, reason: 'target_not_live' }); continue; }
+    try {
+      await archiveMemory(root, target.id, request.why);
+      closeRequest(root, request.id, 'done');
+      result.closed.push(request.id);
+    } catch (err) {
+      if (!(err instanceof ReviewError)) throw err;
+      result.refused.push({ id: request.id, problems: err.problems });
+    }
+  }
+  return result;
 }
 
 export async function markReviewed(root, id) {

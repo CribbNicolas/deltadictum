@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { listMemories, memoryDetail, overview } from '../../src/ui/views.js';
+import { listBatches, listMemories, memoryDetail, overview } from '../../src/ui/views.js';
 import { memory, project } from '../helpers/review.js';
 
 test('the overview counts each queue', async t => {
@@ -42,4 +42,15 @@ test('a memory comes with its breadth, its check result and suggestions when it 
   const bare = await memoryDetail(root, 'bare');
   assert.deepEqual(bare.suggested_triggers, [{ on: ['read', 'edit', 'write'], paths: ['src/a.js'] }, { on: ['edit', 'write'], symbols: ['aThing'] }]);
   assert.equal(await memoryDetail(root, 'missing'), null);
+});
+
+test('batches group the pending candidates and open requests that name them', async t => {
+  const root = await project(t, [memory('live'), memory('c1', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot-a' } }),
+    memory('c2', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot-b' } }), memory('c3', { status: 'candidate' })]);
+  mkdirSync(join(root, '.dd', 'local', 'requests'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'local', 'requests', 'r1.json'), JSON.stringify({ id: 'r1', request: 'archive', target: 'live', why: 'Replaced.', batch: 'lot-a' }));
+  writeFileSync(join(root, '.dd', 'local', 'requests', 'r2.json'), JSON.stringify({ id: 'r2', request: 'archive', target: 'live', why: 'Alone.' }));
+  const batches = await listBatches(root);
+  assert.deepEqual(batches.map(b => [b.name, b.candidates.map(c => c.id), b.requests.map(r => r.id)]), [['lot-a', ['c1'], ['r1']], ['lot-b', ['c2'], []]]);
+  assert.equal((await overview(root)).queues.batches, 2);
 });
