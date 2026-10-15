@@ -206,7 +206,9 @@ What the numbers say, and what they do not:
   runs, Haiku 23 in 14 runs, spread over the four conditions (Opus 3, 4, 4, 3; Haiku 4, 5, 3, 11).
   Every run but one got a test command through; the exception (Opus, clause-kind, docref) delivered
   without running anything and said so, and the runner's own check, suite and lint still passed it.
-  The retries cost time and tokens in every condition alike.
+  The retries cost time and tokens in every condition alike. The list has since been widened to the
+  shell commands that inspect a tree and to `npx` (`src/eval/agent/permissions.js`); a next trial
+  measures whether the refusals go.
 - **Only the dd2 clone has a store.** CLAUDE.md asks for `npm run bench:v2` on matching changes and the
   bench needs `.dd/`: in dd2 it ran (Opus 5 runs, Haiku 3), elsewhere it exited with `bench_no_memories`,
   and in a few runs the agent spent turns trying to rebuild the store (a tar extraction the sandbox
