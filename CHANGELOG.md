@@ -4,6 +4,11 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.5] - 2026-10-15
+
+- Documentation site: the loop diagram on "How DD works", the two remaining callouts and the page
+  descriptions announced in 0.9.3 are in the pages now; the edits had missed files with CRLF line endings.
+
 ## [0.9.4] - 2026-10-15
 
 - Documentation site: the stylesheet compiles again. The variables the custom styles use are defined in
