@@ -1,0 +1,71 @@
+{
+  "schema_version": 8,
+  "id": "6da7702e-46c1-4ff7-8184-2c0762191ca3",
+  "project_id": "supermem",
+  "topic": "eval/agent-trial/effectiveness-numbers",
+  "kind": "fact",
+  "status": "active",
+  "title": "Quote DD's effectiveness from the 2026-10 trials, with their caveats; never the September minutes",
+  "body": "DD's measured effectiveness is in two trials: the 15-task Claude Sonnet 5.5 trial (docs/guide/how-it-works.md, \"How it is measured\": same resolution, +7 quality points, every project requirement met, +1% cost against the agent alone) and the Opus 5.5 / Haiku 5.5 trial at high effort (docs/benchmarks/2026-10-v2-trial-opus-haiku.md: every condition met every requirement, a ceiling, with DD the cheapest condition for both models). Quote them with their caveats: one project, small samples, the second a ceiling. Do not quote the September 2026 agent trial's minutes (72.4 against 37.3): one 25-minute timeout in one task produced that gap, and the 84% token saving of the replay scenarios measures context cost, not task success. Why: a reader of a summary block reports a 2x speedup one outlier produced; the write-ups carry the caveats beside the numbers, the summaries do not.",
+  "not_derivable": "The numbers sit in the docs; which claims the data cannot support is written only here and in the trial write-ups' caveats.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "README.md",
+        "docs/guide/how-it-works.md",
+        "docs/benchmarks/**",
+        "CHANGELOG.md"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "agent trial",
+        "speedup",
+        "benchmark numbers",
+        "measured effectiveness",
+        "how much better",
+        "cuanto mejora"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/benchmarks/2026-10-v2-trial-opus-haiku.md",
+      "sha256": "a497a8f652291d6dc9210951ba4f9582ea5a4e18e9e3c6d1afebda6762d05045",
+      "summary": "The Opus and Haiku trial write-up."
+    },
+    {
+      "type": "file",
+      "path": "docs/guide/how-it-works.md",
+      "sha256": "7cac5bb90197c61e68f20efbcfe1f8a337de7ebc66c29507e8f28ae3d168a0ff",
+      "summary": "The Sonnet trial table and its caveats."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": null,
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "path": "docs/guide/how-it-works.md",
+      "description": "A new trial replaces these numbers."
+    }
+  ],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-10-07T16:48:38.405Z",
+  "updated": "2026-10-15T08:21:47.301Z"
+}

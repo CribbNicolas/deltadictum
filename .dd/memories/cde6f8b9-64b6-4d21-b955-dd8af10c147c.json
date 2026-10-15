@@ -1,0 +1,70 @@
+{
+  "schema_version": 8,
+  "id": "cde6f8b9-64b6-4d21-b955-dd8af10c147c",
+  "project_id": "supermem",
+  "topic": "testing/quote-test-globs",
+  "kind": "trap",
+  "status": "active",
+  "title": "Quote node --test globs in npm scripts",
+  "body": "Wrap each glob in escaped double quotes in package.json so node --test expands it itself. Unquoted, sh on Linux and macOS expands ** without globstar as a single level and silently skips nested test files, while Windows passes the pattern through and runs them all; this memory's check says so at the edit. Why: on 2026-09-22 the same suite ran 323 tests on Windows and 245 on Linux with no error; quoting the globs brought Linux to the full count.",
+  "not_derivable": "The scripts quote their globs, but not why: Windows runs the nested files either way, so only a Linux test count shows the loss.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "package.json"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "test globs",
+        "npm script",
+        "globstar",
+        "nested tests"
+      ]
+    }
+  ],
+  "check": {
+    "on": [
+      "edit",
+      "write"
+    ],
+    "paths": [
+      "package.json"
+    ],
+    "when": "edit",
+    "if_content": "--test[^\"]*\\s(?!\\\\\")[\\w./-]+\\*",
+    "say": "Quote each node --test glob in the npm script (\\\"tests/**/*.test.js\\\"): sh expands ** as one level and skips nested tests.",
+    "examples": {
+      "violates": "\"test\": \"node --test tests/**/*.test.js\"",
+      "passes": "\"test\": \"node --test \\\"tests/**/*.test.js\\\"\""
+    }
+  },
+  "evidence": [
+    {
+      "type": "file",
+      "path": "package.json",
+      "sha256": "e790407de430178b9fd39b3eaa6cd7c219e5ddde178e6137c69decb7f3dd5db5",
+      "summary": "Test scripts with quoted globs."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "7b5d2510-a33e-4d28-8793-4c031292f51f",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.360Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

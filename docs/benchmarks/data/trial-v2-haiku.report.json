@@ -1,0 +1,816 @@
+{
+  "model": "claude-haiku-5-5",
+  "input": "C:\\dev\\supermem\\output\\eval\\trial-v2-haiku.json",
+  "conditions": [
+    "dd2",
+    "docref",
+    "doc",
+    "none"
+  ],
+  "by_kind": {
+    "memory": {
+      "conditions": {
+        "dd2": {
+          "runs": 7,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            65,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 7,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 63916,
+          "median_minutes": 2.65,
+          "mean_cost_usd": 0.0227,
+          "total_cost_usd": 0.16,
+          "median_tool_calls": 19,
+          "median_lines_changed": 33,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        },
+        "docref": {
+          "runs": 7,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            65,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 7,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 70708,
+          "median_minutes": 1.95,
+          "mean_cost_usd": 0.0231,
+          "total_cost_usd": 0.16,
+          "median_tool_calls": 24,
+          "median_lines_changed": 43,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 57
+        },
+        "doc": {
+          "runs": 7,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            65,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 7,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 66488,
+          "median_minutes": 1.8,
+          "mean_cost_usd": 0.021,
+          "total_cost_usd": 0.15,
+          "median_tool_calls": 22,
+          "median_lines_changed": 42,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        },
+        "none": {
+          "runs": 7,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            65,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 7,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 61719,
+          "median_minutes": 2.33,
+          "mean_cost_usd": 0.0246,
+          "total_cost_usd": 0.17,
+          "median_tool_calls": 30,
+          "median_lines_changed": 37,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 4,
+          "docref": 15,
+          "doc": 8,
+          "none": 0
+        },
+        "time": {
+          "dd2": 47,
+          "docref": 8,
+          "doc": 0,
+          "none": 29
+        },
+        "cost": {
+          "dd2": 8,
+          "docref": 10,
+          "doc": 0,
+          "none": 17
+        }
+      },
+      "dd_internals": null,
+      "dd2_internals": {
+        "key_memory_reached_pct": 86,
+        "key_memory_applied_pct": 100,
+        "key_memory_ignored_pct": 0,
+        "median_noise_memories": 2,
+        "median_memories_pushed": 3,
+        "median_injected_tokens": 703,
+        "median_hook_ms": 53,
+        "median_node_ms": 45
+      }
+    },
+    "control": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 3,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 0,
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 43462,
+          "median_minutes": 1.57,
+          "mean_cost_usd": 0.013,
+          "total_cost_usd": 0.04,
+          "median_tool_calls": 17,
+          "median_lines_changed": 27,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        },
+        "docref": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 3,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 0,
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 44030,
+          "median_minutes": 1.29,
+          "mean_cost_usd": 0.0138,
+          "total_cost_usd": 0.04,
+          "median_tool_calls": 16,
+          "median_lines_changed": 29,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 100
+        },
+        "doc": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 3,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 0,
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 44713,
+          "median_minutes": 1.57,
+          "mean_cost_usd": 0.0195,
+          "total_cost_usd": 0.06,
+          "median_tool_calls": 17,
+          "median_lines_changed": 27,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        },
+        "none": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 3,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 0,
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 44736,
+          "median_minutes": 1.29,
+          "mean_cost_usd": 0.0134,
+          "total_cost_usd": 0.04,
+          "median_tool_calls": 18,
+          "median_lines_changed": 27,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0,
+          "docref": 1,
+          "doc": 3,
+          "none": 3
+        },
+        "time": {
+          "dd2": 22,
+          "docref": 0,
+          "doc": 22,
+          "none": 0
+        },
+        "cost": {
+          "dd2": 0,
+          "docref": 6,
+          "doc": 50,
+          "none": 3
+        }
+      },
+      "dd_internals": null,
+      "dd2_internals": {
+        "key_memory_reached_pct": null,
+        "key_memory_applied_pct": null,
+        "key_memory_ignored_pct": null,
+        "median_noise_memories": 0,
+        "median_memories_pushed": 0,
+        "median_injected_tokens": 245,
+        "median_hook_ms": 51,
+        "median_node_ms": 42
+      }
+    },
+    "all": {
+      "conditions": {
+        "dd2": {
+          "runs": 10,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            72,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 10,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 46203,
+          "median_minutes": 1.57,
+          "mean_cost_usd": 0.0198,
+          "total_cost_usd": 0.2,
+          "median_tool_calls": 17,
+          "median_lines_changed": 32,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        },
+        "docref": {
+          "runs": 10,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            72,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 10,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 46615,
+          "median_minutes": 1.29,
+          "mean_cost_usd": 0.0203,
+          "total_cost_usd": 0.2,
+          "median_tool_calls": 16,
+          "median_lines_changed": 29,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 70
+        },
+        "doc": {
+          "runs": 10,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            72,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 10,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 45113,
+          "median_minutes": 1.57,
+          "mean_cost_usd": 0.0206,
+          "total_cost_usd": 0.21,
+          "median_tool_calls": 17,
+          "median_lines_changed": 33,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        },
+        "none": {
+          "runs": 10,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            72,
+            100
+          ],
+          "task_check_pct": 100,
+          "no_regression_pct": 100,
+          "lint_clean_pct": 100,
+          "lint_unknown": 0,
+          "quality_runs": 10,
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_runs": 7,
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 45643,
+          "median_minutes": 1.29,
+          "mean_cost_usd": 0.0213,
+          "total_cost_usd": 0.21,
+          "median_tool_calls": 18,
+          "median_lines_changed": 34,
+          "timeouts": 0,
+          "lingered": 0,
+          "errors": 0,
+          "guide_read_pct": 0
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 2,
+          "docref": 3,
+          "doc": 0,
+          "none": 1
+        },
+        "time": {
+          "dd2": 22,
+          "docref": 0,
+          "doc": 22,
+          "none": 0
+        },
+        "cost": {
+          "dd2": 0,
+          "docref": 3,
+          "doc": 4,
+          "none": 8
+        }
+      },
+      "dd_internals": null,
+      "dd2_internals": {
+        "key_memory_reached_pct": 86,
+        "key_memory_applied_pct": 100,
+        "key_memory_ignored_pct": 0,
+        "median_noise_memories": 2,
+        "median_memories_pushed": 2,
+        "median_injected_tokens": 469,
+        "median_hook_ms": 51,
+        "median_node_ms": 42
+      }
+    }
+  },
+  "by_task": {
+    "maintain-fires-test": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "cli-archive": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "clause-kind": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "stop-asks-telemetry": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "test-capture-script": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "turn-fixed-test": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "maintenance-log": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "keyword-ies-plural": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "recall-json": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    },
+    "ui-kind-filter": {
+      "dd2": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "docref": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 1
+      },
+      "doc": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      },
+      "none": {
+        "runs": 1,
+        "resolved": 1,
+        "passed": 1,
+        "quality_pct": 100,
+        "guide_reads": 0
+      }
+    }
+  },
+  "table": "| | With DD v2 | Guide, referenced in CLAUDE.md | Guide, not referenced | No project knowledge |\n|---|---|---|---|---|\n| Resolution | 100% (72-100) | 100% (72-100) | 100% (72-100) | 100% (72-100) |\n| Resolution, tasks the knowledge bears on | 100% (65-100) | 100% (65-100) | 100% (65-100) | 100% (65-100) |\n| Code quality | 100% (100-100) | 100% (100-100) | 100% (100-100) | 100% (100-100) |\n| Project requirements met | 100% (100-100) | 100% (100-100) | 100% (100-100) | 100% (100-100) |\n| Context (0 = least) | +2% (46.2k) | +3% (46.6k) | +0% (45.1k) | +1% (45.6k) |\n| Time (0 = fastest) | +22% (1.57 min) | +0% (1.29 min) | +22% (1.57 min) | +0% (1.29 min) |\n| Cost (0 = cheapest) | +0% ($0.0198) | +3% ($0.0203) | +4% ($0.0206) | +8% ($0.0213) |\n\nDD v2 memory use on tasks the knowledge bears on: key memory delivered 86%, applied 100%, delivered but ignored 0%; median memories delivered that bear on no task: 2."
+}

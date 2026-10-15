@@ -13,13 +13,12 @@ system, and the steps that reproduce it.
 
 ## What DD protects, and what it does not
 
-The security boundary is described in the README, under
-[Security boundary](docs/guide/security.md). In short: DD protects its knowledge and review from other
-accounts on the machine, from web pages and from text that did not pass review. It does not protect them
-from the agent itself, which runs as you and can write `.dd/` directly; review is a check on what the agent
-proposes, not a lock against it. Reports in scope include:
+The security boundary is described in [Security boundary](docs/guide/security.md). In short: DD protects
+its knowledge and review from other accounts on the machine, from web pages and from text that did not pass
+validation. It does not protect them from the agent itself, which runs as you and can write `.dd/`
+directly; review is a check on what the agent proposes, not a lock against it. Reports in scope include:
 
-- a way for another local account or a web page to reach the audit UI or the resident's hook API;
+- a way for another local account or a web page to reach or drive the review UI;
 - text in a committed knowledge file reaching the agent without passing the content checks;
 - a credential in a recognizable shape stored in knowledge or local telemetry;
 - an evidence path escaping the repository, or knowledge crossing from one project to another.

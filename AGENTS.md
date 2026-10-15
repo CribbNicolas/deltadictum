@@ -2,6 +2,6 @@
 
 See [CLAUDE.md](CLAUDE.md). It applies to every agent working in this repository, not only to Claude Code.
 
-**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** Before proposing any architecture, read [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md): no database engine, no external vector store, no inference server, no hosted model, no federation. Hooks are ephemeral processes and `PreToolUse` runs on every tool call; embeddings are required and live only in the resident process, one per machine shared by all projects; without it DD is inactive and says so.
+**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.** Before proposing any architecture, read [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md): no database engine, no external vector store, no inference server, no hosted model, no federation, no resident process. Hooks are ephemeral processes and `PreToolUse` runs on every tool call; memories fire by rule matching over a compiled index, not by similarity search. [`docs/architecture/history.md`](docs/architecture/history.md) says why, and which mistakes not to repeat.
 
 Everything in this repository is written in English, whatever language the conversation uses (see the Language section of CLAUDE.md).

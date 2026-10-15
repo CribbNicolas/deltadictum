@@ -1,0 +1,65 @@
+{
+  "schema_version": 8,
+  "id": "dc877e79-833d-4164-832f-5441ba2a0524",
+  "project_id": "supermem",
+  "topic": "distribution/harness-native-install-mechanisms",
+  "kind": "fact",
+  "status": "active",
+  "title": "How each harness loads DD, and which OpenCode hooks can carry text",
+  "body": "Claude Code and Grok Build install plugins from a marketplace that auto-discovers skills/ (Grok mirrors Claude Code's layout almost exactly); Codex has no marketplace or npm pull, so `deltadictum install --host codex` writes its config. OpenCode has no hook shaped like PreToolUse: tool.execute.before outputs {args} only and session events return void. Text reaches its model two ways: experimental.chat.system.transform (once per turn; it rewrites the system prompt and breaks the prompt cache) and the output of tool.execute.after ({title, output, metadata}), which v2 uses to append the memories that fired to the tool's own result; that output carries no exit status, so outcomes cannot be read there. Why: verified 2026-09-19 against @opencode-ai/plugin@1.18.31's type definitions and a real plugin's compiled source, after a first version written from a documentation summary got the signatures wrong.",
+  "not_derivable": "The adapter shows the hook it uses, not the hooks tried and ruled out, nor that the published docs described them wrongly.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/**",
+        "docs/integrations/*.md",
+        "scripts/install-codex.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "OpenCode",
+        "Grok Build",
+        "tool.execute",
+        "system.transform",
+        "marketplace",
+        "install mechanism"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "adapters/opencode/index.js",
+      "sha256": "b173476f1addb61da81e2ba2b99854401ae1a07e22a3ebf83c86f5656ff85d30",
+      "summary": "The header cites the plugin version and the real plugin read before the shim."
+    },
+    {
+      "type": "file",
+      "path": "docs/integrations/opencode.md",
+      "sha256": "1ba7e4a98e1d806568730261998e39071126054b2b686060111baf08b3fa8f04",
+      "summary": "What was verified and what was not."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "1b8bdaba-9f19-489e-a2e1-56b8f1c7ecf4",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.857Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

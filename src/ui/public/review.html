@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DD review</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f9; --panel: #ffffff; --hover: #eeeef3; --border: #dcdce4;
+      --fg: #18181f; --muted: #66667a; --accent: #3b5bdb; --accent-fg: #ffffff;
+      --danger: #b42318; --danger-bg: #fdecea; --danger-border: #f3b8b2;
+      --ok: #146c43; --ok-bg: #e6f4ea; --ok-border: #a6d9b8;
+      --warn: #8a5a00; --warn-bg: #fff4dc; --warn-border: #f0d08c;
+      --mono: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0b0f; --panel: #14141a; --hover: #1b1b22; --border: #26262f;
+        --fg: #e9e9ee; --muted: #8f8fa3; --accent: #7c9cff; --accent-fg: #0b0b0f;
+        --danger: #ff9b9b; --danger-bg: #341717; --danger-border: #5c2a2a;
+        --ok: #7fe0b3; --ok-bg: #12321f; --ok-border: #1c4a2c;
+        --warn: #f0c674; --warn-bg: #201a10; --warn-border: #4a3a1c;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--fg);
+      display: flex; flex-direction: column; overflow: hidden; }
+    header { flex: 0 0 auto; min-height: 50px; padding: 8px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border); background: var(--panel); }
+    header h1 { font-size: 14px; font-weight: 600; margin: 0; }
+    #summary, #capture { color: var(--muted); font-size: 12.5px; }
+    #conflicts { color: var(--warn); font-size: 12.5px; }
+    main { flex: 1; min-height: 0; display: grid; grid-template-columns: 210px 330px 1fr; }
+    nav { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+    nav button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border: none;
+      border-radius: 7px; background: transparent; color: var(--fg); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+    nav button:hover { background: var(--hover); }
+    nav button[aria-current="true"] { background: var(--accent); color: var(--accent-fg); }
+    nav .count { font-family: var(--mono); font-size: 11.5px; opacity: 0.8; }
+    nav .count.zero { opacity: 0.4; }
+    nav hr { border: none; border-top: 1px solid var(--border); margin: 8px 2px; }
+    #list { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); }
+    .item { display: block; width: 100%; padding: 10px 14px; border: none; border-bottom: 1px solid var(--border); border-left: 3px solid transparent;
+      background: transparent; color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
+    .item:hover { background: var(--hover); }
+    .item.active { background: var(--panel); border-left-color: var(--accent); }
+    .item .meta, .mono { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+    .item .meta { display: block; margin-top: 3px; }
+    .empty { padding: 28px 16px; color: var(--muted); text-align: center; }
+    #detail { min-height: 0; overflow-y: auto; }
+    .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 20px;
+      border-bottom: 1px solid var(--border); background: var(--panel); }
+    .pane { padding: 16px 20px 40px; max-width: 980px; }
+    h2 { font-size: 16px; margin: 0 0 4px; overflow-wrap: anywhere; }
+    h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin: 22px 0 6px; }
+    label { display: block; margin: 14px 0 5px; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    input, textarea, select { width: 100%; background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 7px;
+      padding: 8px 10px; font: inherit; font-size: 13.5px; }
+    .bar input, .bar select { width: auto; flex: 0 1 180px; min-width: 0; }
+    textarea { min-height: 40px; resize: vertical; }
+    textarea.json { font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+    button.act { height: 32px; padding: 0 13px; border-radius: 7px; border: 1px solid var(--border); background: var(--panel); color: var(--fg);
+      font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+    button.act:hover { background: var(--hover); }
+    button.act:disabled { opacity: 0.5; cursor: default; }
+    body[aria-busy="true"] { cursor: progress; }
+    body[aria-busy="true"] button.act { pointer-events: none; opacity: 0.6; }
+    button.ok { border-color: var(--ok-border); background: var(--ok-bg); color: var(--ok); }
+    button.danger { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
+    button.small { height: 26px; padding: 0 9px; font-size: 12px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .badge { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border);
+      background: var(--panel); letter-spacing: 0.3px; margin-right: 4px; }
+    .badge.warn { border-color: var(--warn-border); background: var(--warn-bg); color: var(--warn); }
+    .badge.bad { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
+    .badge.good { border-color: var(--ok-border); background: var(--ok-bg); color: var(--ok); }
+    #msg { flex: 0 0 auto; padding: 0 16px; }
+    #msg:empty { display: none; }
+    .notice { margin: 10px 0; padding: 10px 12px; border-radius: 7px; border-left: 3px solid var(--accent); background: var(--panel); white-space: pre-wrap; font-size: 13px; }
+    .notice.error { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+    .notice.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+    .notice ul { margin: 4px 0 0; padding-left: 18px; }
+    ul.plain { list-style: none; margin: 0; padding: 0; }
+    ul.plain li { padding: 6px 0; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    ul.plain li:first-child { border-top: none; }
+    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--panel); border: 1px solid var(--border); border-radius: 7px; padding: 10px;
+      font-family: var(--mono); font-size: 12px; }
+    table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+    th { color: var(--muted); font-weight: 500; }
+    .request { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .request p { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .row input { flex: 1 1 260px; width: auto; min-width: 0; }
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      main { grid-template-columns: 1fr; }
+      nav, #list { border-right: none; border-bottom: 1px solid var(--border); max-height: 260px; }
+      #detail { overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DD review</h1>
+    <span id="summary"></span>
+    <span id="capture"></span>
+    <span id="conflicts"></span>
+  </header>
+  <div id="msg"></div>
+  <main>
+    <nav id="queues" aria-label="Queues"></nav>
+    <section id="list" aria-label="Memories"></section>
+    <section id="detail" aria-live="polite"><p class="empty">Select a memory, or a request.</p></section>
+  </main>
+  <script nonce="__NONCE__">
+  'use strict';
+  // Every string from the store reaches the DOM through text nodes or attributes,
+  // never as markup; every handler is attached here (the CSP allows no other script).
+  const QUEUE_LABELS = {
+    candidates: 'Candidates', batches: 'Batches', auto_accepted: 'Accepted by DD', requests: 'Agent requests', stale: 'Stale evidence', hubs: 'Hubs', dead: 'Dead triggers',
+    false_alarms: 'Suspected false alarms', duplicates: 'Duplicates', missing_not_derivable: 'Missing not_derivable', all: 'All memories',
+    activity: 'Recent deliveries', dashboard: 'Dashboard',
+  };
+  const KINDS = ['decision', 'trap', 'failed_approach', 'fact', 'procedure'];
+  const state = { queue: 'candidates', selected: null, overview: null, rows: [] };
+  const $ = id => document.getElementById(id);
+
+  function h(tag, props = {}, ...children) {
+    const el = document.createElement(tag);
+    for (const [key, value] of Object.entries(props)) {
+      if (value === null || value === undefined || value === false) continue;
+      if (key === 'on') for (const [event, fn] of Object.entries(value)) el.addEventListener(event, fn);
+      else if (key === 'class') el.className = value;
+      else if (key === 'value') el.value = value;
+      else el.setAttribute(key, value === true ? '' : String(value));
+    }
+    for (const child of children.flat(Infinity)) {
+      if (child === null || child === undefined || child === false) continue;
+      el.append(child instanceof Node ? child : String(child));
+    }
+    return el;
+  }
+
+  async function api(path, { method = 'GET', body } = {}) {
+    const init = { method, credentials: 'same-origin', headers: {} };
+    if (method !== 'GET') { init.headers['content-type'] = 'application/json'; init.body = JSON.stringify(body ?? {}); }
+    const res = await fetch(path, init);
+    let data = null;
+    try { data = await res.json(); } catch { data = null; }
+    if (!res.ok) {
+      const err = new Error(data?.error ?? `HTTP ${res.status}`);
+      err.problems = data?.problems ?? [data?.message ?? data?.error ?? `HTTP ${res.status}`];
+      throw err;
+    }
+    return data;
+  }
+
+  function say(kind, text, problems = []) {
+    $('msg').replaceChildren(h('div', { class: `notice ${kind}`, role: kind === 'error' ? 'alert' : 'status' },
+      text, problems.length ? h('ul', {}, problems.map(p => h('li', { class: 'mono' }, p))) : null));
+  }
+  const quiet = () => $('msg').replaceChildren();
+  const refused = (what, err) => say('error', `${what} refused.`, err.problems ?? [err.message]);
+
+  const memoryPath = id => `/api/memories/${encodeURIComponent(id)}`;
+  const memoryAction = (id, action) => `${memoryPath(id)}${action}`;
+  const pretty = value => JSON.stringify(value ?? null, null, 2);
+
+  function parseJson(text, field) {
+    if (!text.trim()) return { value: undefined };
+    try { return { value: JSON.parse(text) }; } catch { return { error: `${field}: not valid JSON` }; }
+  }
+
+  function grow(area) { area.style.height = 'auto'; area.style.height = `${Math.min(area.scrollHeight + 2, 600)}px`; }
+  function textArea(id, value, json = false) {
+    const area = h('textarea', { id, class: json ? 'json' : null, spellcheck: json ? 'false' : null, value, on: { input: e => grow(e.target) } });
+    requestAnimationFrame(() => grow(area));
+    return area;
+  }
+
+  // Queues and counts.
+  async function loadOverview() {
+    try { state.overview = await api('/api/overview'); } catch (err) { refused('Reading the overview', err); return; }
+    const { status, queues, capture } = state.overview;
+    const parts = [`${status.total} memories`, ...Object.entries(status.by_status).map(([name, n]) => `${n} ${name}`)];
+    $('summary').textContent = parts.join(' · ');
+    // The capture funnel, as the roll-up last saw it: does asking for memories work?
+    $('capture').textContent = capture
+      ? `Capture: ${capture.asked} asked · ${capture.corrections} corrections · ${capture.proposals} proposals (${capture.active} active, ${capture.candidates} candidates, ${capture.rejected} rejected)` : '';
+    $('conflicts').textContent = status.conflicts.length
+      ? `Topics with more than one live memory: ${status.conflicts.map(c => c.topic).join(', ')}` : '';
+    renderQueues(queues);
+  }
+
+  function renderQueues(queues) {
+    const countOf = queue => (queue === 'activity' ? (state.overview?.recent?.length ?? 0) : queue === 'dashboard' ? '' : queues[queue] ?? 0);
+    const buttons = Object.keys(QUEUE_LABELS).map(queue => h('button', {
+      type: 'button', 'aria-current': state.queue === queue ? 'true' : 'false',
+      on: { click: () => { state.queue = queue; state.selected = null; quiet(); renderQueues(queues); loadList(); showEmpty(); } },
+    }, h('span', {}, QUEUE_LABELS[queue]), h('span', { class: `count${countOf(queue) ? '' : ' zero'}` }, countOf(queue))));
+    $('queues').replaceChildren(...buttons.slice(0, 3), h('hr'), ...buttons.slice(3),
+      h('hr'), h('button', { type: 'button', on: { click: showCreate } }, h('span', {}, '+ New memory')),
+      h('button', { type: 'button', on: { click: showSettings } }, h('span', {}, 'Settings')));
+  }
+
+  async function loadList() {
+    const list = $('list');
+    if (state.queue === 'requests') return loadRequests();
+    if (state.queue === 'batches') return loadBatches();
+    if (state.queue === 'activity') return loadActivity();
+    if (state.queue === 'dashboard') return loadDashboard();
+    let rows;
+    try { rows = await api(`/api/memories?queue=${encodeURIComponent(state.queue)}`); } catch (err) { refused('Reading the queue', err); return; }
+    state.rows = rows;
+    if (!rows.length) { list.replaceChildren(h('p', { class: 'empty' }, `Nothing in ${QUEUE_LABELS[state.queue]}.`)); return; }
+    list.replaceChildren(...rows.map(row => h('button', {
+      type: 'button', class: `item${row.id === state.selected ? ' active' : ''}`, 'data-id': row.id, on: { click: () => { quiet(); openMemory(row.id); } },
+    }, h('div', {}, row.title),
+    h('span', { class: 'meta' }, `${row.topic} · ${row.kind} · ${row.status}`),
+    row.signals.length ? h('span', { class: 'meta' }, row.signals.map(s => s.signal).join(', ')) : null)));
+  }
+
+  function markActive() {
+    for (const item of $('list').querySelectorAll('.item')) item.classList.toggle('active', item.dataset.id === state.selected);
+  }
+
+  function showEmpty() { $('detail').replaceChildren(h('p', { class: 'empty' }, 'Select a memory, or a request.')); }
+
+  // The last deliveries the roll-up saw: which memory, at which event, by which
+  // dimension, in which session. A hub shows here before it shows in a count.
+  function loadActivity() {
+    const recent = state.overview?.recent ?? [];
+    if (!recent.length) { $('list').replaceChildren(h('p', { class: 'empty' }, 'No delivery rolled up yet.')); return; }
+    $('list').replaceChildren(...recent.map(fire => h('button', { type: 'button', class: 'item', on: { click: () => { quiet(); openMemory(fire.memory); } } },
+      h('div', {}, fire.title ?? fire.memory),
+      h('span', { class: 'meta' }, [fire.at, fire.kind, fire.via, fire.session].filter(Boolean).join(' · ')))));
+  }
+
+  // Dashboard: what the telemetry says about use. Counts only, never content.
+  async function loadDashboard() {
+    let d;
+    try { d = await api('/api/dashboard'); } catch (err) { refused('Reading the dashboard', err); return; }
+    const tile = (label, value, note) => h('div', { class: 'request' }, h('div', { class: 'mono' }, label), h('h2', {}, String(value)), note ? h('span', { class: 'meta' }, note) : null);
+    const table = (head, rows) => h('table', {}, h('thead', {}, h('tr', {}, head.map(t => h('th', {}, t)))), h('tbody', {}, rows));
+    const dv = d.deliveries;
+    $('list').replaceChildren(
+      h('div', { class: 'row' },
+        tile('Sessions', d.sessions.total, `${d.sessions.with_deliveries} with a delivery`),
+        tile('Tool calls', d.sessions.tool_calls, `${dv.per_100_tool_calls} deliveries per 100`),
+        tile('Deliveries', dv.total, `${dv.memories_avg} memories each, average`),
+        tile('Characters per delivery', dv.chars_avg, `max ${dv.chars_max} of a cap of ${d.limit}`),
+        tile('Cap reached', dv.capped, `${Math.round(dv.capped_share * 100)}% of deliveries named a memory for later`)),
+      h('div', { class: 'row' },
+        tile('Live memories', d.coverage.live, `${d.coverage.delivered_ever} delivered at least once`),
+        tile('Never fired, had the chance', d.coverage.never_fired_with_opportunity, `${d.coverage.no_opportunity} never had the chance`),
+        tile('Checks', d.checks.fixed + d.checks.ignored + d.checks.repeated, `fixed ${d.checks.fixed} · ignored ${d.checks.ignored} · repeated ${d.checks.repeated}`)),
+      h('h3', {}, 'Last days'),
+      d.by_day.length ? table(['Day', 'Sessions', 'Deliveries'], d.by_day.map(row => h('tr', {}, h('td', { class: 'mono' }, row.day), h('td', { class: 'mono' }, String(row.sessions)), h('td', { class: 'mono' }, String(row.deliveries))))) : h('p', { class: 'empty' }, 'Nothing rolled up yet.'),
+      h('h3', {}, 'Fires by trigger'),
+      table(['Trigger', 'Fires'], Object.entries(d.by_via).map(([via, n]) => h('tr', {}, h('td', { class: 'mono' }, via), h('td', { class: 'mono' }, String(n))))),
+      h('h3', {}, 'Deliveries by event'),
+      table(['Event', 'Deliveries'], Object.entries(d.by_kind).map(([kind, n]) => h('tr', {}, h('td', {}, kind), h('td', { class: 'mono' }, String(n))))),
+      h('h3', {}, 'Memories that fire most'),
+      d.top.length ? table(['Memory', 'Fires', 'Sessions'], d.top.map(row => h('tr', {},
+        h('td', {}, h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(row.memory) } }, 'Open'), ` ${row.title}`),
+        h('td', { class: 'mono' }, String(row.fires)), h('td', { class: 'mono' }, String(row.sessions))))) : h('p', { class: 'empty' }, 'No delivery rolled up yet.'),
+      h('h3', {}, 'Capture'),
+      h('p', { class: 'mono' }, `asked ${d.capture.asked} · corrections ${d.capture.corrections} · proposals ${d.capture.proposals} (active ${d.capture.active}, candidates ${d.capture.candidates}, rejected ${d.capture.rejected}) · requests ${d.capture.requests}`));
+  }
+
+  // Agent requests: the agent asked; a person acts on the memory and closes the request.
+  async function loadRequests() {
+    let requests;
+    try { requests = await api('/api/requests'); } catch (err) { refused('Reading the requests', err); return; }
+    if (!requests.length) { $('list').replaceChildren(h('p', { class: 'empty' }, 'No request waits.')); return; }
+    $('list').replaceChildren(...requests.map(request => h('div', { class: 'request' },
+      h('div', {}, h('span', { class: 'badge warn' }, request.request), h('span', { class: 'mono' }, request.target)),
+      h('p', {}, request.why),
+      h('span', { class: 'mono' }, request.at ?? ''),
+      h('div', { class: 'row' },
+        h('button', { type: 'button', class: 'act small', on: { click: () => openTarget(request.target) } }, 'Open memory'),
+        h('button', { type: 'button', class: 'act small ok', on: { click: () => closeRequest(request.id, 'done') } }, 'Done'),
+        h('button', { type: 'button', class: 'act small', on: { click: () => closeRequest(request.id, 'dismissed') } }, 'Dismiss')))));
+  }
+
+  // Batches: the agent named the lot; a person accepts or rejects it whole and reads what DD could not do.
+  async function loadBatches() {
+    let batches;
+    try { batches = await api('/api/batches'); } catch (err) { refused('Reading the batches', err); return; }
+    if (!batches.length) { $('list').replaceChildren(h('p', { class: 'empty' }, 'No batch waits.')); return; }
+    $('list').replaceChildren(...batches.map(batch => h('div', { class: 'request' },
+      h('div', {}, h('span', { class: 'badge warn' }, 'batch'), h('span', { class: 'mono' }, batch.name),
+        h('span', { class: 'mono' }, ` ${batch.candidates.length} memories, ${batch.requests.length} requests`)),
+      h('ul', { class: 'plain' },
+        ...batch.candidates.map(c => h('li', {}, h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(c.id) } }, 'Open'),
+          h('span', { class: 'badge' }, c.kind), ` ${c.title} `, h('span', { class: 'mono' }, c.topic))),
+        ...batch.requests.map(r => h('li', {}, h('span', { class: 'badge' }, r.request), h('span', { class: 'mono' }, ` ${r.target} `), r.why))),
+      h('div', { class: 'row' },
+        h('button', { type: 'button', class: 'act small ok', on: { click: () => actBatch(batch.name, 'accept') } }, 'Accept all'),
+        h('button', { type: 'button', class: 'act small danger', on: { click: () => actBatch(batch.name, 'reject') } }, 'Reject all')))));
+  }
+
+  async function actBatch(name, outcome) {
+    let result;
+    try { result = await api(`/api/batches/${encodeURIComponent(name)}/${outcome}`, { method: 'POST' }); }
+    catch (err) { refused(`${outcome === 'accept' ? 'Accepting' : 'Rejecting'} the batch`, err); return; }
+    const notes = [];
+    if (result.refused.length) notes.push(`refused: ${result.refused.map(r => `${r.id} (${r.problems.join(', ')})`).join('; ')}`);
+    if (result.left.length) notes.push(`left for a person: ${result.left.map(r => `${r.id} (${r.reason})`).join('; ')}`);
+    say(notes.length ? 'error' : 'ok', `Batch ${name}: ${result.accepted.length + result.rejected.length} memories, ${result.closed.length} requests${notes.length ? `. ${notes.join('. ')}` : '.'}`);
+    await Promise.all([loadOverview(), loadList()]);
+  }
+
+  async function openTarget(target) {
+    try {
+      const all = await api('/api/memories?queue=all');
+      const found = all.find(m => m.id === target) ?? all.find(m => m.topic === target && m.status !== 'superseded' && m.status !== 'archived')
+        ?? all.find(m => m.topic === target);
+      if (!found) { showEmpty(); say('error', `No memory has the id or topic ${target}.`); return; }
+      openMemory(found.id);
+    } catch (err) { refused('Opening the memory', err); }
+  }
+
+  async function closeRequest(id, outcome) {
+    try { await api(`/api/requests/${encodeURIComponent(id)}/${outcome === 'done' ? 'done' : 'dismissed'}`, { method: 'POST' }); }
+    catch (err) { refused('Closing the request', err); return; }
+    await Promise.all([loadOverview(), loadList()]);
+  }
+
+  // One memory: what it is, what it would do, and what a person can do to it.
+  async function openMemory(id) {
+    state.selected = id;
+    markActive();
+    let detail;
+    try { detail = await api(memoryPath(id)); } catch (err) { showEmpty(); refused('Reading the memory', err); return; }
+    renderDetail(detail);
+  }
+
+  // A write recompiles and the views recompute health: about a second. The page
+  // says it is busy and takes no second click meanwhile.
+  async function act(label, path, body, { method = 'POST', after = 'reopen' } = {}) {
+    document.body.setAttribute('aria-busy', 'true');
+    try {
+      try { await api(path, { method, body }); } catch (err) { refused(label, err); return false; }
+      await Promise.all([loadOverview(), loadList()]);
+      if (after === 'reopen' && state.selected) await openMemory(state.selected);
+      else { state.selected = null; showEmpty(); }
+      say('ok', `${label}: done.`);
+      return true;
+    } finally { document.body.removeAttribute('aria-busy'); }
+  }
+
+  function renderDetail(detail) {
+    const m = detail.memory;
+    const id = m.id;
+    const reason = h('input', { type: 'text', placeholder: 'Reason (optional)', 'aria-label': 'Reason' });
+    const topic = h('input', { type: 'text', value: m.topic, 'aria-label': 'Topic' });
+    const keep = h('input', { type: 'text', placeholder: 'Keep memory id', 'aria-label': 'Memory to merge into' });
+    const remove = h('button', { type: 'button', class: 'act danger' }, 'Delete');
+    remove.addEventListener('click', () => {
+      if (remove.dataset.armed) { act('Delete', memoryPath(id), {}, { method: 'DELETE', after: 'clear' }); return; }
+      remove.dataset.armed = '1';
+      remove.textContent = 'Confirm delete';
+      setTimeout(() => { delete remove.dataset.armed; remove.textContent = 'Delete'; }, 4000);
+    });
+    const live = m.status === 'active' || m.status === 'contested';
+    // A status change acts on the stored memory: unsaved edits are saved first, so
+    // what the person sees is what gets accepted, archived or restored.
+    const change = (label, action, body = () => ({})) => async () => {
+      if (edited() && !(await save())) return;
+      await act(label, memoryAction(id, action), body());
+    };
+    const bar = h('div', { class: 'bar' },
+      m.status === 'candidate' ? h('button', { type: 'button', class: 'act ok', on: { click: change('Accept', '/accept') } }, 'Accept') : null,
+      m.status === 'candidate' ? h('button', { type: 'button', class: 'act danger', on: { click: change('Reject', '/reject', () => ({ reason: reason.value })) } }, 'Reject') : null,
+      live ? h('button', { type: 'button', class: 'act', on: { click: change('Archive', '/archive', () => ({ reason: reason.value })) } }, 'Archive') : null,
+      m.status === 'archived' ? h('button', { type: 'button', class: 'act ok', on: { click: change('Restore', '/restore') } }, 'Restore') : null,
+      // DD accepted it on its own: a person who read it says so, and it leaves that queue.
+      live && m.review?.accepted?.by === 'dd' ? h('button', { type: 'button', class: 'act', on: { click: change('Mark as reviewed', '/reviewed') } }, 'Mark as reviewed') : null,
+      // Evidence files changed since the memory was written: a person who judged the claim still holds re-anchors them.
+      live && detail.stale.length ? h('button', { type: 'button', class: 'act', on: { click: change('Re-verify evidence', '/reverify') } }, 'Re-verify evidence') : null,
+      m.status === 'candidate' || live ? reason : null,
+      h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'),
+      remove);
+
+    const kind = h('select', { id: 'f-kind' }, KINDS.map(k => h('option', { value: k, selected: k === m.kind }, k)));
+    const fields = {
+      title: h('input', { id: 'f-title', type: 'text', value: m.title }),
+      body: textArea('f-body', m.body),
+      not_derivable: textArea('f-nd', m.not_derivable ?? ''),
+      triggers: textArea('f-triggers', pretty(m.triggers), true),
+      check: textArea('f-check', m.check ? pretty(m.check) : '', true),
+    };
+    const values = () => JSON.stringify([kind.value, ...Object.values(fields).map(field => field.value)]);
+    const stored = values();
+    const edited = () => values() !== stored;
+
+    async function save() {
+      const triggers = parseJson(fields.triggers.value, 'triggers');
+      const check = parseJson(fields.check.value, 'check');
+      const errors = [triggers.error, check.error].filter(Boolean);
+      if (errors.length) { say('error', 'Not saved.', errors); return false; }
+      const changes = { kind: kind.value, title: fields.title.value, body: fields.body.value, not_derivable: fields.not_derivable.value,
+        triggers: triggers.value ?? [], check: check.value ?? null };
+      if (!m.check && changes.check === null) delete changes.check;
+      return act('Save', memoryPath(id), changes, { method: 'PUT' });
+    }
+
+    const dryOut = h('div');
+    async function dryRun() {
+      const triggers = parseJson(fields.triggers.value, 'triggers');
+      if (triggers.error) { say('error', 'Dry run not started.', [triggers.error]); return; }
+      let result;
+      try { result = await api(memoryAction(id, '/dry-run'), { method: 'POST', body: { triggers: triggers.value ?? [] } }); }
+      catch (err) { refused('Dry run', err); return; }
+      dryOut.replaceChildren(
+        h('p', {}, `Would have fired in ${result.sessions} of ${result.scanned} recorded sessions.`),
+        result.unjudged.map(note => h('div', { class: 'notice' }, `Not judged: ${note}`)),
+        result.events.length ? h('table', {}, h('thead', {}, h('tr', {}, ['Session', 'At', 'Event', 'Paths', 'Via'].map(t => h('th', {}, t)))),
+          h('tbody', {}, result.events.map(e => h('tr', {}, h('td', { class: 'mono' }, e.session), h('td', { class: 'mono' }, e.at ?? ''),
+            h('td', {}, e.kind), h('td', { class: 'mono' }, e.paths.join(', ')), h('td', { class: 'mono' }, typeof e.via === 'string' ? e.via : JSON.stringify(e.via)))))) : null);
+    }
+
+    const stale = new Set(detail.stale);
+    const pane = h('div', { class: 'pane' },
+      h('div', {}, h('span', { class: 'badge' }, m.kind), h('span', { class: `badge${live ? ' good' : m.status === 'candidate' ? ' warn' : ''}` }, m.status),
+        m.origin ? h('span', { class: 'badge' }, m.origin) : null),
+      h('h2', {}, m.title),
+      h('div', { class: 'mono' }, `${m.topic} · ${id}`),
+      m.review?.issues?.length ? h('div', { class: 'notice' }, 'Review issues:', h('ul', {}, m.review.issues.map(i => h('li', { class: 'mono' }, i)))) : null,
+      h('div', { class: 'row' }, topic, h('button', { type: 'button', class: 'act', on: { click: () => act('Re-topic', memoryAction(id, '/retopic'), { topic: topic.value }) } }, 'Re-topic')),
+      h('label', { for: 'f-kind' }, 'Kind'), kind,
+      h('label', { for: 'f-title' }, 'Title'), fields.title,
+      h('label', { for: 'f-body' }, 'Body'), fields.body,
+      h('label', { for: 'f-nd' }, 'Not derivable (why the code does not show this)'), fields.not_derivable,
+      h('label', { for: 'f-triggers' }, 'Triggers (JSON)'), fields.triggers,
+      h('label', { for: 'f-check' }, 'Check (JSON, empty for none)'), fields.check,
+      m.check ? h('div', { class: `notice ${detail.check.problems.length ? 'error' : 'ok'}` },
+        detail.check.problems.length ? ['The check\'s examples fail:', h('ul', {}, detail.check.problems.map(p => h('li', { class: 'mono' }, p)))]
+          : 'The check\'s examples hold.') : null,
+
+      detail.suggested_triggers.length ? [h('h3', {}, 'Suggested triggers'), h('pre', {}, pretty(detail.suggested_triggers)),
+        h('div', { class: 'row' }, h('button', { type: 'button', class: 'act small', on: { click: () => {
+          fields.triggers.value = pretty(detail.suggested_triggers); grow(fields.triggers);
+        } } }, 'Use these (then save)'))] : null,
+
+      h('h3', {}, 'Dry run over recorded sessions'),
+      h('div', { class: 'row' }, h('button', { type: 'button', class: 'act small', on: { click: dryRun } }, 'Dry run the triggers above')),
+      dryOut,
+
+      h('h3', {}, 'Use'),
+      h('p', {}, `Fired in ${detail.fired} of ${detail.opportunity} sessions with an opportunity.`,
+        Object.keys(detail.by_dimension ?? {}).length ? ` By dimension: ${Object.entries(detail.by_dimension).map(([via, n]) => `${via} ${n}`).join(', ')}.` : ''),
+      detail.signals.length ? h('ul', { class: 'plain' }, detail.signals.map(s => h('li', {}, h('span', { class: 'badge warn' }, s.signal),
+        s.value !== undefined ? h('span', { class: 'mono' }, String(s.value)) : null))) : h('p', { class: 'mono' }, 'No health signal.'),
+
+      h('h3', {}, 'Breadth'),
+      detail.breadth.length ? h('ul', { class: 'plain' }, detail.breadth.map(b => h('li', {}, h('span', { class: 'mono' }, b.glob),
+        h('span', { class: `badge${b.files ? '' : ' bad'}` }, `${b.files} file${b.files === 1 ? '' : 's'}`)))) : h('p', { class: 'mono' }, 'No path trigger.'),
+
+      h('h3', {}, 'Evidence'),
+      m.evidence.length ? h('ul', { class: 'plain' }, m.evidence.map(e => h('li', {}, h('span', { class: 'badge' }, e.type),
+        e.path ? h('span', { class: 'mono' }, e.path) : null,
+        e.path && stale.has(e.path) ? h('span', { class: 'badge bad' }, 'stale') : null,
+        h('span', {}, e.summary ?? '')))) : h('p', { class: 'mono' }, 'No evidence.'),
+
+      h('h3', {}, 'Similar memories'),
+      detail.similar.length ? h('ul', { class: 'plain' }, detail.similar.map(s => h('li', {},
+        h('span', {}, s.title ?? s.id), h('span', { class: 'mono' }, s.id),
+        h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(s.id) } }, 'Open'),
+        h('button', { type: 'button', class: 'act small', on: { click: () => merge(s.id) } }, 'Merge this into it')))) : h('p', { class: 'mono' }, 'None found.'),
+
+      h('h3', {}, 'Merge into another memory'),
+      h('p', { class: 'mono' }, 'This memory is archived; the one kept stays as it is.'),
+      h('div', { class: 'row' }, keep, h('button', { type: 'button', class: 'act', on: { click: () => merge(keep.value.trim()) } }, 'Merge into')));
+
+    async function merge(keepId) {
+      if (!keepId) { say('error', 'Merge needs the id of the memory to keep.'); return; }
+      const ok = await act('Merge', '/api/merge', { keep: keepId, drop: id }, { after: 'clear' });
+      if (ok) openMemory(keepId);
+    }
+
+    $('detail').replaceChildren(bar, pane);
+  }
+
+  // The project's settings (.dd/config.json): what DD reads, changed in place; other keys are kept.
+  async function showSettings() {
+    state.selected = null;
+    markActive();
+    let settings;
+    try { settings = await api('/api/config'); } catch (err) { refused('Reading the settings', err); return; }
+    const auto = h('input', { id: 's-auto', type: 'checkbox' });
+    auto.checked = settings.auto_accept;
+    const bounds = settings.limits.delivery_limit;
+    const limit = h('input', { id: 's-limit', type: 'number', min: String(bounds.min), max: String(bounds.max), step: '500' });
+    limit.value = String(settings.delivery_limit);
+    async function save() {
+      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value) } }); }
+      catch (err) { refused('Saving the settings', err); return; }
+      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters.`);
+      await loadOverview();
+    }
+    $('detail').replaceChildren(h('div', { class: 'pane' },
+      h('h2', {}, 'Settings'),
+      h('div', { class: 'mono' }, `.dd/config.json · project ${settings.project_id ?? '(no project_id)'}`),
+      h('label', { for: 's-auto', class: 'row' }, auto, ' Auto-accept: DD activates a proposal on its own when it verified the evidence itself, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits here as a candidate.'),
+      h('label', { for: 's-limit' }, `Delivery cap, in characters (${bounds.min} to ${bounds.max}; default ${bounds.default}). What does not fit whole is named and arrives at its next event.`), limit,
+      h('p', { class: 'mono' }, 'Other keys in the file are kept as they are.'),
+      h('div', { class: 'bar' }, h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'))));
+  }
+
+  function showCreate() {
+    state.selected = null;
+    markActive();
+    const f = {
+      topic: h('input', { id: 'n-topic', type: 'text', placeholder: 'area/subject' }),
+      kind: h('select', { id: 'n-kind' }, KINDS.map(k => h('option', { value: k }, k))),
+      title: h('input', { id: 'n-title', type: 'text' }),
+      body: textArea('n-body', ''),
+      not_derivable: textArea('n-nd', ''),
+      triggers: textArea('n-triggers', '[]', true),
+      check: textArea('n-check', '', true),
+    };
+    async function create() {
+      const triggers = parseJson(f.triggers.value, 'triggers');
+      const check = parseJson(f.check.value, 'check');
+      const errors = [triggers.error, check.error].filter(Boolean);
+      if (errors.length) { say('error', 'Not created.', errors); return; }
+      let created;
+      try {
+        created = await api('/api/memories', { method: 'POST', body: { topic: f.topic.value.trim(), kind: f.kind.value, title: f.title.value,
+          body: f.body.value, not_derivable: f.not_derivable.value, triggers: triggers.value ?? [], ...(check.value ? { check: check.value } : {}) } });
+      } catch (err) { refused('Create', err); return; }
+      await Promise.all([loadOverview(), loadList()]);
+      await openMemory(created.id);
+      say('ok', 'Created.');
+    }
+    $('detail').replaceChildren(
+      h('div', { class: 'bar' }, h('button', { type: 'button', class: 'act ok', on: { click: create } }, 'Create')),
+      h('div', { class: 'pane' }, h('h2', {}, 'New memory'),
+        h('label', { for: 'n-topic' }, 'Topic'), f.topic,
+        h('label', { for: 'n-kind' }, 'Kind'), f.kind,
+        h('label', { for: 'n-title' }, 'Title'), f.title,
+        h('label', { for: 'n-body' }, 'Body'), f.body,
+        h('label', { for: 'n-nd' }, 'Not derivable (why the code does not show this)'), f.not_derivable,
+        h('label', { for: 'n-triggers' }, 'Triggers (JSON)'), f.triggers,
+        h('label', { for: 'n-check' }, 'Check (JSON, empty for none)'), f.check));
+  }
+
+  // Open on what waits for a person: candidates, else requests, else what DD
+  // accepted on its own, else everything.
+  (async () => {
+    await loadOverview();
+    const queues = state.overview?.queues;
+    if (queues && !queues.candidates) { state.queue = queues.requests ? 'requests' : queues.auto_accepted ? 'auto_accepted' : 'all'; renderQueues(queues); }
+    await loadList();
+  })();
+  </script>
+</body>
+</html>

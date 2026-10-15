@@ -1,0 +1,56 @@
+{
+  "schema_version": 8,
+  "id": "134c931e-6f04-46c3-8370-b7a8cfca0207",
+  "project_id": "supermem",
+  "topic": "dd/store/data-directory-renames",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Moving the data directory: adopt the old base, verify before deleting it",
+  "body": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. Before deleting an old data directory, open its index.sqlite read-only with node:sqlite (no sqlite3 CLI on this machine) and compare its memory_atoms topic_keys with .dd/atoms/; delete it only when every topic_key already exists there, and only after the user confirms.\n\nWhy: The data directory moved three times (~/.supermem, ~/.dd, ~/.dd-data). Adoption is list-driven, so a move without updating the list silently abandons telemetry, observations and the contradiction log while atoms return from git and the store still looks complete. The 2026-09-19 cleanup confirmed the topic_key comparison is enough to tell an old directory holds nothing unmigrated.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/project.js",
+        "src/store/adopt.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/store/adopt.js",
+      "sha256": "aa977d07d70489245e1beb5e838b833d949f91c2611e3b8e01c8d33562cb3d4e",
+      "summary": "previousDataDirs and adoptHistory adopt history only from the listed candidate directories."
+    },
+    {
+      "type": "file",
+      "path": "src/project.js",
+      "sha256": "a2a8051b9fb584ab7715349d1080c7ba32179b47a90d62c412ea535b0f862a31",
+      "summary": "openStore passes previousDataDirs candidates to adoptHistory when the index is fresh."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When moving or renaming DD's data directory, or deciding whether an old DD data directory can be deleted"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T21:38:23.845Z"
+    }
+  },
+  "created": "2026-09-24T21:38:23.851Z",
+  "updated": "2026-09-27T14:57:34.227Z"
+}

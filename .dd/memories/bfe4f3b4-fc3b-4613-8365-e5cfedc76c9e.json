@@ -1,0 +1,56 @@
+{
+  "schema_version": 8,
+  "id": "bfe4f3b4-fc3b-4613-8365-e5cfedc76c9e",
+  "project_id": "supermem",
+  "topic": "ui/server-routes-need-restart",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "A running resident keeps its route code; index.html is read fresh",
+  "body": "Verify a route or handler change against a restarted resident: pipe a session-start payload into node hooks/run.cjs session-start, then check GET /api/resident shows stale:false. index.html is read on every GET / and needs only a browser refresh. A resident whose src/ changed refuses hooks (409 build_stale) and is replaced at the next prompt or session start, but until then it keeps serving UI routes with its old code.\n\nWhy: A new route returned 404 against the already-running process while a fresh one served it. Stale detection only guards hook calls, so UI routes silently run old code until replacement.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/ui/server.js",
+        "src/ui/public/index.html"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/ui/server.js",
+      "sha256": "297196f0916649a6f60d100d56a54b514efb282217646c46dbcf2fc91896153b",
+      "summary": "staleCode() gates /api/hooks/* only; index.html is read per request."
+    },
+    {
+      "type": "file",
+      "path": "src/hooks/run.js",
+      "sha256": "2c1cf2140140c61db89ecf3019f923eb57b4bd2bc979379bfdd5e2b71ae420e3",
+      "summary": "The prompt path now calls ensureResident, which replaces a stale resident."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "cf1ad3c5-9c4b-4cdf-83ce-73df45201ffb",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when editing src/ui/server.js routes or handlers and verifying against a running audit UI"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T16:49:24.628Z"
+    }
+  },
+  "created": "2026-09-24T12:07:09.516Z",
+  "updated": "2026-09-24T21:38:22.606Z"
+}

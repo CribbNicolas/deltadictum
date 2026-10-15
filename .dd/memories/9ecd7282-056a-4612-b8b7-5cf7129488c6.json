@@ -1,0 +1,75 @@
+{
+  "schema_version": 8,
+  "id": "9ecd7282-056a-4612-b8b7-5cf7129488c6",
+  "project_id": "supermem",
+  "topic": "engine/retrieval/token-cost-lives-in-get",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "DD token overhead: MCP get payload is mostly duplicated text",
+  "body": "Measure before assuming retrieval volume or memory size is the cost. Retrieval rarely injects (98% abstain, 1.17 memories per injection). The waste is in MCP get: of ~7 KB per atom, ~4.2 KB is exact duplication (retrieval_forms repeats behavior_delta+why three times, what copies behavior_delta, evidence_state repeats evidence_refs plus hashes). Remove duplicates from model-facing output instead of shortening authored content; shortening micro forms loses scope/conditions and saves little.\n\nWhy: Per-field breakdown of the 34 active atoms on 2026-09-22: retrieval_forms 2789 B, evidence_state 777 B, what 671 B, versus behavior_delta 674 B, evidence_refs 469 B, why 394 B. Telemetry in ~/.dd-data/supermem-*/index.sqlite: 1118 retrievals, 23 non-abstained. retrieve.js already notes compact forms cannot remove the scope that makes advice valid.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/mcp/tools.js",
+        "src/engine/contract.js",
+        "src/engine/retrieve.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/engine/contract.js",
+      "sha256": "8f5e170df962bd4bd03ad7179c5491b00a7c60f3538c5b63cf74d51c50967106",
+      "summary": "deriveForms builds micro/short/full from behavior_delta and why; normalizeProposal sets what = behavior_delta"
+    },
+    {
+      "type": "file",
+      "path": "src/mcp/tools.js",
+      "sha256": "5b8edabdcfc1790358ae54518e819b1353033beec8feb51291f9071bc81e4e14",
+      "summary": "get returns the full atom verbatim via jsonResult"
+    },
+    {
+      "type": "observation",
+      "ref": "per-field atom size breakdown 2026-09-22",
+      "summary": "avg bytes: retrieval_forms 2789, evidence_state 777, behavior_delta 674, what 671, evidence_refs 469, why 394"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "f0215a48-6340-4113-a519-0a5c1ce2588e",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "get payload shape changes",
+      "path": "src/mcp/tools.js",
+      "hash": "5b8edabdcfc1790358ae54518e819b1353033beec8feb51291f9071bc81e4e14"
+    },
+    {
+      "kind": "file_changed",
+      "description": "form derivation or what field changes",
+      "path": "src/engine/contract.js",
+      "hash": "8f5e170df962bd4bd03ad7179c5491b00a7c60f3538c5b63cf74d51c50967106"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When investigating DD token cost, JSON overhead, or proposing to shrink memories/forms to save tokens"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-22T19:40:56.108Z"
+    }
+  },
+  "created": "2026-09-22T19:19:06.773Z",
+  "updated": "2026-09-22T19:59:37.568Z"
+}

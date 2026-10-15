@@ -1,0 +1,49 @@
+{
+  "schema_version": 8,
+  "id": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
+  "project_id": "supermem",
+  "topic": "release/npm/bin-path",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "npm 11 drops a bin path written with ./",
+  "body": "Write bin paths without a leading ./ (\"src/cli.js\"), and before publishing read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived; watch for 'npm auto-corrected some errors' in npm publish output.\n\nWhy: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "package.json"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "package.json",
+      "sha256": "0bc15fda0514c0f73ad56c22c368294759303b1badf3c6ae266f1e9db2249b31",
+      "summary": "bin now reads {\"deltadictum\": \"src/cli.js\"}"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "Before publishing deltadictum or editing bin in package.json"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T11:41:56.037Z"
+    }
+  },
+  "created": "2026-09-24T02:05:12.337Z",
+  "updated": "2026-09-27T14:57:14.675Z"
+}

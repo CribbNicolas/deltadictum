@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { access } from 'node:fs/promises';
 
@@ -31,17 +31,14 @@ test('deltadictum install --host codex writes Codex project files without openin
 });
 
 // 0.8.2 printed "ddDir is not defined" for status: the command had never run.
-test('deltadictum status reports the project and where its files live', async () => {
+// v2 keeps everything in the project's .dd/, and status creates none of it.
+test('deltadictum status counts the project memories and creates nothing', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-cli-status-'));
   await mkdir(join(root, '.git'));
   const { code, stdout, stderr } = await run(['status'], { cwd: root });
   assert.equal(code, 0, stderr);
-  const status = JSON.parse(stdout);
-  assert.match(status.project_id, /^dd-cli-status-/);
-  // The physical path: macOS reaches its temporary directory through a symlink.
-  assert.ok(status.dd_dir.endsWith(join(basename(root), '.dd')), status.dd_dir);
-  assert.ok(status.data_dir);
-  assert.equal(status.total, 0);
+  assert.deepEqual(JSON.parse(stdout), { total: 0, by_status: {}, candidates: 0, conflicts: [] });
+  await assert.rejects(access(join(root, '.dd')));
 });
 
 // A typo, --help or --version used to open a store first, creating .dd/ in
@@ -59,4 +56,12 @@ test('help, version and an unknown command leave the current directory untouched
   assert.equal(unknown.code, 1);
   assert.match(unknown.stderr, /Unknown command: statsu/);
   await assert.rejects(access(join(root, '.dd')));
+});
+
+test('deltadictum version prints the package version without loading v1 modules', async () => {
+  const { code, stdout } = await run(['version']);
+  assert.equal(code, 0);
+  assert.equal(stdout.trim(), JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version);
+  const source = await readFile(new URL('../../src/cli.js', import.meta.url), 'utf8');
+  for (const v1 of ['./project.js', './resident.js', './hooks/build.js', './engine/project-context.js']) assert.ok(!source.includes(v1), v1);
 });

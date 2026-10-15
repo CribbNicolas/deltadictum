@@ -1,82 +1,155 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { createMemoryStore } from '../../src/store/create-store.js';
-import { startUiServer } from '../../src/ui/server.js';
-import { fileActions } from '../../src/engine/actions.js';
-import { proposeMemory } from '../../src/engine/write.js';
-import { uiCookie } from '../helpers/resident.js';
-import { PROVENANCE } from '../helpers/atom.js';
+import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from '../../src/ui/actions.js';
+import { loadIndex } from '../../src/engine/index-file.cjs';
+import { createMemoryFiles } from '../../src/memory/store.js';
+import { memory, project } from '../helpers/review.js';
 
-async function setup(t) {
-  const root = await mkdtemp(join(tmpdir(), 'dd-ui-actions-'));
-  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, 'data'), repoRoot: root });
-  await store.putAtom({ id: 'u1', project_id: 'demo', memory_type: 'lesson', scope: 'project', title: 'Old install flow',
-    trigger: 'when installing', behavior_delta: 'Run the old installer.', what: 'W.', why: 'Y.', authority: 'validated',
-    confidence: 0.8, valid_from: '2026-09-01T00:00:00.000Z', topic_key: 'demo/install/flow', tags: [], evidence_refs: [],
-    trigger_variants: [], assumptions: [], revisit_when: [], alternatives: [], applies_to: { files: [], components: [], operations: [] },
-    ...PROVENANCE, lifecycle_state: 'active' });
-  const ui = await startUiServer({ store, projectId: 'demo', port: 0 });
-  t.after(async () => { await ui.close(); store.close(); });
-  const cookie = uiCookie(ui);
-  const html = await (await fetch(ui.url + '/', { headers: cookie })).text();
-  const token = html.match(/name="dd-review-token" content="([a-f0-9]+)"/)[1];
-  const call = async (path, body, { review = true } = {}) => {
-    const res = await fetch(ui.url + path, { method: body === undefined ? 'GET' : 'POST',
-      headers: { ...cookie, 'content-type': 'application/json', ...(review ? { 'x-dd-review-token': token } : {}) },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-    return { status: res.status, body: await res.json() };
-  };
-  return { store, call };
-}
+const list = async root => Object.fromEntries((await createMemoryFiles(join(root, '.dd')).list()).map(m => [m.id, m]));
 
-// The reviewer applies, rejects or sends back what the agent filed; nothing else can.
-test('actions are listed, revised, rejected and applied only through the review token', async t => {
-  const { store, call } = await setup(t);
-  const [a1, a2] = await fileActions([
-    { kind: 'archive', targets: ['u1'], archived_reason: 'Replaced by the plugin install.', rationale: 'The user asked.' },
-    { kind: 'legacy', targets: ['u1'], legacy_reason: 'The old installer broke on Windows.', rationale: 'The user asked.' },
-  ], { store, projectId: 'demo' });
-  const listed = await call('/api/actions');
-  assert.equal(listed.body.length, 2);
-  assert.deepEqual(listed.body[0].target_atoms[0], { id: 'u1', title: 'Old install flow', topic_key: 'demo/install/flow', lifecycle_state: 'active' });
-  assert.equal((await call(`/api/actions/${a1.id}/apply`, {}, { review: false })).status, 403);
-  assert.equal((await call(`/api/actions/${a1.id}/revise`, { reason: '' })).body.error, 'revision_reason_required');
-  assert.equal((await call(`/api/actions/${a1.id}/revise`, { reason: 'Name what replaced it.' })).status, 200);
-  assert.equal((await call(`/api/actions/${a1.id}/apply`, {})).body.error, 'revision_requested');
-  assert.equal((await call(`/api/actions/${a2.id}/apply`, { rationale: 'Agreed.' })).status, 200);
-  assert.equal((await store.getAtom('u1', 'demo')).lifecycle_state, 'legacy');
-  assert.equal((await call(`/api/actions/${a1.id}/reject`, { note: 'Already legacy.' })).status, 200);
-  assert.deepEqual((await call('/api/actions')).body, []);
-  assert.deepEqual((await call('/api/status')).body.archive_review, { archived: 0, threshold: 50, due: false });
+test('an edit by a person is validated, marks the origin and recompiles', async t => {
+  const root = await project(t, [memory('m1')]);
+  const edited = await editMemory(root, 'm1', { body: 'Close the store in `t.after`, always.' });
+  assert.equal(edited.origin, 'user_explicit');
+  assert.ok(loadIndex(root).memories.m1);
+  await assert.rejects(editMemory(root, 'm1', { not_derivable: '' }), err => err instanceof ReviewError && err.problems.includes('not_derivable_required'));
+  await assert.rejects(editMemory(root, 'm1', { triggers: [{ on: ['edit'], paths: ['docs/none.md'] }] }), err => err.problems.includes('dead_glob:docs/none.md'));
+  await assert.rejects(editMemory(root, 'm1', { id: 'x', status: 'archived' }), err => err.problems.includes('not_editable:id'));
 });
 
-test('a candidate memory can be sent back with a reason', async t => {
-  const { store, call } = await setup(t);
-  const { atom } = await proposeMemory({ project_id: 'demo', topic_key: 'demo/install/new', trigger: 'when installing the plugin',
-    behavior_delta: 'Use the marketplace.', why: 'It installs dependencies.', capture_origin: 'model_initiated',
-    evidence_refs: [{ source_type: 'user_statement', source_ref: 'chat', summary: 'Asked.' }] }, { store });
-  assert.equal((await call(`/api/atoms/${atom.id}/revise`, { reason: 'Say which marketplace.' })).status, 200);
-  assert.equal((await store.getAtom(atom.id, 'demo')).revision_requested.reason, 'Say which marketplace.');
-  assert.equal((await call(`/api/atoms/${atom.id}/admit`, { rationale: 'ok' })).body.error, 'revision_requested');
+test('a person supplying not_derivable completes a migrated memory\'s review, and its exemption ends', async t => {
+  const migrated = memory('m1', { not_derivable: '', review: { migrated: true, issues: ['not_derivable_missing', 'folder_scope'] } });
+  const root = await project(t, [migrated]);
+  const reviewed = await editMemory(root, 'm1', { not_derivable: 'Hidden from the code.' });
+  assert.equal(reviewed.review.migrated, false);
+  assert.deepEqual(reviewed.review.issues, ['folder_scope']);
+  await assert.rejects(editMemory(root, 'm1', { not_derivable: '' }), err => err.problems.includes('not_derivable_required'));
+  // An edit that leaves not_derivable empty is not that review: the memory stays migrated and queued.
+  const other = await project(t, [migrated]);
+  assert.equal((await editMemory(other, 'm1', { title: 'Renamed' })).review.migrated, true);
 });
 
-// The Actions tab shows which actions arrived since the reviewer last looked,
-// through the same machine-local record as memories (src/store/seen.js).
-test('an action stays unseen until the reviewer marks it seen', async t => {
-  const previous = process.env.CLAUDE_PLUGIN_DATA;
-  process.env.CLAUDE_PLUGIN_DATA = await mkdtemp(join(tmpdir(), 'dd-seen-'));
-  t.after(() => { if (previous === undefined) delete process.env.CLAUDE_PLUGIN_DATA; else process.env.CLAUDE_PLUGIN_DATA = previous; });
-  const { store, call } = await setup(t);
-  const [a1, a2] = await fileActions([
-    { kind: 'archive', targets: ['u1'], archived_reason: 'Replaced.', rationale: 'The user asked.' },
-    { kind: 'legacy', targets: ['u1'], legacy_reason: 'Broke on Windows.', rationale: 'The user asked.' },
-  ], { store, projectId: 'demo' });
-  assert.deepEqual((await call('/api/actions')).body.map(a => a.seen), [false, false]);
-  assert.equal((await call('/api/actions/seen', { ids: [a1.id] }, { review: false })).status, 403);
-  assert.equal((await call('/api/actions/seen', { ids: [a1.id] })).status, 200);
-  const seen = Object.fromEntries((await call('/api/actions')).body.map(a => [a.id, a.seen]));
-  assert.deepEqual(seen, { [a1.id]: true, [a2.id]: false });
+test('accepting a revision supersedes what it replaces, in one commit', async t => {
+  const root = await project(t, [memory('old'), memory('new', { topic: 'ui/old', status: 'candidate', replaces: 'old' })]);
+  await acceptMemory(root, 'new');
+  const after = await list(root);
+  assert.equal(after.new.status, 'active');
+  assert.equal(after.new.review.accepted.by, 'person');
+  assert.equal(after.old.status, 'superseded');
+  await assert.rejects(acceptMemory(root, 'old'), err => err.problems.includes('not_a_candidate'));
+});
+
+test('reject, archive, restore and delete; a restore onto a live topic is refused', async t => {
+  const root = await project(t, [memory('c', { status: 'candidate' }), memory('a'), memory('b', { topic: 'ui/b' })]);
+  assert.equal((await rejectMemory(root, 'c', 'Not specific.')).status, 'archived');
+  assert.equal((await archiveMemory(root, 'a', 'Obsolete.')).status, 'archived');
+  assert.equal((await restoreMemory(root, 'a')).status, 'active');
+  await archiveMemory(root, 'a', 'Again.');
+  await createMemory(root, { topic: 'ui/a', kind: 'trap', title: 'Replacement', body: 'Use `aThing` in src/a.js.', not_derivable: 'Hidden from the code.',
+    triggers: [{ on: ['edit'], paths: ['src/a.js'] }] });
+  await assert.rejects(restoreMemory(root, 'a'), err => err.problems.includes('topic_is_live:ui/a'));
+  await deleteMemory(root, 'b');
+  assert.equal((await list(root)).b, undefined);
+});
+
+test('a memory a person writes is active and accepted by a person; merge and re-topic keep one live memory per topic', async t => {
+  const root = await project(t, [memory('keep'), memory('drop', { topic: 'ui/drop' })]);
+  const made = await createMemory(root, { topic: 'ui/new', kind: 'fact', title: 'New', body: 'Ports below 1024 need admin on src/a.js servers.',
+    not_derivable: 'Hidden from the code.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }] });
+  assert.equal(made.status, 'active');
+  assert.equal(made.origin, 'user_explicit');
+  assert.equal(made.review.accepted.by, 'person');
+  await mergeMemories(root, 'keep', 'drop');
+  const after = await list(root);
+  assert.equal(after.drop.status, 'archived');
+  assert.ok(after.drop.review.issues.includes('merged_into:keep'));
+  assert.equal((await retopicMemory(root, 'keep', 'ui/kept')).topic, 'ui/kept');
+  await assert.rejects(retopicMemory(root, 'keep', 'ui/new'), err => err.problems.some(p => p.startsWith('live_topic_conflict')));
+});
+
+// Retirement by disuse spares only what a person reviewed (review.accepted.by):
+// a restore, an edit or a re-topic of a live memory is that review, or the next
+// maintenance run archives the memory again.
+test('restoring, editing or re-topicking a live memory records the person, so retirement spares it', async t => {
+  const retired = memory('r1', { status: 'archived', review: { migrated: false, issues: ['retired_by_disuse'], accepted: { by: 'dd', at: '2026-09-01T00:00:00.000Z' } } });
+  const root = await project(t, [retired, memory('e1', { topic: 'ui/e1' })]);
+  const restored = await restoreMemory(root, 'r1');
+  assert.equal(restored.review.accepted.by, 'person');
+  assert.deepEqual(restored.review.issues, []);
+  assert.equal((await editMemory(root, 'e1', { title: 'Renamed rule' })).review.accepted.by, 'person');
+  assert.equal((await retopicMemory(root, 'r1', 'ui/r1-moved')).review.accepted.by, 'person');
+  const candidate = await project(t, [memory('c1', { status: 'candidate' })]);
+  assert.equal((await editMemory(candidate, 'c1', { title: 'Still a candidate' })).review.accepted, undefined);
+});
+
+// Auto-accept activates a memory without a person. What DD accepted stays
+// reviewable: a person marks one as seen without changing it, and retirement then
+// spares it like any memory a person reviewed.
+test('a memory DD accepted can be marked as reviewed by a person, unchanged; a candidate cannot', async t => {
+  const root = await project(t, [memory('auto', { review: { migrated: false, issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } }),
+    memory('c1', { topic: 'ui/c1', status: 'candidate' })]);
+  const seen = await markReviewed(root, 'auto');
+  assert.equal(seen.review.accepted.by, 'person');
+  assert.equal(seen.body, 'Close the store in t.after (auto).');
+  assert.equal(seen.origin, 'model_initiated');
+  await assert.rejects(markReviewed(root, 'c1'), err => err instanceof ReviewError && err.problems.includes('not_live'));
+});
+
+test('a merge into a memory that is not live is refused: the merged knowledge would stop being delivered', async t => {
+  const root = await project(t, [memory('old', { status: 'archived' }), memory('drop', { topic: 'ui/drop' })]);
+  await assert.rejects(mergeMemories(root, 'old', 'drop'), err => err.problems.includes('merge_into_archived'));
+  assert.equal((await list(root)).drop.status, 'active');
+});
+
+test('a memory a person writes in an empty store takes the project id from .dd/config.json', async t => {
+  const root = await project(t, []);
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'acme' }));
+  const made = await createMemory(root, { topic: 'ui/new', kind: 'fact', title: 'New', body: 'Ports below 1024 need admin on src/a.js servers.',
+    not_derivable: 'Hidden from the code.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }] });
+  assert.equal(made.project_id, 'acme');
+});
+
+// A drafted line (written by an agent through the store) does not end the review: the person saves it.
+test('re-verifying evidence re-hashes the files that exist, keeps the missing ones stale, and records the person', async t => {
+  const root = await project(t, [memory('m1', { evidence: [
+    { type: 'file', path: 'src/a.js', sha256: 'a'.repeat(64), summary: 'changed since' },
+    { type: 'file', path: 'src/gone.js', sha256: 'b'.repeat(64), summary: 'removed' },
+    { type: 'observation', ref: 'conversation', summary: 'kept as is' },
+  ] })]);
+  const result = await reverifyEvidence(root, 'm1');
+  const { createHash } = await import('node:crypto');
+  const { readFileSync } = await import('node:fs');
+  assert.equal(result.memory.evidence[0].sha256, createHash('sha256').update(readFileSync(join(root, 'src', 'a.js'))).digest('hex'));
+  assert.equal(result.memory.evidence[1].sha256, 'b'.repeat(64));
+  assert.deepEqual(result.memory.evidence[2], { type: 'observation', ref: 'conversation', summary: 'kept as is' });
+  assert.deepEqual(result.stale, ['src/gone.js']);
+  assert.equal(result.memory.review.reviewed_by?.by ?? result.memory.review.accepted?.by, 'person');
+});
+
+test('accepting a batch accepts its candidates, carries out its archive requests and reports what it could not do', async t => {
+  const root = await project(t, [memory('old'), memory('c1', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot' } }),
+    memory('bad', { status: 'candidate', triggers: [{ on: ['edit'], paths: ['docs/none.md'] }], review: { migrated: false, issues: [], batch: 'lot' } }),
+    memory('other', { status: 'candidate', review: { migrated: false, issues: [], batch: 'elsewhere' } })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'archive', target: 'ui/old', why: 'Replaced.', batch: 'lot' }));
+  writeFileSync(join(dir, 'r2.json'), JSON.stringify({ id: 'r2', request: 'revise', target: 'old', why: 'Outdated.', batch: 'lot' }));
+  const result = await batchAction(root, 'lot', 'accept');
+  assert.deepEqual(result.accepted, ['c1']);
+  assert.deepEqual(result.refused.map(r => r.id), ['bad']);
+  assert.ok(result.refused[0].problems.includes('dead_glob:docs/none.md'));
+  assert.deepEqual(result.closed, ['r1']);
+  assert.deepEqual(result.left.map(r => r.id), ['r2']);
+  const after = await list(root);
+  assert.equal(after.c1.status, 'active');
+  assert.equal(after.c1.review.accepted.by, 'person');
+  assert.equal(after.old.status, 'archived');
+  assert.equal(after.bad.status, 'candidate');
+  assert.equal(after.other.status, 'candidate');
+  const rejected = await batchAction(root, 'elsewhere', 'reject');
+  assert.deepEqual(rejected.rejected, ['other']);
+  assert.equal((await list(root)).other.status, 'archived');
+  await assert.rejects(batchAction(root, 'nothing', 'accept'), err => err instanceof ReviewError && err.problems.includes('batch_not_found'));
 });

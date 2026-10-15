@@ -1,0 +1,79 @@
+{
+  "schema_version": 8,
+  "id": "a409e5a3-34b3-45c9-9bb1-347690d86250",
+  "project_id": "supermem",
+  "topic": "hooks/observe/validation-false-positives",
+  "kind": "trap",
+  "status": "archived",
+  "title": "A 'validation' observation does not prove a test passed",
+  "body": "Do not cite a 'validation' observation as proof of a pass without reading its raw_preview: reject it as evidence when the preview shows failure markers (fail 1+, not ok, ✖, AssertionError) or when the command only read a test file. Run the tests without a pipe instead when a pass must be shown.\n\nWhy: observationFromTool (src/hooks/observe.js) marks any Claude Code Bash call whose command contains a word like test or check and whose PostToolUse reports interrupted:false as 'Validation passed'. A piped test run exits with the pipe's last status, and a grep or sed over a *.test.js file matches the regex, so on 2026-09-24 failing runs and plain file reads were recorded as passes.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/hooks/observe.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "validation observation",
+        "raw_preview",
+        "tests passed",
+        "success rate",
+        "observation counts"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/observe.js",
+      "sha256": "bcc9dcade473a025001b6dcda8d25665b1a5842a6ec515e0b038d0c9fc27c17d",
+      "summary": "Line 27: validation = !failed && succeeded && /\\b(test|pytest|jest|vitest|lint|typecheck|tsc|check)\\b/i.test(command)."
+    },
+    {
+      "type": "file",
+      "path": "TODO.md",
+      "summary": "Item 4 records the two false positives seen in this project's observations on 2026-09-24."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "f4c6ec8f-aef0-4b24-b967-05e39a362d6a",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "Retire this once observationFromTool stops recording piped runs and file reads as validations (TODO.md item 4).",
+      "path": "src/hooks/observe.js",
+      "hash": "bcc9dcade473a025001b6dcda8d25665b1a5842a6ec515e0b038d0c9fc27c17d"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "When citing a host 'validation' observation as evidence that tests passed, or reading observation counts as a success rate"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-27T14:57:34.405Z"
+    }
+  },
+  "created": "2026-09-27T02:37:08.784Z",
+  "updated": "2026-09-27T20:38:21.860Z"
+}

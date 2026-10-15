@@ -1,31 +1,131 @@
 # DeltaDictum current contract
 
-Knowledge schema 7 is defined by [project cognition](architecture/project-cognition.md) and implemented by the engine, store and transport tests. Where this document and `src/` disagree, `src/` is what DD does and this document is corrected.
+DD v2 keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
+applies to. The design is [the v2 spec](superpowers/specs/2026-10-08-dd-v2-design.md); this page states what
+the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
+corrected.
 
-- Knowledge is conditional engineering guidance: action, rationale, scope, assumptions, revision conditions and evidence.
-- Project isolation precedes retrieval. Derived project facts are source-attributed.
-- Delivery favours recall: an extra memory costs less than a missing essential one. Anchors guarantee delivery: a memory is pushed whenever one of its `anchors.keywords` appears in the prompt or tool call as whole words (accent and case insensitive, simple plurals), the request reads or edits one of its `anchors.files` (exact files from its scope, never a folder), or names one of its components; the pushed line names the anchor. Without an anchor hit, every memory, anchored or not, keeps the lexical and semantic activation. `anchors.not_when` phrases keep a memory out either way. A project that sets `anchors.only` trades that recall for determinism: only anchor hits push. A prompt with almost no content (fewer than two words that are not fillers or function words, such as "si dale") is treated that way too, since similarity has nothing to go on. A prompt's semantic floor is 0.01 below a tool call's: a prompt states what the person is after. Host tools that carry no project work (Skill, ToolSearch, WebSearch, WebFetch, subagent hand-backs, Monitor and similar) make no retrieval at all.
-- Delivered memories are ordered by reciprocal rank fusion of the full-text (BM25) and dense rankings plus anchor hits. On a prompt, a memory both rankings place in their top 3 is eligible even when neither signal clears its floor (the fused leader within their top 5). On prompts and tool calls alike, up to eight more that either ranking places in its top 20 follow as one-line pointers (`topic_key — when it applies (get id)`), never for a memory the session already has and once per session each; the agent pulls one with `get` if it applies. A substantive prompt that is not in English also carries a line asking the agent to call `retrieve` with the task described in English, since memories are matched in English. The MCP `retrieve` tool counts as a prompt and as a pull: its five best memories by fused rank are returned even below their floors.
-- An anchor is validated before it is stored: at least two keywords of at most three words, no function words or lone generic terms, each present in the memory's own text, none matching a fixed corpus of content-free or generic requests. The agent's `propose` requires anchors; it anchors an existing memory with the `anchor` action, which keeps the memory's id and applies itself once validated (INV-04's one exception: retrieval metadata only; `auto_apply_retrieval_metadata: false` makes it wait for a person). A keyword edited in by hand that would fail is ignored at delivery. `health` lists unanchored memories, failing anchors, and keywords or files shared by several memories.
-- Session start lists every live memory by topic and title (the memory map), once per session and after compaction, grouped by domain past its budget. The agent pulls any line that applies with `get`; the map is the delivery every host supports.
-- A proposal never displaces an effective decision until it is admitted. Local review admits it, or the auto-accept sweep does when the candidate's freshly verified evidence reaches the project's threshold (`auto_accept`, on by default at 0.765: a repository file DD hashed, behind a model-initiated proposal). The sweep runs when the resident first opens a project, when the audit UI lists memories and when the setting changes; it takes the newest candidate per topic and leaves to a person any candidate sent back, flagged as a suspected duplicate, or replacing a memory that has a pending action. Only local review resolves a dispute.
-- Capture has no proposal count limit per call or session. Automatic reminders use independent turn guards; they cannot block explicit proposals.
-- A user prompt carrying corrective language is recorded as a bounded local observation with `user_correction` provenance, detected by a deterministic English/Spanish rule in the prompt hook. It is evidence a proposal may cite, never knowledge; a detected correction promotes nothing and sets no confidence, and a failure to record one never withholds the turn's retrieval context. Recorded observations are listed read-only in the audit UI and offer the reviewer no action of their own.
-- `capture_origin` distinguishes model initiative from an explicit request to save knowledge. A proposal that states none is recorded as `user_explicit`; a stored memory without it is refused, not defaulted. Capture, transport and approval remain separate.
-- A proposal whose trigger collides with an effective memory is routed, not duplicated. One restating that memory with the same scope and the same direction becomes a candidate revision naming it; a collision with a disjoint scope stays separate knowledge; anything ambiguous, including an opposing instruction or more than one equally close match, becomes a candidate flagged as a suspected pair for the reviewer. Both tests are lexical. Nothing merges, supersedes or is deleted without local review.
-- Knowledge that nothing activates is retired by disuse, never by age alone. A memory is archived only when it was never reviewed above `inferred`, was never activated, is past a configured minimum age, and the project ran enough retrievals after it was written for its trigger to have had real chances to fire. Review protects: `validated` and `canonical` are unreachable by this path, a contested memory is excluded, and so is one a pending candidate is proposing to revise. Archiving is not deleting — the memory keeps its git file, leaves retrieval, and a reviewer restores it from the audit UI. Deletion stays manual and confirmed. The sweep is lazy, on the write path, never on the hot path, and never fails the write.
-- The agent asks for store changes through actions (`act`): archive, restore, delete, legacy, merge, split, retopic, resolve and anchor. An action is a pending file in `.dd/actions/` until a person applies, rejects or sends it back in the audit UI; applying it is all or nothing and is refused when a target changed since it was filed. Actions are never auto-accepted. A merge moves each source one step down: active or contested to superseded, superseded or legacy to archived.
-- `legacy` records a practice the project abandoned. It is recalled, flagged `LEGACY` with why it was abandoned and what replaced it, only when neither its replacement nor a current memory on its topic is in the pack; it never outranks current knowledge. `superseded` is history for evolving a memory and is never recalled.
-- Every archived memory states why it was archived. Past `archive_review_at` archived memories (default 50), the session start asks the agent to offer a cleanup.
-- A reviewer can send a pending memory or action back with a reason. It cannot be admitted or applied until a corrected version answers it (`revises`); the reason reaches the agent on its next prompt and at session start, once per session.
-- Artifact verification establishes provenance/integrity; review assesses claim support.
-- Source reliability caps attainable confidence. One declared ordinal ladder ranks unverified agent claim below host observation below repository artifact below observed user correction; the cap is applied at admission, evidence volume does not exceed it, and `capture_origin` can only lower it. A reviewer granting `canonical` is not clamped; nothing else rises above the ladder.
-- Advice remains subordinate to host instructions, user intent and current project evidence.
-- Every compact form preserves applicability. Disputed or stale knowledge remains explicitly qualified.
-- Context budgets account for what the agent reads: each memory with its flag and id, each pointer line and a fixed envelope, using a documented model-independent estimate. A pack fills breadth first: every memory that matched joins in its most compact form that fits, down to a flagged headline with its id, and only then does each, in order of value, take the fullest form the remaining budget allows.
-- Local telemetry distinguishes retrieval, outcomes and evidence. Frequency is not correctness.
-- Mutations are serialized and recoverable. Git is knowledge authority; SQLite is derived indexing plus local telemetry.
+## Memories
 
-**DD is a plugin for coding-agent harnesses, not a service.** [`architecture/plugin-constraints.md`](architecture/plugin-constraints.md) states the seven limits that follow from that and is the boundary every other document operates inside. Documents describing a service — a database engine, an external vector store, an inference server, federation — have been removed rather than deferred. Embeddings are a required part of the plugin itself: they run inside the resident process, one per machine shared by every project, with vectors in each project's SQLite index; without that process DD is inactive and says so.
+- A memory is one JSON file, `.dd/memories/<id>.json` (schema 8, `src/memory/schema.js`), committed with the
+  project. Its kind is `decision`, `trap`, `failed_approach`, `fact` or `procedure`; its status is `candidate`,
+  `active`, `contested`, `superseded` or `archived`.
+- A memory carries a title, a body, `not_derivable` (why a capable agent reading the code would not work it
+  out), triggers, an optional check, evidence and its origin (`model_initiated` or `user_explicit`).
+  `not_derivable` is required for a memory to be live, except for memories converted from v1
+  (`review.migrated`) until a person supplies it in the review UI.
+- At most one live (`active` or `contested`) memory per topic. A revision is a candidate that `replaces` a live
+  memory; accepting it supersedes that memory in the same commit.
+- Writes go through one journaled, locked transaction (`src/store/transactions.js`); an interrupted one is
+  rolled forward before the next. Validation (schema, secrets, unsafe content, glob safety, sizes) runs before
+  anything is written.
+- `.dd/local/` is derived and git-ignored: the compiled index, session files, telemetry. `deltadictum
+  compile` rebuilds the index; session start rebuilds a stale one.
 
-The `v2`, `v4`, `v5` and `v6` directories under `src/engine/` are named after the phases that introduced them, not after separate contracts: admission, sanitizing, intent, full-text queries, the topic registry and contradiction handling in them all run under the schema-7 contract. The one module no runtime path reaches is `v5/proposals.js`, the topic-registry proposal gate (aliases, renames, promotion), which no transport exposes yet. No roadmap phase is claimed as implemented merely because a helper exists.
+## Delivery
+
+- A memory fires when one of its trigger clauses matches an event: `on` names the event kinds (`prompt`,
+  `read`, `edit`, `write`, `run`, `search`), and paths (globs with `*`, `**`, `?` and `{a,b}`), symbols,
+  commands or prompt keywords narrow it. Matching is rule matching over the compiled index
+  (`src/engine/match.cjs`), not similarity search.
+- Delivery happens in the harness's hooks: at the prompt and before each tool call. Session start injects
+  nothing. There is no MCP server. A shell command that only reads or searches (`cat`, `head`, `sed -n`,
+  `rg`, `ls`…) is a read or search event, in Claude Code as in Codex; one that may change something (a
+  redirection, an in-place `sed`, any other program) is a run (`src/hooks/v2/events.cjs`).
+- Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);
+  a compaction or `/clear` starts a new epoch. The ledger's claim records the dimension that fired the
+  memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters (`delivery_limit`
+  in `.dd/config.json`, 2,000 to 50,000, compiled into the index): what does not fit whole is named and
+  arrives at its next event. Each delivery leaves a ledger line with its event, counts and size, never its
+  content. Stale evidence and disputed memories are marked.
+- Delivered text is advisory project knowledge. It never outranks the host, the user or the current code.
+
+## Checks
+
+- A memory may carry a declarative check: a regular expression over a changed file (`if_content`,
+  `unless_content`) or over a command (`if_command`, `unless_command`). A check never executes code.
+- Its `violates` and `passes` examples must behave as stated, or the compiler leaves it out. Unsafe patterns are
+  refused, and evaluation runs under a time limit.
+- `when: turn` (the default for files) runs at Stop over the final state of the files the turn changed;
+  `when: edit` runs at the edit; command checks run at the command. Only a violation the change introduced is
+  reported: one already in the last commit (turn checks) or in the file before the call (edit checks) is not.
+  A violation is reported at most twice per file per epoch, and a check that fired on a file the agent then
+  left unchanged is recorded as a suspected false alarm. A check judges the first 256 KB of a file, and a
+  turn check only the files touched by the event kinds its `on` names. Check lines share the
+  10,000-character field with the delivery: a line that does not fit waits for the next call, and a check
+  that throws at Stop never costs the turn its capture request.
+
+## Capture
+
+- A project opts in with its `.dd/` folder: a committed `.dd/config.json`, or its first memory. Without
+  it, hooks record nothing and ask nothing (`src/hooks/v2/hook.cjs`). `deltadictum init` writes the
+  opt-in (`.dd/config.json` with the project id, `.dd/.gitignore`, `.dd/memories/`) and compiles; the
+  Codex installer writes the config too. A project still holding a v1 store is migrated, not initialised.
+- Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
+  Prompt text is not kept, except a short preview of a prompt detected as a user correction. Past 4 MB
+  (about 7,000 tool calls) a session's footprint takes no more tool calls or corrections, only Stop's own
+  markers.
+- At Stop, DD asks the agent for a memory only when the turn holds evidence (a failure followed by a fix, or a
+  correction), once per evidence set.
+- The agent saves knowledge by writing `.dd/inbox/<name>.json` (the `save` skill). DD ingests it in the same
+  turn: it validates the proposal, suggests triggers from the session when none are given, refuses generic
+  advice, and answers with the result. A proposal becomes a candidate, or an active memory when auto-accept
+  applies. A proposal on a topic whose candidate is still pending replaces it; the replaced candidate is
+  archived, never deleted. Every ingestion leaves one telemetry line with its outcome and reasons
+  (`.dd/local/telemetry/inbox.jsonl`), never the content.
+- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings pane, turns it off) activates a candidate only
+  when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
+  live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
+- The agent's requests to archive or revise a memory wait for a person in the review UI. A proposal or
+  request may name a `batch`; the review UI accepts or rejects a batch whole, each candidate under the
+  same rules as alone (a refused one is reported, the rest proceed), carrying out its archive requests on
+  live targets and leaving revise requests to the person.
+
+## Maintenance and review
+
+- Maintenance runs detached from session start at most once a day (`deltadictum maintain` by hand): session
+  files are rolled up into `.dd/local/telemetry.sqlite` and pruned after seven days, unused memories are
+  retired, and the similarity index is refreshed.
+- An active memory whose paths were touched in at least 20 sessions (`retire.after_sessions`) without it firing
+  is archived. A memory a person reviewed is never retired this way, nor one a pending candidate revises.
+  Archiving keeps the file.
+- `deltadictum health` reports dead triggers, memories with no opportunity or none used despite it, hubs,
+  triggers only on central paths, suspected false alarms and stale evidence; for each memory, its fires by
+  the dimension that matched; the capture funnel (asks, corrections, proposals stored, activated or rejected,
+  rejections by reason) and the last deliveries. `recall` and `status` read the store. `deltadictum doctor`
+  reports whether DD is working in the project (Node version, the opt-in, a readable config, the compiled
+  index and its freshness, session files recorded, the last maintenance run, and the counts that need a
+  person: dead triggers, stale evidence, conflicts, candidates), as problems with a hint each or as notes,
+  and exits 1 on a problem; a project that did not opt in is told so and nothing is created for it. The
+  `review` skill shows its summary before opening the UI.
+- `deltadictum ui` serves the review UI for one project on a loopback port, until interrupted: queues
+  (among them the memories DD accepted on its own, until a person marks each as reviewed), a memory with its
+  breadth, evidence, use and similar memories, a dry run of its triggers over recorded sessions, and every
+  edit and status change, each validated as ingestion validates and followed by a recompile. It answers only
+  its own Host, only a browser holding its key, and takes changes only as JSON.
+
+## Harnesses
+
+- Claude Code is supported in full. Codex receives the same delivery through its hooks: its shell tool is
+  classified as Claude Code's Bash is, `apply_patch` headers name the edited files, and Stop answers with
+  a block. OpenCode receives memories appended to the tool result, leaving the system prompt and its cache
+  alone. Grok Build runs the same hooks with Claude Code's payload shape, not yet checked against a recorded
+  session.
+- A hook that fails ends silently: DD never blocks the host.
+
+## Migration and import
+
+- `deltadictum migrate [--dry-run]` converts a v1 store (`.dd/atoms/` and the rest) into v2 memories, keeping
+  their ids, and queues every converted memory for a person to supply `not_derivable`.
+- `deltadictum import [--from DIR] [--dry-run]` turns the project's `.claude/rules/*.md` (`paths` in the
+  frontmatter) and `.cursor/rules/*.mdc` (`globs`) into active memories (`src/memory/import.js`): one
+  `procedure` per file under `rules/<claude|cursor>/<file>`, firing on reads, edits and writes of the paths
+  that match a repository file, the file itself as hashed evidence and as a revisit condition, accepted
+  by the person who ran the import. A bare pattern (`*.ts`) applies across folders (`**/*.ts`). A rule
+  with no paths or `alwaysApply: true`, one whose paths match nothing, and one whose topic a memory from
+  elsewhere holds are skipped and reported. A body over 1,500 characters is cut at a paragraph and points
+  at its file (`review.issues: imported_truncated`). A second import updates the memories whose file
+  changed and leaves the rest alone.
+
+**DD is a plugin for coding-agent harnesses, not a service.**
+[`architecture/plugin-constraints.md`](architecture/plugin-constraints.md) states the limits that follow.

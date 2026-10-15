@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "4b92d6f2-79c2-4afe-a84c-7eb47edcede1",
+  "project_id": "supermem",
+  "topic": "integrations/opencode/bun-runtime",
+  "kind": "trap",
+  "status": "active",
+  "title": "OpenCode runs plugins in Bun: the adapter must import no DD module",
+  "body": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.\n\nWhy: OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean.",
+  "not_derivable": "Bun lacking node:sqlite and OpenCode calling every export as a plugin were found live; no test can run OpenCode, and a silent non-load looked like a clean startup.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/index.js",
+        "adapters/opencode/frame.js",
+        "package.json"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "OpenCode adapter",
+        "opencode",
+        "Bun",
+        "frame.js",
+        "./server export"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "adapters/opencode/index.js",
+      "sha256": "b173476f1addb61da81e2ba2b99854401ae1a07e22a3ebf83c86f5656ff85d30",
+      "summary": "The header records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design."
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/opencode.test.js",
+      "sha256": "05415b366eaa7ba5d0297112eb2142b84973f09b8349c192450d30507819972a",
+      "summary": "The adapter imports only node:child_process, node:url and ./frame.js, exports only default; package.json keeps ./server."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "0647b0f0-25eb-40ef-9fe7-ad3d2fc5b903",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.148Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "4b675f10-0d9a-4e3f-a2e1-07d065993a34",
+  "project_id": "supermem",
+  "topic": "development/resident/stale-after-edit",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Editing src/ silences DD for the rest of the session",
+  "body": "After a src/ edit, restart the resident by piping a session-start payload into `node hooks/run.cjs session-start` (it replaces the stale resident and waits for the new one); a detached spawn from the Bash tool dies with the tool call. Check with GET /api/resident that stale is false.\n\nWhy: The resident fingerprints src/ at start and refuses every hook once it changes (build_stale), and only a session start replaces it, so after an edit the rest of the session gets no recall and only one inactive notice. On 2026-09-23 this left long stretches of the session with no injections.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/ui/server.js",
+        "src/resident.js",
+        "src/hooks/build.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/ui/server.js",
+      "sha256": "5eea91af013bf99289ed37243e38953edebd6574b72491649b4fcac0e81ec563",
+      "summary": "staleCode() compares the src fingerprint and hook requests return 409 build_stale once it changes"
+    },
+    {
+      "type": "file",
+      "path": "src/hooks/build.js",
+      "sha256": "f5ac565f7970e801f6d24ad8c077899b97ba3c47c06d0b96d86aacb22e407596",
+      "summary": "codeFingerprint walks BUILD_ROOT (src/) by size and mtime"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "After editing any file under src/ in this checkout during a session, or when DD hooks stop injecting knowledge mid-session"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T11:41:56.124Z"
+    }
+  },
+  "created": "2026-09-24T02:05:12.197Z",
+  "updated": "2026-09-24T16:49:24.522Z"
+}

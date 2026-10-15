@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "b06e473d-1e2a-4379-9b9c-c2b2b6afb36f",
+  "project_id": "supermem",
+  "topic": "dd/telemetry/bridge-interception-abandoned-b06e473d",
+  "kind": "failed_approach",
+  "status": "archived",
+  "title": "Check for a live audit UI before trusting a telemetry count",
+  "body": "No longer done: Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one.\n\nAbandoned because: The per-project audit UI registered in .dd/ui.json was replaced by one resident per machine, found through ~/.dd-data/resident.json. callRunningStore now sends the project's data_dir and ignores a resident from an incompatible build, so another process no longer silently absorbs telemetry into its own data directory.\n\nNow: The resident writes a project's telemetry to the data directory of the first hook that opened it",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/hooks/bridge.js",
+        "src/hooks/run.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/bridge.js",
+      "sha256": "d2a71068c7099ab47c9f7d709e9806a40251637e7fce2f1dce410bf1ff12098b",
+      "summary": "callRunningStore posts session-start, prompt and pre-tool to the URL in .dd/ui.json and returns the response"
+    },
+    {
+      "type": "file",
+      "path": "src/hooks/run.js",
+      "sha256": "e175635fc60747ffb0bfb5a7e3d4631754b7a5b79b5e3a133d5bf8042fb36713",
+      "summary": "if (bridged) ok(bridged) short-circuits before openStore, so the local store is never touched"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "The bridge gains a marker distinguishing a bridged response from a local one",
+      "path": "src/hooks/bridge.js",
+      "hash": "d2a71068c7099ab47c9f7d709e9806a40251637e7fce2f1dce410bf1ff12098b"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "archived_by_person: describes the resident and the hook bridge"
+    ],
+    "v1": {
+      "trigger": "when DD telemetry looks empty or a hook's effect is missing from the store, or when measuring retrieval events, cap_saturation or activation counts"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-19T10:35:48.565Z"
+    }
+  },
+  "created": "2026-09-19T01:16:55.740Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

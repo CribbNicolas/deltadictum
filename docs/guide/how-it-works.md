@@ -1,108 +1,99 @@
 # How DD works
 
-DD runs inside the coding-agent harness: hooks on the harness's events, a local MCP server and one
-background process per machine, the [resident](resident.md). Knowledge is stored as JSON files in the
-project's `.dd/` directory, reviewed and shared through git.
+DD keeps knowledge an agent cannot derive from the code and delivers each piece at the action it applies
+to. The behavioural contract is [`docs/DD.md`](../DD.md).
 
 ## The loop
 
-1. **Capture.** While it works, the agent proposes what an agent reading the code would miss: when it
-   applies, what to do differently, why, the evidence and the anchor keywords (see
-   [memories](memories.md)). DD validates the proposal, hashes the evidence it can verify and files a
-   candidate.
-2. **Review.** A person approves, rejects or sends back each candidate in the local audit UI.
-   [Auto-accept](configuration.md#auto-accept-threshold-values) admits a candidate without waiting when
-   the evidence DD verified is strong enough. It is on by default.
-3. **Recall.** Before each prompt and tool call, hooks push the memories that apply, within a token budget,
-   and point at near misses the agent can pull.
+1. **Compile.** At session start, DD compiles the project's memories into an index when they changed
+   (`.dd/local/v2/index.json`). Session start injects nothing.
+2. **Deliver.** At each prompt and before each tool call, a hook turns the event into its kind and paths
+   (a read, an edit, a command…) and matches it against the triggers. The memories that match are added to
+   the agent's context, once per session and subagent; a compaction or `/clear` re-arms them.
+3. **Check.** Commands and edits are checked against the rules memories carry; at the end of the turn, the
+   files the turn changed are checked once in their final state.
+4. **Capture.** In a project that opted in (a `.dd/` folder: a committed `.dd/config.json`, or a first
+   memory), DD records a footprint of the session: paths, redacted commands, outcomes, corrections. At the
+   end of a turn that held a failure followed by a fix, or a correction from you, it asks the agent to
+   save what it learned.
+5. **Maintain.** Once a day, detached, DD rolls the session files up into local counters, prunes them after
+   seven days and retires memories that never fire although their files keep being touched.
 
 ## What the agent receives
 
-- **At session start: a memory map.** Every live memory by topic and title, once per session and again
-  after compaction. When the map outgrows its budget, it is grouped by domain. The agent pulls any line
-  that applies with `get`. This is the one delivery every harness supports.
-- **Before each prompt and tool call: pushed memories.** Some memories are pushed whatever their rank:
-  - one of its anchor keywords appears in the request as whole words (case and accent insensitive);
-  - the request reads or edits one of its anchor files;
-  - the request names one of its components.
+```text
+DD - project knowledge (tests/store.test.js):
+[TRAP] Close stores in t.after - A test that opens a store must close it in t.after: …
+```
 
-  Otherwise a memory competes on meaning and wording: full-text (BM25) and embedding rankings, fused.
-  `not_when` phrases keep a memory out either way. Each memory arrives in the most compact form that fits
-  the budget (`budget_tokens`, 800 estimated tokens by default), down to a flagged headline with its id.
-- **Pointers.** Up to eight near misses per event, as one line each:
-  `topic_key — when it applies (get id)`. Each memory is pointed at once per session.
-- **Ambient memories.** Memories tagged `ambient` arrive once per session, at session start.
+A delivery is at most 10,000 characters; a memory that does not fit is named and arrives at its next
+event. Stale evidence and disputed memories are marked. A check that fails says so with the file:
 
-A prompt that is not in English also carries a line asking the agent to call `retrieve` with the task in
-English, since memories are matched in English. Harness tools that carry no project work (skill loading,
-web search, subagent hand-backs and similar) trigger no retrieval at all.
+```text
+DD - check (Close stores in t.after): This test opens a store without closing it in t.after. (tests/a.test.js)
+```
 
-OpenCode has no per-tool-call hook, so there the context arrives once per session and recall goes through
-the MCP tools.
+## Saving knowledge
 
-## MCP tools
+The agent saves a memory by writing a JSON file into `.dd/inbox/` (the `save` command tells it how). DD
+ingests it in the same turn and answers:
 
-| Tool | Does |
-|---|---|
-| `orient` | Project facts, structure, source pointers and the knowledge relevant to the coming action |
-| `retrieve` | The memories that apply to an action; its five best are returned even below their floors |
-| `get` | One memory in full: rationale, alternatives, evidence and its freshness |
-| `propose` | Files lessons or decisions as candidates for review, with no count limit |
-| `feedback` | Records an outcome for a memory: `helped`, `failed`, `refuted` or `not_applicable` |
-| `act` | Requests a store change (archive, merge, legacy…) for a person to apply |
-| `similar` | The memories nearest to a memory or a text, to spot overlaps before proposing |
-| `contradict` | Flags two effective memories as disputed, without choosing a winner |
-| `list`, `status`, `health` | Audit listings, counts and the deterioration report |
-| `ui` | The audit UI address |
+- **stored as active**, when DD verified the evidence itself (a file it hashed, or a correction it recorded that names the memory and follows something the agent did),
+  every trigger can fire, the memory has no check and duplicates nothing live (auto-accept, on by default);
+- **stored as a candidate** for review, saying which condition was not met;
+- **rejected** with reasons, for example generic advice, a missing `not_derivable` or a secret in the text.
 
-The agent cannot approve, resolve or delete anything: those operations are not exposed to it.
+When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive or
+revise a memory wait for a person in the review UI, and what DD activated on its own waits in the "Accepted
+by DD" queue until a person marks it reviewed. The review UI's header shows the capture funnel (asks,
+proposals, stored, activated, rejected), and `deltadictum health` adds the rejection reasons and each
+memory's fires by the trigger dimension that matched.
 
 ## Commands
 
-On Claude Code the commands are `/dd:<name>`. Codex installs them as project skills named `dd-<name>`, and Grok
-Build lists them under the `deltadictum` plugin.
-Every change a command makes is a pending proposal or action that you apply in the audit UI.
-
 | Command | Does |
 |---|---|
-| `/dd:recall` | Recalls the knowledge for the current task |
-| `/dd:save` | Saves a lesson or decision from the conversation |
-| `/dd:audit` | Inspects knowledge, evidence, pending revisions and outcomes, and opens the audit UI |
-| `/dd:review [id]` | Works through revision requests and memories whose evidence changed |
-| `/dd:compact` | Finds memories that repeat or overlap and files merges |
-| `/dd:clean` | Reviews the archive and files restores or deletions |
-| `/dd:prospect <area>` | Looks for knowledge in one area and proposes only what is new |
-| `/dd:init` | Deep first survey of a project; states the cost and waits for a yes |
-
-You can also ask in plain words: "merge these two", "that practice is dead, mark it legacy".
-
-## Feedback and capture
-
-The hooks keep small local records, never knowledge:
-
-- **Observations.** Failing commands, and validations: a test, lint or type-check run whose output reports
-  no failures. Ordinary reads and unrelated successful commands are discarded.
-- **User corrections.** A prompt with corrective language is recorded as an observation. The detection is
-  a deterministic English/Spanish rule.
-
-A proposal may cite these records as evidence, which raises the confidence it can reach. The Stop hook
-reminds the agent to capture only after a turn that recorded a failure, a validation or a correction, and
-at most once per turn.
-
-Outcomes reported through `feedback`, and how often a memory is retrieved, are telemetry. They never
-raise a memory's confidence or authority.
+| `/dd:save` | Saves knowledge from the conversation |
+| `/dd:recall <topic>` | Runs `deltadictum recall` and shows what DD knows |
+| `/dd:review` | Opens the review UI (`deltadictum ui`) |
+| `deltadictum init [--project-id NAME]` | Opts the project in: writes `.dd/config.json`, `.dd/.gitignore` and `.dd/memories/`, and compiles |
+| `deltadictum status`, `health`, `maintain`, `compile` | Counts, health signals, maintenance by hand, a fresh index |
+| `deltadictum doctor` | Is DD working here: Node, the opt-in, the index, sessions recorded, maintenance, what needs a person; exit 1 on a problem |
+| `deltadictum migrate [--dry-run]` | Converts a v1 store |
+| `deltadictum import [--from DIR] [--dry-run]` | Turns `.claude/rules/` and `.cursor/rules/` files that name paths into memories; a second run updates the ones that changed |
 
 ## How it is measured
 
-- **Replay** (`npm run eval`). 28 authored scenarios: exact matches, paraphrases, Spanish requests,
-  incompatible scope, changed facts, retired advice and unrelated actions. It currently scores F1 1.0
-  with 28 of 28 exact, and costs 84% fewer estimated tokens than loading the same knowledge as static
-  instructions. It measures retrieval and context cost, not code quality.
-- **Golden sets.** 100 real events from each of two projects, labelled with the memories they needed.
-  On the held-out halves, the memories an agent ends up with (pushed plus pulled) cover 0.90 to 0.96 of
-  the essential ones with Sonnet as the agent (`npm run bench`, `npm run bench:pull`).
-- **Model evaluation.** A provider-neutral [runner](../evaluation/model-evaluation.md) compares no memory,
-  static instructions and DD with real model calls supplied by an adapter.
+- **`npm run bench:v2`** replays the tool calls of a recorded agent trial through the matching engine, over
+  the memories that trial was recorded against (archived ones included, as they were then), and reports
+  which memories each task would receive, and the hook's latency.
+- **The agent trial** (`src/eval/agent/run.js`) runs Claude Code on 15 tasks in this repository, each in a
+  fresh clone, under several conditions: no project knowledge, DD v1, DD v2, the same knowledge as a guide
+  named in `CLAUDE.md`, and the guide not named. It records resolution (the task's check, the full suite,
+  lint), code quality (the task's requirements plus a blind judge), peak context, time and API cost.
 
-The behavioural contract DD guarantees is [docs/DD.md](../DD.md); the limits it is built within are in
-[plugin constraints](../architecture/plugin-constraints.md).
+The 2026-10 trial (Claude Sonnet 5.5; 30 DD v2 runs and 15 runs without knowledge on the same day; judge
+Claude Opus 5.5):
+
+| | No knowledge | DD v2 |
+|---|---|---|
+| Resolved | 93% | 93% |
+| Code quality | 70% | 77% |
+| Project requirements met | 78% | 100% |
+| Peak context | 27.2k | 27.2k |
+| Median time | 1.11 min | 1.09 min |
+| Cost per task | $0.0895 | $0.0903 |
+
+DD v2 delivered the task's key memory in every task that had one, with a median of two memories and about
+600 tokens, and nothing on control tasks. Against their own-day baselines, DD v1 cost 46% more for 10
+quality points, the referenced guide 7% more for 9 points, DD v2 1% more for 7 points. One project, one
+model and small samples: treat these as direction, not as a promise for your project.
+
+A second trial on the v2 code ([2026-10-14, Claude Opus 5.5 and Claude Haiku 5.5 at high
+effort](../benchmarks/2026-10-v2-trial-opus-haiku.md), 10 tasks, four conditions, blind judge and blind
+audit) met every project requirement in every condition with both models: on that codebase the rules the
+memories carried could be reached by reading, so it measures what DD costs when it is not needed. DD v2
+was the cheapest condition for both models (Opus −7% against no knowledge, Haiku −7%, a tie once the two
+tasks only a DD clone could bench are set aside), used the least or near-least context, and delivered the
+key memory in 13 of 14 runs, every one of them honoured; the guide named in CLAUDE.md was read in 6 and 7
+of 10 runs, the unnamed one in 3 and 0.

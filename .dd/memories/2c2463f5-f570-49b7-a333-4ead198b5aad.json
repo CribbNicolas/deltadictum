@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "2c2463f5-f570-49b7-a333-4ead198b5aad",
+  "project_id": "supermem",
+  "topic": "distribution/claude-code/command-namespace",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Claude Code plugin commands are prefixed with the plugin name",
+  "body": "Expect every plugin skill to appear as /<plugin name>:<skill name>. The plugin is named deltadictum, so a skill named review appears as /deltadictum:review, not /dd:review. Getting /dd:* requires plugin.json name dd, which changes the marketplace install id (dd@deltadictum) and needs reinstalling for existing users; the npm package name is separate.\n\nWhy: The user asked for /dd:* commands on 2026-09-24; the prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        ".claude-plugin/plugin.json",
+        ".claude-plugin/marketplace.json"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": ".claude-plugin/plugin.json",
+      "sha256": "f25638a95235984458bf3fab86fd1ec62b0c3df71dbfe333ff7fed82a11735ab",
+      "summary": "The plugin name is deltadictum; the MCP server inside it is dd."
+    },
+    {
+      "type": "file",
+      "path": "docs/superpowers/specs/2026-09-24-actions-and-legacy-design.md",
+      "sha256": "cf9c6b0c7ed7d144aceb2aeb4d0773b14b2bcdaa670b555c68b9ff20a9e53c8a",
+      "summary": "The Commands section records the rename decision."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "folder_scope"
+    ],
+    "v1": {
+      "trigger": "when naming DD slash commands or skills, or changing the name in .claude-plugin/plugin.json"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T16:49:24.406Z"
+    }
+  },
+  "created": "2026-09-24T15:40:21.141Z",
+  "updated": "2026-09-24T22:02:38.160Z"
+}

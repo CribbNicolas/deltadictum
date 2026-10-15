@@ -1,0 +1,43 @@
+{
+  "schema_version": 8,
+  "id": "9a955d61-56e2-42ba-b5de-ec262c449127",
+  "project_id": "supermem",
+  "topic": "dd/store/legacy-home-dirs-verified-and-purged",
+  "kind": "decision",
+  "status": "superseded",
+  "title": "Legacy ~/.dd and ~/.supermem home-dir stores verified stale and deleted",
+  "body": "Before deleting a legacy home-dir store, open its sqlite (memory_atoms table) read-only and diff its topic_keys/lifecycle_state against the current project's .dd/atoms/ git-truth. If every topic_key already exists there as active (candidates included, since they may have since been reviewed under the same topic_key), the legacy dir holds nothing unmigrated and rm -rf is safe. This is the concrete check for roadmap Gap 6 (data-directory rename orphaning telemetry) when the orphaned copy is suspected empty of unique data.\n\nWhy: Ran this exact check on 2026-09-19: ~/.supermem/supermem/index.sqlite (17 active memory_atoms) and ~/.dd/supermem-3892c3ad040f/index.sqlite (17 active + 4 candidate) both had 100% topic_key overlap with .dd/atoms/ in this repo -- the 4 old candidates (dd/lifecycle/automatic-transitions-and-review, dd/telemetry/bridge-interception, dd/testing/backdated-created-at, dd/store/data-directory-renames) are now active under identical topic_keys in the current store. Confirmed nothing unique, deleted both dirs with user confirmation.",
+  "not_derivable": "",
+  "triggers": [],
+  "evidence": [
+    {
+      "type": "observation",
+      "ref": "node --sqlite query of C:/Users/walle/.dd/supermem-3892c3ad040f/index.sqlite and C:/Users/walle/.supermem/supermem/index.sqlite memory_atoms tables",
+      "summary": "Listed topic_key + lifecycle_state from both legacy sqlite files; all 17+17 active and 4 candidate topic_keys matched entries already present and active in this repo's .dd/atoms/"
+    },
+    {
+      "type": "correction",
+      "ref": "AskUserQuestion: 'Delete old dirs' -> 'Yes, delete both (Recommended)'",
+      "summary": "User explicitly approved deleting ~/.dd and ~/.supermem after the verification was shown"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "no_triggers"
+    ],
+    "v1": {
+      "trigger": "When deciding whether to delete a pre-rename legacy data directory (~/.supermem, ~/.dd/<project-hash>) left over from before the project moved to per-project .dd/local"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-19T16:22:29.261Z"
+    }
+  },
+  "created": "2026-09-19T15:28:48.793Z",
+  "updated": "2026-09-24T21:38:23.851Z"
+}

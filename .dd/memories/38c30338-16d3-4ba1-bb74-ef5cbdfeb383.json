@@ -1,0 +1,55 @@
+{
+  "schema_version": 8,
+  "id": "38c30338-16d3-4ba1-bb74-ef5cbdfeb383",
+  "project_id": "supermem",
+  "topic": "tooling/windows/junction-delete-follows",
+  "kind": "trap",
+  "status": "active",
+  "title": "Unlink a node_modules junction before deleting the tree that holds it",
+  "body": "Unlink the junction first (fs.unlink on the link path, which Node reports as a symbolic link), then delete the tree. Never run git worktree remove --force on a worktree whose node_modules is a junction to the main checkout. If the main node_modules was emptied anyway, restore it with npm ci. Why: on 2026-10-07 git worktree remove --force followed the node_modules junction and emptied the main checkout's node_modules (0 entries left); fs.unlink on the junction followed by fs.rm recursive on the parent kept the target intact in a scratch test, and src/eval/agent/run.js unlinks its junction before removing each clone.",
+  "not_derivable": "A Windows junction followed by git worktree remove --force empties the target; no code comment can show it before it happens.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/eval/agent/run.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "junction",
+        "worktree remove",
+        "node_modules junction"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/eval/agent/run.js",
+      "sha256": "957560537e4a30c512446a0212a36b28c6016e65b656d0ea13cce6a2b2d8d18c",
+      "summary": "Unlinks the shared node_modules junction before removing the clone, naming git worktree remove --force as the reason."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-10-07T17:16:04.532Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "11a59098-b095-4b6e-8daa-9b8eec7304bf",
+  "project_id": "supermem",
+  "topic": "integrations/grok/manifest-traps",
+  "kind": "trap",
+  "status": "active",
+  "title": "Grok Build manifest traps",
+  "body": "In .grok-plugin/plugin.json and .grok-plugin/marketplace.json, anchor every path with ${GROK_PLUGIN_ROOT} and never with ${VAR:-default} (Grok expands ${VAR} only), and name the marketplace plugin source by git URL, not \"./\" (its marketplace rejects it as \"marketplace path is empty\"). `grok plugin validate` passes on all of these, so check a change with `grok inspect` from an isolated HOME/USERPROFILE. Why: found on Grok 1.0.41 on 2026-09-23 with the v1 manifest, which also inlined an mcpServers object Grok ignored; v2 registers hooks only, mirroring hooks/hooks.json, and no live Grok session has been recorded since.",
+  "not_derivable": "Grok accepts the broken manifests without an error; only a live grok mcp doctor and inspect showed what it ignored.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        ".grok-plugin/**",
+        ".grok/**",
+        "docs/integrations/grok-build.md"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "grok-plugin",
+        "GROK_PLUGIN_ROOT",
+        "grok marketplace",
+        "grok inspect",
+        "Grok Build"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/integrations/grok-build.md",
+      "sha256": "ef3945e5b59e66fb39321d403562fee1833085849f881f95b1765f409c10f8ab",
+      "summary": "The manifest layout and each finding from grok mcp doctor on 2026-09-23."
+    },
+    {
+      "type": "file",
+      "path": ".grok-plugin/plugin.json",
+      "sha256": "31ffad7e1b038531b6c39282f32918d766e8abc83eba8dce0716d005f2dab260",
+      "summary": "Hooks anchored with GROK_PLUGIN_ROOT."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "31c07973-1037-4544-bb82-610a41d415d5",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.177Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

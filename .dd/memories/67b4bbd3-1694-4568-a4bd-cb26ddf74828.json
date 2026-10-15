@@ -1,0 +1,61 @@
+{
+  "schema_version": 8,
+  "id": "67b4bbd3-1694-4568-a4bd-cb26ddf74828",
+  "project_id": "supermem",
+  "topic": "tooling/install-codex/managed-block-drops-manual-fields",
+  "kind": "trap",
+  "status": "active",
+  "title": "The Codex installer replaces everything inside its managed block",
+  "body": "Re-running `deltadictum install --host codex` rewrites every line between BEGIN and END DD MANAGED CONFIG in .codex/config.toml with the current configBody (in v2 a single comment: DD runs no MCP server), and gives DD's own handlers in .codex/hooks.json the installer's timeout and limits back; handlers DD did not write, their matcher groups, and everything outside the block are kept. Move hand edits out of the block, or run with --dry-run first and diff the files it lists. Why: in a real project (2026-10) regenerating the block dropped a hand-set approval_mode; 0.8.4 preserved tools.* tables only, and v2 drops the MCP block altogether, so any key a person added inside it goes without a warning.",
+  "not_derivable": "The installer replaces the block silently; a person's edits inside it vanish with no message, which only a real project showed.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "scripts/install-codex.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "managed block",
+        "install-codex",
+        "config.toml",
+        "reinstall codex",
+        "Codex install"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "scripts/install-codex.mjs",
+      "sha256": "b0623d6595a1eaefa28ac745eb6085160a78d2f0d062104fa87ee759ac95f683",
+      "summary": "managedBlock replaces the block; owned handlers are refreshed in place."
+    },
+    {
+      "type": "file",
+      "path": "tests/hooks/codex.test.js",
+      "sha256": "620270d6858e268c6861598c73e8b22f64107c401e2be53e017f9826adebc2c9",
+      "summary": "The installer tests."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-10-06T17:40:50.529Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

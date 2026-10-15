@@ -1,11 +1,6 @@
 {
-  "plugin": ["deltadictum"],
-  "mcp": {
-    "dd": {
-      "type": "local",
-      "command": ["npx", "-y", "deltadictum", "mcp"],
-      "environment": { "DD_PROJECT_DIR": "<absolute-project-path>" },
-      "enabled": true
-    }
-  }
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "deltadictum"
+  ]
 }

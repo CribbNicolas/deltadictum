@@ -1,13 +1,12 @@
 {
   "name": "deltadictum",
-  "version": "0.8.6",
-  "description": "DeltaDictum (DD): reviewed project knowledge for coding agents, recalled before each action. Local plugin for Claude Code, Codex, Grok Build and OpenCode.",
+  "version": "0.9.0",
+  "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git; a plugin for Claude Code, with Codex, Grok Build and OpenCode in progress.",
   "keywords": [
     "claude-code",
     "codex",
     "grok",
     "opencode",
-    "mcp",
     "coding-agents",
     "agent-memory"
   ],
@@ -23,48 +22,33 @@
     "./server": "./adapters/opencode/index.js"
   },
   "scripts": {
-    "test": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/mcp/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/semantic/**/*.test.js\" \"tests/skills/**/*.test.js\"",
+    "test": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/skills/**/*.test.js\" \"tests/capture/**/*.test.js\" \"tests/maintenance/**/*.test.js\"",
     "test:engine": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/engine/**/*.test.js\"",
     "test:store": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/store/**/*.test.js\"",
-    "test:mcp": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/mcp/**/*.test.js\"",
     "test:ui": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/ui/**/*.test.js\"",
     "test:hooks": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/hooks/**/*.test.js\"",
     "test:stress": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/stress/**/*.test.js\"",
     "test:all": "npm test && npm run test:stress",
     "lint": "npx --yes eslint@10.11.0 .",
-    "eval": "node src/eval/replay.js",
-    "eval:models": "node src/eval/model-runner.js",
     "start": "node src/cli.js",
-    "mcp": "node src/mcp/server.js",
-    "bench": "node src/eval/bench/run.js --project=.",
-    "bench:semantic": "node src/eval/bench/run.js --project=. --provider=semantic",
-    "golden": "node src/eval/golden/extract.js",
-    "bench:pull": "node src/eval/bench/pull.js --project=."
+    "bench:v2": "node src/eval/v2bench/run.js"
   },
   "files": [
     "src",
+    "!src/eval",
     ".claude-plugin",
     "adapters",
     "docs/DD.md",
     "docs/guide",
     "docs/architecture",
     "docs/integrations",
-    "docs/evaluation",
-    "docs/memory",
     "skills",
     "hooks",
-    "mcp.js",
-    ".mcp.json",
     "scripts",
     "LICENSE",
     "npm-shrinkwrap.json"
   ],
   "license": "SEE LICENSE IN LICENSE",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.31.0",
-    "zod": "^4.6.0",
-    "@huggingface/transformers": "^4.3.0"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CribbNicolas/deltadictum.git"
