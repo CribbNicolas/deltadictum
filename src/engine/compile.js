@@ -128,6 +128,12 @@ function gitLines(root, args) {
 export const repoFilesOf = root => gitLines(root, ['ls-files']);
 // Untracked files git does not ignore: new work not yet added.
 export const untrackedFilesOf = root => gitLines(root, ['ls-files', '--others', '--exclude-standard']);
+// The files present in the repository: tracked plus untracked, ignored files excluded; null without
+// git. A trigger glob is judged against this listing, so a document written but not yet added counts.
+export function presentFilesOf(root) {
+  const tracked = repoFilesOf(root);
+  return tracked ? [...new Set([...tracked, ...(untrackedFilesOf(root) ?? [])])] : null;
+}
 
 // The trigger symbols the project's code holds, in one git grep over tracked
 // files. DD's own files are excluded: a memory names its own symbols. null when
@@ -148,9 +154,7 @@ export async function compileProject(root) {
   await store.refreshManifest();
   const all = await store.list();
   const manifest = await store.manifest();
-  // Tracked files plus new work not yet added: a glob over either is live; ignored files are absent.
-  const tracked = repoFilesOf(root);
-  const repoFiles = tracked ? [...new Set([...tracked, ...(untrackedFilesOf(root) ?? [])])] : null;
+  const repoFiles = presentFilesOf(root);
   const found = repoFiles ? codeSymbols(root, [...new Set(all.flatMap(memory => (memory.triggers ?? []).flatMap(clause => clause.symbols ?? [])))]) : null;
   const symbolExists = found ? symbol => found.has(symbol) : null;
   const compiled = compileIndex({ memories: all, manifest, fingerprint: memoryFilesFingerprint(paths.memories), repoFiles, symbolExists });

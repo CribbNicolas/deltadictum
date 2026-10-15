@@ -94,3 +94,18 @@ test('suspected false alarms and queues come with the report', async t => {
   // What DD accepted on its own stays reviewable: a queue, until a person has seen it.
   assert.deepEqual(report.queues.auto_accepted, ['auto']);
 });
+
+test('a trigger over an untracked file is live in health; one over an ignored file is dead', async t => {
+  const root = await project(t, [
+    memory('draft', [{ on: ['read'], paths: ['doc/draft.md'] }]),
+    memory('built', [{ on: ['read'], paths: ['output/**'] }]),
+  ], []);
+  mkdirSync(join(root, 'doc'));
+  mkdirSync(join(root, 'output'));
+  writeFileSync(join(root, '.gitignore'), 'output/\n');
+  writeFileSync(join(root, 'doc', 'draft.md'), 'new work');
+  writeFileSync(join(root, 'output', 'build.exe'), 'x');
+  const report = await healthReport(root);
+  assert.ok(!signalsOf(report, 'draft').includes('dead_trigger'));
+  assert.ok(signalsOf(report, 'built').includes('dead_trigger'));
+});

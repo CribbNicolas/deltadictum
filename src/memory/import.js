@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 import { globToRegExp } from '../engine/clause.cjs';
-import { compileProject, repoFilesOf, untrackedFilesOf } from '../engine/compile.js';
+import { compileProject, presentFilesOf } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { BODY_MAX } from './convert-v1.js';
 import { LIMITS, LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from './schema.js';
@@ -114,8 +114,7 @@ export async function importRules(root, { from = null, dryRun = false, now = new
     ? [{ dir: String(from).replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, ''), area: areaOf(from), extensions: ['.md', '.mdc'] }]
     : RULE_SOURCES;
   const files = sources.flatMap(source => listRuleFiles(root, source));
-  const tracked = repoFilesOf(root);
-  const listing = tracked ? [...new Set([...tracked, ...(untrackedFilesOf(root) ?? [])])] : null;
+  const listing = presentFilesOf(root);
   const store = createMemoryFiles(localPaths(root).dd);
   const existing = await store.list();
   const live = existing.filter(memory => LIVE_STATUSES.includes(memory.status));

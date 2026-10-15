@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
-import { codeSymbols, compileProject, repoFilesOf, triggerWarnings } from '../engine/compile.js';
+import { codeSymbols, compileProject, presentFilesOf, triggerWarnings } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory } from '../memory/schema.js';
 import { createMemoryFiles } from '../memory/store.js';
@@ -38,7 +38,7 @@ function problemsOf(root, memory) {
   const problems = validateMemory(memory);
   if (memory.check) problems.push(...exampleProblems(memory.check, createMatcher()));
   if (LIVE_STATUSES.includes(memory.status)) {
-    const repoFiles = repoFilesOf(root);
+    const repoFiles = presentFilesOf(root);
     if (repoFiles) {
       const found = codeSymbols(root, [...new Set(memory.triggers.flatMap(clause => clause.symbols ?? []))]);
       for (const warning of triggerWarnings(memory, repoFiles, found ? symbol => found.has(symbol) : null)) {

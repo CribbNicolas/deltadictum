@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { suspectedFalseAlarms } from '../checks/turn.js';
 import { globToRegExp } from '../engine/clause.cjs';
-import { codeSymbols, repoFilesOf, triggerWarnings } from '../engine/compile.js';
+import { codeSymbols, presentFilesOf, triggerWarnings } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { LIVE_STATUSES } from '../memory/schema.js';
 import { createMemoryFiles } from '../memory/store.js';
@@ -64,7 +64,7 @@ export async function healthReport(root, { minOpportunity = 10, hubShare = 0.3, 
     const dimensions = firesByDimension(db.prepare('SELECT memory, via FROM fire_events').all());
     const recent = db.prepare('SELECT memory, session, via, kind, at FROM fire_events ORDER BY at DESC LIMIT ?').all(RECENT)
       .map(row => ({ memory: row.memory, title: titles.get(row.memory) ?? row.memory, via: row.via, kind: row.kind, session: row.session, at: row.at }));
-    const repoFiles = repoFilesOf(root);
+    const repoFiles = presentFilesOf(root);
     const found = repoFiles ? codeSymbols(root, [...new Set(live.flatMap(m => m.triggers.flatMap(c => c.symbols ?? [])))]) : null;
     const alarms = new Set(suspectedFalseAlarms(root).map(alarm => alarm.memory));
     const memories = live.map(memory => {
