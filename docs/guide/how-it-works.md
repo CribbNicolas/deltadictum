@@ -12,7 +12,8 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 ## The loop
 
 1. **Compile.** At session start, DD compiles the project's memories into an index when they changed
-   (`.dd/local/v2/index.json`). Session start injects nothing.
+   (`.dd/local/v2/index.json`). Session start injects nothing into the agent's context; it shows you one
+   line with the number of live memories and how to open the review UI.
 2. **Deliver.** At each prompt and before each tool call, a hook turns the event into its kind and paths
    (a read, an edit, a command…) and matches it against the triggers. The memories that match are added to
    the agent's context, once per session and subagent; a compaction or `/clear` re-arms them.

@@ -6,6 +6,10 @@ when it reaches `main`, and CI refuses a version bump without a section here.
 
 ## [0.9.2] - 2026-10-15
 
+- Session start shows the person one line in Claude Code (the hook's `systemMessage`, which the model does
+  not see): how many memories are live in the project and how to open the review UI (`/dd:review`), or,
+  before the first memory, how to save one. Nothing is added to the agent's context, as before; the line
+  is not repeated after a compaction, and Codex, which has no such field, gets nothing.
 - Documentation site: the link to the Opus and Haiku trial on "How DD works" is rewritten by Jekyll (its
   text no longer spans two lines), and the behavioural contract no longer links to the v2 design note,
   which is kept outside git.
