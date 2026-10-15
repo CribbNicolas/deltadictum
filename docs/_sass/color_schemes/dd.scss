@@ -1,10 +1,7 @@
 // DeltaDictum's scheme: Just the Docs' dark scheme with the site's own surfaces,
 // a soft blue for links and amber as the single accent (buttons, cards, callouts).
+// The accent and surface variables custom.scss uses are in custom/setup.scss.
 @import "./color_schemes/dark";
-
-$dd-accent: #e8b84a;
-$dd-accent-text: #0e1116;
-$dd-surface: #141922;
 
 $body-background-color: #0e1116;
 $sidebar-color: #0b0e13;
