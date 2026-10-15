@@ -33,7 +33,7 @@ function firesByDimension(rows) {
 
 // The capture funnel: how often Stop asked and corrections were recorded, and
 // what the inbox did with each proposal, with rejection reasons by their code.
-function captureFunnel(db) {
+export function captureFunnel(db) {
   const signal = kind => db.prepare('SELECT COALESCE(SUM(count), 0) AS n FROM signals WHERE kind = ?').get(kind).n;
   const rows = db.prepare('SELECT outcome, reasons FROM inbox').all();
   const outcomes = outcome => rows.filter(row => row.outcome === outcome).length;

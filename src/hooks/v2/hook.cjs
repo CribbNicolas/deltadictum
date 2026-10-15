@@ -49,8 +49,9 @@ function deliverFor(root, event, session, payload = {}) {
   const parts = [violations];
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
   if (fired.length && bodiesOf()) {
-    const { LIMIT } = require('../../engine/deliver.cjs');
-    parts.push(delivery(root, index, event, fired, ledger, bodiesOf(), violations ? LIMIT - violations.length - 2 : LIMIT));
+    const { LIMIT, validLimit } = require('../../engine/deliver.cjs');
+    const cap = validLimit(index.limit) ? index.limit : LIMIT;
+    parts.push(delivery(root, index, event, fired, ledger, bodiesOf(), violations ? cap - violations.length - 2 : cap));
   }
   return parts.filter(Boolean).join('\n\n');
 }
@@ -81,7 +82,9 @@ function delivery(root, index, event, fired, ledger, bodies, limit) {
   const items = fits.filter(item => won.has(item.id));
   const named = candidates.filter(item => !fits.includes(item));
   if (!items.length && !named.length) return '';
-  return renderDelivery({ label, items, named, limit });
+  const text = renderDelivery({ label, items, named, limit });
+  if (ledger) ledger.record({ e: event.kind, m: items.length, x: named.length, c: text.length });
+  return text;
 }
 
 // Session start injects nothing (spec section 1): it re-arms the ledger after a

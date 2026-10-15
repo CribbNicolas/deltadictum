@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { defaultWhen, exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
@@ -8,6 +9,8 @@ import { DIMENSIONS, globToRegExp, shellTokens } from './clause.cjs';
 import { INDEX_VERSION, memoryFilesFingerprint, readJson } from './index-file.cjs';
 import { localPaths } from './locate.cjs';
 import { words } from './text.cjs';
+
+const { validLimit } = createRequire(import.meta.url)('./deliver.cjs');
 import { ensureIgnored } from '../memory/ignore.js';
 import { LIVE_STATUSES } from '../memory/schema.js';
 import { createMemoryFiles } from '../memory/store.js';
@@ -56,10 +59,10 @@ export function triggerWarnings(memory, repoFiles, symbolExists) {
   return warnings;
 }
 
-export function compileIndex({ memories, manifest, fingerprint = null, repoFiles = null, symbolExists = null, bodiesFile = null }) {
+export function compileIndex({ memories, manifest, fingerprint = null, repoFiles = null, symbolExists = null, bodiesFile = null, limit = null }) {
   const live = memories.filter(memory => LIVE_STATUSES.includes(memory.status));
   const index = { version: INDEX_VERSION, manifest: { count: manifest?.count ?? 0, hash: manifest?.hash ?? '' }, fingerprint,
-    bodies: bodiesFile, memories: {}, clauses: [], checks: [] };
+    bodies: bodiesFile, memories: {}, clauses: [], checks: [], ...(limit === null ? {} : { limit }) };
   const bodies = {};
   const warnings = [];
   const matcher = createMatcher();
@@ -147,6 +150,15 @@ export function codeSymbols(root, symbols) {
   } catch (err) { return err.status === 1 ? new Set() : null; }
 }
 
+// The project's delivery cap (.dd/config.json delivery_limit), compiled into the
+// index so the hook reads no extra file; null leaves the default to the hook.
+function deliveryLimitOf(dd) {
+  try {
+    const value = JSON.parse(readFileSync(join(dd, 'config.json'), 'utf8')).delivery_limit;
+    return validLimit(value) ? value : null;
+  } catch { return null; }
+}
+
 export async function compileProject(root) {
   const paths = localPaths(root);
   const store = createMemoryFiles(paths.dd);
@@ -157,7 +169,7 @@ export async function compileProject(root) {
   const repoFiles = presentFilesOf(root);
   const found = repoFiles ? codeSymbols(root, [...new Set(all.flatMap(memory => (memory.triggers ?? []).flatMap(clause => clause.symbols ?? [])))]) : null;
   const symbolExists = found ? symbol => found.has(symbol) : null;
-  const compiled = compileIndex({ memories: all, manifest, fingerprint: memoryFilesFingerprint(paths.memories), repoFiles, symbolExists });
+  const compiled = compileIndex({ memories: all, manifest, fingerprint: memoryFilesFingerprint(paths.memories), repoFiles, symbolExists, limit: deliveryLimitOf(paths.dd) });
   await ensureIgnored(paths.dd);
   writeCompiled(paths, compiled);
   return { memories: Object.keys(compiled.index.memories).length, clauses: compiled.index.clauses.length, warnings: compiled.warnings };

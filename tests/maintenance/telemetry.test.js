@@ -117,3 +117,13 @@ test('check telemetry is rolled up too', t => {
   rollUp(root, db);
   assert.equal(count(db, "SELECT COUNT(*) AS n FROM checks WHERE outcome = 'ignored'"), 1);
 });
+
+test('delivery records roll up into the deliveries table', t => {
+  const root = project();
+  writeFileSync(join(sessions(root), 's1.jsonl'), line({ t: 'claim', m: 'm1', n: 0, k: 'a' })
+    + line({ t: 'delivery', e: 'read', m: 2, x: 1, c: 9800, n: 0, at: '2026-10-15T10:00:00.000Z' }));
+  const db = open(t, root);
+  rollUp(root, db);
+  assert.deepEqual(db.prepare('SELECT session, at, kind, memories, named, chars FROM deliveries').all().map(row => ({ ...row })),
+    [{ session: 's1', at: '2026-10-15T10:00:00.000Z', kind: 'read', memories: 2, named: 1, chars: 9800 }]);
+});

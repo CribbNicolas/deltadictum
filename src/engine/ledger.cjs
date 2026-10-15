@@ -99,6 +99,11 @@ function openLedger(path) {
     report(memoryId, target) {
       try { append(`${JSON.stringify({ t: 'check', m: memoryId, f: String(target), n: read().epoch })}\n`); } catch { /* fail open */ }
     },
+    // What a delivery carried (memories in full, named only, characters) at which
+    // event: the roll-up turns these into the dashboard's figures.
+    record(entry, at = new Date().toISOString()) {
+      try { append(`${JSON.stringify({ t: 'delivery', ...entry, n: read().epoch, at })}\n`); } catch { /* fail open */ }
+    },
     newEpoch(reason) {
       try { append(`${JSON.stringify({ t: 'epoch', n: read().epoch + 1, why: String(reason ?? '') })}\n`); } catch { /* fail open */ }
     },

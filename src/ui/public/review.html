@@ -122,7 +122,7 @@
   const QUEUE_LABELS = {
     candidates: 'Candidates', batches: 'Batches', auto_accepted: 'Accepted by DD', requests: 'Agent requests', stale: 'Stale evidence', hubs: 'Hubs', dead: 'Dead triggers',
     false_alarms: 'Suspected false alarms', duplicates: 'Duplicates', missing_not_derivable: 'Missing not_derivable', all: 'All memories',
-    activity: 'Recent deliveries',
+    activity: 'Recent deliveries', dashboard: 'Dashboard',
   };
   const KINDS = ['decision', 'trap', 'failed_approach', 'fact', 'procedure'];
   const state = { queue: 'candidates', selected: null, overview: null, rows: [] };
@@ -196,7 +196,7 @@
   }
 
   function renderQueues(queues) {
-    const countOf = queue => (queue === 'activity' ? (state.overview?.recent?.length ?? 0) : queues[queue] ?? 0);
+    const countOf = queue => (queue === 'activity' ? (state.overview?.recent?.length ?? 0) : queue === 'dashboard' ? '' : queues[queue] ?? 0);
     const buttons = Object.keys(QUEUE_LABELS).map(queue => h('button', {
       type: 'button', 'aria-current': state.queue === queue ? 'true' : 'false',
       on: { click: () => { state.queue = queue; state.selected = null; quiet(); renderQueues(queues); loadList(); showEmpty(); } },
@@ -211,6 +211,7 @@
     if (state.queue === 'requests') return loadRequests();
     if (state.queue === 'batches') return loadBatches();
     if (state.queue === 'activity') return loadActivity();
+    if (state.queue === 'dashboard') return loadDashboard();
     let rows;
     try { rows = await api(`/api/memories?queue=${encodeURIComponent(state.queue)}`); } catch (err) { refused('Reading the queue', err); return; }
     state.rows = rows;
@@ -236,6 +237,30 @@
     $('list').replaceChildren(...recent.map(fire => h('button', { type: 'button', class: 'item', on: { click: () => { quiet(); openMemory(fire.memory); } } },
       h('div', {}, fire.title ?? fire.memory),
       h('span', { class: 'meta' }, [fire.at, fire.kind, fire.via, fire.session].filter(Boolean).join(' · ')))));
+  }
+
+  // Dashboard: what the telemetry says about use. Counts only, never content.
+  async function loadDashboard() {
+    let d;
+    try { d = await api('/api/dashboard'); } catch (err) { refused('Reading the dashboard', err); return; }
+    const tile = (label, value, note) => h('div', { class: 'request' }, h('div', { class: 'mono' }, label), h('h2', {}, String(value)), note ? h('span', { class: 'meta' }, note) : null);
+    const table = (head, rows) => h('table', {}, h('thead', {}, h('tr', {}, head.map(t => h('th', {}, t)))), h('tbody', {}, rows));
+    const dv = d.deliveries;
+    $('list').replaceChildren(
+      h('div', { class: 'row' },
+        tile('Sessions', d.sessions.total, `${d.sessions.with_deliveries} with a delivery`),
+        tile('Tool calls', d.sessions.tool_calls, `${dv.per_100_tool_calls} deliveries per 100`),
+        tile('Deliveries', dv.total, `${dv.memories_avg} memories each, average`),
+        tile('Characters per delivery', dv.chars_avg, `max ${dv.chars_max} of a cap of ${d.limit}`),
+        tile('Cap reached', dv.capped, `${Math.round(dv.capped_share * 100)}% of deliveries named a memory for later`)),
+      h('h3', {}, 'Deliveries by event'),
+      table(['Event', 'Deliveries'], Object.entries(d.by_kind).map(([kind, n]) => h('tr', {}, h('td', {}, kind), h('td', { class: 'mono' }, String(n))))),
+      h('h3', {}, 'Memories that fire most'),
+      d.top.length ? table(['Memory', 'Fires', 'Sessions'], d.top.map(row => h('tr', {},
+        h('td', {}, h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(row.memory) } }, 'Open'), ` ${row.title}`),
+        h('td', { class: 'mono' }, String(row.fires)), h('td', { class: 'mono' }, String(row.sessions))))) : h('p', { class: 'empty' }, 'No delivery rolled up yet.'),
+      h('h3', {}, 'Capture'),
+      h('p', { class: 'mono' }, `asked ${d.capture.asked} · corrections ${d.capture.corrections} · proposals ${d.capture.proposals} (active ${d.capture.active}, candidates ${d.capture.candidates}, rejected ${d.capture.rejected}) · requests ${d.capture.requests}`));
   }
 
   // Agent requests: the agent asked; a person acts on the memory and closes the request.
@@ -461,16 +486,20 @@
     try { settings = await api('/api/config'); } catch (err) { refused('Reading the settings', err); return; }
     const auto = h('input', { id: 's-auto', type: 'checkbox' });
     auto.checked = settings.auto_accept;
+    const bounds = settings.limits.delivery_limit;
+    const limit = h('input', { id: 's-limit', type: 'number', min: String(bounds.min), max: String(bounds.max), step: '500' });
+    limit.value = String(settings.delivery_limit);
     async function save() {
-      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked } }); }
+      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value) } }); }
       catch (err) { refused('Saving the settings', err); return; }
-      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}.`);
+      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters.`);
       await loadOverview();
     }
     $('detail').replaceChildren(h('div', { class: 'pane' },
       h('h2', {}, 'Settings'),
       h('div', { class: 'mono' }, `.dd/config.json · project ${settings.project_id ?? '(no project_id)'}`),
       h('label', { for: 's-auto', class: 'row' }, auto, ' Auto-accept: DD activates a proposal on its own when it verified the evidence itself, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits here as a candidate.'),
+      h('label', { for: 's-limit' }, `Delivery cap, in characters (${bounds.min} to ${bounds.max}; default ${bounds.default}). What does not fit whole is named and arrives at its next event.`), limit,
       h('p', { class: 'mono' }, 'Other keys in the file are kept as they are.'),
       h('div', { class: 'bar' }, h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'))));
   }
