@@ -1,3 +1,9 @@
+---
+title: Where DD came from
+parent: Architecture
+nav_order: 4
+---
+
 # Where DD came from
 
 DD v2 replaced v1's core in October 2026. This page keeps, in short, what v1 was, what measurement showed

@@ -1,3 +1,9 @@
+---
+title: Security boundary
+parent: Reference
+nav_order: 5
+---
+
 # Security boundary
 
 DD protects a project's knowledge and its review from other accounts on the machine, from web pages and

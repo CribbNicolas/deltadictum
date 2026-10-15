@@ -11,7 +11,9 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 
 async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-maintain-'));
-  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }));
+  // The detached maintenance process keeps the project as its working directory and exits a moment
+  // after it writes "finished": Windows refuses to remove the folder until then, so the removal retries.
+  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 60, retryDelay: 250 }));
   mkdirSync(join(root, '.git'));
   await createMemoryFiles(join(root, '.dd')).commit({ put: [] });
   return root;

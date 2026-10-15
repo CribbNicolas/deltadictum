@@ -1,3 +1,9 @@
+---
+title: Configuration
+parent: Reference
+nav_order: 3
+---
+
 # Configuration
 
 ## Project settings: `.dd/config.json`

@@ -1,3 +1,9 @@
+---
+title: Invariants
+parent: Architecture
+nav_order: 3
+---
+
 # Invariants
 
 Properties that must remain true at all times. Violating one is a system-level failure, not a regression to be
