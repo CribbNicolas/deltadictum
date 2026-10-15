@@ -4,6 +4,12 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.4] - 2026-10-15
+
+- Documentation site: the stylesheet compiles again. The variables the custom styles use are defined in
+  `_sass/custom/setup.scss`, which every stylesheet the theme builds includes, instead of in the `dd`
+  colour scheme alone.
+
 ## [0.9.3] - 2026-10-15
 
 - Documentation site: a dark colour scheme of its own (amber accent, soft blue links), a landing page with
