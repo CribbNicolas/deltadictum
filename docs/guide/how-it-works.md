@@ -84,3 +84,12 @@ DD v2 delivered the task's key memory in every task that had one, with a median 
 600 tokens, and nothing on control tasks. Against their own-day baselines, DD v1 cost 46% more for 10
 quality points, the referenced guide 7% more for 9 points, DD v2 1% more for 7 points. One project, one
 model and small samples: treat these as direction, not as a promise for your project.
+
+A second trial on the v2 code ([2026-10-14, Claude Opus 5.5 and Claude Haiku 5.5 at high
+effort](../benchmarks/2026-10-v2-trial-opus-haiku.md), 10 tasks, four conditions, blind judge and blind
+audit) met every project requirement in every condition with both models: on that codebase the rules the
+memories carried could be reached by reading, so it measures what DD costs when it is not needed. DD v2
+was the cheapest condition for both models (Opus −7% against no knowledge, Haiku −7%, a tie once the two
+tasks only a DD clone could bench are set aside), used the least or near-least context, and delivered the
+key memory in 13 of 14 runs, every one of them honoured; the guide named in CLAUDE.md was read in 6 and 7
+of 10 runs, the unnamed one in 3 and 0.

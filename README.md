@@ -36,7 +36,11 @@ same day, code quality scored by a blind Claude Opus judge):
 
 The earlier version of DD, which searched its memories by similarity, reached similar quality at 46% more
 cost. These numbers come from one project, one model and a small sample; they say DD is on track, not that
-it will do the same on yours. Details: [how it is measured](docs/guide/how-it-works.md#how-it-is-measured).
+it will do the same on yours. A second trial with Claude Opus 5.5 and Claude Haiku 5.5 at high effort
+found no quality difference between any condition (both models reached every rule by reading the code)
+and DD again the cheapest condition for both
+([details](docs/benchmarks/2026-10-v2-trial-opus-haiku.md)). More:
+[how it is measured](docs/guide/how-it-works.md#how-it-is-measured).
 
 ## Quickstart (Claude Code)
 
