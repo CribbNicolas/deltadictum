@@ -20,8 +20,9 @@ requirement in every condition with both models and kept DD the cheapest conditi
   `failed_approach`, `procedure` and `fact`, triggers, an optional check and a required `not_derivable`.
 - **No MCP server, no resident process, no embedding model, no dependencies.** The `dd` MCP tools, the
   memory map at session start, anchors, the actions queue and the audit UI are gone.
-- **Commands:** `/dd:save`, `/dd:recall` and `/dd:review` remain; `compact`, `clean`, `prospect`, `init` and
-  `audit` are removed.
+- **Commands:** `/dd:save`, `/dd:recall` and `/dd:review` remain; `compact`, `clean`, `prospect` and
+  `audit` are removed. `deltadictum init` now writes the project's opt-in (`.dd/config.json`,
+  `.dd/.gitignore`, `.dd/memories/`) instead of a data directory.
 - Settings `auto_accept.confidence_threshold`, `budget_tokens` and `anchors.only` and the environment
   variables `DD_DATA`, `DD_EMBED_MODEL`, `DD_RESIDENT` and `DD_RETRIEVAL` no longer exist.
 
@@ -53,7 +54,8 @@ requirement in every condition with both models and kept DD the cheapest conditi
 - The review UI, `deltadictum ui`: queues, evidence, breadth, use, a dry run of triggers over recent
   sessions, and every edit and status change.
 - A project opts in with its `.dd/` folder (a committed `.dd/config.json`, or a first memory): DD records
-  its footprint and asks for memories from the first session, not from the first memory.
+  its footprint and asks for memories from the first session, not from the first memory. `deltadictum
+  init` writes the opt-in and compiles; the Codex installer writes the config when there is none.
 - Health and the review UI show each memory's fires by the trigger dimension that matched, the capture
   funnel (asks, corrections, proposals stored, activated or rejected, rejections by reason) and the last
   deliveries; memories DD accepted on its own wait in their own queue until a person marks them reviewed.

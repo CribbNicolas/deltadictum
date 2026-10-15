@@ -4,7 +4,8 @@
 
 Commit it to share the settings with your team. Every key is optional, and the file's presence is enough:
 a project with a `.dd/` folder (this file, or a first memory) is one DD records and asks in; one without
-is left alone.
+is left alone. `deltadictum init` writes it with the project id, beside `.dd/.gitignore` and
+`.dd/memories/`.
 
 | Setting | Default | What it does |
 |---|---|---|

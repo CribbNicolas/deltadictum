@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyCodexInstall, planCodexInstall } from '../../scripts/install-codex.mjs';
 import { compileProject } from '../../src/engine/compile.js';
@@ -115,5 +115,16 @@ test('the Codex installer registers the v2 hooks and writes no MCP server', asyn
   const agents = readFileSync(join(root, 'AGENTS.md'), 'utf8');
   assert.doesNotMatch(agents, /MCP|orient|retrieve/);
   assert.match(agents, /dd-save/);
+  // The install is the project's opt-in: DD records and asks from the first session.
+  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')).project_id, basename(root));
   assert.equal((await planCodexInstall(root)).operations.length, 0);
+});
+
+test('the Codex installer leaves an existing .dd/config.json alone', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-codex-config-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.dd'));
+  writeFileSync(join(root, '.dd', 'config.json'), '{ "auto_accept": false }\n');
+  await applyCodexInstall(await planCodexInstall(root));
+  assert.equal(readFileSync(join(root, '.dd', 'config.json'), 'utf8'), '{ "auto_accept": false }\n');
 });

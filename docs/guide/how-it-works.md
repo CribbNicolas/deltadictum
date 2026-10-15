@@ -56,6 +56,7 @@ memory's fires by the trigger dimension that matched.
 | `/dd:save` | Saves knowledge from the conversation |
 | `/dd:recall <topic>` | Runs `deltadictum recall` and shows what DD knows |
 | `/dd:review` | Opens the review UI (`deltadictum ui`) |
+| `deltadictum init [--project-id NAME]` | Opts the project in: writes `.dd/config.json`, `.dd/.gitignore` and `.dd/memories/`, and compiles |
 | `deltadictum status`, `health`, `maintain`, `compile` | Counts, health signals, maintenance by hand, a fresh index |
 | `deltadictum migrate [--dry-run]` | Converts a v1 store |
 
