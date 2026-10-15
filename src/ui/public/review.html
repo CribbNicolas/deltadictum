@@ -202,7 +202,8 @@
       on: { click: () => { state.queue = queue; state.selected = null; quiet(); renderQueues(queues); loadList(); showEmpty(); } },
     }, h('span', {}, QUEUE_LABELS[queue]), h('span', { class: `count${countOf(queue) ? '' : ' zero'}` }, countOf(queue))));
     $('queues').replaceChildren(...buttons.slice(0, 3), h('hr'), ...buttons.slice(3),
-      h('hr'), h('button', { type: 'button', on: { click: showCreate } }, h('span', {}, '+ New memory')));
+      h('hr'), h('button', { type: 'button', on: { click: showCreate } }, h('span', {}, '+ New memory')),
+      h('button', { type: 'button', on: { click: showSettings } }, h('span', {}, 'Settings')));
   }
 
   async function loadList() {
@@ -450,6 +451,28 @@
     }
 
     $('detail').replaceChildren(bar, pane);
+  }
+
+  // The project's settings (.dd/config.json): what DD reads, changed in place; other keys are kept.
+  async function showSettings() {
+    state.selected = null;
+    markActive();
+    let settings;
+    try { settings = await api('/api/config'); } catch (err) { refused('Reading the settings', err); return; }
+    const auto = h('input', { id: 's-auto', type: 'checkbox' });
+    auto.checked = settings.auto_accept;
+    async function save() {
+      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked } }); }
+      catch (err) { refused('Saving the settings', err); return; }
+      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}.`);
+      await loadOverview();
+    }
+    $('detail').replaceChildren(h('div', { class: 'pane' },
+      h('h2', {}, 'Settings'),
+      h('div', { class: 'mono' }, `.dd/config.json · project ${settings.project_id ?? '(no project_id)'}`),
+      h('label', { for: 's-auto', class: 'row' }, auto, ' Auto-accept: DD activates a proposal on its own when it verified the evidence itself, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits here as a candidate.'),
+      h('p', { class: 'mono' }, 'Other keys in the file are kept as they are.'),
+      h('div', { class: 'bar' }, h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'))));
   }
 
   function showCreate() {
