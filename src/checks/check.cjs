@@ -1,6 +1,6 @@
 'use strict';
 
-const { closeSync, openSync, readSync } = require('node:fs');
+const { closeSync, fstatSync, openSync, readSync } = require('node:fs');
 const { compilePattern } = require('./pattern.cjs');
 
 // A check (spec section 6) says when a rule is broken: the `if_` pattern matches
@@ -14,8 +14,8 @@ function readHead(file, max = CONTENT_MAX) {
   let fd;
   try { fd = openSync(file, 'r'); } catch { return null; }
   try {
-    const buffer = Buffer.alloc(max);
-    const read = readSync(fd, buffer, 0, max, 0);
+    const buffer = Buffer.alloc(Math.min(max, fstatSync(fd).size));
+    const read = readSync(fd, buffer, 0, buffer.length, 0);
     return buffer.subarray(0, read).toString('utf8');
   } catch { return null; } finally { closeSync(fd); }
 }
