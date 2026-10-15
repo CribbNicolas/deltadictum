@@ -1,4 +1,9 @@
-<p align="center"><img src="brand/DeltaDictum-mark.svg" width="88" alt="DeltaDictum mark"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/DeltaDictum-mark-light.svg">
+    <img src="brand/DeltaDictum-mark.svg" width="88" alt="DeltaDictum mark">
+  </picture>
+</p>
 
 # DeltaDictum
 
@@ -199,7 +204,7 @@ Every setting and environment variable: [Configuration](docs/guide/configuration
 The site, [cribbnicolas.github.io/deltadictum](https://cribbnicolas.github.io/deltadictum/), has the same
 pages with navigation and search. In the repository:
 
-- [Getting started](docs/getting-started.md) and [Using DD well](docs/using-dd.md)
+- [Getting started](https://cribbnicolas.github.io/deltadictum/getting-started) and [Using DD well](https://cribbnicolas.github.io/deltadictum/using-dd)
 - [How DD works](docs/guide/how-it-works.md): triggers, delivery, capture, checks, maintenance, measurements
 - [Memories](docs/guide/memories.md): kinds, fields, triggers, statuses
 - [Configuration](docs/guide/configuration.md) and [storage](docs/guide/storage.md)
