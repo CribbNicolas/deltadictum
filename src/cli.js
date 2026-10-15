@@ -23,6 +23,7 @@ Usage: deltadictum [command]
                       Print the memories that match QUERY in full (--all includes candidates)
   status              Memory counts by status, and topics with more than one live memory
   health              Each memory's health: dead triggers, idle, hubs, central paths, stale evidence, false alarms
+  doctor              Is DD working here: Node, the opt-in, the index, sessions recorded, maintenance, what needs a person (exit 1 on a problem)
   maintain            Roll session files up into local telemetry, prune them, retire unused memories (runs daily on its own)
   ui [--port N]       The review UI for this project, until interrupted (default port 7733)
   help                Show this help
@@ -85,6 +86,13 @@ async function main() {
   if (command === 'health') {
     const { healthReport } = await import('./maintenance/health.js');
     console.log(JSON.stringify(await healthReport(findProjectRoot(process.cwd())), null, 2));
+    return;
+  }
+  if (command === 'doctor') {
+    const { doctorReport } = await import('./maintenance/doctor.js');
+    const report = await doctorReport(findProjectRoot(process.cwd()));
+    console.log(JSON.stringify(report, null, 2));
+    if (!report.ok) process.exitCode = 1;
     return;
   }
   if (command === 'maintain') {

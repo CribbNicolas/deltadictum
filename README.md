@@ -161,7 +161,9 @@ memories, duplicates, the agent's requests and the last deliveries; shows each m
 and use (by the trigger dimension that fired it); dry-runs a memory's triggers over recent sessions; and
 edits, accepts, archives, merges or restores. Its header shows the capture funnel: how often DD asked for
 a memory, and how many proposals were stored, activated or rejected. On the command line: `deltadictum
-recall`, `status`, `health` and `maintain`.
+recall`, `status`, `health` and `maintain`; `deltadictum doctor` says whether DD is working in the project
+(Node, the opt-in, the index, sessions recorded, maintenance, what needs a person), since a hook that
+fails never says so.
 
 ## Memory types
 

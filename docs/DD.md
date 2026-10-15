@@ -87,7 +87,12 @@ corrected.
 - `deltadictum health` reports dead triggers, memories with no opportunity or none used despite it, hubs,
   triggers only on central paths, suspected false alarms and stale evidence; for each memory, its fires by
   the dimension that matched; the capture funnel (asks, corrections, proposals stored, activated or rejected,
-  rejections by reason) and the last deliveries. `recall` and `status` read the store.
+  rejections by reason) and the last deliveries. `recall` and `status` read the store. `deltadictum doctor`
+  reports whether DD is working in the project (Node version, the opt-in, a readable config, the compiled
+  index and its freshness, session files recorded, the last maintenance run, and the counts that need a
+  person: dead triggers, stale evidence, conflicts, candidates), as problems with a hint each or as notes,
+  and exits 1 on a problem; a project that did not opt in is told so and nothing is created for it. The
+  `review` skill shows its summary before opening the UI.
 - `deltadictum ui` serves the review UI for one project on a loopback port, until interrupted: queues
   (among them the memories DD accepted on its own, until a person marks each as reviewed), a memory with its
   breadth, evidence, use and similar memories, a dry run of its triggers over recorded sessions, and every
