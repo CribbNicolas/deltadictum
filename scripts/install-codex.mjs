@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -110,10 +110,14 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
 DD hooks add this project's memories before the actions they apply to. Treat them as advice: the current code, the project's documents and the user take precedence. When you learn something an agent reading the code would miss, save it with the dd-save skill.`), agents);
   const ignorePath = join(projectRoot, '.dd', '.gitignore');
   let ignore = await optionalText(ignorePath);
-  for (const pattern of ['local/', '.write-lock', '.pending-write.json', '*.tmp', '*.sqlite', '*.sqlite-*']) {
+  for (const pattern of ['local/', 'memories/manifest.json', 'inbox/', '.write-lock', '.pending-write.json', '*.tmp', '*.sqlite', '*.sqlite-*']) {
     if (!ignore.split(/\r?\n/).includes(pattern)) ignore = `${ignore.trimEnd()}${ignore.trim() ? '\n' : ''}${pattern}\n`;
   }
   await plan(ignorePath, ignore);
+  // The install is the project's opt-in (docs/DD.md): a .dd/config.json with the
+  // project id, as `deltadictum init` writes it; one already there is the project's.
+  const configJsonPath = join(projectRoot, '.dd', 'config.json');
+  if (!(await optionalText(configJsonPath))) await plan(configJsonPath, `${JSON.stringify({ project_id: basename(projectRoot) }, null, 2)}\n`, '');
   return { projectRoot, pluginRoot, dataDir, operations };
 }
 

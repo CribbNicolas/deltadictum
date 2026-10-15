@@ -13,6 +13,8 @@ const USAGE = `DeltaDictum (DD) ${VERSION ?? ''}
 
 Usage: deltadictum [command]
 
+  init [--project-id NAME]
+                      Opt this project in: write .dd/config.json, .dd/.gitignore and .dd/memories/, and compile
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
   migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
@@ -45,6 +47,14 @@ async function runInstall(args) {
   }, null, 2));
 }
 
+// The project's opt-in (docs/DD.md): the folder, the config with the project id, the ignore file.
+async function runInit(args) {
+  const { initProject } = await import('./memory/init.js');
+  const idAt = args.indexOf('--project-id');
+  if (idAt >= 0 && !args[idAt + 1]) throw new Error('Usage: deltadictum init [--project-id NAME]');
+  console.log(JSON.stringify(await initProject(findProjectRoot(process.cwd()), { projectId: idAt >= 0 ? args[idAt + 1] : null }), null, 2));
+}
+
 // Converts the project's v1 store before any store opens it: a v2 store has no atoms to index.
 async function runMigrate(args) {
   const repoRoot = findProjectRoot(process.cwd());
@@ -56,6 +66,7 @@ async function runMigrate(args) {
 async function main() {
   if (['help', '--help', '-h'].includes(command)) { console.log(USAGE); return; }
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
+  if (command === 'init') return runInit(rest);
   if (command === 'install') return runInstall(rest);
   if (command === 'migrate') return runMigrate(rest);
   if (command === 'recall') {

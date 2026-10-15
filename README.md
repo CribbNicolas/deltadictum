@@ -53,8 +53,9 @@ You need [Node.js](https://nodejs.org) 22.16 or later.
    /plugin install dd@deltadictum
    ```
 
-2. Opt the project in: commit a `.dd/config.json` (`{}` is enough), or save a first memory with
-   `/dd:save`. A project without a `.dd/` folder is left alone.
+2. Opt the project in: `npx deltadictum init` writes `.dd/config.json`, `.dd/.gitignore` and
+   `.dd/memories/` for you to commit (a `.dd/config.json` holding `{}` written by hand is enough too, as
+   is a first memory saved with `/dd:save`). A project without a `.dd/` folder is left alone.
 3. Work as usual. When a fix teaches the agent something the code does not show, DD asks it, at the end of
    the turn, to save a memory; you can also ask for one (`/dd:save`, or "save this as a trap").
 4. Review what was saved with `/dd:review`, which opens the local review UI.
@@ -128,8 +129,8 @@ npm install -g deltadictum
 deltadictum install --host codex --project "<absolute-project-path>"
 ```
 
-Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`. Details:
-[Codex guide](docs/integrations/codex.md).
+Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`. The install writes the
+project's opt-in (`.dd/config.json`) when there is none. Details: [Codex guide](docs/integrations/codex.md).
 
 ### OpenCode and Grok Build
 
