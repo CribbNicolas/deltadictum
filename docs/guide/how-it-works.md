@@ -1,3 +1,9 @@
+---
+title: How DD works
+parent: Reference
+nav_order: 1
+---
+
 # How DD works
 
 DD keeps knowledge an agent cannot derive from the code and delivers each piece at the action it applies

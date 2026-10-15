@@ -1,3 +1,9 @@
+---
+title: OpenCode
+parent: Harnesses
+nav_order: 2
+---
+
 # OpenCode
 
 **Status: adapter written and unit-tested against OpenCode's plugin API; not yet verified in a live

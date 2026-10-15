@@ -1,3 +1,9 @@
+---
+title: Memories
+parent: Reference
+nav_order: 2
+---
+
 # Memories
 
 A memory is one JSON file, `.dd/memories/<id>.json`, committed with the project. The authoritative
