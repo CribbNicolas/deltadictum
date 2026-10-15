@@ -22,7 +22,7 @@
     "./server": "./adapters/opencode/index.js"
   },
   "scripts": {
-    "test": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/skills/**/*.test.js\" \"tests/capture/**/*.test.js\" \"tests/maintenance/**/*.test.js\"",
+    "test": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/engine/**/*.test.js\" \"tests/store/**/*.test.js\" \"tests/ui/**/*.test.js\" \"tests/hooks/**/*.test.js\" \"tests/skills/**/*.test.js\" \"tests/capture/**/*.test.js\" \"tests/maintenance/**/*.test.js\" \"tests/repo/**/*.test.js\"",
     "test:engine": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/engine/**/*.test.js\"",
     "test:store": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/store/**/*.test.js\"",
     "test:ui": "node --import ./tests/helpers/isolate-data.js --test --test-concurrency=1 \"tests/ui/**/*.test.js\"",
