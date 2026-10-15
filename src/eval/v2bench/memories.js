@@ -1,12 +1,16 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { convertV1 } from '../../memory/convert-v1.js';
-import { LIVE_STATUSES } from '../../memory/schema.js';
 
 // The memories the bench replays. Plan 0 read the live v1 atoms and converted
 // them; the migration removed the atoms and wrote the same memories, under the
-// same ids, to .dd/memories/. Atoms when they are still there, the live v2
-// memories otherwise.
+// same ids, to .dd/memories/. Atoms when they are still there, the v2 memories
+// otherwise: the live ones and the archived ones, because the bench is a frozen
+// harness around a recorded trial and a curation that archives a memory must not
+// read as the engine missing it. Superseded versions and candidates were never
+// delivered and stay out.
+const REPLAYED = ['active', 'contested', 'archived'];
+
 async function jsonFilesUnder(dir, { recursive = true } = {}) {
   const found = [];
   for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
@@ -28,5 +32,7 @@ export async function loadBenchMemories(ddDir) {
     const liveByTopic = new Map(v1.filter(atom => atom.lifecycle_state !== 'legacy').map(atom => [atom.topic_key, atom.title]));
     return v1.map(atom => convertV1(atom, { titles, liveByTopic }));
   }
-  return (await jsonFilesUnder(join(ddDir, 'memories'), { recursive: false })).filter(memory => LIVE_STATUSES.includes(memory.status));
+  // Replayed as they were when the trial ran: the engine compiles live memories only.
+  return (await jsonFilesUnder(join(ddDir, 'memories'), { recursive: false })).filter(memory => REPLAYED.includes(memory.status))
+    .map(memory => (memory.status === 'archived' ? { ...memory, status: 'active' } : memory));
 }
