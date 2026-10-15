@@ -45,7 +45,7 @@ test('session start starts maintenance in the background when it is due, and say
   const root = await project(t);
   const run = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
   const out = spawnSync(process.execPath, [run, 'session-start'], { input: JSON.stringify({ session_id: 's', cwd: root, source: 'startup' }), encoding: 'utf8', env: { ...process.env, DD_MAINTENANCE: '1' } });
-  assert.equal(out.stdout, '');
+  assert.deepEqual(Object.keys(JSON.parse(out.stdout)), ['systemMessage']);
   const marker = join(root, '.dd', 'local', 'maintenance.json');
   const finished = () => { try { return JSON.parse(readFileSync(marker, 'utf8')).state === 'finished'; } catch { return false; } };
   for (let i = 0; i < 150 && !finished(); i += 1) await new Promise(resolve => setTimeout(resolve, 100));

@@ -145,17 +145,23 @@ test('a prompt naming a keyword delivers its memory', async t => {
   assert.match(context(result), /\[TRAP\] Adopt old data directories/);
 });
 
-test('session start compiles a missing index and says nothing; compaction re-arms delivery', async t => {
+// Session start adds nothing to the agent's context; it tells the person, through
+// the host's system message, that DD is on and where the review UI is.
+test('session start compiles a missing index and tells the person, not the model; compaction re-arms delivery', async t => {
   const root = await project(t);
   rmSync(join(root, '.dd', 'local', 'v2'), { recursive: true, force: true });
   const start = hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'startup' });
   assert.equal(start.status, 0);
-  assert.equal(start.stdout, '');
+  const output = JSON.parse(start.stdout);
+  assert.deepEqual(Object.keys(output), ['systemMessage']);
+  assert.match(output.systemMessage, /^DD - \d+ memories live in this project\. Review UI: \/dd:review \(or npx deltadictum ui\)\.$/);
   assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
   assert.match(context(hook('pre-tool', read(root, 's1'))), /Close stores/);
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
-  hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'compact' });
+  const compact = hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'compact' });
+  assert.equal(compact.stdout, '');
   assert.match(context(hook('pre-tool', read(root, 's1'))), /Close stores/);
+  assert.equal(hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'startup' }, ['--codex']).stdout, '');
 });
 
 // A project opts in by having a .dd/ folder (a committed .dd/config.json is the
@@ -176,7 +182,7 @@ test('a project with .dd/ and no memory yet records its footprint, asks at Stop 
   assert.ok(existsSync(join(root, '.dd', 'local', 'sessions', 's1.footprint.jsonl')));
   assert.match(context(hook('stop', { session_id: 's1', cwd })), /^DD - This turn fixed a failure/);
   const start = hook('session-start', { session_id: 's1', cwd, source: 'startup' });
-  assert.equal(start.stdout, '');
+  assert.equal(JSON.parse(start.stdout).systemMessage, 'DD - on for this project, no memories yet. Save one with /dd:save; review with /dd:review.');
   assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
 });
 
