@@ -49,7 +49,8 @@ It writes three things, all meant to be committed:
 git add .dd && git commit -m "Opt the project into DeltaDictum"
 ```
 
-A `.dd/config.json` holding `{}` written by hand works too, as does a first memory saved with `/dd:save`.
+> **Tip:** a `.dd/config.json` holding `{}` written by hand works too, as does a first memory saved with
+> `/dd:save`. The folder is the opt-in; DD never creates it on its own.
 
 **What you will see:** from the next session on, one line when the session starts:
 
@@ -147,7 +148,9 @@ prints an address like:
 DD - review UI: http://127.0.0.1:7733/?key=3f9a…
 ```
 
-Open that exact URL: the key is what lets your browser in. The UI lists candidates, memories DD accepted on
+> **Open that exact URL.** The key is what lets your browser in; without it the UI answers 403.
+
+The UI lists candidates, memories DD accepted on
 its own, stale or unused memories, duplicates, the agent's requests and the last deliveries. For each
 memory it shows the evidence, how broad its triggers are, how often it fired and by which trigger, and it
 dry-runs the triggers over recent sessions so you can see what would have fired. Edit, accept, archive,
