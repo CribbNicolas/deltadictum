@@ -136,7 +136,8 @@ Rules for checks:
 - A check is reported at most twice per file per session. A memory with a check is never auto-accepted;
   a person enables it in the review UI.
 
-Write a check when the rule is mechanical and the cost of missing it is real. Do not write one for style.
+> **When to write one.** The rule is mechanical and the cost of missing it is real. Not for style: a
+> linter does that better, and every check line costs the agent context.
 
 ## The review UI
 

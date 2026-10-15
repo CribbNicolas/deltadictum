@@ -29,7 +29,8 @@ const rules = {
 };
 
 export default [
-  { ignores: ['node_modules/**', 'output/**', '.dd/**'] },
+  // docs/_includes/mermaid_config.js is an object literal Just the Docs splices into a script: not a module.
+  { ignores: ['node_modules/**', 'output/**', '.dd/**', 'docs/_includes/**'] },
   { files: ['**/*.js', '**/*.mjs'], languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals }, rules },
   { files: ['**/*.cjs'], rules,
     languageOptions: { ecmaVersion: 'latest', sourceType: 'commonjs',

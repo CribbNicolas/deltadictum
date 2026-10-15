@@ -4,6 +4,14 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.3] - 2026-10-15
+
+- Documentation site: a dark colour scheme of its own (amber accent, soft blue links), a landing page with
+  the four ideas behind DD and the three steps to start, a diagram of the loop on "How DD works", callouts
+  on the guide pages, page descriptions, and a favicon. The mark is transparent now, with a light variant
+  for dark surfaces (`brand/DeltaDictum-mark-light.svg`); the README shows the right one for the reader's
+  theme.
+
 ## [0.9.2] - 2026-10-15
 
 - Session start shows the person one line in Claude Code (the hook's `systemMessage`, which the model does
