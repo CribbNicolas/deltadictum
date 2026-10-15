@@ -65,7 +65,8 @@ requirement in every condition with both models and kept DD the cheapest conditi
   `.dd/config.json`, keeping every other key the file holds. Each delivery leaves a ledger line (event,
   memories in full, memories named, characters) that rolls up into the telemetry; the UI's Dashboard shows
   sessions and tool calls, deliveries per 100 tool calls, memories and characters per delivery, how often
-  the cap was reached, deliveries by event, the memories that fire most and the capture funnel.
+  the cap was reached, deliveries by event, the memories that fire most, fires by trigger dimension, check
+  outcomes, which live memories were ever delivered, the last days and the capture funnel.
 - `deltadictum import [--from DIR] [--dry-run]`: the project's `.claude/rules/` and `.cursor/rules/`
   files that name paths become memories delivered at those files on every harness, with the file as
   hashed evidence; always-on rules are left to `CLAUDE.md`, and a second run updates what changed.

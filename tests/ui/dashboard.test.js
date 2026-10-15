@@ -24,6 +24,11 @@ test('the dashboard sums deliveries, the cap hits, the top memories and the sess
     fire.run('m1', 's2', 'keywords', 'prompt', '2026-10-15T10:01:00.000Z');
     fire.run('m2', 's1', 'paths', 'read', '2026-10-14T10:01:00.000Z');
     fire.run('gone', 's1', 'paths', 'edit', '2026-10-14T10:02:00.000Z');
+    const fired = db.prepare('INSERT INTO fires (memory, session) VALUES (?, ?)');
+    for (const [m, s] of [['m1', 's1'], ['m1', 's2'], ['m2', 's1'], ['gone', 's1']]) fired.run(m, s);
+    const check = db.prepare('INSERT INTO checks (memory, path, outcome, at) VALUES (?, ?, ?, ?)');
+    check.run('m1', 'src/a.js', 'fixed', '2026-10-14T10:05:00.000Z');
+    check.run('m1', 'src/a.js', 'ignored', '2026-10-15T10:05:00.000Z');
   } finally { db.close(); }
   const report = await dashboard(root);
   assert.equal(report.limit, 10000);
@@ -33,6 +38,11 @@ test('the dashboard sums deliveries, the cap hits, the top memories and the sess
   assert.deepEqual(report.top.map(row => [row.memory, row.title, row.fires, row.sessions]),
     [['m1', 'First rule', 2, 2], ['gone', 'gone', 1, 1], ['m2', 'Second rule', 1, 1]]);
   assert.equal(typeof report.capture.proposals, 'number');
+  assert.deepEqual(report.by_via, { keywords: 1, paths: 3 });
+  assert.deepEqual(report.checks, { fixed: 1, ignored: 1, repeated: 0 });
+  assert.deepEqual([report.coverage.live, report.coverage.delivered_ever], [2, 2]);
+  assert.equal(typeof report.coverage.never_fired_with_opportunity, 'number');
+  assert.deepEqual(report.by_day, [{ day: '2026-10-14', sessions: 1, deliveries: 2 }, { day: '2026-10-15', sessions: 1, deliveries: 1 }]);
 });
 
 test('an empty project has a dashboard of zeros', async t => {
