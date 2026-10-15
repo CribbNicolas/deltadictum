@@ -87,11 +87,14 @@ function delivery(root, index, event, fired, ledger, bodies, limit) {
   return text;
 }
 
-// Session start injects nothing (spec section 1): it re-arms the ledger after a
-// compaction or /clear, starts the daily maintenance (which prunes old session
-// files), and compiles a missing or stale index so the first tool call is
-// served. A project without a .dd/ folder is left alone: the folder (a
-// committed .dd/config.json, or the memories themselves) is the opt-in.
+// Session start injects nothing into the agent's context (spec section 1): it
+// re-arms the ledger after a compaction or /clear, starts the daily maintenance
+// (which prunes old session files), and compiles a missing or stale index so
+// the first tool call is served. It returns one line for the person (shown by
+// the host as a system message, never as context): how many memories are live
+// and how to open the review UI. A project without a .dd/ folder is left
+// alone: the folder (a committed .dd/config.json, or the memories themselves)
+// is the opt-in.
 async function sessionStart(root, payload, session) {
   const paths = localPaths(root);
   if (!existsSync(paths.dd)) return '';
@@ -112,7 +115,11 @@ async function sessionStart(root, payload, session) {
     const { compileProject } = await import(pathToFileURL(join(__dirname, '..', '..', 'engine', 'compile.js')).href);
     await compileProject(root);
   }
-  return '';
+  // A compaction keeps the session: the person saw the line when it started.
+  if (payload.source === 'compact') return '';
+  const live = Object.keys(loadIndex(root)?.memories ?? {}).length;
+  if (!live) return 'DD - on for this project, no memories yet. Save one with /dd:save; review with /dd:review.';
+  return `DD - ${live} ${live === 1 ? 'memory' : 'memories'} live in this project. Review UI: /dd:review (or npx deltadictum ui).`;
 }
 
 async function handle(command, payload, { host = 'claude' } = {}) {
@@ -139,7 +146,12 @@ async function handle(command, payload, { host = 'claude' } = {}) {
     return respond(command, await capture.run(command, root, payload), host);
   }
   const session = payload.session_id ? { id: payload.session_id, agent: payload.agent_id } : null;
-  if (command === 'session-start') return respond(command, await sessionStart(root, payload, session), host);
+  if (command === 'session-start') {
+    // The line is for the person, not the model: Claude Code shows systemMessage
+    // in the interface and adds nothing to the context. Codex has no such field.
+    const notice = await sessionStart(root, payload, session);
+    return notice && host === 'claude' ? JSON.stringify({ systemMessage: notice }) : '';
+  }
   if (!existsSync(localPaths(root).index)) return '';
   const event = command === 'prompt'
     ? { kind: 'prompt', paths: [], text: String(payload.prompt ?? '') }
