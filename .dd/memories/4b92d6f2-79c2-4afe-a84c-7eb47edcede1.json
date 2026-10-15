@@ -7,7 +7,7 @@
   "status": "active",
   "title": "OpenCode runs plugins in Bun: the adapter must import no DD module",
   "body": "Keep the OpenCode adapter free of DD imports: it spawns `node hooks/run.cjs session-start` and injects the hook's additionalContext. Export only the default plugin function (constants go in adapters/opencode/frame.js), and keep the package.json `./server` export pointing at it.\n\nWhy: OpenCode loads the package's ./server export and runs it in Bun, which has no node:sqlite, so importing DD's store fails at load. It also calls every export of the module as a plugin, so an exported constant fails with 'Plugin export is not a function'. Without ./server it never loads the plugin at all, silently, which is why an earlier `opencode debug startup` check looked clean.",
-  "not_derivable": "",
+  "not_derivable": "Bun lacking node:sqlite and OpenCode calling every export as a plugin were found live; no test can run OpenCode, and a silent non-load looked like a clean startup.",
   "triggers": [
     {
       "on": [
@@ -23,14 +23,14 @@
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "OpenCode adapter",
         "opencode",
         "Bun",
-        "frame.js"
+        "frame.js",
+        "./server export"
       ]
     }
   ],
@@ -38,37 +38,27 @@
     {
       "type": "file",
       "path": "adapters/opencode/index.js",
-      "sha256": "ce7c0642e4ce926363e1a9ff2a31f6619ea16442b1a1dea53330bb515adf7f1b",
-      "summary": "Header comment records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design"
+      "sha256": "b173476f1addb61da81e2ba2b99854401ae1a07e22a3ebf83c86f5656ff85d30",
+      "summary": "The header records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design."
     },
     {
       "type": "file",
       "path": "tests/hooks/opencode.test.js",
-      "sha256": "0fefca7db94a44695c7e67140276622e2958c789476ed4fcfdc695b8ea743bfe",
-      "summary": "Test asserts the adapter imports only node:child_process, node:url and ./frame.js, exports only default, and package.json has ./server"
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "sha256": "05415b366eaa7ba5d0297112eb2142b84973f09b8349c192450d30507819972a",
+      "summary": "The adapter imports only node:child_process, node:url and ./frame.js, exports only default; package.json keeps ./server."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "0647b0f0-25eb-40ef-9fe7-ad3d2fc5b903",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "Before editing adapters/opencode/index.js or adding an import or export to it"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-28T06:47:11.364Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.148Z",
-  "updated": "2026-10-06T18:21:23.683Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

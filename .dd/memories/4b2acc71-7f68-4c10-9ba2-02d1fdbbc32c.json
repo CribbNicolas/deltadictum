@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "testing/resident/isolate-bridge-in-tests",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "Tests that reach the bridge must use a temporary registry",
   "body": "Call useTempRegistry() from tests/helpers/resident.js at the top of the file (DD_RETRIEVAL=lexical alone is not enough). Without it the test passes while the machine's resident is stale or from another build, and fails as soon as a resident of this build is running, because callRunningStore accepts its answer for the temporary project.\n\nWhy: On 2026-09-24 tests/mcp/tools.test.js passed for weeks, then failed right after the resident was restarted from this checkout; the failure left a SQLite store open and npm test hung past 10 minutes instead of reporting it.",
   "not_derivable": "",
@@ -65,7 +65,8 @@
     "migrated": true,
     "issues": [
       "not_derivable_missing",
-      "folder_scope"
+      "folder_scope",
+      "archived_by_person: describes the resident bridge in tests"
     ],
     "v1": {
       "trigger": "when writing or changing a test that calls MCP tool handlers (retrieve, orient, similar) or hook commands that bridge to the resident"
@@ -76,5 +77,5 @@
     }
   },
   "created": "2026-09-27T02:37:08.972Z",
-  "updated": "2026-10-06T18:21:23.632Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "development/resident/stale-after-edit",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "A resident keeps its old code after a src/ edit",
   "body": "Restart the resident before verifying a change to src/: run node src/cli.js ui (it retires the stale one) or pipe a session-start payload into node hooks/run.cjs session-start. Then check that GET /api/resident reports stale:false. index.html is read on every GET / and needs only a browser refresh. The resident is not part of the session's MCP server: stopping it keeps the mcp__dd__* tools; reconnect the MCP server with /mcp when its own answers say its code is stale. A restart changes the audit UI key, so give the user the new address.\n\nWhy: The resident fingerprints src/ and refuses hooks once it changes (409 build_stale), but keeps serving UI routes with its old code until the next prompt or session start replaces it, and the prompt that triggers the replacement gets no recall. A new route then returns 404, or a new field reads as undefined in the page, while the source is correct.",
   "not_derivable": "",
@@ -72,7 +72,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the resident"
     ],
     "v1": {
       "trigger": "After editing src/ in a DD checkout while a resident is running, or when a route or field just added to src/ui/server.js is missing from the running audit UI (404, or 'Cannot read properties of undefined' in the browser console)"
@@ -83,5 +84,5 @@
     }
   },
   "created": "2026-09-27T02:37:08.912Z",
-  "updated": "2026-10-06T18:21:23.420Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "memory/retrieval/compact-fts",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "What retrieve returns and what bounds it",
   "body": "Expect at most 8 pushed memories within budget_tokens (800 by default), counted as the agent reads them. Each arrives in its most compact form that fits, down to a one-line headline with the id to fetch. Up to 8 more arrive as pointers (topic_key, when it applies, get id) on prompts and tool calls, once per session; get one when its line applies. Candidates come from FTS plus, with the resident, nearest embeddings. An explicit retrieve returns its fused top 5 even below their floors, and a non-English prompt asks for a retrieve in English. vpt_threshold is a floor on marginal value, not a per-token ratio.\n\nWhy: Measured 2026-09-22: the old value-per-token gate capped every memory near 50 tokens, so reviewed advice longer than a sentence never injected; one ~470-token micro form filled the pack alone. The headline fallback and the value floor fixed both, verified by tests/engine/cognition/retrieval-reach.test.js and the task benchmark. Revised for 0.8.0 (2026-09-29): pull-first delivery (pointers on tool calls, explicit retrieve, English-retrieve nudge) reached 0.90-0.96 must-recall on the golden sets' measuring halves with bench:pull, and the budget now counts the rendered pack.",
   "not_derivable": "",
@@ -60,7 +60,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes v1 retrieval (retrieve, pointers, the token budget)"
     ],
     "v1": {
       "trigger": "When calling the DD retrieve/orient tools, or changing how retrieval selects and sizes memories"
@@ -71,5 +72,5 @@
     }
   },
   "created": "2026-09-29T19:38:56.892Z",
-  "updated": "2026-10-06T18:21:23.554Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

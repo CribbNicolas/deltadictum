@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "dd/testing/backdated-created-at",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "Backdating created_at reaches the health snapshot only after a reindex",
   "body": "Call store.reindex() after the backdated putAtom. upsertAtom's ON CONFLICT clause updates every column except created_at, so a memory that already has an index row keeps its original date and loadHealthSnapshot reports the wrong age. The rebuild reads the git file, which is where the truth is.\n\nWhy: created_at is immutable identity and the index enforces that. Without the rebuild an age test passes or fails for a reason unrelated to what it claims to measure.",
   "not_derivable": "",
@@ -59,7 +59,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the v1 sqlite index (upsertAtom)"
     ],
     "v1": {
       "trigger": "when a test backdates a memory's created_at to exercise an age threshold, such as dead_inferred or retirement"
@@ -70,5 +71,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.953Z",
-  "updated": "2026-09-28T06:47:10.511Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

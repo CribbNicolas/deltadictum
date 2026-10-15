@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "ui/audit-ui/error-hints-must-track-engine-codes",
   "kind": "procedure",
-  "status": "active",
+  "status": "archived",
   "title": "Audit UI's #msg now translates engine error codes -- keep ERROR_HINTS in sync when adding new throw/reasons.push sites",
   "body": "Add a matching entry to ERROR_HINTS in src/ui/public/index.html for every error code the audit UI can surface. src/ui/public/index.html previously rendered raw `err.message` (an internal error code like 'replacement_changed_review_again' or 'cannot_admit:missing_title,missing_why') directly into the #msg red hint, unexplained. Added an ERROR_HINTS dictionary + friendlyError() that maps every UI-reachable engine error code (flat codes, `cannot_admit:a,b` compounds, and the PATCH save flow's `'; '`-joined reasons list) to a plain-language, actionable sentence, while still falling back to the raw code for anything unmapped (so a gap is visible, not silently swallowed). All #msg assignments in index.html now go through friendlyError(). Consequence: any new error code thrown/pushed in the engine files above that can reach the audit UI needs a matching entry added to ERROR_HINTS in src/ui/public/index.html, or it will fall back to showing the raw code verbatim to the reviewer.\n\nWhy: User asked for descriptive red-hint error messages after hitting an unexplained 'replacement_changed_review_again' trying to admit a candidate whose replacement target was itself still an unreviewed candidate. Implemented by reading every throw/reasons.push site reachable from the audit UI's own routes in src/ui/server.js and building the full mapping, verified with `npm test` (302/302 passing).",
   "not_derivable": "",
@@ -63,7 +63,8 @@
     "migrated": true,
     "issues": [
       "not_derivable_missing",
-      "evidence_not_a_path"
+      "evidence_not_a_path",
+      "archived_by_person: describes the v1 audit UI (index.html); the v2 review UI has no ERROR_HINTS"
     ],
     "v1": {
       "trigger": "Adding, renaming, or removing a `throw new Error('some_code')` or `reasons.push('some_code')` in src/engine/{lifecycle,contract,v2/admission,v5/admission,v5/vocab,v6/contradiction}.js or src/ui/server.js that can surface through an audit-UI action (admit/reject/resolve/restore/delete/save/feedback-review/settings)."
@@ -74,5 +75,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.513Z",
-  "updated": "2026-09-29T19:41:35.499Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

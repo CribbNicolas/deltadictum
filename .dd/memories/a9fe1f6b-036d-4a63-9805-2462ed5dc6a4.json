@@ -5,71 +5,65 @@
   "topic": "testing/store-handle-hangs-node-test",
   "kind": "trap",
   "status": "active",
-  "title": "Failing store tests hang node --test; --test-force-exit breaks resident tests on Windows",
-  "body": "Close stores in t.after so a failing assertion cannot leave a SQLite handle open, and run a single file with a tool timeout. Use --test-force-exit only for files that start no resident or UI server: on Windows it crashes tests/hooks/resident.test.js. Standalone scripts that open a store must end with process.exit.\n\nWhy: A failing assertion before store.close() kept tests/mcp/tools.test.js alive past the 120 s timeout with no output (2026-09-22); --test-force-exit revealed it, but the same flag crashed the resident tests on Windows, so it is not a safe default.",
-  "not_derivable": "",
+  "title": "Close every node:sqlite handle a test opens before its folder goes, and before an assertion can fail",
+  "body": "Register the close of a telemetry database (openTelemetry, DatabaseSync) in t.after before the folder's rmSync, or close it in the test before asserting: t.after callbacks run in registration order, Windows answers EPERM when a folder holds an open database, and a failing assertion before the close keeps node --test alive past its timeout with no output. Do not make --test-force-exit the default: it hides the hang (and crashed server tests on Windows in v1); a standalone script that opens a database ends with process.exit. Why: a store left open hung tests/mcp/tools.test.js for 120 s silently on 2026-09-22; the v2 maintenance tests hit EPERM on 2026-10-13 until the handle closed before the folder was removed.",
+  "not_derivable": "The tests close their handles, but not why the order matters, nor that a failing assertion hangs the runner without a word.",
   "triggers": [
     {
       "on": [
-        "read",
         "edit",
         "write"
       ],
       "paths": [
-        "tests/hooks/resident.test.js",
-        "tests/mcp/tools.test.js",
-        "src/store/create-store.js"
+        "tests/maintenance/**",
+        "tests/capture/**",
+        "tests/ui/**",
+        "tests/stress/**"
+      ],
+      "symbols": [
+        "openTelemetry",
+        "DatabaseSync"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "never finishes",
-        "hang",
+        "test hangs",
+        "EPERM",
         "test-force-exit",
-        "SQLite handle",
-        "se cuelga"
+        "se cuelga",
+        "sqlite handle"
       ]
     }
   ],
   "evidence": [
     {
       "type": "file",
-      "path": "TODO.md",
-      "sha256": "f8bfaaf4cea52536d626b0e98017a741f2ec6b3dfc05aa84ce60e266e70a5cb4",
-      "summary": "Item 9 records that --test-force-exit crashes the resident tests on Windows."
+      "path": "tests/maintenance/telemetry.test.js",
+      "sha256": "c2d9a692a09c82f0395a273466aebb30d63a8358412dc2d9b4c12b20df458be2",
+      "summary": "Tests close the database before the temporary folder is removed."
     },
     {
       "type": "file",
-      "path": "tests/hooks/resident.test.js",
-      "sha256": "5e165a0e20363eb79f6d02a4f78d9fd2c4479addbdfbad11f671cdf8e1af4289",
-      "summary": "Resident tests start UI servers and close them in t.after."
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "path": "src/maintenance/telemetry.js",
+      "sha256": "8d5acaaccdcf1c135bde2b5d7bbe44ecbfcd3cb4e8a8f4fa030ddedd08103a8d",
+      "summary": "openTelemetry returns a DatabaseSync the caller closes."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "when a single DD test file run with node --test never finishes, or when choosing flags to run test files"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-28T06:47:11.750Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.031Z",
-  "updated": "2026-10-06T22:43:49.537Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "hooks/hot-path-cache-lifetime",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "Hook work runs in the resident: cache on its store, persist only what must outlive it",
   "body": "Cache hook-path work on the resident's store, not in the hook process. Hooks are thin clients: src/hooks/run.js posts session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keeps one store per project open across calls, so an in-memory cache on that store does hit between tool calls while the resident lives. When no resident answers, pre-tool exits without retrieval and the other events only do bookkeeping, so do not optimize the local hook path. Persist in the SQLite index (index_meta through store.index.getMeta/setMeta, as projectContext() in src/engine/project-context.js does) only when the value must survive a resident restart or be shared with the separate MCP server process.\n\nWhy: The previous version said a property on the store dies with each hook process and cited projectContext's in-memory cache as the bug. Since the shared resident, every hook that retrieves is answered by that long-lived process (run.js returns the bridged reply before opening a store, and skips pre-tool when nothing answers), and projectContext now caches in index_meta. Optimizing the per-event Node process buys nothing.",
   "not_derivable": "",
@@ -62,7 +62,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes caching in the resident; v2 hooks are ephemeral by design (L1)"
     ],
     "v1": {
       "trigger": "Reviewing or optimizing PreToolUse/observe/prompt hook cost, or adding a cache on the store object anywhere in src/engine or src/hooks."
@@ -73,5 +74,5 @@
     }
   },
   "created": "2026-10-06T17:40:50.481Z",
-  "updated": "2026-10-06T19:08:52.289Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

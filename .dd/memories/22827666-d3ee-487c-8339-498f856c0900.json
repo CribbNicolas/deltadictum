@@ -6,70 +6,58 @@
   "kind": "procedure",
   "status": "active",
   "title": "Verify the Claude Code plugin in a real session with --plugin-dir",
-  "body": "Start a resident first (node src/cli.js ui as a background task) and wait until GET /api/resident reports retrieval semantic. Then, in a scratch git project, run claude -p \"<prompt>\" --plugin-dir <checkout> --allowedTools Bash --output-format stream-json --verbose < /dev/null and read hook_response events and assistant text from the JSONL. Read recorded observations from ~/.claude/plugins/data/dd-inline/<project-key>/index.sqlite (table memory_observations), and delete that directory afterwards (stop the resident first; it holds the file open).\n\nWhy: --plugin-dir loads hooks/hooks.json exactly as the marketplace install does, for that run only. A resident that a hook starts inside a Bash tool call dies when the call ends, and while it loads DD is inactive: session start then omits the retrieve/propose guidance and project context, so a probe without a ready resident looks like a regression. Text output mode shows only the reply to the Stop reminder, hiding the rest.",
-  "not_derivable": "",
+  "body": "In a scratch git project that holds a `.dd/config.json` (and memories to try), run `claude -p \"<prompt>\" --plugin-dir <this checkout> --output-format stream-json --verbose --include-hook-events < /dev/null` and read the JSONL: the hook_response events carry what DD injected (hookSpecificOutput.additionalContext) and the assistant text is the agent's work; plain text output shows only the reply to DD's Stop request. The session's ledger and footprint land in `<scratch>/.dd/local/sessions/`. Why: --plugin-dir loads hooks/hooks.json exactly as a marketplace install does, for that run only, so the checkout is tested rather than the installed copy; src/eval/agent/run.js drives the same flags for the trials. A probe in a scratch project without a `.dd/` folder records nothing: the folder is the opt-in.",
+  "not_derivable": "No test can run Claude Code; the flags, the event the injection appears in and the opt-in trap were found by running it.",
   "triggers": [
     {
       "on": [
         "read",
-        "edit",
-        "write"
+        "edit"
       ],
       "paths": [
         "hooks/hooks.json",
-        "src/hooks/session-start.js",
-        "src/hooks/observe.js"
+        "hooks/run.cjs"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "plugin-dir",
-        "real Claude Code",
         "stream-json",
-        "memory_observations",
-        "sesion real"
+        "real session",
+        "live session",
+        "sesion real",
+        "probe the plugin"
       ]
     }
   ],
   "evidence": [
     {
       "type": "file",
-      "path": "src/hooks/session-start.js",
-      "sha256": "a8c035bccb0d0d036e706b1f27c381482f6afe41ece29f4090031c11014bf067",
-      "summary": "An inactive resident returns only the banner and residentNotice; PULL_GUIDANCE and advisory context are added only when active."
+      "path": "hooks/hooks.json",
+      "sha256": "33afbfd046d64040287f633f589b9730232a9ed2e8f2ea3251dbe6632d2543a7",
+      "summary": "The hooks --plugin-dir loads."
     },
     {
       "type": "file",
-      "path": "hooks/hooks.json",
-      "sha256": "db8153d7734b88de66c5ea16db597ae77885dd9a83fffa24e7d564b4ce78a6f1",
-      "summary": "Plugin hooks anchored at ${CLAUDE_PLUGIN_ROOT}, including PostToolUseFailure."
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "path": "src/eval/agent/run.js",
+      "sha256": "957560537e4a30c512446a0212a36b28c6016e65b656d0ea13cce6a2b2d8d18c",
+      "summary": "The trial runner's claude -p flags."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "e82ba814-47e6-4401-b96e-ae01aec268cc",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "When a change to hooks, session start or capture must be confirmed in a real Claude Code session, without installing the plugin into the user's global config"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-28T06:47:10.545Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:08.722Z",
-  "updated": "2026-10-06T18:21:23.809Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

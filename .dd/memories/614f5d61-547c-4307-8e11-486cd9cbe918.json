@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "testing/ui/seen-json-isolation",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "UI tests that mark items seen write the real seen.json",
   "body": "Point CLAUDE_PLUGIN_DATA at a temporary directory for that test (restore it in t.after), or the seen state is written to the developer's real ~/.dd-data/seen.json. The same applies to a throwaway UI demo started with startUiServer on a temp store: set CLAUDE_PLUGIN_DATA before importing the modules.\n\nWhy: seen.json is not part of the store: src/store/seen.js resolves it from resolveDataBase() (plugin data env vars or ~/.dd-data), so a temp ddDir/dataDir given to createMemoryStore does not isolate it. Tests pass either way, so the pollution is silent.",
   "not_derivable": "",
@@ -58,7 +58,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes seen.json and the v1 data directory"
     ],
     "v1": {
       "trigger": "When writing a test or demo script that reads a memory through GET /api/atoms/:id or marks actions seen through the audit UI server"
@@ -69,5 +70,5 @@
     }
   },
   "created": "2026-09-27T02:37:08.942Z",
-  "updated": "2026-09-28T06:47:11.795Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

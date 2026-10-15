@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "debugging/dd-store/datadir-and-sqlite-abandoned-292df784",
   "kind": "failed_approach",
-  "status": "active",
+  "status": "archived",
   "title": "Find DD's live dataDir and query index.sqlite directly",
   "body": "No longer done: 1) dataDir is not in .dd/ui.json or mcp__dd__status output. Find the live node process via `Get-CimInstance Win32_Process -Filter \"Name='node.exe'\"` (or ps) and look for `node mcp.js` — then cross-check its resolution against src/project.js: dataDir = $env:DD_DATA or join(GROK_PLUGIN_DATA/CLAUDE_PLUGIN_DATA or ~/.dd-data, `${slug}-${identity}`), where identity = sha256(resolve(repoRoot)).slice(0,12). 2) sqlite3 CLI is not installed in this environment — use `node -e \"require('node:sqlite').DatabaseSync\"` (Node >=22 built-in, experimental) to open index.sqlite and query tables directly (table is `memory_retrieval_events`, not `retrieval_events`).\n\nAbandoned because: The live data directory is no longer found by inspecting a `node mcp.js` process: one resident (node src/cli.js ui) serves every project, and projectDataDir() names each project's directory from normalizePath(repoRoot), not resolve(repoRoot).\n\nNow: Find a project's DD data directory and query index.sqlite directly",
   "not_derivable": "",
@@ -44,7 +44,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the v1 data directory and the mcp.js process"
     ],
     "v1": {
       "trigger": "Need to verify which .dd-data dir the running DD MCP server is using, or need to inspect index.sqlite (e.g. retrieval_events, health indicators) directly instead of trusting a cached/derived value."
@@ -55,5 +56,5 @@
     }
   },
   "created": "2026-09-19T04:09:59.450Z",
-  "updated": "2026-09-24T21:38:31.965Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

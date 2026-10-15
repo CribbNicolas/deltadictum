@@ -5,15 +5,14 @@
   "topic": "tooling/install-codex/managed-block-drops-manual-fields",
   "kind": "trap",
   "status": "active",
-  "title": "Codex installer keeps tools.* tables but replaces other edits inside its managed block",
-  "body": "Move hand edits out of DD's managed block, or warn the user before re-running the installer. Since 0.8.4 scripts/install-codex.mjs carries [mcp_servers.dd.tools.<tool>] tables (approval_mode and the like) from the old block into the new one, but every other key between BEGIN/END DD MANAGED CONFIG (command, args, cwd, startup_timeout_sec, tool_timeout_sec, the env table, comments) is replaced by configBody. In .codex/hooks.json DD's own handlers get the installer's timeout and limits back; other handlers are kept. Run with --dry-run first and diff the files it lists.\n\nWhy: Observed in Project-Patriark: regenerating the block dropped approval_mode = \"approve\" for orient and retrieve. The 0.8.4 fix preserves tools.* tables only; tests/hooks/codex.test.js asserts that a hand-set startup_timeout_sec returns to 30, so other hand edits are still replaced silently.",
-  "not_derivable": "",
+  "title": "The Codex installer replaces everything inside its managed block",
+  "body": "Re-running `deltadictum install --host codex` rewrites every line between BEGIN and END DD MANAGED CONFIG in .codex/config.toml with the current configBody (in v2 a single comment: DD runs no MCP server), and gives DD's own handlers in .codex/hooks.json the installer's timeout and limits back; handlers DD did not write, their matcher groups, and everything outside the block are kept. Move hand edits out of the block, or run with --dry-run first and diff the files it lists. Why: in a real project (2026-10) regenerating the block dropped a hand-set approval_mode; 0.8.4 preserved tools.* tables only, and v2 drops the MCP block altogether, so any key a person added inside it goes without a warning.",
+  "not_derivable": "The installer replaces the block silently; a person's edits inside it vanish with no message, which only a real project showed.",
   "triggers": [
     {
       "on": [
         "read",
-        "edit",
-        "write"
+        "edit"
       ],
       "paths": [
         "scripts/install-codex.mjs"
@@ -21,14 +20,14 @@
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "managed block",
         "install-codex",
         "config.toml",
-        "configBody"
+        "reinstall codex",
+        "Codex install"
       ]
     }
   ],
@@ -36,32 +35,27 @@
     {
       "type": "file",
       "path": "scripts/install-codex.mjs",
-      "sha256": "4c6f9492b4953b32ea0ff0177c79e4afc2917aa40539a7a53e9799556e563ff2",
-      "summary": "toolPreferences keeps [mcp_servers.dd.tools.*] tables from the managed block; the rest of the block is configBody; owned hook handlers are replaced in place."
+      "sha256": "b0623d6595a1eaefa28ac745eb6085160a78d2f0d062104fa87ee759ac95f683",
+      "summary": "managedBlock replaces the block; owned handlers are refreshed in place."
     },
     {
       "type": "file",
       "path": "tests/hooks/codex.test.js",
-      "sha256": "bf5d34fb4d2b80a47eaf67c1136b8dd8263b7db6f69909273133668566b89856",
-      "summary": "Upgrade tests: tools.* preferences survive, startup_timeout_sec 99 returns to 30, hook timeout and limits are refreshed."
+      "sha256": "620270d6858e268c6861598c73e8b22f64107c401e2be53e017f9826adebc2c9",
+      "summary": "The installer tests."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "Before re-running scripts/install-codex.mjs (or deltadictum install --host codex) against a project whose .codex/config.toml managed DD block or .codex/hooks.json was hand-edited"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-06T19:08:52.124Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-10-06T17:40:50.529Z",
-  "updated": "2026-10-06T19:08:52.131Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

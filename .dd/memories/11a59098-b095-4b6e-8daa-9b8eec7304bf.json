@@ -5,9 +5,9 @@
   "topic": "integrations/grok/manifest-traps",
   "kind": "trap",
   "status": "active",
-  "title": "Grok Build plugin manifest traps",
-  "body": "Point mcpServers in .grok-plugin/plugin.json at a file (./.grok-plugin/mcp.json) anchored with ${GROK_PLUGIN_ROOT}. Never inline it, never use ${VAR:-default}, and name the marketplace plugin source by git URL, not \"./\". Check changes with `grok mcp doctor` from an isolated HOME/USERPROFILE, not `grok plugin validate`.\n\nWhy: Grok 1.0.41 ignored an inline mcpServers object and fell back to the root .mcp.json, whose relative mcp.js resolved in the user's project; it expands ${VAR} but not ${VAR:-default}; its marketplace rejects \"./\" as 'marketplace path is empty'. grok plugin validate passed on all of these.",
-  "not_derivable": "",
+  "title": "Grok Build manifest traps",
+  "body": "In .grok-plugin/plugin.json and .grok-plugin/marketplace.json, anchor every path with ${GROK_PLUGIN_ROOT} and never with ${VAR:-default} (Grok expands ${VAR} only), and name the marketplace plugin source by git URL, not \"./\" (its marketplace rejects it as \"marketplace path is empty\"). `grok plugin validate` passes on all of these, so check a change with `grok inspect` from an isolated HOME/USERPROFILE. Why: found on Grok 1.0.41 on 2026-09-23 with the v1 manifest, which also inlined an mcpServers object Grok ignored; v2 registers hooks only, mirroring hooks/hooks.json, and no live Grok session has been recorded since.",
+  "not_derivable": "Grok accepts the broken manifests without an error; only a live grok mcp doctor and inspect showed what it ignored.",
   "triggers": [
     {
       "on": [
@@ -16,22 +16,21 @@
         "write"
       ],
       "paths": [
-        ".grok-plugin/plugin.json",
-        ".grok-plugin/marketplace.json",
-        ".grok-plugin/mcp.json"
+        ".grok-plugin/**",
+        ".grok/**",
+        "docs/integrations/grok-build.md"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "grok-plugin",
-        "grok mcp doctor",
         "GROK_PLUGIN_ROOT",
-        "mcpServers",
-        "grok"
+        "grok marketplace",
+        "grok inspect",
+        "Grok Build"
       ]
     }
   ],
@@ -39,37 +38,27 @@
     {
       "type": "file",
       "path": "docs/integrations/grok-build.md",
-      "sha256": "902a31308fbed5a8443940162a5350b0b727240225bf07addfa0468b7fa0017f",
-      "summary": "Section 'How the manifest is laid out, and why' records each finding from grok mcp doctor on 2026-09-23"
+      "sha256": "ef3945e5b59e66fb39321d403562fee1833085849f881f95b1765f409c10f8ab",
+      "summary": "The manifest layout and each finding from grok mcp doctor on 2026-09-23."
     },
     {
       "type": "file",
-      "path": "tests/hooks/install.test.js",
-      "sha256": "6d580cee9a3a84a482adfd32a4a5db33558b8e89e833b34cc434c3491073d9bb",
-      "summary": "Test pins the file-path mcpServers, the GROK_PLUGIN_ROOT anchor and the url marketplace source"
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "path": ".grok-plugin/plugin.json",
+      "sha256": "31ffad7e1b038531b6c39282f32918d766e8abc83eba8dce0716d005f2dab260",
+      "summary": "Hooks anchored with GROK_PLUGIN_ROOT."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "31c07973-1037-4544-bb82-610a41d415d5",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "Before changing .grok-plugin/plugin.json, .grok-plugin/marketplace.json or .grok-plugin/mcp.json"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-29T19:41:34.750Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.177Z",
-  "updated": "2026-10-06T18:21:23.445Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

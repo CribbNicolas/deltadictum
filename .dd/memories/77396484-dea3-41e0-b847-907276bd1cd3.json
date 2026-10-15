@@ -6,8 +6,8 @@
   "kind": "trap",
   "status": "active",
   "title": "Claude Code plugin commands are prefixed with the plugin name",
-  "body": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:review, /dd:compact and so on, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate.\n\nWhy: The prefix comes from the plugin manifest, not from the skill or MCP server name, so naming the skills alone does not produce it. The previous version of this memory predated the rename and said the plugin was named deltadictum.",
-  "not_derivable": "",
+  "body": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:save, /dd:recall and /dd:review, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate. Why: the prefix comes from the plugin manifest, not from the skill names, so naming the skills alone does not produce it; an earlier version of this memory predated the rename and said the plugin was named deltadictum.",
+  "not_derivable": "The prefix comes from the plugin manifest's name, which no skill file shows; renaming the plugin changes the install id for every user.",
   "triggers": [
     {
       "on": [
@@ -38,38 +38,27 @@
     {
       "type": "file",
       "path": ".claude-plugin/plugin.json",
-      "sha256": "6356ccb4b66a150ecf758c26cdfddbf56acf23b571132bf79a4f34ae6e9c41b0",
-      "summary": "\"name\": \"dd\""
+      "sha256": "3eee8f642ca9fca163a650bbdc472416a31116e79f17d12163ba2fff9bea91d5",
+      "summary": "\"name\": \"dd\"."
     },
     {
       "type": "file",
       "path": "README.md",
-      "sha256": "df7f54bcd83954a3e2a1c74b4cd7a4b7cc0ae215a07d0f6287e211377396e77b",
-      "summary": "Install section: /plugin install dd@deltadictum; command table lists /dd:* commands."
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "sha256": "ad27465a33260b972e241975a2108d9b83dda545c3d4ddb52584f383dd16e778",
+      "summary": "Install section: /plugin install dd@deltadictum; the command table lists /dd:* commands."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "27c7fd7f-027b-4a2c-ac4f-507496faf3d0",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing",
-      "folder_scope"
-    ],
-    "v1": {
-      "trigger": "When naming, documenting or renaming a Claude Code plugin skill or the plugin itself"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-28T06:47:10.695Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:08.691Z",
-  "updated": "2026-10-06T22:43:40.166Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

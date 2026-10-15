@@ -5,84 +5,67 @@
   "topic": "eval/agent-trial/effectiveness-numbers",
   "kind": "fact",
   "status": "active",
-  "title": "DD's measured effectiveness lives in the agent trial, and its time gain is one outlier",
-  "body": "Quote the agent trial from output/eval/agent-results.json (claude-sonnet-5, 6 tasks x 3 repeats, fresh clone per run, 2026-09-23): 15/18 passed without DD, 18/18 with DD, cost about equal (7.02 vs 7.13 USD). Do not claim a speedup from its summary minutes (72.4 vs 37.3): nearly all of that gap is the retrieve-title task, where one no-DD run hit the 25-minute timeout and another took 11 minutes; other tasks took similar time. Disclose the bias: the tasks were picked because a memory holds what the code does not show (commit 6cb6acd). agent-results-pruned.json is the DD condition with some memories removed (16/18), not a no-DD baseline. The 84% token saving comes from authored replay scenarios and measures context cost, not task success.\n\nWhy: No document cites this trial: docs/evaluation/model-evaluation.md still calls quality and speed gains hypotheses, so an agent asked for evidence either misses it or reads the summary block and reports a 2x speedup that one timeout produces.",
-  "not_derivable": "",
+  "title": "Quote DD's effectiveness from the 2026-10 trials, with their caveats; never the September minutes",
+  "body": "DD's measured effectiveness is in two trials: the 15-task Claude Sonnet 5.5 trial (docs/guide/how-it-works.md, \"How it is measured\": same resolution, +7 quality points, every project requirement met, +1% cost against the agent alone) and the Opus 5.5 / Haiku 5.5 trial at high effort (docs/benchmarks/2026-10-v2-trial-opus-haiku.md: every condition met every requirement, a ceiling, with DD the cheapest condition for both models). Quote them with their caveats: one project, small samples, the second a ceiling. Do not quote the September 2026 agent trial's minutes (72.4 against 37.3): one 25-minute timeout in one task produced that gap, and the 84% token saving of the replay scenarios measures context cost, not task success. Why: a reader of a summary block reports a 2x speedup one outlier produced; the write-ups carry the caveats beside the numbers, the summaries do not.",
+  "not_derivable": "The numbers sit in the docs; which claims the data cannot support is written only here and in the trial write-ups' caveats.",
   "triggers": [
     {
       "on": [
-        "read",
         "edit",
         "write"
       ],
       "paths": [
-        "output/eval/agent-results.json",
-        "docs/evaluation/model-evaluation.md",
-        "README.md"
+        "README.md",
+        "docs/guide/how-it-works.md",
+        "docs/benchmarks/**",
+        "CHANGELOG.md"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "agent trial",
         "speedup",
-        "agent-results",
-        "retrieve-title"
+        "benchmark numbers",
+        "measured effectiveness",
+        "how much better",
+        "cuanto mejora"
       ]
     }
   ],
   "evidence": [
     {
       "type": "file",
-      "path": "output/eval/agent-results.json",
-      "sha256": "10bf48aa2f54c2e7eda2bfa139acb5aa2b8d4cddfccef6d1eb5a70ffb16b3ddc",
-      "summary": "summary without_dd 15/18 passed, 72.4 min, 7.0163 USD; with_dd 18/18, 37.3 min, 7.1337 USD; retrieve-title no-DD rows include a 25.0 min timeout and an 11.0 min run"
+      "path": "docs/benchmarks/2026-10-v2-trial-opus-haiku.md",
+      "sha256": "4b2b9d19bf06725bbffdf44c7964a5f80996c887ee693f68d94278c2353aef1a",
+      "summary": "The Opus and Haiku trial write-up."
     },
     {
       "type": "file",
-      "path": "output/eval/agent-results-pruned.json",
-      "sha256": "041dacd9f834bddf2ea227b1381bbea973fdf23e6351852a0859f7535e498293",
-      "summary": "with_dd only, 16/18 passed, no without_dd runs"
-    },
-    {
-      "type": "file",
-      "path": "docs/evaluation/model-evaluation.md",
-      "sha256": "2cf83e7842967a1060209ffa08a9f9ce594146ac58099e0961f8c0f743ab382b",
-      "summary": "line 84 says cross-model quality and development-speed gains remain hypotheses to measure; the agent trial is not mentioned"
-    },
-    {
-      "type": "file",
-      "path": "src/eval/agent/run.js",
-      "sha256": "48a48f07f89dd2925b947167ac68362c0e2eae8bb6b2ad2f5680a1667a0d506c",
-      "summary": "harness: fresh clone per run, headless Claude Code, 20-minute timeout, DD condition adds hooks and MCP server"
+      "path": "docs/guide/how-it-works.md",
+      "sha256": "06ab5590e497ca05cc604943529301636c5473f9d38edc1c6a62226294572642",
+      "summary": "The Sonnet trial table and its caveats."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": null,
   "revisit_when": [
     {
       "kind": "file_changed",
-      "description": "A new agent trial run replaces these numbers",
-      "path": "output/eval/agent-results.json",
-      "hash": "10bf48aa2f54c2e7eda2bfa139acb5aa2b8d4cddfccef6d1eb5a70ffb16b3ddc"
+      "path": "docs/guide/how-it-works.md",
+      "description": "A new trial replaces these numbers."
     }
   ],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "When stating whether DD measurably helps (README, release notes, posts, docs/evaluation), or quoting the with-DD vs without-DD agent trial numbers"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-11T20:01:22.821Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-10-07T16:48:38.405Z",
-  "updated": "2026-10-11T20:01:22.828Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }
