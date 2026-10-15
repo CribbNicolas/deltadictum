@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { exampleProblems } from '../checks/check.cjs';
@@ -119,6 +119,23 @@ export async function restoreMemory(root, id) {
 
 // A memory DD accepted on its own, seen by a person and left as it is: the review
 // it waited for, so it leaves the auto_accepted queue and retirement spares it.
+// Stale evidence re-anchored by a person: each file entry that still exists is
+// hashed again at its current content; a file that is gone stays stale and is
+// reported. Integrity only (invariants): the person judged the claim, DD did not.
+export async function reverifyEvidence(root, id) {
+  const memory = await find(root, id);
+  if (!LIVE_STATUSES.includes(memory.status)) throw new ReviewError(['not_live']);
+  const stale = [];
+  const evidence = memory.evidence.map(entry => {
+    if (entry.type !== 'file' || !entry.sha256) return entry;
+    try { return { ...entry, sha256: createHash('sha256').update(readFileSync(join(root, entry.path))).digest('hex') }; }
+    catch { stale.push(entry.path); return entry; }
+  });
+  const at = now();
+  const saved = await save(root, [reviewedByPerson({ ...memory, evidence, updated: at }, at)]);
+  return { memory: saved, stale };
+}
+
 export async function markReviewed(root, id) {
   const memory = await find(root, id);
   if (!LIVE_STATUSES.includes(memory.status)) throw new ReviewError(['not_live']);
