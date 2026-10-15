@@ -1,5 +1,6 @@
 ---
 title: Getting started
+description: Install DeltaDictum in Claude Code, opt a project in, save a first memory, see it fire, review it and share it with the team.
 nav_order: 2
 ---
 
@@ -92,8 +93,11 @@ Or, when a condition for auto-accept was not met:
 DD - testing/store-handle: stored as a candidate for review (no_verified_evidence), id 6f1c….
 ```
 
-Or a rejection with its reasons, which the agent fixes and resubmits. A proposal that reads like generic
-advice ("write tests"), or one that lacks the line saying why the code does not show it, is rejected.
+Or a rejection with its reasons, which the agent fixes and resubmits.
+
+> **Rejected?** A proposal that reads like generic advice ("write tests"), or one that lacks the line
+> saying why the code does not show it, is refused. [Using DD well](using-dd.md#what-belongs-in-a-memory)
+> has the test to apply before saving.
 
 **What was written:** `.dd/memories/<id>.json`. Open it; it is readable. Commit it.
 

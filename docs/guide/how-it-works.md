@@ -1,5 +1,6 @@
 ---
 title: How DD works
+description: The loop DD runs in a session, what the agent receives, how knowledge is saved, the commands, and how DD is measured.
 parent: Reference
 nav_order: 1
 ---
@@ -10,6 +11,16 @@ DD keeps knowledge an agent cannot derive from the code and delivers each piece 
 to. The behavioural contract is [`docs/DD.md`](../DD.md).
 
 ## The loop
+
+```mermaid
+flowchart LR
+  A["Session start<br>compile the index"] --> B["Prompt or tool call<br>match the triggers"]
+  B --> C["Deliver<br>once per session"]
+  C --> D["Check<br>edits and commands"]
+  D --> E["Stop<br>ask to save after a fix"]
+  E --> F["Review UI<br>or auto-accept"]
+  F -- "memories in git" --> A
+```
 
 1. **Compile.** At session start, DD compiles the project's memories into an index when they changed
    (`.dd/local/v2/index.json`). Session start injects nothing into the agent's context; it shows you one
