@@ -54,6 +54,8 @@ requirement in every condition with both models and kept DD the cheapest conditi
 - `deltadictum doctor`: whether DD is working in the project (Node, the opt-in, the index, sessions
   recorded, maintenance, what needs a person), with a hint per problem and exit 1 when there is one; a
   hook that fails never says so (L5), this does. `/dd:review` shows its summary before opening the UI.
+  A trigger path is dead when it matches no tracked or untracked file; new work not yet added to git
+  counts as present, ignored files do not.
 - `deltadictum import [--from DIR] [--dry-run]`: the project's `.claude/rules/` and `.cursor/rules/`
   files that name paths become memories delivered at those files on every harness, with the file as
   hashed evidence; always-on rules are left to `CLAUDE.md`, and a second run updates what changed.

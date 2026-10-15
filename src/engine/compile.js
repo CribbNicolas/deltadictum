@@ -148,7 +148,9 @@ export async function compileProject(root) {
   await store.refreshManifest();
   const all = await store.list();
   const manifest = await store.manifest();
-  const repoFiles = repoFilesOf(root);
+  // Tracked files plus new work not yet added: a glob over either is live; ignored files are absent.
+  const tracked = repoFilesOf(root);
+  const repoFiles = tracked ? [...new Set([...tracked, ...(untrackedFilesOf(root) ?? [])])] : null;
   const found = repoFiles ? codeSymbols(root, [...new Set(all.flatMap(memory => (memory.triggers ?? []).flatMap(clause => clause.symbols ?? [])))]) : null;
   const symbolExists = found ? symbol => found.has(symbol) : null;
   const compiled = compileIndex({ memories: all, manifest, fingerprint: memoryFilesFingerprint(paths.memories), repoFiles, symbolExists });
