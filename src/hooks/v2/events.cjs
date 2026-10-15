@@ -28,6 +28,31 @@ function fromFolder(folder, path) {
   return parts.join('/');
 }
 
+// Shell commands that only look at files. The agent reads through the shell as
+// much as through the Read tool (cat, sed -n, head), in every harness.
+const READERS = new Set(['cat', 'head', 'tail', 'less', 'more', 'nl', 'bat', 'type', 'wc', 'sed', 'get-content', 'gc']);
+const SEARCHERS = new Set(['rg', 'grep', 'egrep', 'fgrep', 'findstr', 'ls', 'dir', 'find', 'fd', 'tree', 'select-string', 'get-childitem', 'gci']);
+
+// 'read' or 'search' when every step of the script only looks at files (a cd
+// between them is fine), null when any step may change something: a redirect
+// into a file, an in-place sed, any other program.
+function shellKind(script) {
+  const text = String(script ?? '');
+  if (/(?:^|[^>&\d])>|&>/.test(text) || /\btee\b/.test(text)) return null;
+  let kind = null;
+  for (const step of text.split(/&&|\|\||;|\n/)) {
+    const words = step.split('|')[0].trim().split(/\s+/).filter(Boolean);
+    let name = (words[0] ?? '').toLowerCase();
+    if (!name || name === 'cd') continue;
+    if (name === 'git' && words[1] === 'grep') name = 'grep';
+    if (name === 'sed' && words.some(word => /^-[a-z]*i/i.test(word) || word === '--in-place')) return null;
+    if (READERS.has(name)) kind ??= 'read';
+    else if (SEARCHERS.has(name)) kind = 'search';
+    else return null;
+  }
+  return kind;
+}
+
 // Repository paths a shell command names: tokens with a folder separator or a file extension.
 function bashPaths(command, root, cwd = root) {
   const tokens = String(command ?? '').split(/[\s;&|<>()]+/).map(token => token.replace(/^['"]+|['",]+$/g, ''));
@@ -54,7 +79,8 @@ function toolEvent(name, input, root, cwd = root) {
     case 'MultiEdit': return { kind: 'edit', paths: [path(input.file_path)], text: (input.edits ?? []).map(e => text(e.new_string)).join('\n') };
     case 'NotebookEdit': return { kind: 'edit', paths: [path(input.notebook_path)], text: text(input.new_source) };
     case 'Write': return { kind: 'write', paths: [path(input.file_path)], text: text(input.content) };
-    case 'Bash': return { kind: 'run', paths: bashPaths(input.command, root, cwd), text: text(input.command) };
+    // A command that only reads or searches is that event; anything that may change something is a run.
+    case 'Bash': return { kind: shellKind(input.command) ?? 'run', paths: bashPaths(input.command, root, cwd), text: text(input.command) };
     case 'Grep': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: text(input.pattern) };
     case 'Glob': return { kind: 'search', paths: input.path ? [path(input.path)] : [], text: text(input.pattern) };
     // Codex (codex.cjs names them): shell commands that only read or search, and patches.
@@ -65,4 +91,4 @@ function toolEvent(name, input, root, cwd = root) {
   }
 }
 
-module.exports = { relativize, bashPaths, toolEvent };
+module.exports = { relativize, bashPaths, shellKind, toolEvent };

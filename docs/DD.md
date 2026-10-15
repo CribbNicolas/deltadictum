@@ -29,7 +29,9 @@ corrected.
   commands or prompt keywords narrow it. Matching is rule matching over the compiled index
   (`src/engine/match.cjs`), not similarity search.
 - Delivery happens in the harness's hooks: at the prompt and before each tool call. Session start injects
-  nothing. There is no MCP server.
+  nothing. There is no MCP server. A shell command that only reads or searches (`cat`, `head`, `sed -n`,
+  `rg`, `ls`…) is a read or search event, in Claude Code as in Codex; one that may change something (a
+  redirection, an in-place `sed`, any other program) is a run (`src/hooks/v2/events.cjs`).
 - Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);
   a compaction or `/clear` starts a new epoch. The ledger's claim records the dimension that fired the
   memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters: what does not
@@ -87,8 +89,8 @@ corrected.
 
 ## Harnesses
 
-- Claude Code is supported in full. Codex receives the same delivery through its hooks: shell commands that only
-  read or search are read and search events, `apply_patch` headers name the edited files, and Stop answers with
+- Claude Code is supported in full. Codex receives the same delivery through its hooks: its shell tool is
+  classified as Claude Code's Bash is, `apply_patch` headers name the edited files, and Stop answers with
   a block. OpenCode receives memories appended to the tool result, leaving the system prompt and its cache
   alone. Grok Build runs the same hooks with Claude Code's payload shape, not yet checked against a recorded
   session.

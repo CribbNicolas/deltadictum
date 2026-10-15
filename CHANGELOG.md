@@ -58,6 +58,8 @@ requirement in every condition with both models and kept DD the cheapest conditi
   funnel (asks, corrections, proposals stored, activated or rejected, rejections by reason) and the last
   deliveries; memories DD accepted on its own wait in their own queue until a person marks them reviewed.
 - Trigger globs accept `{a,b}` alternatives (`src/**/*.{js,ts}`).
+- A shell command that only reads or searches (`cat`, `sed -n`, `head`, `rg`…) is a read or search event
+  in Claude Code too, as it was in Codex: a memory on a file fires when the agent reads it through Bash.
 - Codex delivery through shell reads and `apply_patch`, and OpenCode delivery with the tool result; both
   are not yet verified in a live session.
 

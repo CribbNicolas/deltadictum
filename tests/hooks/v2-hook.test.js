@@ -47,6 +47,16 @@ test('a read of a scoped file delivers the memory once per session and once per 
   assert.match(context(hook('pre-tool', read(root, 's1', { agent_id: 'sub-1' }))), /Close stores/);
 });
 
+// The agent reads files through Bash too (cat, sed -n, head): a memory on the file
+// fires then as it does for the Read tool.
+test('a cat of a scoped file through Bash is a read and delivers the memory', async t => {
+  const root = await project(t);
+  const out = context(hook('pre-tool', { session_id: 's1', cwd: root, tool_name: 'Bash', tool_input: { command: 'cat src/a.js' } }));
+  assert.match(out, /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores/);
+  const claim = JSON.parse(readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n')[0]);
+  assert.equal(claim.e, 'read');
+});
+
 // Past the 10,000-character field, memories are only named; one only named is
 // not counted as delivered, so it arrives in full at the next event it fires on.
 test('memories that did not fit are named, not marked delivered, and arrive in full next time', async t => {
