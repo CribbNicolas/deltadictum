@@ -7,7 +7,7 @@ nav_order: 1
 # DeltaDictum current contract
 
 DD v2 keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
-applies to. The design is [the v2 spec](superpowers/specs/2026-10-08-dd-v2-design.md); this page states what
+applies to. The design is the v2 spec (the owner's design note, kept outside git); this page states what
 the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
 corrected.
 
