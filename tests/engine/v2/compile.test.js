@@ -207,3 +207,23 @@ test('a project cloned without its manifest gets one, and the index matches it',
   const index = JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8'));
   assert.equal(index.manifest.hash, (await store.manifest()).hash);
 });
+
+// New work not yet added is present in the repository: a glob over it is not dead. An ignored file is absent.
+test('a glob over an untracked file is live; one over an ignored file is dead', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-compile-untracked-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (...args) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+  git('init', '-q');
+  mkdirSync(join(root, 'doc'));
+  mkdirSync(join(root, 'output'));
+  writeFileSync(join(root, '.gitignore'), 'output/\n');
+  writeFileSync(join(root, 'doc', 'tracked.md'), 'a');
+  writeFileSync(join(root, 'doc', 'draft.md'), 'b');
+  writeFileSync(join(root, 'output', 'build.exe'), 'c');
+  git('add', '.gitignore', 'doc/tracked.md');
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [memory('m1', { triggers: [
+    { on: ['read'], paths: ['doc/tracked.md', 'doc/draft.md', 'output/**'] },
+  ] })] });
+  const { warnings } = await compileProject(root);
+  assert.deepEqual(warnings.filter(w => w.kind === 'dead_glob').map(w => w.value), ['output/**']);
+});
