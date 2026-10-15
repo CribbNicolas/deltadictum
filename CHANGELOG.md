@@ -71,6 +71,13 @@ requirement in every condition with both models and kept DD the cheapest conditi
 - Codex delivery through shell reads and `apply_patch`, and OpenCode delivery with the tool result; both
   are not yet verified in a live session.
 
+### Changed
+- This repository's own memories were curated against the v2 code: 25 that described mechanisms v2
+  removed (the resident, the bridge, the MCP server, embeddings, the v1 store) are archived with the
+  reason; the 22 that still hold were rewritten or completed with `not_derivable`, globs that match a
+  tracked file, keyword phrases instead of single generic words, fresh evidence hashes, and two checks for
+  the `package.json` traps (a bin path written with `./`, an unquoted `node --test` glob).
+
 ### Fixed
 - The `recall` and `review` skills ran `npx deltadictum`, which fetched the published package from npm (a
   network request, and possibly another version than the hooks); they run the installed plugin's own CLI.
