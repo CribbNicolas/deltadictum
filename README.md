@@ -86,7 +86,8 @@ memories (the file stays the evidence; a rule with no paths belongs in `CLAUDE.m
    read or edit of certain files, a command, a symbol. DD compiles them into an index and matches every
    tool call against it. A memory that does not match is never sent.
 2. **Delivery at the action.** Hooks add the memories that match to the prompt or the tool call, once per
-   session (again after a compaction). Session start adds nothing.
+   session (again after a compaction). Session start adds nothing to the agent's context: it shows you one
+   line with the number of live memories and how to open the review UI.
 3. **Capture with evidence.** DD records what the agent touched and how commands ended. After a failure
    followed by a fix, or a correction from you, it asks the agent to save what it learned. The agent writes
    a proposal; DD validates it, rejects generic advice, and stores it.

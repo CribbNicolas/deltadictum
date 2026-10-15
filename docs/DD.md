@@ -7,7 +7,7 @@ nav_order: 1
 # DeltaDictum current contract
 
 DD v2 keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
-applies to. The design is [the v2 spec](superpowers/specs/2026-10-08-dd-v2-design.md); this page states what
+applies to. The design is the v2 spec (the owner's design note, kept outside git); this page states what
 the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
 corrected.
 
@@ -35,7 +35,9 @@ corrected.
   commands or prompt keywords narrow it. Matching is rule matching over the compiled index
   (`src/engine/match.cjs`), not similarity search.
 - Delivery happens in the harness's hooks: at the prompt and before each tool call. Session start injects
-  nothing. There is no MCP server. A shell command that only reads or searches (`cat`, `head`, `sed -n`,
+  nothing into the agent's context; in Claude Code it shows the person one line (the hook's
+  `systemMessage`, which the model does not see) with the number of live memories and how to open the
+  review UI, except after a compaction. There is no MCP server. A shell command that only reads or searches (`cat`, `head`, `sed -n`,
   `rg`, `ls`…) is a read or search event, in Claude Code as in Codex; one that may change something (a
   redirection, an in-place `sed`, any other program) is a run (`src/hooks/v2/events.cjs`).
 - Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);

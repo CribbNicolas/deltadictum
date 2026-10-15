@@ -12,7 +12,8 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 ## The loop
 
 1. **Compile.** At session start, DD compiles the project's memories into an index when they changed
-   (`.dd/local/v2/index.json`). Session start injects nothing.
+   (`.dd/local/v2/index.json`). Session start injects nothing into the agent's context; it shows you one
+   line with the number of live memories and how to open the review UI.
 2. **Deliver.** At each prompt and before each tool call, a hook turns the event into its kind and paths
    (a read, an edit, a command…) and matches it against the triggers. The memories that match are added to
    the agent's context, once per session and subagent; a compaction or `/clear` re-arms them.
@@ -95,9 +96,9 @@ DD v2 delivered the task's key memory in every task that had one, with a median 
 quality points, the referenced guide 7% more for 9 points, DD v2 1% more for 7 points. One project, one
 model and small samples: treat these as direction, not as a promise for your project.
 
-A second trial on the v2 code ([2026-10-14, Claude Opus 5.5 and Claude Haiku 5.5 at high
-effort](../benchmarks/2026-10-v2-trial-opus-haiku.md), 10 tasks, four conditions, blind judge and blind
-audit) met every project requirement in every condition with both models: on that codebase the rules the
+A second trial on the v2 code
+([2026-10-14, Claude Opus 5.5 and Claude Haiku 5.5 at high effort](../benchmarks/2026-10-v2-trial-opus-haiku.md),
+10 tasks, four conditions, blind judge and blind audit) met every project requirement in every condition with both models: on that codebase the rules the
 memories carried could be reached by reading, so it measures what DD costs when it is not needed. DD v2
 was the cheapest condition for both models (Opus −7% against no knowledge, Haiku −7%, a tie once the two
 tasks only a DD clone could bench are set aside), used the least or near-least context, and delivered the

@@ -27,8 +27,7 @@ In Claude Code:
 Start a new session. `/dd:save`, `/dd:recall` and `/dd:review` are now available, and DD's hooks run on
 every tool call. Update later from `/plugin`.
 
-**What you will see:** nothing. DD adds nothing at session start, and a project without a `.dd/` folder
-is left alone.
+**What you will see:** nothing yet. A project without a `.dd/` folder is left alone.
 
 ## 3. Opt the project in
 
@@ -51,6 +50,15 @@ git add .dd && git commit -m "Opt the project into DeltaDictum"
 ```
 
 A `.dd/config.json` holding `{}` written by hand works too, as does a first memory saved with `/dd:save`.
+
+**What you will see:** from the next session on, one line when the session starts:
+
+```text
+DD - on for this project, no memories yet. Save one with /dd:save; review with /dd:review.
+```
+
+Once there are memories, the line counts them and points at the review UI. It is shown to you only; the
+agent's context gets nothing at session start.
 
 **Check:** `npx deltadictum doctor` prints a `summary` line. In a fresh project it says DD is working and
 that there are no memories yet.
