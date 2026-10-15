@@ -51,6 +51,9 @@ requirement in every condition with both models and kept DD the cheapest conditi
   answered in the same turn.
 - Daily maintenance (roll-up, pruning, retirement of memories that never fire despite opportunity),
   `deltadictum health`, `recall`, `status`, `compile` and `migrate`.
+- `deltadictum doctor`: whether DD is working in the project (Node, the opt-in, the index, sessions
+  recorded, maintenance, what needs a person), with a hint per problem and exit 1 when there is one; a
+  hook that fails never says so (L5), this does. `/dd:review` shows its summary before opening the UI.
 - The review UI, `deltadictum ui`: queues, evidence, breadth, use, a dry run of triggers over recent
   sessions, and every edit and status change.
 - A project opts in with its `.dd/` folder (a committed `.dd/config.json`, or a first memory): DD records

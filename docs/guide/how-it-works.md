@@ -58,6 +58,7 @@ memory's fires by the trigger dimension that matched.
 | `/dd:review` | Opens the review UI (`deltadictum ui`) |
 | `deltadictum init [--project-id NAME]` | Opts the project in: writes `.dd/config.json`, `.dd/.gitignore` and `.dd/memories/`, and compiles |
 | `deltadictum status`, `health`, `maintain`, `compile` | Counts, health signals, maintenance by hand, a fresh index |
+| `deltadictum doctor` | Is DD working here: Node, the opt-in, the index, sessions recorded, maintenance, what needs a person; exit 1 on a problem |
 | `deltadictum migrate [--dry-run]` | Converts a v1 store |
 
 ## How it is measured
