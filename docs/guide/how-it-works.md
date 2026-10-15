@@ -64,8 +64,9 @@ memory's fires by the trigger dimension that matched.
 
 ## How it is measured
 
-- **`npm run bench:v2`** replays the tool calls of a recorded agent trial through the matching engine and
-  reports which memories each task would receive, and the hook's latency.
+- **`npm run bench:v2`** replays the tool calls of a recorded agent trial through the matching engine, over
+  the memories that trial was recorded against (archived ones included, as they were then), and reports
+  which memories each task would receive, and the hook's latency.
 - **The agent trial** (`src/eval/agent/run.js`) runs Claude Code on 15 tasks in this repository, each in a
   fresh clone, under several conditions: no project knowledge, DD v1, DD v2, the same knowledge as a guide
   named in `CLAUDE.md`, and the guide not named. It records resolution (the task's check, the full suite,

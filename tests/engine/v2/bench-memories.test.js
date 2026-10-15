@@ -16,14 +16,21 @@ const atom = (id, lifecycle_state) => ({ id, project_id: 'p', topic_key: `t/${id
 // The bench read v1 atoms; after the migration removed them it had nothing to
 // replay and failed before its first number. The migrated store holds the same
 // memories under the same ids, so the bench reads those when no atom is left.
-test('without v1 atoms, the bench replays the live memories of the v2 store', async t => {
+// The bench is a frozen harness around a recorded trial: the memories that trial
+// was recorded against stay in the replay after a curation archives them, or the
+// key-delivery figure measures the curation, not the engine. Superseded versions
+// and candidates were never delivered and stay out.
+test('without v1 atoms, the bench replays the live and the archived memories of the v2 store', async t => {
   const dd = scratch(t);
   mkdirSync(join(dd, 'memories'));
   for (const [id, status] of [['a', 'active'], ['b', 'contested'], ['c', 'candidate'], ['d', 'superseded'], ['e', 'archived']]) {
     writeFileSync(join(dd, 'memories', `${id}.json`), JSON.stringify(v2(id, status)));
   }
   writeFileSync(join(dd, 'memories', 'manifest.json'), JSON.stringify({ version: 1, count: 5, hash: 'h' }));
-  assert.deepEqual((await loadBenchMemories(dd)).map(m => m.id).sort(), ['a', 'b']);
+  const loaded = await loadBenchMemories(dd);
+  assert.deepEqual(loaded.map(m => m.id).sort(), ['a', 'b', 'e']);
+  // Replayed as they were when the trial ran: the engine compiles live memories only.
+  assert.equal(loaded.find(m => m.id === 'e').status, 'active');
 });
 
 test('with v1 atoms, the bench converts the live and legacy ones as it always did', async t => {
