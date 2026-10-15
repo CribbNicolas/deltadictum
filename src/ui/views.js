@@ -4,7 +4,7 @@ import { namedSymbols } from '../capture/generic.js';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
 import { globToRegExp } from '../engine/clause.cjs';
-import { codeSymbols, repoFilesOf } from '../engine/compile.js';
+import { codeSymbols, presentFilesOf } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { healthReport } from '../maintenance/health.js';
 import { status } from '../maintenance/recall.js';
@@ -61,7 +61,7 @@ export async function memoryDetail(root, id) {
   const memories = await store.list();
   const memory = memories.find(m => m.id === id);
   if (!memory) return null;
-  const repoFiles = repoFilesOf(root) ?? [];
+  const repoFiles = presentFilesOf(root) ?? [];
   const breadth = memory.triggers.flatMap(clause => clause.paths ?? [])
     .map(glob => ({ glob, files: repoFiles.filter(file => globToRegExp(glob).test(file)).length }));
   const health = (await healthReport(root)).memories.find(m => m.id === id);
