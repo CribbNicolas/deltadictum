@@ -58,7 +58,9 @@ requirement in every condition with both models and kept DD the cheapest conditi
   counts as present, ignored files do not. A converted memory stays in the "Missing not_derivable"
   queue until a person saves its line in the UI, even when an agent drafted one through the store. The
   UI's "Re-verify evidence" re-hashes a memory's evidence files at their current content (a file that is
-  gone stays stale) and records the person.
+  gone stays stale) and records the person. Batches: a proposal or request may carry `"batch": "<name>"`;
+  the UI's Batches queue accepts or rejects the lot in one action, with each candidate validated as alone
+  and what it could not do reported.
 - `deltadictum import [--from DIR] [--dry-run]`: the project's `.claude/rules/` and `.cursor/rules/`
   files that name paths become memories delivered at those files on every harness, with the file as
   hashed evidence; always-on rules are left to `CLAUDE.md`, and a second run updates what changed.

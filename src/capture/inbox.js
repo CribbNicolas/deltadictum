@@ -20,7 +20,10 @@ import { appendTelemetry } from './telemetry.js';
 // verified here, triggers are checked against the repository, and the memory is
 // stored as a candidate unless every auto-accept condition holds.
 export const INBOX_MAX = 16000;
-const PROPOSAL_FIELDS = ['topic', 'kind', 'title', 'body', 'not_derivable', 'triggers', 'check', 'evidence', 'origin', 'revisit_when', 'review'];
+const PROPOSAL_FIELDS = ['topic', 'kind', 'title', 'body', 'not_derivable', 'triggers', 'check', 'evidence', 'origin', 'revisit_when', 'review', 'batch'];
+// The lot a proposal or request belongs to, when the agent names one: the review UI acts on it whole.
+const BATCH = /^[A-Za-z0-9_-]{1,64}$/;
+const invalidBatch = proposal => proposal.batch !== undefined && !(typeof proposal.batch === 'string' && BATCH.test(proposal.batch));
 const NOT_DERIVABLE_MIN = 20;
 const REQUESTS = ['archive', 'revise'];
 
@@ -145,11 +148,12 @@ function storeRequest(root, file, proposal, now) {
   if (!REQUESTS.includes(proposal.request) || typeof proposal.target !== 'string' || typeof proposal.why !== 'string' || !proposal.why.trim()) {
     return reject(name, ['invalid_request']);
   }
+  if (invalidBatch(proposal)) return reject(name, ['invalid_batch']);
   const dir = join(localPaths(root).local, 'requests');
   mkdirSync(dir, { recursive: true });
   const id = randomUUID();
   writeFileSync(join(dir, `${id}.json`), `${JSON.stringify({ id, request: proposal.request, target: proposal.target.slice(0, 100),
-    why: proposal.why.slice(0, 500), at: now.toISOString() }, null, 2)}\n`);
+    why: proposal.why.slice(0, 500), at: now.toISOString(), ...(proposal.batch ? { batch: proposal.batch } : {}) }, null, 2)}\n`);
   rmSync(file, { force: true });
   return { reply: `DD - request ${id} (${proposal.request} ${proposal.target.slice(0, 100)}) waits for a person in the review UI.`, request: id };
 }
@@ -195,6 +199,7 @@ async function ingest({ root, file, sessionId, now = new Date(), compile = compi
   const origin = typeof proposal.origin === 'string' ? proposal.origin : 'model_initiated';
   const unknown = Object.keys(proposal).filter(key => !PROPOSAL_FIELDS.includes(key));
   if (unknown.length) return { ...reject(name, unknown.map(key => `unknown_field:${key}`)), origin };
+  if (invalidBatch(proposal)) return { ...reject(name, ['invalid_batch']), origin };
 
   const config = readConfig(root);
   const store = createMemoryFiles(localPaths(root).dd);
@@ -254,8 +259,8 @@ async function ingest({ root, file, sessionId, now = new Date(), compile = compi
   const pending = all.filter(other => other.status === 'candidate' && other.topic === memory.topic);
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
     review: { migrated: false, issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)],
-      // Who accepted it: DD here; a person through the review UI.
-      ...(accept.length ? {} : { accepted: { by: 'dd', at: memory.created } }) } };
+      // Who accepted it: DD here; a person through the review UI. A candidate keeps the lot it was proposed in.
+      ...(accept.length ? {} : { accepted: { by: 'dd', at: memory.created } }), ...(accept.length && proposal.batch ? { batch: proposal.batch } : {}) } };
   const replaced = pending.map(other => ({ ...other, status: 'archived', updated: memory.created,
     review: { ...other.review, issues: [...new Set([...(other.review?.issues ?? []), `replaced_by_candidate:${stored.id}`])] } }));
   await store.commit({ put: [stored, ...replaced] });

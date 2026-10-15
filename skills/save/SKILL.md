@@ -19,3 +19,11 @@ file `{ "type": "file", "path": "src/x.js" }`, an id DD gave you `{ "type": "obs
 or `{ "type": "correction", "ref": "..." }`, or `{ "type": "note", "summary": "..." }`. Without triggers,
 DD uses the ones it suggested for the fix you cite. When the user asked to save it, add
 `"origin": "user_explicit"`. Save only what changes what a capable agent would do.
+
+To ask for a change to an existing memory instead, write `{ "request": "archive" | "revise",
+"target": "<id or topic>", "why": "..." }`; it waits for a person in the review UI.
+
+When you save or request several things at once, give them one `"batch": "<name>"` (letters, digits,
+`-` or `_`, at most 64 characters, for example the task's name): the person accepts or rejects the
+whole lot in one action in the review UI. Each item is still validated on its own; one that is refused
+is reported and the others go through.

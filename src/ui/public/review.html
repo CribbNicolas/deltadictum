@@ -120,7 +120,7 @@
   // Every string from the store reaches the DOM through text nodes or attributes,
   // never as markup; every handler is attached here (the CSP allows no other script).
   const QUEUE_LABELS = {
-    candidates: 'Candidates', auto_accepted: 'Accepted by DD', requests: 'Agent requests', stale: 'Stale evidence', hubs: 'Hubs', dead: 'Dead triggers',
+    candidates: 'Candidates', batches: 'Batches', auto_accepted: 'Accepted by DD', requests: 'Agent requests', stale: 'Stale evidence', hubs: 'Hubs', dead: 'Dead triggers',
     false_alarms: 'Suspected false alarms', duplicates: 'Duplicates', missing_not_derivable: 'Missing not_derivable', all: 'All memories',
     activity: 'Recent deliveries',
   };
@@ -208,6 +208,7 @@
   async function loadList() {
     const list = $('list');
     if (state.queue === 'requests') return loadRequests();
+    if (state.queue === 'batches') return loadBatches();
     if (state.queue === 'activity') return loadActivity();
     let rows;
     try { rows = await api(`/api/memories?queue=${encodeURIComponent(state.queue)}`); } catch (err) { refused('Reading the queue', err); return; }
@@ -249,6 +250,34 @@
         h('button', { type: 'button', class: 'act small', on: { click: () => openTarget(request.target) } }, 'Open memory'),
         h('button', { type: 'button', class: 'act small ok', on: { click: () => closeRequest(request.id, 'done') } }, 'Done'),
         h('button', { type: 'button', class: 'act small', on: { click: () => closeRequest(request.id, 'dismissed') } }, 'Dismiss')))));
+  }
+
+  // Batches: the agent named the lot; a person accepts or rejects it whole and reads what DD could not do.
+  async function loadBatches() {
+    let batches;
+    try { batches = await api('/api/batches'); } catch (err) { refused('Reading the batches', err); return; }
+    if (!batches.length) { $('list').replaceChildren(h('p', { class: 'empty' }, 'No batch waits.')); return; }
+    $('list').replaceChildren(...batches.map(batch => h('div', { class: 'request' },
+      h('div', {}, h('span', { class: 'badge warn' }, 'batch'), h('span', { class: 'mono' }, batch.name),
+        h('span', { class: 'mono' }, ` ${batch.candidates.length} memories, ${batch.requests.length} requests`)),
+      h('ul', { class: 'plain' },
+        ...batch.candidates.map(c => h('li', {}, h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(c.id) } }, 'Open'),
+          h('span', { class: 'badge' }, c.kind), ` ${c.title} `, h('span', { class: 'mono' }, c.topic))),
+        ...batch.requests.map(r => h('li', {}, h('span', { class: 'badge' }, r.request), h('span', { class: 'mono' }, ` ${r.target} `), r.why))),
+      h('div', { class: 'row' },
+        h('button', { type: 'button', class: 'act small ok', on: { click: () => actBatch(batch.name, 'accept') } }, 'Accept all'),
+        h('button', { type: 'button', class: 'act small danger', on: { click: () => actBatch(batch.name, 'reject') } }, 'Reject all')))));
+  }
+
+  async function actBatch(name, outcome) {
+    let result;
+    try { result = await api(`/api/batches/${encodeURIComponent(name)}/${outcome}`, { method: 'POST' }); }
+    catch (err) { refused(`${outcome === 'accept' ? 'Accepting' : 'Rejecting'} the batch`, err); return; }
+    const notes = [];
+    if (result.refused.length) notes.push(`refused: ${result.refused.map(r => `${r.id} (${r.problems.join(', ')})`).join('; ')}`);
+    if (result.left.length) notes.push(`left for a person: ${result.left.map(r => `${r.id} (${r.reason})`).join('; ')}`);
+    say(notes.length ? 'error' : 'ok', `Batch ${name}: ${result.accepted.length + result.rejected.length} memories, ${result.closed.length} requests${notes.length ? `. ${notes.join('. ')}` : '.'}`);
+    await Promise.all([loadOverview(), loadList()]);
   }
 
   async function openTarget(target) {

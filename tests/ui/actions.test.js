@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from '../../src/ui/actions.js';
+import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from '../../src/ui/actions.js';
 import { loadIndex } from '../../src/engine/index-file.cjs';
 import { createMemoryFiles } from '../../src/memory/store.js';
 import { memory, project } from '../helpers/review.js';
@@ -126,4 +126,30 @@ test('re-verifying evidence re-hashes the files that exist, keeps the missing on
   assert.deepEqual(result.memory.evidence[2], { type: 'observation', ref: 'conversation', summary: 'kept as is' });
   assert.deepEqual(result.stale, ['src/gone.js']);
   assert.equal(result.memory.review.reviewed_by?.by ?? result.memory.review.accepted?.by, 'person');
+});
+
+test('accepting a batch accepts its candidates, carries out its archive requests and reports what it could not do', async t => {
+  const root = await project(t, [memory('old'), memory('c1', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot' } }),
+    memory('bad', { status: 'candidate', triggers: [{ on: ['edit'], paths: ['docs/none.md'] }], review: { migrated: false, issues: [], batch: 'lot' } }),
+    memory('other', { status: 'candidate', review: { migrated: false, issues: [], batch: 'elsewhere' } })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'archive', target: 'ui/old', why: 'Replaced.', batch: 'lot' }));
+  writeFileSync(join(dir, 'r2.json'), JSON.stringify({ id: 'r2', request: 'revise', target: 'old', why: 'Outdated.', batch: 'lot' }));
+  const result = await batchAction(root, 'lot', 'accept');
+  assert.deepEqual(result.accepted, ['c1']);
+  assert.deepEqual(result.refused.map(r => r.id), ['bad']);
+  assert.ok(result.refused[0].problems.includes('dead_glob:docs/none.md'));
+  assert.deepEqual(result.closed, ['r1']);
+  assert.deepEqual(result.left.map(r => r.id), ['r2']);
+  const after = await list(root);
+  assert.equal(after.c1.status, 'active');
+  assert.equal(after.c1.review.accepted.by, 'person');
+  assert.equal(after.old.status, 'archived');
+  assert.equal(after.bad.status, 'candidate');
+  assert.equal(after.other.status, 'candidate');
+  const rejected = await batchAction(root, 'elsewhere', 'reject');
+  assert.deepEqual(rejected.rejected, ['other']);
+  assert.equal((await list(root)).other.status, 'archived');
+  await assert.rejects(batchAction(root, 'nothing', 'accept'), err => err instanceof ReviewError && err.problems.includes('batch_not_found'));
 });

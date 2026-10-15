@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appendFootprint, footprintPath } from '../../src/capture/footprint.js';
@@ -245,4 +245,20 @@ test('a request waits for a person and the inbox file is removed', async t => {
   assert.match(reply, /waits for a person/);
   assert.equal(existsSync(file), false);
   assert.equal((await createMemoryFiles(join(root, '.dd')).list()).length, 0);
+});
+
+// A batch names the lot a proposal belongs to: the review UI accepts or rejects it in one action.
+test('a batch name is kept on the candidate and on a request; an invalid one is refused', async t => {
+  const root = repo(t);
+  const { stored } = await ingestInboxFile({ root, file: write(root, 'a.json', proposal({ batch: 'release-2026-10', evidence: [{ type: 'note', summary: 'Seen.' }] })), sessionId: 's1' });
+  assert.equal(stored.status, 'candidate');
+  assert.equal(stored.review.batch, 'release-2026-10');
+  await ingestInboxFile({ root, file: write(root, 'q.json', { request: 'archive', target: 'x', why: 'Replaced.', batch: 'release-2026-10' }), sessionId: 's1' });
+  const requests = readdirSync(join(root, '.dd', 'local', 'requests')).filter(name => name.endsWith('.json'))
+    .map(name => JSON.parse(readFileSync(join(root, '.dd', 'local', 'requests', name), 'utf8')));
+  assert.equal(requests[0].batch, 'release-2026-10');
+  const { rejected } = await ingestInboxFile({ root, file: write(root, 'b.json', proposal({ topic: 'config/other', batch: 'no spaces here' })), sessionId: 's1' });
+  assert.ok(rejected.includes('invalid_batch'));
+  const bad = await ingestInboxFile({ root, file: write(root, 'r.json', { request: 'archive', target: 'x', why: 'Replaced.', batch: '../x' }), sessionId: 's1' });
+  assert.ok(bad.rejected.includes('invalid_batch'));
 });

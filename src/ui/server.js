@@ -2,7 +2,8 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from './actions.js';
+import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from './actions.js';
+import { listBatches } from './batches.js';
 import { dryRun } from './dry-run.js';
 import { closeRequest, listRequests } from './requests.js';
 import { listMemories, memoryDetail, overview, QUEUES } from './views.js';
@@ -53,6 +54,8 @@ async function route(root, req, url, body) {
   if (req.method === 'GET' && area === 'requests') return listRequests(root);
   if (req.method === 'POST' && area === 'requests' && parts.length === 3) return closeRequest(root, id, action);
   if (req.method === 'POST' && area === 'merge') return mergeMemories(root, body.keep, body.drop);
+  if (req.method === 'GET' && area === 'batches' && parts.length === 1) return listBatches(root);
+  if (req.method === 'POST' && area === 'batches' && parts.length === 3) return batchAction(root, id, action);
   if (area !== 'memories') return undefined;
   if (!id && req.method === 'GET') {
     const queue = url.searchParams.get('queue') ?? 'all';
