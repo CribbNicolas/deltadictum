@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "development/claude-code/plugin-snapshot-dd-dev",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "The DD plugin running in this repository is an npm-pack snapshot: re-pack and update it after changing the code",
   "body": "Claude Code loads DD here as dd@dd-dev 0.9.0 (project scope) from ~/.claude/dd-dev-marketplace/dd, the extracted `npm pack` of this checkout, not from the working tree: an edit to src/, hooks/, skills/ or scripts/ changes nothing in the running hooks until the snapshot is refreshed. Refresh: `npm pack --pack-destination <tmp>`, extract the tarball over ~/.claude/dd-dev-marketplace/dd (`tar -xzf ... --strip-components=1`), `claude plugin update dd@dd-dev`, start a new session. A headless check: `claude -p \"...\" --output-format stream-json --verbose --include-hook-events`, DD's output is in `system` events of subtype hook_response. After 0.9.0 is published: `claude plugin uninstall dd@dd-dev --scope project`, `claude plugin marketplace remove dd-dev`, `claude plugin install dd@deltadictum --scope project`. Why: the GitHub marketplace serves main (0.8.6) until the release, and the raw checkout cannot be the plugin source (output/ is 559 MB); the pack is what users receive, so testing it also tests the published file set.",
   "not_derivable": "Nothing in the repository says which copy of the plugin Claude Code loads here; the marketplace lives outside git.",
@@ -50,12 +50,14 @@
   ],
   "review": {
     "migrated": false,
-    "issues": [],
+    "issues": [
+      "archived_by_person: 0.9.0 published 2026-10-15; both projects load dd@deltadictum from the GitHub marketplace, the dd-dev snapshot is gone"
+    ],
     "accepted": {
       "by": "person",
       "at": "2026-10-15T08:21:23.398Z"
     }
   },
   "created": "2026-10-15T08:21:23.398Z",
-  "updated": "2026-10-15T08:21:23.401Z"
+  "updated": "2026-10-15T15:14:40.847Z"
 }
