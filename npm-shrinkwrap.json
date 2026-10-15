@@ -1,12 +1,12 @@
 {
   "name": "deltadictum",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "deltadictum",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "license": "SEE LICENSE IN LICENSE",
       "bin": {
         "deltadictum": "src/cli.js"

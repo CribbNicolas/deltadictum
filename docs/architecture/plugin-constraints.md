@@ -1,4 +1,7 @@
 ---
+title: Plugin constraints
+parent: Architecture
+nav_order: 2
 artifact_class: authored
 owner_domain: architecture
 artifact_type: reference

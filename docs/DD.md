@@ -1,3 +1,9 @@
+---
+title: Behavioural contract
+parent: Architecture
+nav_order: 1
+---
+
 # DeltaDictum current contract
 
 DD v2 keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it

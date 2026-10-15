@@ -2,7 +2,7 @@
 
 # DeltaDictum
 
-[![CI](https://github.com/CribbNicolas/deltadictum/actions/workflows/publish.yml/badge.svg?branch=main)](https://github.com/CribbNicolas/deltadictum/actions/workflows/publish.yml)
+[![CI](https://github.com/CribbNicolas/deltadictum/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CribbNicolas/deltadictum/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/deltadictum)](https://www.npmjs.com/package/deltadictum)
 [![node](https://img.shields.io/node/v/deltadictum)](package.json)
 [![license](https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue)](LICENSE)
@@ -21,7 +21,7 @@ and stays silent otherwise.
 DD is a **plugin**, not a service. Memories are JSON files in your repository, shared through git;
 everything else stays on your machine. No account, no model calls, no background process, no dependencies.
 
-## What it measured
+## Measured
 
 On this repository's 15 agent tasks (Claude Code, Claude Sonnet 5.5, 30 runs with DD against 15 without,
 same day, code quality scored by a blind Claude Opus judge):
@@ -60,7 +60,8 @@ You need [Node.js](https://nodejs.org) 22.16 or later.
    the turn, to save a memory; you can also ask for one (`/dd:save`, or "save this as a trap").
 4. Review what was saved with `/dd:review`, which opens the local review UI.
 
-From then on, a memory reaches the agent when it touches what the memory covers.
+From then on, a memory reaches the agent when it touches what the memory covers. The full walk-through,
+with what you see at each step: [Getting started](https://cribbnicolas.github.io/deltadictum/getting-started).
 
 ## Next to what Claude Code already has
 
@@ -115,13 +116,8 @@ later on Windows, Linux or macOS (macOS passes CI but has not been used in a rea
 
 ### Claude Code
 
-```text
-/plugin marketplace add CribbNicolas/deltadictum
-/plugin install dd@deltadictum
-```
-
-The `/dd:save`, `/dd:recall` and `/dd:review` commands become available in new sessions. Update the plugin
-from `/plugin`.
+The two commands in the [Quickstart](#quickstart-claude-code). The `/dd:save`, `/dd:recall` and
+`/dd:review` commands become available in new sessions. Update the plugin from `/plugin`.
 
 ### Codex (not yet verified live)
 
@@ -159,14 +155,19 @@ show it. Details: [CHANGELOG](CHANGELOG.md).
 | `/dd:recall <topic>` | Shows what DD knows on a topic |
 | `/dd:review` | Opens the review UI |
 
-The review UI (`npx deltadictum ui`) lists candidates, memories DD accepted on its own, stale or unused
-memories, duplicates, the agent's requests and the last deliveries; shows each memory's evidence, breadth
-and use (by the trigger dimension that fired it); dry-runs a memory's triggers over recent sessions; and
-edits, accepts, archives, merges or restores. Its header shows the capture funnel: how often DD asked for
-a memory, and how many proposals were stored, activated or rejected. On the command line: `deltadictum
-recall`, `status`, `health` and `maintain`; `deltadictum doctor` says whether DD is working in the project
-(Node, the opt-in, the index, sessions recorded, maintenance, what needs a person), since a hook that
-fails never says so.
+The review UI (`npx deltadictum ui`):
+
+- lists candidates, memories DD accepted on its own, stale or unused memories, duplicates, the agent's
+  requests and the last deliveries;
+- shows each memory's evidence, breadth and use (by the trigger dimension that fired it), and dry-runs its
+  triggers over recent sessions;
+- edits, accepts, archives, merges or restores, and shows the capture funnel: how often DD asked for a
+  memory, and how many proposals were stored, activated or rejected.
+
+On the command line: `deltadictum recall`, `status`, `health` and `maintain`; `deltadictum doctor` says
+whether DD is working in the project (Node, the opt-in, the index, sessions recorded, maintenance, what
+needs a person), since a hook that fails never says so. How to write memories that earn their place, and
+what to do when one does not fire: [Using DD well](https://cribbnicolas.github.io/deltadictum/using-dd).
 
 ## Memory types
 
@@ -194,6 +195,10 @@ Every setting and environment variable: [Configuration](docs/guide/configuration
 
 ## Documentation
 
+The site, [cribbnicolas.github.io/deltadictum](https://cribbnicolas.github.io/deltadictum/), has the same
+pages with navigation and search. In the repository:
+
+- [Getting started](docs/getting-started.md) and [Using DD well](docs/using-dd.md)
 - [How DD works](docs/guide/how-it-works.md): triggers, delivery, capture, checks, maintenance, measurements
 - [Memories](docs/guide/memories.md): kinds, fields, triggers, statuses
 - [Configuration](docs/guide/configuration.md) and [storage](docs/guide/storage.md)

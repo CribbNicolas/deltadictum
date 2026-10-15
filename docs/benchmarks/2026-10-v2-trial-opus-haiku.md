@@ -1,3 +1,9 @@
+---
+title: Opus 5.5 and Haiku 5.5 trial (2026-10-14)
+parent: Benchmarks
+nav_order: 1
+---
+
 # DD v2 agent trial: Opus 5.5 and Haiku 5.5 at high effort (2026-10-14)
 
 Code: `src/eval/agent/` (`run.js --taskset=v2`, `tasks-v2.js`, `trial-memories.js`, `judge.js`, `audit.js`,

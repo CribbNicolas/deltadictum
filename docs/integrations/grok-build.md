@@ -1,3 +1,9 @@
+---
+title: Grok Build
+parent: Harnesses
+nav_order: 3
+---
+
 # Grok Build
 
 **Status: not verified.** DD's Grok plugin runs the hooks Claude Code runs, assuming Claude Code's payload
