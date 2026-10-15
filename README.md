@@ -76,6 +76,9 @@ repository. DD is for what those leave out:
 - rules DD checks itself, retirement of what never fires, and one store for the other harnesses as they
   are verified.
 
+`npx deltadictum import` turns the `.claude/rules/` and `.cursor/rules/` files that name paths into
+memories (the file stays the evidence; a rule with no paths belongs in `CLAUDE.md` and is left alone).
+
 ## How it works
 
 1. **Triggers, not search.** Each memory names the events it applies to: a prompt mentioning some words, a
