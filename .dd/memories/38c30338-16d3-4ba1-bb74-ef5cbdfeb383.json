@@ -6,8 +6,8 @@
   "kind": "trap",
   "status": "active",
   "title": "Unlink a node_modules junction before deleting the tree that holds it",
-  "body": "Unlink the junction first (fs.unlink on the link path, which Node reports as a symbolic link), then delete the tree. Never run git worktree remove --force on a worktree whose node_modules is a junction to the main checkout. If the main node_modules was emptied anyway, restore it with npm ci from npm-shrinkwrap.json; the embedding model lives in the data directory, not node_modules, so it survives.\n\nWhy: On 2026-10-07 git worktree remove --force followed the node_modules junction and emptied the main checkout's node_modules (0 entries left). Node's fs.unlink on the junction followed by fs.rm recursive on the parent kept the target intact in a scratch test, and src/eval/agent/run.js now unlinks its junction before removing each clone.",
-  "not_derivable": "",
+  "body": "Unlink the junction first (fs.unlink on the link path, which Node reports as a symbolic link), then delete the tree. Never run git worktree remove --force on a worktree whose node_modules is a junction to the main checkout. If the main node_modules was emptied anyway, restore it with npm ci. Why: on 2026-10-07 git worktree remove --force followed the node_modules junction and emptied the main checkout's node_modules (0 entries left); fs.unlink on the junction followed by fs.rm recursive on the parent kept the target intact in a scratch test, and src/eval/agent/run.js unlinks its junction before removing each clone.",
+  "not_derivable": "A Windows junction followed by git worktree remove --force empties the target; no code comment can show it before it happens.",
   "triggers": [
     {
       "on": [
@@ -35,32 +35,21 @@
     {
       "type": "file",
       "path": "src/eval/agent/run.js",
-      "sha256": "48a48f07f89dd2925b947167ac68362c0e2eae8bb6b2ad2f5680a1667a0d506c",
-      "summary": "unlinks the shared node_modules junction before rm of the clone, with a comment naming git worktree remove --force as the cause"
-    },
-    {
-      "type": "file",
-      "path": "src/semantic/embedder.js",
-      "sha256": "fa2bea4eb052f10fbf2d6e6aa413334fd8193b0e0d829caac91e5211b1c4164d",
-      "summary": "model cacheDir is join(resolveDataBase(), 'models'), outside node_modules"
+      "sha256": "957560537e4a30c512446a0212a36b28c6016e65b656d0ea13cce6a2b2d8d18c",
+      "summary": "Unlinks the shared node_modules junction before removing the clone, naming git worktree remove --force as the reason."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": null,
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "When removing a git worktree or a scratch clone on Windows that links the repository's node_modules through a junction"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-11T20:01:22.778Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-10-07T17:16:04.532Z",
-  "updated": "2026-10-11T20:01:22.785Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

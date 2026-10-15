@@ -2,74 +2,54 @@
   "schema_version": 8,
   "id": "56228242-eef6-4913-bdfd-6f746e1af86d",
   "project_id": "supermem",
-  "topic": "store/index/schema-check-migration",
+  "topic": "telemetry/schema-changes-need-a-migration",
   "kind": "trap",
   "status": "active",
-  "title": "Changing a CHECK in schema.sql does not reach existing indexes",
-  "body": "Add an explicit migration in migrate() (src/store/sqlite-index.js); CREATE TABLE IF NOT EXISTS never alters an existing table. Detect the old definition in sqlite_master, drop that table's named indexes, rename the table, exec the schema, copy the rows back and drop the old table. Bumping INDEX_FORMAT alone does not help: rebuild() deletes rows but keeps the old table and its old CHECK, and copying rows keeps activation_count, which lives only in the index.\n\nWhy: migrate() runs the schema with CREATE TABLE IF NOT EXISTS, which never alters a table that already exists, so an index built by an earlier release keeps rejecting the new value at insert time. Found while planning the legacy state on 2026-09-24.",
-  "not_derivable": "",
+  "title": "A change to the telemetry SCHEMA does not reach an existing telemetry.sqlite",
+  "body": "SCHEMA in src/maintenance/telemetry.js runs with CREATE TABLE IF NOT EXISTS, which never alters a table that already exists: a new column, a changed primary key or a CHECK added later is absent from every telemetry.sqlite built by an earlier version, and the first statement that needs it fails in maintenance, health and the review UI. Add the column with ALTER TABLE guarded by PRAGMA table_info, or record a schema version in `meta` and recreate the file when it is behind: the database is derived (.dd/local/) and rolls up again from the session files still present (seven days). Why: v1's index kept rejecting a new CHECK value after a schema edit until an explicit migration was written (2026-09-24); v2's telemetry has the same shape and no migration path yet.",
+  "not_derivable": "SQLite's IF NOT EXISTS semantics are not in the code, and no test opens a database built by an older schema.",
   "triggers": [
     {
       "on": [
-        "read",
         "edit",
         "write"
       ],
       "paths": [
-        "src/store/schema.sql",
-        "src/store/sqlite-index.js",
-        "src/store/create-store.js"
+        "src/maintenance/telemetry.js",
+        "src/maintenance/similar.js"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
-        "CHECK constraint",
-        "schema.sql",
-        "migrate",
-        "migration",
-        "INDEX_FORMAT"
+        "telemetry schema",
+        "new column",
+        "ALTER TABLE",
+        "CREATE TABLE"
       ]
     }
   ],
   "evidence": [
     {
       "type": "file",
-      "path": "src/store/sqlite-index.js",
-      "sha256": "bff9d74f3a79ee45dc5e315faf3dd9431d00ae3f07b28995459aec534145c1cb",
-      "summary": "migrate() only execs schema.sql; rebuild() deletes rows from memory_atoms without recreating it."
-    },
-    {
-      "type": "file",
-      "path": "src/store/schema.sql",
-      "sha256": "62d6d0fe07e99055ce933b0e83d1b9bee28440b6084f2cca3694d97ff9303651",
-      "summary": "memory_atoms uses CREATE TABLE IF NOT EXISTS with a lifecycle_state CHECK list."
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "path": "src/maintenance/telemetry.js",
+      "sha256": "8d5acaaccdcf1c135bde2b5d7bbe44ecbfcd3cb4e8a8f4fa030ddedd08103a8d",
+      "summary": "SCHEMA runs CREATE TABLE IF NOT EXISTS at every open."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "6d5ce29a-26fa-4c9b-8755-1e377c185c0c",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "when changing a CHECK constraint or column definition of an existing table in src/store/schema.sql (for example adding a lifecycle state)"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-29T19:41:34.750Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.119Z",
-  "updated": "2026-09-29T19:41:35.499Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

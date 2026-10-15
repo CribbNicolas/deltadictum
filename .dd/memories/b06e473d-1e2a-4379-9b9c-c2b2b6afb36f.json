@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "dd/telemetry/bridge-interception-abandoned-b06e473d",
   "kind": "failed_approach",
-  "status": "active",
+  "status": "archived",
   "title": "Check for a live audit UI before trusting a telemetry count",
   "body": "No longer done: Check whether an audit UI is listening on the port in .dd/ui.json before concluding the hooks never ran. callRunningStore routes session-start, prompt and pre-tool to any live UI, which writes telemetry to that process's own data directory; the hook exits 0 and prints the bridged response either way, so nothing distinguishes a bridged call from a local one.\n\nAbandoned because: The per-project audit UI registered in .dd/ui.json was replaced by one resident per machine, found through ~/.dd-data/resident.json. callRunningStore now sends the project's data_dir and ignores a resident from an incompatible build, so another process no longer silently absorbs telemetry into its own data directory.\n\nNow: The resident writes a project's telemetry to the data directory of the first hook that opened it",
   "not_derivable": "",
@@ -48,7 +48,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the resident and the hook bridge"
     ],
     "v1": {
       "trigger": "when DD telemetry looks empty or a hook's effect is missing from the store, or when measuring retrieval events, cap_saturation or activation counts"
@@ -59,5 +60,5 @@
     }
   },
   "created": "2026-09-19T01:16:55.740Z",
-  "updated": "2026-09-24T21:38:31.394Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

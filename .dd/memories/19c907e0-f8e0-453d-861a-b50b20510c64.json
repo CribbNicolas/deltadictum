@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "engine/retrieval/abstain-rate-not-diagnostic-alone",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "High PreToolUse abstain rate is expected noise, not a recall failure, unless conditioned on relevant tool calls",
   "body": "Split the sample before treating a high abstain rate as a bug. Check whether the retrievals that did return atoms (abstained=0) matched genuinely relevant tool calls (they did, in every case checked), then check what the abstained calls actually were. PreToolUse fires a retrieval attempt on every single tool call (L1), so a session dominated by ad-hoc exploratory bash/read/grep calls with no related stored memory will show 90-100% abstention even with a healthy store and working retrieval -- that is correct behavior (advisory injection should not fire on unrelated calls), not degraded recall. The real diagnostic is the precision/relevance of the non-abstained subset, not the raw abstain percentage across an unfiltered tool-call stream.\n\nWhy: Investigated live on 2026-09-19 against the actual production telemetry store (~/.dd-data/supermem-3892c3ad040f/index.sqlite -- found via src/project.js resolveDataBase(), not .dd/data or .dd/local as first assumed). 1008/1029 all-time retrievals abstained (98%), 200/200 of the most recent (100%). Of the 21 all-time non-abstained events, every one checked was a legitimate match: editing .claude-plugin/marketplace.json returned the harness-install-mechanisms memory, grepping topic_key returned the admission-required-fields memory, a telemetry-related git commit returned the anti-memory against writing retrieval telemetry to git. The high rate tracked entirely with a recent run of one-off diagnostic bash/read/grep commands with no matching stored trigger, not with a retrieval defect.",
   "not_derivable": "",
@@ -45,7 +45,8 @@
     "migrated": true,
     "issues": [
       "not_derivable_missing",
-      "body_too_long"
+      "body_too_long",
+      "archived_by_person: describes v1 retrieval abstention"
     ],
     "v1": {
       "trigger": "When investigating a high abstention rate reported by memory_retrieval_events (e.g. 'X abstained out of Y retrievals') as a possible recall/quality problem"
@@ -56,5 +57,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.451Z",
-  "updated": "2026-09-29T19:41:35.499Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

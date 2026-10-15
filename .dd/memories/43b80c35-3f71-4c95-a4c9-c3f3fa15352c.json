@@ -5,35 +5,31 @@
   "topic": "store/layout/new-dd-directory",
   "kind": "trap",
   "status": "active",
-  "title": "A new directory under .dd needs four places updated",
-  "body": "Register a new .dd/ directory in four places at once. Update the journal path whitelist in operationPath (src/store/transactions.js), the directories readStored or its listing reads (src/store/git-file-store.js), sourceFingerprint (src/store/fingerprint.js) if the files are indexed, and the watcher regex in src/store/create-store.js. Missing the whitelist fails every write with invalid_journal_path; missing the fingerprint or watcher leaves the index or the live UI stale without any error.\n\nWhy: Adding legacy/ and actions/ on 2026-09-24, the plan listed paths, git store and fingerprint but not the journal whitelist; the first write failed with invalid_journal_path. The watcher and fingerprint gaps fail silently.",
-  "not_derivable": "",
+  "title": "A new folder under .dd/ needs four places updated",
+  "body": "When adding a folder or file under .dd/, update every place that names them in the same change: operationPath's whitelist in src/store/transactions.js (a journaled write outside it fails with invalid_journal_path), DERIVED_ENTRIES in src/memory/ignore.js when it is derived (or it lands in git), localPaths in src/engine/locate.cjs, and the table in docs/guide/storage.md. The Codex installer's ignore list (scripts/install-codex.mjs) and `deltadictum init` write the same entries. Why: in v1 the journal whitelist was the one place a plan missed, and the first write failed with invalid_journal_path; the ignore list and the docs fail silently, which is worse.",
+  "not_derivable": "The whitelist fails loudly; that the ignore list and the storage table must move with it is written nowhere near them.",
   "triggers": [
     {
       "on": [
-        "read",
         "edit",
         "write"
       ],
       "paths": [
         "src/store/transactions.js",
-        "src/store/fingerprint.js",
-        "src/store/git-file-store.js",
-        "src/store/create-store.js",
-        "src/store/paths.js"
+        "src/memory/ignore.js",
+        "src/engine/locate.cjs"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
-        "new directory",
-        "operationPath",
+        "new directory under .dd",
+        "new folder under .dd",
         "invalid_journal_path",
-        "sourceFingerprint",
-        "watcher regex"
+        "DERIVED_ENTRIES",
+        "localPaths"
       ]
     }
   ],
@@ -41,43 +37,27 @@
     {
       "type": "file",
       "path": "src/store/transactions.js",
-      "sha256": "1de1bc86fd6b0aa49be764d12aa56d9b7787618639c547c0eac4bd998a92fa11",
-      "summary": "operationPath only accepts journal paths under an explicit list of directories."
+      "sha256": "5708ec78b740f3ef9c75f36f38238e690858e9c400aecee065d1c9b3807be5cf",
+      "summary": "operationPath accepts journal paths under an explicit list."
     },
     {
       "type": "file",
-      "path": "src/store/create-store.js",
-      "sha256": "40f65ee9f648d3d1b842c201418655ee4fbeae3bd9132bfd523430b8ea7cc3c0",
-      "summary": "The .dd watcher regex names the directories whose changes refresh the index and notify the UI."
-    },
-    {
-      "type": "file",
-      "path": "src/store/fingerprint.js",
-      "sha256": "542a9d6c6ae9a5bc90bf5d2ee75a54701bdb8599b64827c20f3f26f94a78ef44",
-      "summary": "sourceFingerprint walks a fixed list of directories to decide when to reindex."
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "path": "src/memory/ignore.js",
+      "sha256": "e2119b1383607de12b30da8293d1807e7449ed3ccbad0e268626b0058f1bacc3",
+      "summary": "DERIVED_ENTRIES."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "69a66da2-6d70-4b30-a5f7-c0265c894601",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "when adding a new directory or file kind under .dd/ that the store writes (like legacy/ or actions/)"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-29T19:41:34.750Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.002Z",
-  "updated": "2026-09-29T19:41:35.499Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

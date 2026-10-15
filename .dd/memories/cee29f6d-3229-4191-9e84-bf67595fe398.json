@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "memory/retrieval/embeddings-resident-only",
   "kind": "decision",
-  "status": "active",
+  "status": "archived",
   "title": "Embeddings run only in the resident process; without it DD is inactive",
   "body": "Load embedding models only in the resident DD process (src/resident.js), never in a hook process. Store vectors in the SQLite index, not an external vector store. Without a resident whose model is loaded, DD is inactive and says so; lexical-only retrieval (DD_RETRIEVAL=lexical) exists for tests and evaluation, not as a user-facing fallback. Keep trigger activation, applicability gates and abstention; embeddings widen candidates and add a calibrated activation fused with the full-text ranking.\n\nWhy: An in-process ONNX runtime (@huggingface/transformers) measured 0.5 s cached load and 3 ms per query, so it cannot run per hook (L1) but works in a long-lived process; on the supermem benchmark semantic retrieval beat lexical on every metric. The previous version kept lexical retrieval as the fallback; L2 in docs/architecture/plugin-constraints.md now makes the resident required, and src/hooks/session-start.js keeps lexical mode for tests and evaluation only.",
   "not_derivable": "",
@@ -70,7 +70,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes embeddings and the resident"
     ],
     "v1": {
       "trigger": "when adding embeddings, vector search or any model runtime to DD retrieval"
@@ -81,5 +82,5 @@
     }
   },
   "created": "2026-10-06T17:40:50.573Z",
-  "updated": "2026-10-06T19:08:51.999Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

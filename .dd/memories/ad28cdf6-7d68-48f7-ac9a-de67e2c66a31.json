@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "dd/store/data-directory-renames",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "Moving the data directory: adopt the old base, verify before deleting it",
   "body": "Add the previous location to the bases adoptHistory searches in src/store/adopt.js in the same change. Before deleting an old data directory, open its index.sqlite read-only with node:sqlite (no sqlite3 CLI on this machine) and compare its memory_atoms topic_keys with .dd/atoms/; delete it only when every topic_key already exists there, and only after the user confirms.\n\nWhy: The data directory moved three times (~/.supermem, ~/.dd, ~/.dd-data). Adoption is list-driven, so a move without updating the list silently abandons telemetry, observations and the contradiction log while atoms return from git and the store still looks complete. The 2026-09-19 cleanup confirmed the topic_key comparison is enough to tell an old directory holds nothing unmigrated.",
   "not_derivable": "",
@@ -60,7 +60,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the v1 data directory and adoptHistory"
     ],
     "v1": {
       "trigger": "When moving or renaming DD's data directory, or deciding whether an old DD data directory can be deleted"
@@ -71,5 +72,5 @@
     }
   },
   "created": "2026-09-27T02:37:08.882Z",
-  "updated": "2026-09-28T06:47:10.473Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

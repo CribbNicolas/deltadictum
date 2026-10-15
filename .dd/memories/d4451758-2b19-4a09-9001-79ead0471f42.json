@@ -2,79 +2,60 @@
   "schema_version": 8,
   "id": "d4451758-2b19-4a09-9001-79ead0471f42",
   "project_id": "supermem",
-  "topic": "dd/lifecycle/automatic-transitions-and-review",
+  "topic": "maintenance/retirement-spares-what-review-holds",
   "kind": "trap",
   "status": "active",
-  "title": "An automatic lifecycle transition must not touch anything under review",
-  "body": "Exclude every memory a reviewer is currently holding: contested ones, and any memory a pending candidate names in replaces. Put the exclusion in the selector the health report reads, not in the driver, so the report cannot name a memory the sweep would decline to touch.\n\nWhy: admitMemory refuses a replacement that is no longer effective, so retiring a revision target leaves a candidate review can never approve. The write path proposes revisions and sweeps in the same call, so this is reachable in one operation rather than by a race, and the candidate looks normal until someone presses Admit.",
-  "not_derivable": "",
+  "title": "Retirement by disuse must not touch what a review holds",
+  "body": "Keep the exclusions of retireByDisuse (src/maintenance/retire.js) in the selector itself, so health never names a memory the sweep would decline to touch: a contested memory, a memory a pending candidate names in `replaces`, and a memory a person accepted or edited (review.accepted.by \"person\") stay out of it, whatever retire.after_sessions says. Why: a revision whose target was retired can never be accepted, and the candidate looks normal until someone presses Accept; a reviewer's held memories must not move under them. v1 shipped the race in 2026-09 and v2 re-learned it in the retire tests on 2026-10-13.",
+  "not_derivable": "The code exempts them; that a retired revision target strands its candidate, and that v1 shipped the race, is written nowhere in it.",
   "triggers": [
     {
       "on": [
-        "read",
         "edit",
         "write"
       ],
       "paths": [
-        "src/engine/lifecycle.js",
-        "src/engine/health/deterioration.js"
+        "src/maintenance/retire.js",
+        "src/maintenance/health.js"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
-        "automatic lifecycle",
         "retirement",
-        "expiry",
-        "sweep",
-        "demotes"
+        "retire by disuse",
+        "retired automatically",
+        "after_sessions"
       ]
     }
   ],
   "evidence": [
     {
       "type": "file",
-      "path": "src/engine/health/deterioration.js",
-      "sha256": "fec1aedab903bce3a66754d35fcd01af407f30dcee65890ee61406960f14509c",
-      "summary": "retirementCandidates excludes contested memories and any id named in a pending candidate's replaces"
+      "path": "src/maintenance/retire.js",
+      "sha256": "6ec8a16155280f605e291ff958bda085c67416e80553f4654179a9d0185350da",
+      "summary": "retireByDisuse retires only active memories not accepted by a person and not named by a pending candidate's replaces."
     },
     {
       "type": "file",
-      "path": "src/engine/lifecycle.js",
-      "sha256": "38aa9757e8743646ed44f422324e85c4010f4a3e35cde9285cdc5f8fb9d29376",
-      "summary": "admitMemory throws replacement_changed_review_again when the named replacement is no longer active or contested"
-    },
-    {
-      "type": "file",
-      "path": "tests/engine/forgetting.test.js",
-      "sha256": "e834d677839c3520104a7b65538bf64a073ba10a8db2c7d3fec0f6e8d9a1be48",
-      "summary": "Test asserting a memory a candidate is proposing to revise is not disused"
-    },
-    {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "path": "tests/maintenance/retire.test.js",
+      "sha256": "87de8ef6b1b7dbff852e489c4e77032b4dfd19c550c2714cae2bfa3203821cdc",
+      "summary": "A memory a pending candidate revises is not retired."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "9dc49d33-f37e-4fa7-90ac-ae3e1e7cc841",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "when adding or changing an automatic lifecycle transition, such as retirement, expiry or any sweep that demotes a memory without human review"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-28T06:47:10.429Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.921Z",
-  "updated": "2026-09-28T06:47:10.435Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

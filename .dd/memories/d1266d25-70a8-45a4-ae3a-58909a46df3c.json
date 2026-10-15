@@ -6,8 +6,8 @@
   "kind": "trap",
   "status": "active",
   "title": "npm 11 drops a bin path written with ./",
-  "body": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for 'npm auto-corrected some errors' in npm publish output.\n\nWhy: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
-  "not_derivable": "",
+  "body": "Write bin paths without a leading ./ (\"src/cli.js\"). Before publishing, read package.json out of the packed tarball (npm pack, then tar --force-local -xOf) to confirm bin survived, and watch for \"npm auto-corrected some errors\" in npm publish output; .github/scripts/check-pack.mjs fails CI on a ./ bin path, and this memory's check says so at the edit. Why: npm 11.6 removed \"./src/cli.js\" as an invalid script name at publish time, only as a warning, which would have shipped the package without its deltadictum command and broken the Codex install.",
+  "not_derivable": "npm removes the path with a warning only; nothing fails until the published package lacks its command.",
   "triggers": [
     {
       "on": [
@@ -21,47 +21,58 @@
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "prompt"
       ],
       "keywords": [
         "npm publish",
         "bin path",
-        "publishing",
+        "npm pack",
         "packed tarball",
-        "npm pack"
+        "release checklist"
       ]
     }
   ],
+  "check": {
+    "on": [
+      "edit",
+      "write"
+    ],
+    "paths": [
+      "package.json"
+    ],
+    "when": "edit",
+    "if_content": "\"bin\"\\s*:\\s*\\{[^}]*\"\\./",
+    "say": "npm 11 drops a bin path written with ./ at publish time: write it as \"src/cli.js\".",
+    "examples": {
+      "violates": "\"bin\": { \"deltadictum\": \"./src/cli.js\" }",
+      "passes": "\"bin\": { \"deltadictum\": \"src/cli.js\" }"
+    }
+  },
   "evidence": [
     {
       "type": "file",
       "path": "package.json",
-      "sha256": "ffa5bb239e4526c934a491b7ed3dc74276b7997362a8a44442b981cea3b05801",
-      "summary": "bin now reads {\"deltadictum\": \"src/cli.js\"}"
+      "sha256": "e790407de430178b9fd39b3eaa6cd7c219e5ddde178e6137c69decb7f3dd5db5",
+      "summary": "bin reads {\"deltadictum\": \"src/cli.js\"}."
     },
     {
-      "type": "observation",
-      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
-      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+      "type": "file",
+      "path": ".github/scripts/check-pack.mjs",
+      "sha256": "1887aa6efa6a45ba1b1bd0f9b3c5c310f6c4e09b7efbad7b631b82622cf19c49",
+      "summary": "CI refuses a bin path starting with ./."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": "942ad1bc-47d4-4ae2-92b6-575c697a9751",
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "Before publishing deltadictum or editing bin in package.json"
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-09-29T19:41:34.750Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-09-27T02:37:09.235Z",
-  "updated": "2026-10-06T22:47:45.259Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

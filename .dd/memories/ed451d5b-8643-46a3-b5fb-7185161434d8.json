@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "dd/telemetry/bridge-interception",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "The resident writes a project's telemetry to the data directory of the first hook that opened it",
   "body": "Check which data directory the shared resident opened the project with before concluding the hooks never ran. Hooks post session-start, prompt and pre-tool to the machine's resident (callRunningStore), which keys projects by repo root and opens each with the data_dir of the first hook that asked (hookProject in src/ui/server.js). Later calls from a harness with a different data directory, such as Codex's <project>/.dd/local beside Claude Code's plugin data directory, write to that first directory until the resident exits. Compare the index.sqlite of each candidate data directory (modification time, memory_retrieval_events count) instead of trusting one.\n\nWhy: The previous version blamed a stale audit UI found through .dd/ui.json, which no longer exists: the bridge now answers only through a resident of the same build and sends its data_dir. The resident uses that data_dir only when it first opens the project, so a project used from two harnesses records everything in one directory and the other looks empty.",
   "not_derivable": "",
@@ -61,7 +61,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the resident and the hook bridge"
     ],
     "v1": {
       "trigger": "when DD telemetry looks empty or a hook's effect is missing from the store, or when measuring retrieval events, cap_saturation or activation counts"
@@ -72,5 +73,5 @@
     }
   },
   "created": "2026-10-06T17:40:50.705Z",
-  "updated": "2026-10-06T19:08:51.466Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

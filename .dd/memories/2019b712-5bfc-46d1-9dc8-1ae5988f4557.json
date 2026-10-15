@@ -2,74 +2,57 @@
   "schema_version": 8,
   "id": "2019b712-5bfc-46d1-9dc8-1ae5988f4557",
   "project_id": "supermem",
-  "topic": "debugging/dd-store/datadir-and-sqlite",
-  "kind": "procedure",
+  "topic": "environment/dev-machine/query-telemetry-with-node-sqlite",
+  "kind": "fact",
   "status": "active",
-  "title": "Find a project's DD data directory and query index.sqlite directly",
-  "body": "1) Run node src/cli.js status (deltadictum status) from the project: it prints dd_dir and data_dir as this process resolves them (DD_DATA, else the harness plugin data directory under Claude Code or Grok Build, else ~/.dd-data, then <slug>-<hash of the normalized repo root>). The shared resident keeps the data_dir of the first hook that opened the project, so when two harnesses use different data directories, compare the index.sqlite in each. 2) The sqlite3 CLI is not installed on this machine: open <data_dir>/index.sqlite with node:sqlite (new (require('node:sqlite').DatabaseSync)(path)); retrieval events are in memory_retrieval_events.\n\nWhy: The previous version found the data directory by hunting the node mcp.js process and hashing the repo root by hand, and cited .dd/ui.json, which no longer exists. Since 0.8.3 the status command prints data_dir directly. sqlite3 is still missing here (which sqlite3 finds nothing), and node:sqlite reads the index.",
-  "not_derivable": "",
+  "title": "No sqlite3 CLI on this machine: open DD's telemetry with node:sqlite",
+  "body": "To look inside a project's telemetry (`.dd/local/telemetry.sqlite`: fires, fire_events, touches, sessions, events, signals, inbox, checks), open it with node:sqlite from a one-off script: `node -e \"const {DatabaseSync}=require('node:sqlite'); const db=new DatabaseSync('.dd/local/telemetry.sqlite'); console.log(db.prepare('SELECT memory, via, kind, at FROM fire_events ORDER BY at DESC LIMIT 20').all()); db.close()\"`. The sqlite3 command-line tool is not installed on this development machine (`which sqlite3` finds nothing), and `deltadictum health` and the review UI already answer the common questions: fires by dimension, the capture funnel, the last deliveries. Close the handle before deleting anything: Windows refuses to remove an open database.",
+  "not_derivable": "What is installed on the development machine is recorded nowhere in the repository.",
   "triggers": [
     {
       "on": [
-        "read",
-        "edit",
-        "write"
+        "prompt"
       ],
-      "paths": [
-        "src/project.js",
-        "src/cli.js"
+      "keywords": [
+        "telemetry.sqlite",
+        "sqlite3",
+        "node:sqlite",
+        "query the telemetry",
+        "DatabaseSync"
       ]
     },
     {
       "on": [
-        "prompt",
-        "search"
+        "read"
       ],
-      "keywords": [
-        "data_dir",
-        "index.sqlite",
-        "memory_retrieval_events",
-        "node:sqlite",
-        "sqlite3"
+      "paths": [
+        "src/maintenance/telemetry.js"
       ]
     }
   ],
   "evidence": [
     {
       "type": "file",
-      "path": "src/cli.js",
-      "sha256": "4db610ea769166cb37e2ec43dc417b00d7b6e9996eb59e1e5b6186553173165e",
-      "summary": "status prints project_id, dd_dir, data_dir and counts."
+      "path": "src/maintenance/telemetry.js",
+      "sha256": "8d5acaaccdcf1c135bde2b5d7bbe44ecbfcd3cb4e8a8f4fa030ddedd08103a8d",
+      "summary": "SCHEMA: the tables and their columns."
     },
     {
-      "type": "file",
-      "path": "src/project.js",
-      "sha256": "a2a8051b9fb584ab7715349d1080c7ba32179b47a90d62c412ea535b0f862a31",
-      "summary": "projectDataDir: DD_DATA, else resolveDataBase() (GROK_PLUGIN_DATA, CLAUDE_PLUGIN_DATA, ~/.dd-data) joined with the project key."
-    },
-    {
-      "type": "file",
-      "path": "src/store/schema.sql",
-      "sha256": "62d6d0fe07e99055ce933b0e83d1b9bee28440b6084f2cca3694d97ff9303651",
-      "summary": "CREATE TABLE memory_retrieval_events."
+      "type": "note",
+      "summary": "sqlite3 is not on this machine's PATH (checked 2026-09-19 and 2026-10-06)."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": null,
   "revisit_when": [],
   "review": {
-    "migrated": true,
-    "issues": [
-      "not_derivable_missing"
-    ],
-    "v1": {
-      "trigger": "Need to verify which data directory DD uses for a project, or need to inspect index.sqlite (retrieval events, health indicators) directly instead of trusting a derived value."
-    },
+    "migrated": false,
+    "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-06T19:08:51.660Z"
+      "at": "2026-10-15T07:29:31.448Z"
     }
   },
   "created": "2026-10-06T17:40:50.661Z",
-  "updated": "2026-10-06T19:08:51.756Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

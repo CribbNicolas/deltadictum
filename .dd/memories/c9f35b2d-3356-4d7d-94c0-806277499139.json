@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "engine/retrieval/token-cost-lives-in-get",
   "kind": "decision",
-  "status": "active",
+  "status": "archived",
   "title": "MCP tools return model-facing views, not engine records",
   "body": "Keep engine bookkeeping out of MCP output. retrieve returns only {abstained, memories[id, memory_type, content, lifecycle_state?, contested?, contradicts?], pointers?} where each pointer is its one rendered line; get returns the atom without retrieval_forms, what, evidence_state, project_id, registry_key_id, schema_version, activation_count, with each evidence_ref annotated by its verification status only. The raw atom is behind get verbose=true. Add new engine fields to HIT_FIELDS/ENGINE_FIELDS in src/mcp/tools.js deliberately, not by default.\n\nWhy: Measured 2026-09-22: about 4.2 KB of the 7 KB get payload was duplicated authored text plus evidence hashes; the compact view cut get by 60.9% with no authored content removed. Pointers joined the retrieve view with pull-first delivery, as rendered lines rather than records. Budget accounting stays in the engine, so the stripped view is always within the budget the engine enforced.",
   "not_derivable": "",
@@ -62,7 +62,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes the MCP tool views"
     ],
     "v1": {
       "trigger": "When adding fields to retrieve results or atoms, or changing what MCP retrieve/get return"
@@ -73,5 +74,5 @@
     }
   },
   "created": "2026-10-06T17:40:50.617Z",
-  "updated": "2026-10-06T19:08:51.829Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

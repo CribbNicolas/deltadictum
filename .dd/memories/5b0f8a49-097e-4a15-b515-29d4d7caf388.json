@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "store/memoize-per-instance-reads",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "Check every call site of the read across the whole request path, not just the one you're editing — a",
   "body": "Memoize a repeated store read in the store instance and invalidate it on every write and on recover(). Check every call site of the read across the whole request path, not just the one you're editing — a cheap-looking read (e.g. `store.loadConfig()`) can be called from 3+ independent places in one PreToolUse invocation (openStore's project-id bootstrap, retrieveMemories, and telemetry.prune, which holds its own reference to the underlying git object and bypasses the store-level wrapper). If the underlying data can't change mid-process outside of an explicit write, memoize it once in the store instance's closure (see loadConfig/saveConfig/recover in src/store/git-file-store.js) rather than trusting that a single call site's fix covers the cost. Invalidate the memo on every write path AND on recover() (called on every write-lock acquisition and on refreshIfChanged in the long-lived MCP/UI processes) so an out-of-band edit is still picked up within the existing staleness window — invalidating only on the store's own saveConfig would silently stop picking up external edits in the long-lived processes.\n\nWhy: Found while auditing PreToolUse cost: reading src/engine/project-context.js and src/hooks/pre-tool.js alone made loadConfig look like a single cheap read, but src/project.js's openStore, src/engine/retrieve.js, and src/store/telemetry.js's prune() each called it independently, so one PreToolUse invocation re-read and re-merged .dd/config.json from disk 3+ times before this was fixed.",
   "not_derivable": "",
@@ -68,7 +68,8 @@
     "migrated": true,
     "issues": [
       "not_derivable_missing",
-      "body_too_long"
+      "body_too_long",
+      "archived_by_person: describes the v1 git-file-store memo"
     ],
     "v1": {
       "trigger": "Adding or reviewing a store-layer read (like loadConfig) that multiple call sites invoke within a single hook invocation, or auditing PreToolUse/prompt hot-path cost."
@@ -79,5 +80,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.668Z",
-  "updated": "2026-10-06T18:21:23.527Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }

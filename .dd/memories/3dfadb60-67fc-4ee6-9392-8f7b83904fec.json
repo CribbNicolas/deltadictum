@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "distribution/repo-internal-install-facts",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "Dispatch CLI subcommands before openStore(); start the MCP server by importing it",
   "body": "Dispatch any subcommand that must not touch the current directory's project (help, version, install, mcp, resident) before main() in src/cli.js reaches openStore(), and refuse unknown commands there too: openStore() creates .dd/ and a data directory in whatever directory the CLI runs from. Start the MCP server with a side-effecting await import('./mcp/server.js'); it is a top-level-await script with no exported entry point.\n\nWhy: 0.8.3 fixed exactly this trap: an unknown command, --help or --version created .dd/ and a data directory in the current directory before refusing. src/mcp/server.js opens its store and connects the stdio transport when imported and exports nothing to call. The previous version also described the Grok marketplace files as they were before the 2026-09-19 install work; those details were fixed long ago and live in integrations/grok/manifest-traps.",
   "not_derivable": "",
@@ -60,7 +60,8 @@
   "review": {
     "migrated": true,
     "issues": [
-      "not_derivable_missing"
+      "not_derivable_missing",
+      "archived_by_person: describes openStore and the MCP server; the v2 CLI is pinned by tests not to create .dd/ in a project without DD"
     ],
     "v1": {
       "trigger": "When adding or changing a subcommand in src/cli.js, or starting the MCP server from another entry point"
@@ -71,5 +72,5 @@
     }
   },
   "created": "2026-10-06T19:11:53.608Z",
-  "updated": "2026-10-06T22:47:45.282Z"
+  "updated": "2026-10-15T07:29:31.504Z"
 }
