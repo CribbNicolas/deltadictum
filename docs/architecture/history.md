@@ -41,6 +41,11 @@ each memory already named would have delivered the key memory in 30 of 30 runs, 
 
 1. Done (2026-10-14): the agent trial on the 15 tasks. Against the agent alone on the same day, v2 resolved
    as many tasks, scored 7 points more on code quality and met every project requirement, at 1% more cost
-   ([how it is measured](../guide/how-it-works.md#how-it-is-measured)).
-2. Fresh-context reviews of the branch, this repository's `.dd/` migrated, and `v2` merged and released.
-3. Real use on a project, then Codex verified live, then Grok Build (its payloads recorded first), then OpenCode.
+   ([how it is measured](../guide/how-it-works.md#how-it-is-measured)). A second trial with Opus 5.5 and
+   Haiku 5.5 at high effort met every requirement in every condition, a ceiling on that task set, and kept
+   DD the cheapest condition ([write-up](../benchmarks/2026-10-v2-trial-opus-haiku.md)).
+2. Done (2026-10-15): this repository's `.dd/` migrated and curated against the v2 code (25 memories that
+   described v1 archived, 22 rewritten with `not_derivable`, live globs, keyword phrases and two checks).
+   Still to do: `v2` merged and released.
+3. Real use on a project whose knowledge is not derivable by reading, then Codex verified live, then Grok
+   Build (its payloads recorded first), then OpenCode.

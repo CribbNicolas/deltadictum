@@ -244,6 +244,17 @@ What the numbers say, and what they do not:
 
 Cost of the trial: Opus runs $17.24, Haiku runs $0.82, judges $3.55.
 
+## Follow-up (2026-10-15, before 0.9.0)
+
+- A shell command that only reads or searches (`cat`, `sed -n`, `head`, `rg`…) is a read or search event
+  in Claude Code too: the one missed delivery above would have fired on the `cat` of `footprint.js`.
+- The trial's allow list covers the shell commands that inspect a tree and `npx`
+  (`src/eval/agent/permissions.js`); whether the refusals go is measured at the next run.
+- This repository's own store was curated: of 47 live memories, 25 that described v1 mechanisms are
+  archived and the 22 that remain carry phrases instead of single generic prompt keywords (the "telemetry"
+  and ".dd/local" noise above came from that shape), live globs, `not_derivable` and fresh evidence.
+- Still open: a trial on a project whose knowledge is not derivable by reading.
+
 ## Reproduce
 
 ```bash
