@@ -24,8 +24,7 @@ function greater(a, b) {
 const errors = [];
 const head = JSON.parse(readFileSync('package.json', 'utf8')).version;
 const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
-const changed = execFileSync('git', ['diff', '--name-only', `${baseRef}...HEAD`], { encoding: 'utf8' }).split('
-').filter(Boolean);
+const changed = execFileSync('git', ['diff', '--name-only', `${baseRef}...HEAD`], { encoding: 'utf8' }).split(/\r?\n/).filter(Boolean);
 const baseVersion = JSON.parse(execFileSync('git', ['show', `${baseRef}:package.json`], { encoding: 'utf8' })).version;
 if (head === baseVersion && !needsRelease(changed, manifest.files ?? [])) {
   console.log(`no release needed: nothing the package ships changed (${changed.length} files)`);
