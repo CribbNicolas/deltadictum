@@ -1,5 +1,6 @@
 ---
 title: Using DD well
+description: What belongs in a memory, how to write one that fires when it should, checks, the review UI, a working rhythm, commands and troubleshooting.
 nav_order: 3
 ---
 
@@ -10,10 +11,10 @@ them fire when they should, and keeping the store honest. The format itself is i
 
 ## What belongs in a memory
 
-One test: **would a capable agent, reading the code, the tests and the docs, work this out on its own?**
-If yes, do not save it; the agent will find it, and the memory costs context every time it fires. If no,
-save it, and say in one line why not. That line is the `not_derivable` field, and DD refuses a live memory
-without it.
+> **One test.** Would a capable agent, reading the code, the tests and the docs, work this out on its own?
+> If yes, do not save it: the agent will find it, and the memory costs context every time it fires. If no,
+> save it, and say in one line why not. That line is the `not_derivable` field, and DD refuses a live
+> memory without it.
 
 | Save | Do not save |
 |---|---|
