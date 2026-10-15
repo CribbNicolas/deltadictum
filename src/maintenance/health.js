@@ -93,7 +93,9 @@ export async function healthReport(root, { minOpportunity = 10, hubShare = 0.3, 
       sessions, memories, conflicts: await store.conflicts(), unsupported: await store.unsupported(), capture: captureFunnel(db), recent,
       queues: {
         candidates: all.filter(memory => memory.status === 'candidate').map(memory => memory.id),
-        migrated_without_not_derivable: live.filter(memory => memory.review?.migrated && !String(memory.not_derivable ?? '').trim()).map(memory => memory.id),
+        // Converted from v1 and not yet reviewed by a person: a not_derivable line drafted through the
+        // store does not end the wait, saving one in the review UI does (ui/actions.js editMemory).
+        migrated_without_not_derivable: live.filter(memory => memory.review?.migrated).map(memory => memory.id),
         // Activated by auto-accept and not yet seen by a person: the YOLO default stays reviewable.
         auto_accepted: live.filter(memory => memory.review?.accepted?.by === 'dd').map(memory => memory.id),
       },

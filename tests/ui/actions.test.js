@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, ReviewError } from '../../src/ui/actions.js';
+import { acceptMemory, archiveMemory, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from '../../src/ui/actions.js';
 import { loadIndex } from '../../src/engine/index-file.cjs';
 import { createMemoryFiles } from '../../src/memory/store.js';
 import { memory, project } from '../helpers/review.js';
@@ -109,4 +109,21 @@ test('a memory a person writes in an empty store takes the project id from .dd/c
   const made = await createMemory(root, { topic: 'ui/new', kind: 'fact', title: 'New', body: 'Ports below 1024 need admin on src/a.js servers.',
     not_derivable: 'Hidden from the code.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }] });
   assert.equal(made.project_id, 'acme');
+});
+
+// A drafted line (written by an agent through the store) does not end the review: the person saves it.
+test('re-verifying evidence re-hashes the files that exist, keeps the missing ones stale, and records the person', async t => {
+  const root = await project(t, [memory('m1', { evidence: [
+    { type: 'file', path: 'src/a.js', sha256: 'a'.repeat(64), summary: 'changed since' },
+    { type: 'file', path: 'src/gone.js', sha256: 'b'.repeat(64), summary: 'removed' },
+    { type: 'observation', ref: 'conversation', summary: 'kept as is' },
+  ] })]);
+  const result = await reverifyEvidence(root, 'm1');
+  const { createHash } = await import('node:crypto');
+  const { readFileSync } = await import('node:fs');
+  assert.equal(result.memory.evidence[0].sha256, createHash('sha256').update(readFileSync(join(root, 'src', 'a.js'))).digest('hex'));
+  assert.equal(result.memory.evidence[1].sha256, 'b'.repeat(64));
+  assert.deepEqual(result.memory.evidence[2], { type: 'observation', ref: 'conversation', summary: 'kept as is' });
+  assert.deepEqual(result.stale, ['src/gone.js']);
+  assert.equal(result.memory.review.reviewed_by?.by ?? result.memory.review.accepted?.by, 'person');
 });

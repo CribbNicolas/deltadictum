@@ -80,7 +80,7 @@ export async function doctorReport(root, { now = Date.now() } = {}) {
   if (health.unsupported.length) problems.push(item('unsupported_memory_files', `${plural(health.unsupported.length, 'memory file')} cannot be read (${health.unsupported.map(u => u.path).slice(0, 3).join(', ')}): fix or remove them; \`deltadictum health\` lists the reasons.`));
   if (health.conflicts.length) problems.push(item('topic_conflicts', `${plural(health.conflicts.length, 'topic')} with more than one live memory (${health.conflicts.map(c => c.topic).slice(0, 3).join(', ')}): archive or merge one in the review UI.`));
   if (report.signals.dead_triggers) problems.push(item('dead_triggers', `${plural(report.signals.dead_triggers, 'memory')} with a trigger that can never fire (a glob matching no file, a symbol absent from the code): fix them in the review UI's Dead triggers queue (/dd:review).`));
-  if (report.signals.stale_evidence) problems.push(item('stale_evidence', `${plural(report.signals.stale_evidence, 'memory')} whose evidence file changed or is gone: re-check them in the review UI; deliveries carry a stale mark meanwhile.`));
+  if (report.signals.stale_evidence) problems.push(item('stale_evidence', `${plural(report.signals.stale_evidence, 'memory')} whose evidence file changed or is gone: re-verify them in the review UI's Stale evidence queue; deliveries carry a stale mark meanwhile.`));
   const started = Date.parse(report.maintenance?.started ?? '');
   if (report.maintenance?.state === 'started' && Number.isFinite(started) && now - started > STUCK_MS) {
     problems.push(item('maintenance_stuck', `The maintenance run started ${report.maintenance.started} and never finished: run \`deltadictum maintain\` by hand and read its error.`));

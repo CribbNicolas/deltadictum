@@ -317,6 +317,8 @@
       m.status === 'archived' ? h('button', { type: 'button', class: 'act ok', on: { click: change('Restore', '/restore') } }, 'Restore') : null,
       // DD accepted it on its own: a person who read it says so, and it leaves that queue.
       live && m.review?.accepted?.by === 'dd' ? h('button', { type: 'button', class: 'act', on: { click: change('Mark as reviewed', '/reviewed') } }, 'Mark as reviewed') : null,
+      // Evidence files changed since the memory was written: a person who judged the claim still holds re-anchors them.
+      live && detail.stale.length ? h('button', { type: 'button', class: 'act', on: { click: change('Re-verify evidence', '/reverify') } }, 'Re-verify evidence') : null,
       m.status === 'candidate' || live ? reason : null,
       h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'),
       remove);

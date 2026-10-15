@@ -83,6 +83,8 @@ test('fires by dimension, the capture funnel and recent deliveries come with the
 test('suspected false alarms and queues come with the report', async t => {
   const root = await project(t, [memory('chk', [{ on: ['edit'], paths: ['src/a.js'] }]),
     memory('mig', [{ on: ['edit'], paths: ['src/a.js'] }], { not_derivable: '', review: { migrated: true, issues: ['not_derivable_missing'] } }),
+    // A line drafted through the store is not a person's review: the memory stays queued until one saves it.
+    memory('drafted', [{ on: ['edit'], paths: ['src/a.js'] }], { not_derivable: 'Drafted by an agent.', review: { migrated: true, issues: [] } }),
     memory('cand', [{ on: ['edit'], paths: ['src/a.js'] }], { status: 'candidate' }),
     memory('auto', [{ on: ['edit'], paths: ['src/a.js'] }], { review: { migrated: false, issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } })], []);
   mkdirSync(join(root, '.dd', 'local', 'telemetry'), { recursive: true });
@@ -90,7 +92,7 @@ test('suspected false alarms and queues come with the report', async t => {
   const report = await healthReport(root);
   assert.ok(signalsOf(report, 'chk').includes('suspected_false_alarm'));
   assert.deepEqual(report.queues.candidates, ['cand']);
-  assert.deepEqual(report.queues.migrated_without_not_derivable, ['mig']);
+  assert.deepEqual(report.queues.migrated_without_not_derivable.sort(), ['drafted', 'mig']);
   // What DD accepted on its own stays reviewable: a queue, until a person has seen it.
   assert.deepEqual(report.queues.auto_accepted, ['auto']);
 });
