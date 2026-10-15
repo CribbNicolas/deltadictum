@@ -194,3 +194,22 @@ test('tools, projects and inputs DD has nothing for stay silent and create nothi
   assert.equal(torn.stdout, '');
   assert.equal(hook('observe', read(root, 's1')).stdout, '');
 });
+
+// The cap comes from the project's settings (compiled into the index, so the hook reads
+// no extra file), and each delivery leaves a ledger line the roll-up turns into telemetry.
+test('delivery_limit in .dd/config.json caps a delivery, and the delivery is recorded in the ledger', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  mkdirSync(join(root, '.dd'));
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', delivery_limit: 2000 }));
+  const long = id => ({ ...memory(id, `Rule ${id}`, [{ on: ['read'], paths: ['src/a.js'] }]), body: `Rule ${id}: ${'keep the layers apart. '.repeat(40)}` });
+  await createMemoryFiles(join(root, '.dd')).commit({ put: ['m1', 'm2', 'm3', 'm4'].map(long) });
+  await compileProject(root);
+  const first = context(hook('pre-tool', read(root, 's1')));
+  assert.ok(first.length <= 2000 && first.length > 1000, `${first.length}`);
+  const lines = readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n').map(text => JSON.parse(text));
+  const record = lines.find(entry => entry.t === 'delivery');
+  assert.deepEqual([record.e, record.m >= 1, record.x >= 1, record.c], ['read', true, true, first.length]);
+  assert.match(record.at, /^\d{4}-\d\d-\d\dT/);
+});

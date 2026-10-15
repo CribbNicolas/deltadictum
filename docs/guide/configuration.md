@@ -12,6 +12,7 @@ is left alone. `deltadictum init` writes it with the project id, beside `.dd/.gi
 | `auto_accept` | on | `false` (or `{ "enabled": false }`) sends every proposal to review instead of activating those backed by evidence DD verified |
 | `retire.after_sessions` | `20` | How many sessions must touch a memory's files without it firing before maintenance retires it |
 | `project_id` | the existing memories' id, else the folder name | The project id written into new memories |
+| `delivery_limit` | 10000 | The cap of one delivery, in characters (2,000 to 50,000); what does not fit whole is named and arrives at its next event. Changed in the review UI's Settings pane or by hand, then `deltadictum compile` |
 
 For example, to review every proposal yourself:
 

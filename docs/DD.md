@@ -34,8 +34,10 @@ corrected.
   redirection, an in-place `sed`, any other program) is a run (`src/hooks/v2/events.cjs`).
 - Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);
   a compaction or `/clear` starts a new epoch. The ledger's claim records the dimension that fired the
-  memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters: what does not
-  fit whole is named and arrives at its next event. Stale evidence and disputed memories are marked.
+  memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters (`delivery_limit`
+  in `.dd/config.json`, 2,000 to 50,000, compiled into the index): what does not fit whole is named and
+  arrives at its next event. Each delivery leaves a ledger line with its event, counts and size, never its
+  content. Stale evidence and disputed memories are marked.
 - Delivered text is advisory project knowledge. It never outranks the host, the user or the current code.
 
 ## Checks

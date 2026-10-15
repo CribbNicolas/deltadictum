@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from './actions.js';
 import { listBatches } from './batches.js';
 import { readSettings, writeSettings } from './config.js';
+import { dashboard } from './dashboard.js';
 import { dryRun } from './dry-run.js';
 import { closeRequest, listRequests } from './requests.js';
 import { listMemories, memoryDetail, overview, QUEUES } from './views.js';
@@ -52,6 +53,7 @@ async function route(root, req, url, body) {
   const parts = url.pathname.split('/').slice(2).map(decodeURIComponent);
   const [area, id, action] = parts;
   if (req.method === 'GET' && area === 'overview') return overview(root);
+  if (req.method === 'GET' && area === 'dashboard' && parts.length === 1) return dashboard(root);
   if (area === 'config' && parts.length === 1) {
     if (req.method === 'GET') return readSettings(root);
     if (req.method === 'PUT') return writeSettings(root, body);

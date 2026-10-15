@@ -6,7 +6,12 @@ const { join } = require('node:path');
 // What reaches the agent (spec section 3): each memory complete, asking for
 // nothing. One additionalContext field holds 10,000 characters in Claude Code;
 // past that, whole memories are named rather than any being cut.
+// The default cap of a delivery, in characters; a project sets its own with
+// delivery_limit in .dd/config.json, within these bounds (compiled into the index).
 const LIMIT = 10000;
+const LIMIT_MIN = 2000;
+const LIMIT_MAX = 50000;
+const validLimit = value => Number.isInteger(value) && value >= LIMIT_MIN && value <= LIMIT_MAX;
 const LABELS = { trap: 'TRAP', decision: 'DECISION', fact: 'FACT', failed_approach: 'ABANDONED', procedure: 'PROCEDURE' };
 
 // Evidence files whose content changed since the memory was written, or that are gone.
@@ -64,4 +69,4 @@ function renderDelivery({ label, items, named = [], limit = LIMIT }) {
   return out.join('\n');
 }
 
-module.exports = { LIMIT, staleEvidence, fitItems, renderDelivery };
+module.exports = { LIMIT, LIMIT_MIN, LIMIT_MAX, validLimit, staleEvidence, fitItems, renderDelivery };

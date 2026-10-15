@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS fire_events (memory TEXT NOT NULL, session TEXT NOT N
 CREATE TABLE IF NOT EXISTS signals (session TEXT NOT NULL, kind TEXT NOT NULL, count INTEGER NOT NULL, PRIMARY KEY (session, kind));
 CREATE TABLE IF NOT EXISTS inbox (at TEXT, outcome TEXT NOT NULL, reasons TEXT, origin TEXT, session TEXT);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS deliveries (session TEXT NOT NULL, at TEXT, kind TEXT, memories INTEGER NOT NULL, named INTEGER NOT NULL, chars INTEGER NOT NULL);
 `;
 const CHECKS_KEY = 'telemetry/checks.jsonl';
 const INBOX_KEY = 'telemetry/inbox.jsonl';
@@ -74,6 +75,7 @@ export function rollUp(root, db) {
   const fireEvent = db.prepare('INSERT INTO fire_events (memory, session, via, kind, at) VALUES (?, ?, ?, ?, ?)');
   const signal = db.prepare('INSERT INTO signals (session, kind, count) VALUES (?, ?, 1) ON CONFLICT(session, kind) DO UPDATE SET count = count + 1');
   const inbox = db.prepare('INSERT INTO inbox (at, outcome, reasons, origin, session) VALUES (?, ?, ?, ?, ?)');
+  const delivery = db.prepare('INSERT INTO deliveries (session, at, kind, memories, named, chars) VALUES (?, ?, ?, ?, ?, ?)');
   let files = 0;
   let lines = 0;
   db.exec('BEGIN');
@@ -91,6 +93,9 @@ export function rollUp(root, db) {
           for (const path of entry.paths ?? []) touch.run(session, String(path), String(entry.kind));
           event.run(session, String(entry.kind));
           if (entry.at) seen.run(session, String(entry.at), String(entry.at));
+        } else if (entry.t === 'delivery') {
+          delivery.run(session, entry.at === undefined ? null : String(entry.at), entry.e === undefined ? null : String(entry.e),
+            Number(entry.m) || 0, Number(entry.x) || 0, Number(entry.c) || 0);
         } else if (entry.t === 'claim' && entry.m) {
           fire.run(String(entry.m), session);
           // Claims written since the dimension was recorded say what fired and when.

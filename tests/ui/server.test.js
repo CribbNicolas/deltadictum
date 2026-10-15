@@ -73,7 +73,7 @@ test('the settings are read and changed through the API; unknown keys are kept a
   const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
   writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1 }));
   const before = JSON.parse((await json('/api/config')).text);
-  assert.deepEqual(before, { project_id: 'p', auto_accept: true, file: { project_id: 'p', custom: 1 } });
+  assert.deepEqual({ ...before, limits: undefined }, { project_id: 'p', auto_accept: true, delivery_limit: 10000, limits: undefined, file: { project_id: 'p', custom: 1 } });
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: false }) })).status, 200);
   assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')), { project_id: 'p', custom: 1, auto_accept: false });
   assert.equal(JSON.parse((await json('/api/config')).text).auto_accept, false);
@@ -83,4 +83,13 @@ test('the settings are read and changed through the API; unknown keys are kept a
   const unknown = await json('/api/config', { method: 'PUT', body: JSON.stringify({ project_id: 'other' }) });
   assert.equal(unknown.status, 400);
   assert.ok(JSON.parse(unknown.text).problems.includes('not_a_setting:project_id'));
+});
+
+test('delivery_limit is a setting with bounds, compiled into the index when changed', async t => {
+  const { server, cookie, root } = await serve(t);
+  const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
+  assert.equal(JSON.parse((await json('/api/config')).text).delivery_limit, 10000);
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 1000 }) })).status, 400);
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 5000 }) })).status, 200);
+  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8')).limit, 5000);
 });
