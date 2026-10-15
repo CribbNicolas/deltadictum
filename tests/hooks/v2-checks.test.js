@@ -47,6 +47,25 @@ test('a command check speaks with the command, with the body the first time, at 
   assert.equal(context(hook({ session_id: 's1', cwd: root, tool_name: 'Bash', tool_input: { command: 'node --test tests' } })), '');
 });
 
+// One additionalContext field holds 10,000 characters (spec section 3): a check's
+// line and body count against it, and the memories that no longer fit whole are
+// named, not cut; they arrive at their next event.
+test('check lines share the delivery budget: what no longer fits whole is named, not cut', async t => {
+  const ids = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8'];
+  // Eight memories whose lines fill the field to within a few characters.
+  const rules = ids.map(id => memory(id, `Rule ${id}`, { body: `Rule ${id}: ${'x'.repeat(1392)}`, triggers: [{ on: ['run'], commands: ['node --test'] }] }));
+  const root = await project(t, [...rules, force]);
+  const run = command => context(hook({ session_id: 's1', cwd: root, tool_name: 'Bash', tool_input: { command } }));
+  const first = run('node --test --test-force-exit tests');
+  assert.ok(first.length <= 10000, `${first.length}`);
+  assert.match(first, /DD - check \(Never force-exit tests\): --test-force-exit crashes the resident tests on Windows\.\nNever force-exit tests, always\./);
+  assert.match(first, /\.\.\. and \d more: /);
+  const full = text => ids.filter(id => text.includes(`[TRAP] Rule ${id} - Rule ${id}: xxx`));
+  const second = run('node --test tests');
+  assert.doesNotMatch(second, /DD - check/);
+  assert.deepEqual([...full(first), ...full(second)].sort(), ids);
+});
+
 test('an edit check judges the file as the edit would leave it', async t => {
   const root = await project(t, [store]);
   const edit = (old_string, new_string) => context(hook({ session_id: 's1', cwd: root, tool_name: 'Edit',

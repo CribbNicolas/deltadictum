@@ -1,20 +1,22 @@
 'use strict';
 
-const { readFileSync } = require('node:fs');
 const { isAbsolute, join } = require('node:path');
+const { LIMIT } = require('../engine/deliver.cjs');
 const { REPORT_LIMIT } = require('../engine/ledger.cjs');
-const { evaluateCommand, evaluateContent } = require('./check.cjs');
+const { CONTENT_MAX, evaluateCommand, evaluateContent, readHead } = require('./check.cjs');
 const { createMatcher } = require('./pattern.cjs');
 
 // Checks that speak at the tool call (spec section 6): command checks, before the
 // command runs, and `when: edit` checks on the file as the edit would leave it.
 // Turn checks wait for Stop.
-// The file as it is before the call, or null (a new file). Git for Windows checks
-// files out with CRLF and the Edit tool matches with plain newlines: the text is
-// judged with plain newlines too.
+// The file as it is before the call, or null (a new file). Its first megabyte: a
+// check judges the first 256 KB, and an edit beyond what was read is not judged.
+// Git for Windows checks files out with CRLF and the Edit tool matches with plain
+// newlines: the text is judged with plain newlines too.
 function contentBefore(root, payload) {
   const file = String(payload.tool_input?.file_path ?? '');
-  try { return readFileSync(isAbsolute(file) ? file : join(payload.cwd || root, file), 'utf8').replace(/\r\n/g, '\n'); } catch { return null; }
+  const head = readHead(isAbsolute(file) ? file : join(payload.cwd || root, file), CONTENT_MAX * 4);
+  return head === null ? null : head.replace(/\r\n/g, '\n');
 }
 
 function contentAfter(root, payload, before) {
@@ -36,13 +38,17 @@ function contentAfter(root, payload, before) {
 }
 
 // `checks` are the ones that apply to this call (hook.cjs applicableChecks); the
-// memories' bodies are read only once a violation is found.
-function toolViolations({ root, event, index, payload, ledger, checks, bodiesOf = () => null }) {
+// memories' bodies are read only once a violation is found. The lines share one
+// field with the delivery (`budget`, spec section 3): a line that does not fit
+// waits for the next call, unreported; a body that does not fit comes at the
+// memory's next event, unclaimed.
+function toolViolations({ root, event, index, payload, ledger, checks, bodiesOf = () => null, budget = LIMIT }) {
   const kind = event.kind;
   if (!checks.length) return [];
   let matcher;
   const match = () => (matcher ??= createMatcher());
   const lines = [];
+  let used = 0;
   for (const check of checks) {
     let target;
     let result;
@@ -60,11 +66,17 @@ function toolViolations({ root, event, index, payload, ledger, checks, bodiesOf 
     }
     if (!result.violated) continue;
     if (ledger && ledger.reported(check.m, target) >= REPORT_LIMIT) continue;
-    if (ledger) ledger.report(check.m, target);
-    const body = !ledger || !ledger.delivered().has(check.m) ? bodiesOf()?.[check.m]?.body : null;
-    if (body && ledger) ledger.claim([check.m], { kind, viaOf: () => ['check'] });
     const title = index.memories[check.m]?.title ?? check.m;
-    lines.push(`DD - check (${title}): ${check.say}${kind === 'run' ? '' : ` (${target})`}${body ? `\n${body}` : ''}`);
+    const bare = `DD - check (${title}): ${check.say}${kind === 'run' ? '' : ` (${target})`}`;
+    const separator = lines.length ? 1 : 0;
+    if (used + separator + bare.length > budget) continue;
+    if (ledger) ledger.report(check.m, target);
+    let body = !ledger || !ledger.delivered().has(check.m) ? bodiesOf()?.[check.m]?.body : null;
+    if (body && used + separator + bare.length + 1 + body.length > budget) body = null;
+    if (body && ledger) ledger.claim([check.m], { kind, viaOf: () => ['check'] });
+    const line = `${bare}${body ? `\n${body}` : ''}`;
+    lines.push(line);
+    used += separator + line.length;
   }
   return lines;
 }

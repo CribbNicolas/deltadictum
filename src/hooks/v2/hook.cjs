@@ -43,10 +43,15 @@ function deliverFor(root, event, session, payload = {}) {
   const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
   let bodies;
   const bodiesOf = () => (bodies === undefined ? (bodies = readBodies(root, index)) : bodies);
-  const parts = [];
+  // Checks speak first: a violation the call is about to introduce comes before
+  // knowledge about its files, and both share the 10,000-character field.
+  const violations = checks.length ? require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf }).join('\n') : '';
+  const parts = [violations];
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
-  if (fired.length && bodiesOf()) parts.push(delivery(root, index, event, fired, ledger, bodiesOf()));
-  if (checks.length) parts.push(...require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf }));
+  if (fired.length && bodiesOf()) {
+    const { LIMIT } = require('../../engine/deliver.cjs');
+    parts.push(delivery(root, index, event, fired, ledger, bodiesOf(), violations ? LIMIT - violations.length - 2 : LIMIT));
+  }
   return parts.filter(Boolean).join('\n\n');
 }
 
@@ -61,7 +66,7 @@ function applicableChecks(index, event) {
   return target ? checks.filter(check => (check.paths ?? []).some(source => new RegExp(source, PATH_FLAGS).test(target))) : [];
 }
 
-function delivery(root, index, event, fired, ledger, bodies) {
+function delivery(root, index, event, fired, ledger, bodies, limit) {
   const { fitItems, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
   const done = ledger ? ledger.delivered() : new Set();
   const fresh = fired.filter(hit => !done.has(hit.id) && typeof bodies[hit.id]?.body === 'string');
@@ -70,13 +75,13 @@ function delivery(root, index, event, fired, ledger, bodies) {
   const candidates = fresh.map(hit => ({ id: hit.id, ...index.memories[hit.id], body: bodies[hit.id]?.body ?? '',
     stale: staleEvidence(root, bodies[hit.id]?.evidence) }));
   // Only what fits whole is claimed; the rest is named and arrives at its next event.
-  const fits = fitItems({ label, items: candidates });
+  const fits = fitItems({ label, items: candidates, limit });
   const claims = { kind: event.kind, viaOf: id => fired.find(hit => hit.id === id)?.via };
   const won = ledger ? new Set(ledger.claim(fits.map(item => item.id), claims)) : new Set(fits.map(item => item.id));
   const items = fits.filter(item => won.has(item.id));
   const named = candidates.filter(item => !fits.includes(item));
   if (!items.length && !named.length) return '';
-  return renderDelivery({ label, items, named });
+  return renderDelivery({ label, items, named, limit });
 }
 
 // Session start injects nothing (spec section 1): it re-arms the ledger after a

@@ -7,7 +7,7 @@ import { PATH_FLAGS } from '../engine/clause.cjs';
 import { loadIndex, readBodies } from '../engine/index-file.cjs';
 import { ledgerPath, openLedger, REPORT_LIMIT } from '../engine/ledger.cjs';
 import { localPaths } from '../engine/locate.cjs';
-import { CONTENT_MAX, evaluateContent } from './check.cjs';
+import { CONTENT_MAX, evaluateContent, readHead } from './check.cjs';
 import { createMatcher } from './pattern.cjs';
 
 // Turn checks (spec section 6): at Stop, once, over the final state of the files
@@ -23,10 +23,6 @@ function modifiedSince(root, file, since) {
   // Whole milliseconds, as the marker's time is: a write in the very millisecond
   // of the previous Stop belongs to that turn.
   try { return Math.floor(statSync(join(root, file)).mtimeMs) > since; } catch { return false; }
-}
-
-function readSmall(file) {
-  try { return statSync(file).size > CONTENT_MAX * 4 ? null : readFileSync(file, 'utf8'); } catch { return null; }
 }
 
 // The file as the last commit has it, or null (a new file, no git). A violation
@@ -48,9 +44,13 @@ export function turnViolations(root, payload, { now = new Date() } = {}) {
   const since = marker >= 0 ? Date.parse(entries[marker].at) || 0 : 0;
   const turn = entries.slice(marker + 1);
   const tools = turn.filter(e => e.t === 'tool');
-  const editedPaths = new Set(tools.filter(e => e.kind === 'edit' || e.kind === 'write').flatMap(e => e.paths ?? []));
-  for (const file of tools.filter(e => e.kind === 'run').flatMap(e => e.paths ?? [])) {
-    if (modifiedSince(root, file, since)) editedPaths.add(file);
+  // The files the turn changed, each with the kinds of event that changed it: a
+  // check names the kinds it judges (`on`). A command that rewrote a file edited it.
+  const touched = new Map();
+  const touch = (file, kind) => touched.set(file, (touched.get(file) ?? new Set()).add(kind));
+  for (const entry of tools) {
+    if (entry.kind === 'edit' || entry.kind === 'write') for (const file of entry.paths ?? []) touch(file, entry.kind);
+    if (entry.kind === 'run') for (const file of entry.paths ?? []) if (modifiedSince(root, file, since)) touch(file, 'edit');
   }
   appendFootprint(path, { t: 'turn', at: now.toISOString() });
 
@@ -62,10 +62,11 @@ export function turnViolations(root, payload, { now = new Date() } = {}) {
     const matcher = createMatcher();
     const bodies = readBodies(root, index) ?? {};
     const ledger = openLedger(ledgerPath(localPaths(root).sessions, payload.session_id, payload.agent_id));
-    for (const file of editedPaths) {
-      const relevant = checks.filter(check => (check.paths ?? []).some(source => new RegExp(source, PATH_FLAGS).test(file)));
+    for (const [file, kinds] of touched) {
+      const relevant = checks.filter(check => (check.on ?? []).some(kind => kinds.has(kind))
+        && (check.paths ?? []).some(source => new RegExp(source, PATH_FLAGS).test(file)));
       if (!relevant.length) continue;
-      const content = readSmall(join(root, file));
+      const content = readHead(join(root, file), CONTENT_MAX);
       if (content === null) continue;
       let committed;
       const before = () => (committed === undefined ? (committed = committedContent(root, file)) : committed);
@@ -84,7 +85,7 @@ export function turnViolations(root, payload, { now = new Date() } = {}) {
   }
   // The previous Stop's reports: fixed, repeated, or left alone (a suspected false alarm).
   for (const violation of turn.filter(e => e.t === 'violation')) {
-    const outcome = !editedPaths.has(violation.path) ? 'ignored' : reportedNow.has(`${violation.m}\0${violation.path}`) ? 'repeated' : 'fixed';
+    const outcome = !touched.has(violation.path) ? 'ignored' : reportedNow.has(`${violation.m}\0${violation.path}`) ? 'repeated' : 'fixed';
     record(root, { m: violation.m, path: violation.path, outcome, at: now.toISOString() });
   }
   return lines.join('\n');

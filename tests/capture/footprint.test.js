@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { appendFootprint, correctionEntry, footprintPath, readFootprint, toolEntry } from '../../src/capture/footprint.js';
+import { dirname, join } from 'node:path';
+import { appendFootprint, correctionEntry, FOOTPRINT_MAX, footprintPath, readFootprint, toolEntry } from '../../src/capture/footprint.js';
 
 const scratch = t => { const root = mkdtempSync(join(tmpdir(), 'dd-fp-')); t.after(() => rmSync(root, { recursive: true, force: true })); return root; };
 
@@ -73,6 +73,19 @@ test('entries read back in the order their hooks started, not the order they wer
   assert.deepEqual(readFootprint(path).map(e => e.id), ['fail', 'edit', 'asked']);
   const started = new Date(performance.timeOrigin).toISOString();
   assert.equal(toolEntry({ tool_name: 'Read', tool_input: { file_path: join(root, 'a.js') } }, { root }).at, started);
+});
+
+// Every Stop reads the session's footprint whole: past the cap, tool calls and
+// corrections are no longer recorded, while the markers Stop itself writes are.
+test('a footprint past its size cap takes no more tool entries, only markers', t => {
+  const root = scratch(t);
+  const path = footprintPath(root, 's1');
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify({ t: 'tool', id: 'x', paths: ['src/a.js'], pad: 'p'.repeat(FOOTPRINT_MAX) })}\n`);
+  assert.equal(appendFootprint(path, { t: 'tool', id: 'late' }), false);
+  assert.equal(appendFootprint(path, { t: 'correction', id: 'late2' }), false);
+  assert.equal(appendFootprint(path, { t: 'asked', ids: ['x'] }), true);
+  assert.deepEqual(readFootprint(path).map(e => e.t), ['tool', 'asked']);
 });
 
 test('the footprint lives beside the ledger, in its own file, and reads back in order', t => {

@@ -48,14 +48,19 @@ corrected.
   `when: edit` runs at the edit; command checks run at the command. Only a violation the change introduced is
   reported: one already in the last commit (turn checks) or in the file before the call (edit checks) is not.
   A violation is reported at most twice per file per epoch, and a check that fired on a file the agent then
-  left unchanged is recorded as a suspected false alarm.
+  left unchanged is recorded as a suspected false alarm. A check judges the first 256 KB of a file, and a
+  turn check only the files touched by the event kinds its `on` names. Check lines share the
+  10,000-character field with the delivery: a line that does not fit waits for the next call, and a check
+  that throws at Stop never costs the turn its capture request.
 
 ## Capture
 
 - A project opts in with its `.dd/` folder: a committed `.dd/config.json`, or its first memory. Without
   it, hooks record nothing and ask nothing (`src/hooks/v2/hook.cjs`).
 - Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
-  Prompt text is not kept, except a short preview of a prompt detected as a user correction.
+  Prompt text is not kept, except a short preview of a prompt detected as a user correction. Past 4 MB
+  (about 7,000 tool calls) a session's footprint takes no more tool calls or corrections, only Stop's own
+  markers.
 - At Stop, DD asks the agent for a memory only when the turn holds evidence (a failure followed by a fix, or a
   correction), once per evidence set.
 - The agent saves knowledge by writing `.dd/inbox/<name>.json` (the `save` skill). DD ingests it in the same
