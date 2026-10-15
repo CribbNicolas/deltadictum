@@ -13,7 +13,7 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 ## The loop
 
 ```mermaid
-flowchart LR
+flowchart TB
   A["Session start<br>compile the index"] --> B["Prompt or tool call<br>match the triggers"]
   B --> C["Deliver<br>once per session"]
   C --> D["Check<br>edits and commands"]

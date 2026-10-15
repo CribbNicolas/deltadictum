@@ -4,6 +4,11 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.6] - 2026-10-15
+
+- Documentation site: the loop diagram on "How DD works" runs top to bottom; six steps in a row did not
+  fit the page width legibly.
+
 ## [0.9.5] - 2026-10-15
 
 - Documentation site: the loop diagram on "How DD works", the two remaining callouts and the page
