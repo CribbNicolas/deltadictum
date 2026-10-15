@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
+import { join } from 'node:path';
 import { startReviewServer } from '../../src/ui/server.js';
 import { memory, project } from '../helpers/review.js';
 
@@ -63,4 +65,22 @@ test('a malformed percent-encoding in an API path is refused, not an internal er
   const { server, cookie } = await serve(t);
   const bad = await call(server, '/api/memories/%E0%A4%A', { headers: { cookie } });
   assert.equal(bad.status, 400);
+});
+
+// The project's settings, read and changed from the UI: .dd/config.json keeps every key it has.
+test('the settings are read and changed through the API; unknown keys are kept and bad values refused', async t => {
+  const { server, cookie, root } = await serve(t);
+  const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1 }));
+  const before = JSON.parse((await json('/api/config')).text);
+  assert.deepEqual(before, { project_id: 'p', auto_accept: true, file: { project_id: 'p', custom: 1 } });
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: false }) })).status, 200);
+  assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')), { project_id: 'p', custom: 1, auto_accept: false });
+  assert.equal(JSON.parse((await json('/api/config')).text).auto_accept, false);
+  const bad = await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: 'yes' }) });
+  assert.equal(bad.status, 400);
+  assert.ok(JSON.parse(bad.text).problems.includes('invalid_setting:auto_accept'));
+  const unknown = await json('/api/config', { method: 'PUT', body: JSON.stringify({ project_id: 'other' }) });
+  assert.equal(unknown.status, 400);
+  assert.ok(JSON.parse(unknown.text).problems.includes('not_a_setting:project_id'));
 });

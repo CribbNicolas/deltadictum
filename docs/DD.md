@@ -71,7 +71,7 @@ corrected.
   applies. A proposal on a topic whose candidate is still pending replaces it; the replaced candidate is
   archived, never deleted. Every ingestion leaves one telemetry line with its outcome and reasons
   (`.dd/local/telemetry/inbox.jsonl`), never the content.
-- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false` turns it off) activates a candidate only
+- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings pane, turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
 - The agent's requests to archive or revise a memory wait for a person in the review UI. A proposal or

@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from './actions.js';
 import { listBatches } from './batches.js';
+import { readSettings, writeSettings } from './config.js';
 import { dryRun } from './dry-run.js';
 import { closeRequest, listRequests } from './requests.js';
 import { listMemories, memoryDetail, overview, QUEUES } from './views.js';
@@ -51,6 +52,10 @@ async function route(root, req, url, body) {
   const parts = url.pathname.split('/').slice(2).map(decodeURIComponent);
   const [area, id, action] = parts;
   if (req.method === 'GET' && area === 'overview') return overview(root);
+  if (area === 'config' && parts.length === 1) {
+    if (req.method === 'GET') return readSettings(root);
+    if (req.method === 'PUT') return writeSettings(root, body);
+  }
   if (req.method === 'GET' && area === 'requests') return listRequests(root);
   if (req.method === 'POST' && area === 'requests' && parts.length === 3) return closeRequest(root, id, action);
   if (req.method === 'POST' && area === 'merge') return mergeMemories(root, body.keep, body.drop);
