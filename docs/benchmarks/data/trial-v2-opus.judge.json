@@ -1,0 +1,953 @@
+{
+  "model": "claude-opus-5-5",
+  "input": "C:\\dev\\supermem\\output\\eval\\trial-v2-opus.json",
+  "judgments": [
+    {
+      "run_id": "maintain-fires-test-dd2-0",
+      "task": "maintain-fires-test",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The test opens telemetry.sqlite read-only and closes it in a finally block inside the test body, so it is closed before the project's t.after removal runs. The diff only adds the needed imports and one test that queries fires for both claims, and it matches the file's existing style.",
+      "cost_usd": 0.043271,
+      "error": null,
+      "judge_requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintain-fires-test-docref-0",
+      "task": "maintain-fires-test",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The test closes each DatabaseSync handle in a finally block right after its query, so no handle is open when the t.after removal runs. It writes real ledger claims, queries the fires table after maintain() and checks the incremental roll-up; the only change is the new test file, which follows the style of the sibling maintenance tests.",
+      "cost_usd": 0.043783,
+      "error": null,
+      "judge_requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintain-fires-test-doc-0",
+      "task": "maintain-fires-test",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The test opens its own read-only DatabaseSync and closes it in a finally block right after each query, so no handle is open when the t.after removal runs. It is a single new test file that writes the claim through the real ledger code, queries fires directly, and follows the setup style of the existing maintenance tests.",
+      "cost_usd": 0.031235600000000002,
+      "error": null,
+      "judge_requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "keyword-ies-plural-dd2-0",
+      "task": "keyword-ies-plural",
+      "kind": "control",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test checks memory/memories and query/queries in both directions. Without the `iesPlural` rule it would fail, because neither pair matched under the old -s/-es rules. The diff touches only `text.cjs` and one test file, and its comment, arrow-function helper and test naming match the surrounding code.",
+      "cost_usd": 0.0281116,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "keyword-ies-plural-doc-0",
+      "task": "keyword-ies-plural",
+      "kind": "control",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test exercises -ies matching in both directions, through `containsPhrase` and through `clauseMatches`, and it would fail without `iesPlural`; it also guards against looser forms. The diff only touches `text.cjs` and one test file, and the helper and its comment match the surrounding style.",
+      "cost_usd": 0.0318836,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "cli-archive-dd2-0",
+      "task": "cli-archive",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The command calls the UI's archiveMemory action, which commits through the store and then recompiles. The new test spawns the CLI against a running session and checks that the next tool call gets nothing, that the reason is saved, and that refusals work; it would fail without the command. The docs and help-text additions are proportionate, and the code matches the existing runMigrate style and its English comments.",
+      "cost_usd": 0.0451436,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "cli-archive-docref-0",
+      "task": "cli-archive",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test runs the real CLI and hook, and checks that a session already receiving memories stops getting the archived one; it would fail without the command. The code reuses archiveMemory from src/ui/actions.js (commit then recompile) in the existing CLI style, and the doc edits, including INV-04, only describe the new command.",
+      "cost_usd": 0.0594756,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "cli-archive-doc-0",
+      "task": "cli-archive",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test drives a real PreToolUse hook session, runs the CLI archive, and checks that the session stops receiving the memory, plus each refusal case, so it would fail without the command. The small `save()` fix in `src/ui/actions.js` directly serves printing the stored memory accurately, the docs updates belong with the new command, and the code goes through `archiveMemory` (store commit plus recompile) in the style of `runUi`.",
+      "cost_usd": 0.0635436,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "cli-archive-none-0",
+      "task": "cli-archive",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test spawns the real CLI and hook: a running session stops receiving a1 after the archive, and the test also covers the stored reason, refusals and usage errors, so it would fail without the command. The change calls the review UI's `archiveMemory` action as the guidance requires, follows `cli.js` idioms (lazy import, usage errors thrown, JSON output), and limits the doc edits to the help text, the commands table and the changelog entry for the new command.",
+      "cost_usd": 0.0570716,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "clause-kind-docref-0",
+      "task": "clause-kind",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new match test ranks hits from the clause `k` while passing an empty memories map, so it would fail under the old lookup, and the shape test pins version 5 and the `k` key. The version bump, comment style and dropping the now-unused `memories` from `prepareIndex` all fit the task and the repository's conventions; nothing was run, so these results are untested in practice.",
+      "cost_usd": 0.049691599999999995,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "clause-kind-dd2-0",
+      "task": "clause-kind",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new match test passes an empty memories map, so the old lookup would rank every hit as -1 and return a, b, c instead of c, b, a. The shape test covers `k` and the INDEX_VERSION bump to 5, as the guidance requires. Dropping `memories` from the runtime follows directly from the task, and the code and comments match the surrounding style.",
+      "cost_usd": 0.0546276,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "clause-kind-doc-0",
+      "task": "clause-kind",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new match test empties the memories map before matching, so it fails without the change, and the shape test now covers `k`. INDEX_VERSION is raised with a version comment as the project guidance requires, and the edits follow the file's existing comment and naming style without unrelated changes.",
+      "cost_usd": 0.047715600000000004,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "stop-asks-telemetry-docref-0",
+      "task": "stop-asks-telemetry",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Both new tests would fail without the change: the Stop test checks the asks.jsonl line and that a repeated Stop writes nothing, and the roll-up test covers the per-session table, its own offset key and a repeated roll-up. The doc edits only describe the new file, the writer goes through appendTelemetry, and the reader follows the same pattern as checks and inbox.",
+      "cost_usd": 0.0709276,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "clause-kind-none-0",
+      "task": "clause-kind",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": false
+      },
+      "notes": "The new match test empties the memories map and expects the order c, b, a; it would fail without `k`, because every hit would tie on kind and sort by id. INDEX_VERSION and the shape test are updated as the guidance requires. The edits also drop the space after the colon in `dims:DIMENSIONS` and `clausesFor:kind`, which the original lines had and the rest of the file uses.",
+      "cost_usd": 0.0544876,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": false
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "stop-asks-telemetry-dd2-0",
+      "task": "stop-asks-telemetry",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Both sides are tested and would fail without the change: the Stop test checks one line per request and none when there is no request, and the roll-up test checks rows land once across repeated runs and pick up appended lines. The change goes through `appendTelemetry`, adds its own `telemetry/asks.jsonl` offset key like the existing files, and only adds a related docs line; the developer flagged reading 'cited' as only what the request shows (fixes 0–1, corrections 0–2) for confirmation.",
+      "cost_usd": 0.058407600000000004,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "stop-asks-telemetry-doc-0",
+      "task": "stop-asks-telemetry",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Both new tests would fail without the change: the stop test checks one asks.jsonl line per request with its counts and none when nothing is asked, and the roll-up test checks rows, no double counting, and per-session counts. The change follows the byte-offset convention (appendTelemetry, its own ASKS_KEY offset, whole lines only), matches the checks/inbox code around it, and its only extra edit is a one-line docs mention of the new file.",
+      "cost_usd": 0.0593116,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "test-capture-script-dd2-0",
+      "task": "test-capture-script",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new script has all three required parts (the isolate-data import, --test-concurrency=1 and a quoted glob) and matches its sibling scripts exactly; the developer ran it and it picked up only the capture tests. The CONTRIBUTING.md line sits with the other test commands, and its comment notes the overlap with npm test, so the 'CI runs these' context is not misleading.",
+      "cost_usd": 0.024823599999999998,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "stop-asks-telemetry-none-0",
+      "task": "stop-asks-telemetry",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Both new tests fail without the change: the Stop test checks for exactly one asks.jsonl line and none when nothing is asked, and the roll-up test checks the once-only, offset-based ingestion with its own ASKS_KEY. The edits stay on the task (the doc updates describe the new file and table) and follow the existing appendTelemetry, offset-key and prepared-statement patterns.",
+      "cost_usd": 0.0647076,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "test-capture-script-docref-0",
+      "task": "test-capture-script",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The script includes all three required parts (isolate-data import, --test-concurrency=1, quoted glob), matches its sibling area scripts, and the developer ran it (52 pass, 1 platform skip). The CONTRIBUTING.md entry is a minimal addition in English beside the other test commands, and it correctly notes the script is a subset of npm test.",
+      "cost_usd": 0.022251600000000003,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "test-capture-script-doc-0",
+      "task": "test-capture-script",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The script has all three required parts (the isolate-data import, --test-concurrency=1 and a quoted glob), matches the sibling per-folder scripts, and was run with 52 passing and 1 platform-skipped. The CONTRIBUTING line fits the existing list's format, though that list is headed as what CI runs, which is a minor placement question the developer raised.",
+      "cost_usd": 0.0225236,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "turn-fixed-test-dd2-0",
+      "task": "turn-fixed-test",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The edits are stamped at :01 and :03 and the Stops' `now` is fixed at :02 and :04, so each edit sorts into its own turn after the previous marker. The single added test follows the neighbouring tests' helpers and style, and it checks both the empty second report and the 'fixed' telemetry outcome.",
+      "cost_usd": 0.0272956,
+      "error": null,
+      "judge_requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "test-capture-script-none-0",
+      "task": "test-capture-script",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The new `test:capture` script has all three required parts (isolate-data import, `--test-concurrency=1`, quoted glob) and was run successfully; the CONTRIBUTING note placed right after the test-command block is a reasonable, explained choice. However, the diff also rewrites the unrelated `test:stress` line and drops the space after its colon (`\"test:stress\":\"node ...`), an unrelated edit that breaks the file's formatting.",
+      "cost_usd": 0.0313156,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "turn-fixed-test-docref-0",
+      "task": "turn-fixed-test",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The later edit is at 00:00:03, after the first Stop's fixed `now` of 00:00:02, so the sort by time keeps it in the second turn. The test checks the empty report, the single 'fixed' telemetry entry and the absence of false alarms, and the diff touches nothing else while matching the neighbouring false-alarm test.",
+      "cost_usd": 0.027863600000000002,
+      "error": null,
+      "judge_requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "turn-fixed-test-doc-0",
+      "task": "turn-fixed-test",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The edits (00:01, 00:03) and Stop `now` values (00:02, 00:04) rise in step, so each edit sorts after the previous turn marker and stays in its turn. The change is one test that follows the neighbouring tests' helpers and style, and it asserts both the empty second report and the single `fixed` telemetry entry.",
+      "cost_usd": 0.0280476,
+      "error": null,
+      "judge_requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "turn-fixed-test-none-0",
+      "task": "turn-fixed-test",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The later turn's edit (00:03) comes after the first Stop's fixed `now` (00:02), and its Stop is fixed at 00:04, so the sort by time keeps the edit in the later turn. The change is one test that follows the file's existing helpers and style and checks both the empty report and the `fixed` outcome in checks.jsonl.",
+      "cost_usd": 0.028155599999999996,
+      "error": null,
+      "judge_requirements": {
+        "timestamps_consistent": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintenance-log-docref-0",
+      "task": "maintenance-log",
+      "kind": "memory",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The new test in tests/maintenance/maintain.test.js runs maintain() twice, checks the history lines and status' last_maintenance, and would fail without the change; the file lives under .dd/local as the project guidance requires. However, the src/cli.js diff also drops a space from the unrelated `health` help line and breaks its column alignment, an edit the task did not need.",
+      "cost_usd": 0.0602956,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintenance-log-none-0",
+      "task": "maintenance-log",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test runs maintain twice and checks the two appended lines, their counts, status's last_maintenance (null before any run) and torn-line handling; none of it would pass without the change. The edits stay within the task (history module, maintain hook-in, status field, the exact-match tests, docs and help), and the file lives under .dd/local via localPaths, with best-effort error handling and comment style matching the surrounding telemetry code.",
+      "cost_usd": 0.06304760000000001,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintenance-log-dd2-0",
+      "task": "maintenance-log",
+      "kind": "memory",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new maintain test covers two runs, the line contents, `status` reporting `last_maintenance` (null before any run) and a torn last line, so it would fail without the change. The history file sits under `.dd/local/` next to the marker and follows the surrounding code's style; the only extra is the storage-table row for the existing marker, a small doc addition next to the new file.",
+      "cost_usd": 0.0652196,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "recall-json-dd2-0",
+      "task": "recall-json",
+      "kind": "control",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new unit and CLI tests check the exact JSON objects, the `--all` and empty `[]` cases, and that `--json` is kept out of the query; all of them would fail without the change. The edits stay within recall, its CLI wiring and help text, and match the file's terse English comments and inline style.",
+      "cost_usd": 0.0352156,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintenance-log-doc-0",
+      "task": "maintenance-log",
+      "kind": "memory",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests cover the history lines across two runs (including a prune), the empty-history case and `status` reporting `last_maintenance`; each would fail without the change. The diff also adds a `docs/guide/storage.md` row for the existing `maintenance.json` marker, which documents something the task didn't touch and is an unrelated fix; otherwise the history file sits under `.dd/local/` via `localPaths` and matches the surrounding style.",
+      "cost_usd": 0.07521159999999999,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit override: the extra storage.md row for the existing maintenance.json marker is one line in the table the task edits; the judge accepted the same addition in another run of this task (0bca8db1). One rule for both: scoped.",
+        "overrides": [
+          {
+            "id": "scoped",
+            "judge": false,
+            "audit": true
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "recall-json-docref-0",
+      "task": "recall-json",
+      "kind": "control",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new unit test checks the exact JSON fields and the empty-array case, and the CLI test checks the `--json` path end to end; both would fail without the change. The edits stay within cli.js, recall.js and the test file, and match the existing style. The report leaves out the recall.js change, but the diff itself is fine.",
+      "cost_usd": 0.0351076,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "recall-json-doc-0",
+      "task": "recall-json",
+      "kind": "control",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new unit test checks the exact JSON array and the empty-array case, and the CLI test parses `recall --json` output; both would fail without the change. Edits are confined to the recall flag, its help text and comment, and match the surrounding style. The report leaves out the `recall.js` change, but the diff includes it and the task requires it.",
+      "cost_usd": 0.0365876,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "recall-json-none-0",
+      "task": "recall-json",
+      "kind": "control",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests check the exact JSON shape, the empty-array case and the CLI `--json` path end to end, and would fail without the change. The edits are limited to `cli.js`, `recall.js` and their test, and follow the existing one-line style, comment voice and English-only text.",
+      "cost_usd": 0.0341956,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ui-kind-filter-dd2-0",
+      "task": "ui-kind-filter",
+      "kind": "control",
+      "condition": "dd2",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new server test checks kind filtering and the 400 `unknown_kind` refusal; it would fail without the change. The edits are confined to the route, `listMemories` and that test, and follow the existing `unknown_queue` validation pattern. The repo wasn't available locally, so I couldn't confirm that `KINDS` is exported from `src/memory/schema.js`.",
+      "cost_usd": 0.0360156,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ui-kind-filter-doc-0",
+      "task": "ui-kind-filter",
+      "kind": "control",
+      "condition": "doc",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new server test checks filtering by trap and by decision, the unfiltered list, and the 400 `unknown_kind` response, so it would fail without the change. The edits stay within the route, `listMemories` and one test, and reuse `KINDS` and `ReviewError` the same way as the existing queue check. The workspace was empty, so this verdict rests on the diff alone.",
+      "cost_usd": 0.0360436,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ui-kind-filter-none-0",
+      "task": "ui-kind-filter",
+      "kind": "control",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new server test checks kind filtering, kind combined with a queue, the unfiltered list and the `unknown_kind` 400; it would fail if the filter or the check were missing. The edits stay in `server.js`, `views.js` and the test. They reuse `KINDS` from the schema and the existing `ReviewError` pattern, matching how `unknown_queue` is handled.",
+      "cost_usd": 0.0319436,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "maintain-fires-test-none-0",
+      "task": "maintain-fires-test",
+      "kind": "memory",
+      "condition": "none",
+      "requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The test closes each read-only handle in a `finally` right after querying, so no handle is open when the project folder is removed. It writes real ledger claims, runs maintain() twice and queries `fires`, and only adds the test and its imports, in the file's existing style.",
+      "cost_usd": 0.043234999999999996,
+      "error": null,
+      "judge_requirements": {
+        "cleanup_order": true,
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "keyword-ies-plural-docref-0",
+      "task": "keyword-ies-plural",
+      "kind": "control",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new -ies tests in text.test.js and clause.test.js would fail without the change. The edit is limited to sameWord, plus a small, commented helper that matches the existing code.",
+      "cost_usd": 0.050866999999999996,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "keyword-ies-plural-none-0",
+      "task": "keyword-ies-plural",
+      "kind": "control",
+      "condition": "none",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test covers memory/memories, query/queries and a multi-word phrase in both directions, and it would fail without the `pluralOf` -ies branch. It also checks that the existing -s/-es plurals still match and that near-misses do not. The diff only touches the matcher and adds the test, and it keeps the file's terse arrow-function style with an English comment in the existing style.",
+      "cost_usd": 0.030107599999999998,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ui-kind-filter-docref-0",
+      "task": "ui-kind-filter",
+      "kind": "control",
+      "condition": "docref",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new server test covers kind filtering across queues, the no-kind path and the 400 `unknown_kind` refusal; it would fail without the change. The edits are confined to the route, `listMemories` and that test, and they reuse the schema's `KINDS` and the existing `ReviewError` problem pattern in English.",
+      "cost_usd": 0.0618436,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: read the diff and the verdict blind; agrees with the judge.",
+        "overrides": []
+      }
+    }
+  ],
+  "audited": {
+    "verdicts": 40,
+    "overrides": 1,
+    "at": "2026-10-14T18:46:47.689Z"
+  }
+}

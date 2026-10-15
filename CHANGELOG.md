@@ -11,7 +11,9 @@ being searched for by similarity on every prompt and tool call, so DD costs abou
 on this repository's 15-task agent trial, the same resolution, 7 more points of code quality and every
 project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% more
 ([how it is measured](docs/guide/how-it-works.md#how-it-is-measured),
-[why v2](docs/architecture/history.md)).
+[why v2](docs/architecture/history.md)). A second trial on the v2 code with Claude Opus 5.5 and Claude
+Haiku 5.5 at high effort ([write-up and data](docs/benchmarks/2026-10-v2-trial-opus-haiku.md)) met every
+requirement in every condition with both models and kept DD the cheapest condition.
 
 ### Breaking
 - **New memory format** (schema 8): one file per memory in `.dd/memories/`, with kinds `trap`, `decision`,
