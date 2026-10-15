@@ -18,6 +18,8 @@ Usage: deltadictum [command]
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
   migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
+  import [--from DIR] [--dry-run]
+                      Turn the project's .claude/rules/ and .cursor/rules/ files that name paths into memories
   compile             Compile this project's memories for delivery (.dd/local/v2)
   recall QUERY [--all] [--limit N]
                       Print the memories that match QUERY in full (--all includes candidates)
@@ -70,6 +72,13 @@ async function main() {
   if (command === 'init') return runInit(rest);
   if (command === 'install') return runInstall(rest);
   if (command === 'migrate') return runMigrate(rest);
+  if (command === 'import') {
+    const { importRules } = await import('./memory/import.js');
+    const fromAt = rest.indexOf('--from');
+    if (fromAt >= 0 && !rest[fromAt + 1]) throw new Error('Usage: deltadictum import [--from DIR] [--dry-run]');
+    console.log(JSON.stringify(await importRules(findProjectRoot(process.cwd()), { from: fromAt >= 0 ? rest[fromAt + 1] : null, dryRun: rest.includes('--dry-run') }), null, 2));
+    return;
+  }
   if (command === 'recall') {
     const { recall } = await import('./maintenance/recall.js');
     const limitAt = rest.indexOf('--limit');

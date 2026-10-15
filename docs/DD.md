@@ -108,10 +108,19 @@ corrected.
   session.
 - A hook that fails ends silently: DD never blocks the host.
 
-## Migration
+## Migration and import
 
 - `deltadictum migrate [--dry-run]` converts a v1 store (`.dd/atoms/` and the rest) into v2 memories, keeping
   their ids, and queues every converted memory for a person to supply `not_derivable`.
+- `deltadictum import [--from DIR] [--dry-run]` turns the project's `.claude/rules/*.md` (`paths` in the
+  frontmatter) and `.cursor/rules/*.mdc` (`globs`) into active memories (`src/memory/import.js`): one
+  `procedure` per file under `rules/<claude|cursor>/<file>`, firing on reads, edits and writes of the paths
+  that match a repository file, the file itself as hashed evidence and as a revisit condition, accepted
+  by the person who ran the import. A bare pattern (`*.ts`) applies across folders (`**/*.ts`). A rule
+  with no paths or `alwaysApply: true`, one whose paths match nothing, and one whose topic a memory from
+  elsewhere holds are skipped and reported. A body over 1,500 characters is cut at a paragraph and points
+  at its file (`review.issues: imported_truncated`). A second import updates the memories whose file
+  changed and leaves the rest alone.
 
 **DD is a plugin for coding-agent harnesses, not a service.**
 [`architecture/plugin-constraints.md`](architecture/plugin-constraints.md) states the limits that follow.

@@ -60,6 +60,7 @@ memory's fires by the trigger dimension that matched.
 | `deltadictum status`, `health`, `maintain`, `compile` | Counts, health signals, maintenance by hand, a fresh index |
 | `deltadictum doctor` | Is DD working here: Node, the opt-in, the index, sessions recorded, maintenance, what needs a person; exit 1 on a problem |
 | `deltadictum migrate [--dry-run]` | Converts a v1 store |
+| `deltadictum import [--from DIR] [--dry-run]` | Turns `.claude/rules/` and `.cursor/rules/` files that name paths into memories; a second run updates the ones that changed |
 
 ## How it is measured
 
