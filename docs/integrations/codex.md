@@ -1,3 +1,9 @@
+---
+title: Codex
+parent: Harnesses
+nav_order: 1
+---
+
 # Codex
 
 **Status: adapter written and unit-tested against Codex payloads recorded in 2026-09 (codex-cli 0.154); not

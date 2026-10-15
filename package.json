@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git; a plugin for Claude Code, with Codex, Grok Build and OpenCode in progress.",
   "keywords": [
     "claude-code",
@@ -53,7 +53,7 @@
     "type": "git",
     "url": "git+https://github.com/CribbNicolas/deltadictum.git"
   },
-  "homepage": "https://github.com/CribbNicolas/deltadictum#readme",
+  "homepage": "https://cribbnicolas.github.io/deltadictum/",
   "bugs": {
     "url": "https://github.com/CribbNicolas/deltadictum/issues"
   }

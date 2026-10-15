@@ -1,3 +1,9 @@
+---
+title: Storage
+parent: Reference
+nav_order: 4
+---
+
 # Storage
 
 Everything DD keeps for a project lives in its `.dd/` folder.

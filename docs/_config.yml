@@ -1,0 +1,44 @@
+# GitHub Pages builds this folder with Jekyll (Settings > Pages: main, /docs).
+# Theme: Just the Docs, fetched by jekyll-remote-theme at build time; nothing to install.
+title: DeltaDictum
+description: "The engineering knowledge your code does not show, delivered to coding agents at the action it applies to. A local plugin for Claude Code; Codex, OpenCode and Grok Build in progress."
+url: "https://cribbnicolas.github.io"
+baseurl: "/deltadictum"
+lang: en
+
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+  - jekyll-seo-tag
+
+logo: "/assets/DeltaDictum-mark.svg"
+color_scheme: light
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  button: false
+heading_anchors: true
+back_to_top: true
+back_to_top_text: "Back to top"
+
+aux_links:
+  "GitHub": "https://github.com/CribbNicolas/deltadictum"
+  "npm": "https://www.npmjs.com/package/deltadictum"
+aux_links_new_tab: true
+
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/CribbNicolas/deltadictum"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "edit"
+
+footer_content: 'DeltaDictum is source-available under the <a href="https://github.com/CribbNicolas/deltadictum/blob/main/LICENSE">PolyForm Shield License 1.0.0</a>.'
+
+# Internal plans and research notes are not part of the site.
+exclude:
+  - superpowers/
+  - research/
+  - "*.original.md"
