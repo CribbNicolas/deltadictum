@@ -70,6 +70,12 @@ requirement in every condition with both models and kept DD the cheapest conditi
   corrections, no failures); they mirror Claude Code's.
 - `npm run bench:v2` read the v1 atoms the migration removed and failed before its first number; it reads
   the live memories of the v2 store when no atom is left.
+- Minors found during the v2 plans, closed before the release: a ledger claim written after a torn last
+  line started on that line and never counted; a session's footprint had no size cap (it now stops
+  taking tool calls at 4 MB); a check whose pattern does not compile was reported as `check_timed_out`
+  (now `invalid_check_pattern`); a turn check skipped files over 1 MB instead of judging their first 256
+  KB, and judged files edited by events its `on` did not name; check lines were appended after the
+  10,000-character delivery budget; a check that threw at Stop also lost the capture request.
 
 ## [0.8.6] - 2026-10-06
 

@@ -19,7 +19,10 @@ export async function run(command, root, payload) {
     // A turn DD made continue is checked too: a fix can break the rule elsewhere,
     // and the twice-per-file limit bounds the loop. It asks for no memory.
     const { turnViolations } = await import('../checks/turn.js');
-    return [turnViolations(root, payload), stopRequest(root, payload)].filter(Boolean).join('\n\n');
+    let violations = '';
+    // A check that throws never costs the turn its capture request.
+    try { violations = turnViolations(root, payload); } catch { /* fail open */ }
+    return [violations, stopRequest(root, payload)].filter(Boolean).join('\n\n');
   }
   if (command === 'inbox') {
     const raw = String(payload.tool_input?.file_path ?? '');

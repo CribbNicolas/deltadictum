@@ -50,6 +50,18 @@ test('torn lines and unknown kinds are skipped', t => {
   assert.deepEqual(openLedger(path).claim(['a', 'b']), ['b']);
 });
 
+// A hook that died mid-write leaves a torn last line with no newline; the next
+// claim must start on a line of its own, or it is torn with it and never counts.
+test('a claim after a torn last line starts on its own line', t => {
+  const path = join(dir(t), 's.jsonl');
+  writeFileSync(path, `${JSON.stringify({ t: 'claim', m: 'a', n: 0, k: 'x' })}\n{"t":"cla`);
+  assert.deepEqual(openLedger(path).claim(['b']), ['b']);
+  const lines = readFileSync(path, 'utf8').split('\n');
+  assert.equal(lines[1], '{"t":"cla');
+  assert.equal(JSON.parse(lines[2]).m, 'b');
+  assert.deepEqual([...openLedger(path).delivered()].sort(), ['a', 'b']);
+});
+
 test('a ledger that cannot be written fails open: it delivers and never throws', t => {
   const path = join(dir(t), 'folder.jsonl');
   mkdirSync(path);

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { ledgerPath } from '../engine/ledger.cjs';
 import { localPaths } from '../engine/locate.cjs';
@@ -60,9 +60,19 @@ export function correctionEntry(payload, { now = hookStarted() } = {}) {
   return observation ? { t: 'correction', id: newId(), at: now.toISOString(), preview: observation.raw_preview.slice(0, TEXT_MAX) } : null;
 }
 
+// Every Stop reads the session's footprint whole: past this size (about 7,000
+// tool calls), tool calls and corrections are no longer recorded; the markers Stop
+// itself writes (turn, asked, violation) still are.
+export const FOOTPRINT_MAX = 4 * 1024 * 1024;
+const CAPPED = new Set(['tool', 'correction']);
+
 export function appendFootprint(path, entry) {
+  if (CAPPED.has(entry.t)) {
+    try { if (statSync(path).size >= FOOTPRINT_MAX) return false; } catch { /* a new file */ }
+  }
   mkdirSync(dirname(path), { recursive: true });
   appendFileSync(path, `${JSON.stringify(entry)}\n`);
+  return true;
 }
 
 export function readFootprint(path) {

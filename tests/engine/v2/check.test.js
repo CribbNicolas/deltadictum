@@ -28,6 +28,14 @@ test('examples must behave as stated; a timeout is its own problem', () => {
   assert.deepEqual(exampleProblems(slow, createMatcher({ timeoutMs: 20 })), ['check_timed_out']);
 });
 
+// A pattern that does not compile is its own problem, not a timeout: the person
+// fixing the check must know which.
+test('an invalid pattern is reported as such, not as a timeout', () => {
+  assert.deepEqual(exampleProblems({ ...store, if_content: 'a(' }, matcher), ['invalid_check_pattern']);
+  assert.deepEqual(exampleProblems({ ...store, unless_content: '(a+)+' }, matcher), ['invalid_check_pattern']);
+  assert.deepEqual(exampleProblems({ ...force, if_command: '' }, matcher), ['invalid_check_pattern']);
+});
+
 test('the default moment', () => {
   assert.equal(defaultWhen(store), 'turn');
   assert.equal(defaultWhen({ ...store, when: 'edit' }), 'edit');

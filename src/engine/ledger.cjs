@@ -40,6 +40,20 @@ function readLines(path) {
   } finally { closeSync(fd); }
 }
 
+// A hook that died mid-write leaves a last line without its newline: the next
+// line must start on its own, or both are torn and neither counts.
+function endsWithNewline(path) {
+  let fd;
+  try { fd = openSync(path, 'r'); } catch { return true; }
+  try {
+    const size = fstatSync(fd).size;
+    if (!size) return true;
+    const last = Buffer.alloc(1);
+    readSync(fd, last, 0, 1, size - 1);
+    return last[0] === 0x0a;
+  } finally { closeSync(fd); }
+}
+
 function stateOf(lines) {
   let epoch = 0;
   for (const line of lines) {
@@ -60,7 +74,7 @@ const REPORT_LIMIT = 2;
 
 function openLedger(path) {
   const read = () => stateOf(retrying(() => readLines(path)));
-  const append = text => retrying(() => { mkdirSync(dirname(path), { recursive: true }); appendFileSync(path, text); });
+  const append = text => retrying(() => { mkdirSync(dirname(path), { recursive: true }); appendFileSync(path, `${endsWithNewline(path) ? '' : '\n'}${text}`); });
   return {
     epoch: () => { try { return read().epoch; } catch { return 0; } },
     delivered: () => { try { return new Set(read().first.keys()); } catch { return new Set(); } },

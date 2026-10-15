@@ -77,6 +77,49 @@ test('a violation already committed is left alone also when the project is a sub
   assert.doesNotMatch(turnViolations(root, { session_id: 's1' }), /old\.test\.js/);
 });
 
+// Every check judges at most the first 256 KB of a file; a large file is judged on
+// them, not skipped.
+test('a file over the size limit is judged on its first 256 KB', async t => {
+  const root = await project(t);
+  writeFileSync(join(root, 'tests', 'big.test.js'), `createMemoryStore(d)\n${'/'.repeat(1.5 * 1024 * 1024)}\n`);
+  edited(root, 'tests/big.test.js', '2026-10-12T00:00:01.000Z');
+  assert.match(turnViolations(root, { session_id: 's1' }), /tests\/big\.test\.js/);
+});
+
+// A check says which events it judges: one on writes alone leaves edited files alone.
+test('a turn check judges only the files touched by the events it names', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-turn-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  mkdirSync(join(root, 'tests'));
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [{ ...memory, id: 'writes', topic: 'checks/writes', check: { ...check, on: ['write'] } }] });
+  await compileProject(root);
+  writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\n');
+  writeFileSync(join(root, 'tests', 'b.test.js'), 'createMemoryStore(d)\n');
+  edited(root, 'tests/a.test.js', '2026-10-12T00:00:01.000Z');
+  appendFootprint(footprintPath(root, 's1'), { t: 'tool', id: 'w1', at: '2026-10-12T00:00:02.000Z', kind: 'write', paths: ['tests/b.test.js'] });
+  const text = turnViolations(root, { session_id: 's1' });
+  assert.match(text, /tests\/b\.test\.js/);
+  assert.doesNotMatch(text, /a\.test\.js/);
+});
+
+// A broken check (here a path pattern the index should never hold) must not cost
+// the turn its capture request.
+test('a check that throws at Stop still lets the capture request through', async t => {
+  const root = await project(t);
+  const indexPath = join(root, '.dd', 'local', 'v2', 'index.json');
+  const index = JSON.parse(readFileSync(indexPath, 'utf8'));
+  index.checks = [{ m: 'store', on: ['edit'], when: 'turn', paths: ['('], if_content: 'x', say: 'broken' }];
+  writeFileSync(indexPath, JSON.stringify(index));
+  const fp = footprintPath(root, 's1');
+  appendFootprint(fp, { t: 'tool', id: 'f1', at: '2026-10-12T00:00:01.000Z', kind: 'run', runner: true, outcome: 'failure', paths: [], command: 'npm test', preview: 'FAIL' });
+  appendFootprint(fp, { t: 'tool', id: 'e1', at: '2026-10-12T00:00:02.000Z', kind: 'edit', paths: ['tests/a.test.js'] });
+  appendFootprint(fp, { t: 'tool', id: 'v1', at: '2026-10-12T00:00:03.000Z', kind: 'run', runner: true, outcome: 'validation', paths: [], command: 'npm test', preview: 'ok' });
+  const { fileURLToPath } = await import('node:url');
+  const out = spawnSync(process.execPath, [fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url)), 'stop'], { input: JSON.stringify({ session_id: 's1', cwd: root }), encoding: 'utf8' });
+  assert.match(out.stdout ? JSON.parse(out.stdout).hookSpecificOutput.additionalContext : '', /DD - This turn fixed a failure/);
+});
+
 test('a file the turn deleted, or did not touch, is not judged', async t => {
   const root = await project(t);
   writeFileSync(join(root, 'tests', 'c.test.js'), 'createMemoryStore(d)\n');
