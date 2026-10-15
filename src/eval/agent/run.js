@@ -36,6 +36,7 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { engineeringGuide, engineeringGuideV2 } from './guide.js';
 import { limitWait, taskReport, usageLimited } from './metrics.js';
+import { ALLOWED_TOOLS } from './permissions.js';
 import { killTree, run as runProcess } from './proc.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
@@ -67,7 +68,7 @@ const BASE_DEPS = join(REPO, 'output', 'eval', `deps-${BASE.slice(0, 7)}`);
 const TIMEOUT_MS = 20 * 60 * 1000;
 const SUITE_TIMEOUT_MS = 10 * 60 * 1000;
 const LINT_TIMEOUT_MS = 5 * 60 * 1000;
-const ALLOWED = ['Read', 'Edit', 'Write', 'Grep', 'Glob', 'Bash(node:*)', 'Bash(npm:*)', 'Bash(git:*)', 'mcp__dd'];
+const ALLOWED = ALLOWED_TOOLS;
 const OUT = join(REPO, 'output', 'eval', args.out ?? 'agent-results.json');
 const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
 const RUNS = join(REPO, 'output', 'eval', args.runs ?? 'runs');
