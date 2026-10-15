@@ -4,6 +4,107 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.0] - 2026-10-14 (DD v2)
+
+DD v2 replaces the core. Memories fire by rules (their triggers) at the action they apply to instead of
+being searched for by similarity on every prompt and tool call, so DD costs about what the agent costs alone:
+on this repository's 15-task agent trial, the same resolution, 7 more points of code quality and every
+project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% more
+([how it is measured](docs/guide/how-it-works.md#how-it-is-measured),
+[why v2](docs/architecture/history.md)). A second trial on the v2 code with Claude Opus 5.5 and Claude
+Haiku 5.5 at high effort ([write-up and data](docs/benchmarks/2026-10-v2-trial-opus-haiku.md)) met every
+requirement in every condition with both models and kept DD the cheapest condition.
+
+### Breaking
+- **New memory format** (schema 8): one file per memory in `.dd/memories/`, with kinds `trap`, `decision`,
+  `failed_approach`, `procedure` and `fact`, triggers, an optional check and a required `not_derivable`.
+- **No MCP server, no resident process, no embedding model, no dependencies.** The `dd` MCP tools, the
+  memory map at session start, anchors, the actions queue and the audit UI are gone.
+- **Commands:** `/dd:save`, `/dd:recall` and `/dd:review` remain; `compact`, `clean`, `prospect` and
+  `audit` are removed. `deltadictum init` now writes the project's opt-in (`.dd/config.json`,
+  `.dd/.gitignore`, `.dd/memories/`) instead of a data directory.
+- Settings `auto_accept.confidence_threshold`, `budget_tokens` and `anchors.only` and the environment
+  variables `DD_DATA`, `DD_EMBED_MODEL`, `DD_RESIDENT` and `DD_RETRIEVAL` no longer exist.
+
+### Migrating from 0.8
+1. Update the plugin (Claude Code: `/plugin`), or `npm update -g deltadictum`.
+2. In each project, preview and convert its store, then commit the result:
+   ```bash
+   npx deltadictum migrate --dry-run
+   npx deltadictum migrate
+   git add .dd && git commit -m "Migrate DD memories to v2"
+   ```
+   Every memory keeps its id; `.dd/atoms/`, `candidates/`, `archive/`, `legacy/`, `registry/` and `actions/`
+   are removed once the memories are written. Pending actions are reported and dropped.
+3. Open the review UI (`npx deltadictum ui`). Converted memories wait in the "Missing not_derivable" queue
+   for one line saying why the code does not show them, and "Dead triggers" lists those whose files no
+   longer exist.
+4. Codex: run `deltadictum install --host codex --project <path>` again; it removes the MCP server block.
+5. The old data directory (`~/.dd-data` or the plugin's data folder) is no longer read and can be deleted.
+
+### Added
+- Delivery by triggers (paths, symbols, commands, prompt keywords) compiled into an index, once per session
+  and subagent, re-armed after a compaction.
+- Checks: rules over changed files or commands, reported only when the change introduced the violation.
+- Capture from the session's footprint: at the end of a turn with a failure followed by a fix, or a user
+  correction, DD asks the agent to save what it learned; proposals arrive through `.dd/inbox/` and are
+  answered in the same turn.
+- Daily maintenance (roll-up, pruning, retirement of memories that never fire despite opportunity),
+  `deltadictum health`, `recall`, `status`, `compile` and `migrate`.
+- `deltadictum doctor`: whether DD is working in the project (Node, the opt-in, the index, sessions
+  recorded, maintenance, what needs a person), with a hint per problem and exit 1 when there is one; a
+  hook that fails never says so (L5), this does. `/dd:review` shows its summary before opening the UI.
+  A trigger path is dead when it matches no tracked or untracked file; new work not yet added to git
+  counts as present, ignored files do not. A converted memory stays in the "Missing not_derivable"
+  queue until a person saves its line in the UI, even when an agent drafted one through the store. The
+  UI's "Re-verify evidence" re-hashes a memory's evidence files at their current content (a file that is
+  gone stays stale) and records the person. Batches: a proposal or request may carry `"batch": "<name>"`;
+  the UI's Batches queue accepts or rejects the lot in one action, with each candidate validated as alone
+  and what it could not do reported. The UI's Settings pane turns auto-accept on or off and sets the
+  delivery cap (`delivery_limit`, 2,000 to 50,000 characters, default 10,000, compiled into the index) in
+  `.dd/config.json`, keeping every other key the file holds. Each delivery leaves a ledger line (event,
+  memories in full, memories named, characters) that rolls up into the telemetry; the UI's Dashboard shows
+  sessions and tool calls, deliveries per 100 tool calls, memories and characters per delivery, how often
+  the cap was reached, deliveries by event, the memories that fire most, fires by trigger dimension, check
+  outcomes, which live memories were ever delivered, the last days and the capture funnel.
+- `deltadictum import [--from DIR] [--dry-run]`: the project's `.claude/rules/` and `.cursor/rules/`
+  files that name paths become memories delivered at those files on every harness, with the file as
+  hashed evidence; always-on rules are left to `CLAUDE.md`, and a second run updates what changed.
+- The review UI, `deltadictum ui`: queues, evidence, breadth, use, a dry run of triggers over recent
+  sessions, and every edit and status change.
+- A project opts in with its `.dd/` folder (a committed `.dd/config.json`, or a first memory): DD records
+  its footprint and asks for memories from the first session, not from the first memory. `deltadictum
+  init` writes the opt-in and compiles; the Codex installer writes the config when there is none.
+- Health and the review UI show each memory's fires by the trigger dimension that matched, the capture
+  funnel (asks, corrections, proposals stored, activated or rejected, rejections by reason) and the last
+  deliveries; memories DD accepted on its own wait in their own queue until a person marks them reviewed.
+- Trigger globs accept `{a,b}` alternatives (`src/**/*.{js,ts}`).
+- A shell command that only reads or searches (`cat`, `sed -n`, `head`, `rg`…) is a read or search event
+  in Claude Code too, as it was in Codex: a memory on a file fires when the agent reads it through Bash.
+- Codex delivery through shell reads and `apply_patch`, and OpenCode delivery with the tool result; both
+  are not yet verified in a live session.
+
+### Changed
+- This repository's own memories were curated against the v2 code: 25 that described mechanisms v2
+  removed (the resident, the bridge, the MCP server, embeddings, the v1 store) are archived with the
+  reason; the 22 that still hold were rewritten or completed with `not_derivable`, globs that match a
+  tracked file, keyword phrases instead of single generic words, fresh evidence hashes, and two checks for
+  the `package.json` traps (a bin path written with `./`, an unquoted `node --test` glob).
+
+### Fixed
+- The `recall` and `review` skills ran `npx deltadictum`, which fetched the published package from npm (a
+  network request, and possibly another version than the hooks); they run the installed plugin's own CLI.
+- The Grok manifests registered a subset of the hooks (no inbox, so `/dd:save` was never ingested there; no
+  corrections, no failures); they mirror Claude Code's.
+- `npm run bench:v2` read the v1 atoms the migration removed and failed before its first number; it reads
+  the live memories of the v2 store when no atom is left.
+- Minors found during the v2 plans, closed before the release: a ledger claim written after a torn last
+  line started on that line and never counted; a session's footprint had no size cap (it now stops
+  taking tool calls at 4 MB); a check whose pattern does not compile was reported as `check_timed_out`
+  (now `invalid_check_pattern`); a turn check skipped files over 1 MB instead of judging their first 256
+  KB, and judged files edited by events its `on` did not name; check lines were appended after the
+  10,000-character delivery budget; a check that threw at Stop also lost the capture request.
+
 ## [0.8.6] - 2026-10-06
 
 ### Security
@@ -171,7 +272,11 @@ when it reaches `main`, and CI refuses a version bump without a section here.
 - The published package works in Claude Code, Grok Build, OpenCode and Codex; the audit UI is closed to
   other accounts on the machine.
 
-[0.8.3]: https://github.com/CribbNicolas/deltadictum/compare/696f567...HEAD
+[0.9.0]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.6...v0.9.0
+[0.8.6]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.5...v0.8.6
+[0.8.5]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.4...v0.8.5
+[0.8.4]: https://github.com/CribbNicolas/deltadictum/compare/v0.8.3...v0.8.4
+[0.8.3]: https://github.com/CribbNicolas/deltadictum/compare/696f567...v0.8.3
 [0.8.2]: https://github.com/CribbNicolas/deltadictum/compare/7606bcd...cc871cf
 [0.8.1]: https://github.com/CribbNicolas/deltadictum/compare/932d275...7606bcd
 [0.8.0]: https://github.com/CribbNicolas/deltadictum/compare/43c555c...932d275

@@ -1,0 +1,56 @@
+{
+  "schema_version": 8,
+  "id": "0775e2e0-a142-443d-9615-a90c9e05bd9c",
+  "project_id": "supermem",
+  "topic": "memory/retrieval/compact-fts",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Return compact micro/short hits built from FTS candidates, capped at 8 memories per response, gated ",
+  "body": "Return compact micro/short hits built from FTS candidates, capped at 8 memories per response, gated by a value-per-token threshold (default 0.02, config vpt_threshold). Use the `get` tool only when full evidence/relations for one specific memory are needed. Do not name a specific internal function (e.g. a helper inside retrieve.js) in this memory's content — describe the externally-observable contract instead, so a later refactor of the internal shape doesn't leave the memory citing code that no longer exists.\n\nWhy: The existing active memory on this topic_key (b8f17c0c) is stale in two ways found during a full memory-store audit: it names a `compactHit` helper in src/engine/retrieve.js that no longer exists (retrieve.js now builds the hit object inline in the candidate loop), and it uses the pre-rename tool names `supermem_retrieve`/`supermem_get` instead of the current `orient`/`retrieve`/`get` MCP tools. Its evidence_state freshness check reported no drift because the cited file's hash hadn't changed since last verification — hash-based freshness checks provenance, not whether the memory's prose description of the code is still accurate, so this kind of staleness needs a human or an explicit audit pass to catch.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/engine/retrieve.js",
+        "src/mcp/tools.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/engine/retrieve.js",
+      "sha256": "8671f5d1e28c7c27059fa736aba0e3dd38bb017900de41dab7d2902ead9629bc",
+      "summary": "Hit objects are built inline in the candidate loop (~line 91), capped at 8 selected memories, gated by the value-per-token threshold check."
+    },
+    {
+      "type": "file",
+      "path": "src/mcp/definition.js",
+      "sha256": "cde3ac9db7cbaeb2977a83892ad1db919434bf1c79f01df92061fcf390e648e2",
+      "summary": "Current MCP tool names are orient/retrieve/get/propose/feedback/list/contradict/ui/status/health, not supermem_*."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "b8f17c0c-5752-4c83-9f14-3ee9977d2812",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when calling the DD retrieve/orient tools, or changing retrieveMemories in src/engine/retrieve.js"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-19T10:36:32.424Z"
+    }
+  },
+  "created": "2026-09-19T10:22:01.410Z",
+  "updated": "2026-09-23T16:46:46.986Z"
+}

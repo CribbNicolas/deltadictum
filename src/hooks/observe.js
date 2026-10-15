@@ -18,7 +18,7 @@ const RUNNER = new RegExp('^(?:\\w+=\\S*\\s+)*(?:'
   + '|node\\s+(?:\\S+\\s+)*--test|(?:cargo|go|dotnet|deno|swift|mvn|(?:\\.\\/)?gradlew|gradle)\\s+(?:\\S+\\s+)*test'
   + '|make\\s+(?:test|check|lint)|rspec|phpunit'
   + ')(?:\\s|$)');
-function runsValidation(command) {
+export function runsValidation(command) {
   const plain = String(command).replace(/'[^']*'|"(?:\\.|[^"\\])*"/g, '""');
   const parts = plain.split(/(&&|\|\||;|\n)/);
   for (let i = 0; i < parts.length; i += 2) {
@@ -64,11 +64,9 @@ export function observationFromTool(payload, { claudeCode = false } = {}) {
       session_id: String(payload.session_id ?? payload.sessionId ?? '').slice(0, 150) } };
 }
 
-// Corrective language, English and Spanish, following the lexical precedent in
-// src/engine/v2/admission.js rather than inventing a second style. It is a
-// regex and nothing else because PreToolUse-class hooks are ephemeral Node
-// processes with two dependencies (L1, L3): there is no model to call and
-// nothing to learn a classifier from (L6).
+// Corrective language, English and Spanish. It is a regex and nothing else
+// because hooks are ephemeral Node processes with no dependency (L1, L3): there
+// is no model to call and nothing to learn a classifier from (L6).
 //
 // Each family demands a corrective marker rather than a bare keyword, because a
 // bare keyword matches ordinary work: "don't forget the docs" and "stop the
@@ -118,18 +116,8 @@ export function observationFromPrompt(payload) {
   if (!text || !CORRECTION.test(text)) return null;
   return { source_type: 'user_correction', source_ref: 'UserPromptSubmit',
     raw_preview: `User correction. ${text.slice(0, 600)}`,
-    // The provenance only names the source. What ceiling it earns is the
-    // reliability ladder's decision, made at admission, not here.
+    // The provenance only names the source. Whether it counts as evidence is
+    // decided at ingestion (src/capture/auto-accept.js), not here.
     metadata: { provenance: 'user_correction', signal: 'correction',
       session_id: String(payload.session_id ?? payload.sessionId ?? '').slice(0, 150) } };
-}
-
-// L5: the prompt hook owes the turn its retrieval context. Recording a
-// correction is worth less than the turn it was observed in, so a failure here
-// is silence, never a degraded prompt.
-export async function recordPromptObservation(payload, { store, projectId }) {
-  try {
-    const observation = observationFromPrompt(payload);
-    if (observation) await store.putObservation({ ...observation, project_id: projectId });
-  } catch { /* observation is best-effort; the context is not */ }
 }

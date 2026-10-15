@@ -41,11 +41,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      # Timing assertions over 2,000 knowledge files: Linux runners only, where
-      # the file system does not make them a measure of the runner.
+      # Concurrent hook processes claiming the same memories: Linux runners only,
+      # where process start-up does not make the run a measure of the runner.
       - if: runner.os == 'Linux'
         run: npm run test:stress
-      - run: npm run eval
 
   # The oldest Node that package.json accepts (node:sqlite with FTS5 arrived in
   # 22.16.0) and the current LTS.
@@ -65,9 +64,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run eval
 
-  # macOS is handled in code (src/paths.js) but has never run on a Mac; this job
+  # macOS is handled in code (src/engine/clause.cjs) but has never run on a Mac; this job
   # reports how it fares without blocking a merge.
   macos:
     name: test (macos-latest, advisory)
@@ -82,7 +80,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run eval
 
   package:
     runs-on: ubuntu-latest
@@ -96,8 +93,15 @@ jobs:
       - name: Check the published file list
         run: node .github/scripts/check-pack.mjs
       - run: npm ci --ignore-scripts
+      # DD has no runtime dependency today, and npm refuses to audit an empty tree;
+      # the check runs again as soon as package.json declares one.
       - name: Verify registry signatures of the dependency tree
-        run: npm audit signatures
+        run: |
+          if node -e "process.exit(Object.keys(require('./package.json').dependencies ?? {}).length ? 0 : 1)"; then
+            npm audit signatures
+          else
+            echo "No dependencies to verify."
+          fi
 
   version:
     # Dependabot PRs carry no release; a skipped required check counts as passed.

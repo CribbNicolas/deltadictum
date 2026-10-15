@@ -1,0 +1,57 @@
+{
+  "schema_version": 8,
+  "id": "6d5ce29a-26fa-4c9b-8755-1e377c185c0c",
+  "project_id": "supermem",
+  "topic": "store/index/schema-check-migration",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Changing a CHECK in schema.sql does not reach existing indexes",
+  "body": "Add an explicit migration in migrate() (src/store/sqlite-index.js): detect the old definition in sqlite_master, drop that table's named indexes, rename the table, exec the schema, copy the rows back and drop the old table. Bumping INDEX_FORMAT alone does not help: rebuild() deletes rows but keeps the old table and its old CHECK, and copying rows keeps activation_count, which lives only in the index.\n\nWhy: migrate() runs the schema with CREATE TABLE IF NOT EXISTS, which never alters a table that already exists, so an index built by an earlier release keeps rejecting the new value at insert time. Found while planning the legacy state on 2026-09-24.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/store/schema.sql",
+        "src/store/sqlite-index.js",
+        "src/store/create-store.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/store/sqlite-index.js",
+      "sha256": "a22752ddece33048adafd39558d57b7803f710212e830105a9ca9b6e0b4c9a34",
+      "summary": "migrate() only execs schema.sql; rebuild() deletes rows from memory_atoms without recreating it."
+    },
+    {
+      "type": "file",
+      "path": "src/store/schema.sql",
+      "sha256": "69a3ae110adeea0dba9df5c47ab96c155ed3f1b59957dc6e805582a0d24a3c57",
+      "summary": "memory_atoms uses CREATE TABLE IF NOT EXISTS with a lifecycle_state CHECK list."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when changing a CHECK constraint or column definition of an existing table in src/store/schema.sql (for example adding a lifecycle state)"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-24T16:49:24.438Z"
+    }
+  },
+  "created": "2026-09-24T15:40:21.070Z",
+  "updated": "2026-09-27T14:57:33.458Z"
+}

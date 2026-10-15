@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { planCodexInstall } from '../../scripts/install-codex.mjs';
 
-export const COMMANDS = ['recall', 'audit', 'save', 'review', 'compact', 'clean', 'prospect', 'init'];
+export const COMMANDS = ['save', 'recall', 'review'];
 const read = path => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 // Claude Code shows plugin skills as /<plugin>:<skill>, so the plugin is named dd.
@@ -15,11 +15,22 @@ test('every command skill exists, is named after its directory and is written in
     assert.match(text, new RegExp(`^---\\nname: ${name}\\ndescription: .+\\n---\\n`), name);
     assert.doesNotMatch(text, /[áéíóúñ¿¡]/, `${name} must be English`);
   }
-  const init = await read('skills/init/SKILL.md');
-  assert.match(init, /Before exploring anything/);
-  assert.match(init, /\/dd:prospect/);
   assert.equal(JSON.parse(await read('.claude-plugin/plugin.json')).name, 'dd');
   assert.equal(JSON.parse(await read('.claude-plugin/marketplace.json')).plugins[0].name, 'dd');
+});
+
+// Claude Code lists every skill in skills/, so all of them count, not only COMMANDS.
+test('the plugin costs at most 150 tokens of fixed context: three short skill descriptions', async () => {
+  const shipped = (await readdir(new URL('../../skills/', import.meta.url), { withFileTypes: true }))
+    .filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
+  assert.deepEqual(shipped, [...COMMANDS].sort());
+  let characters = 0;
+  for (const name of shipped) {
+    const text = (await read(`skills/${name}/SKILL.md`)).replace(/\r\n/g, '\n');
+    const description = /^---\nname: .+\ndescription: (.+)\n---\n/.exec(text)[1];
+    characters += name.length + description.length;
+  }
+  assert.ok(Math.ceil(characters / 4) <= 150, `${Math.ceil(characters / 4)} tokens`);
 });
 
 // Codex has no plugin namespace: the skills are installed prefixed, so a project
@@ -51,7 +62,49 @@ test('reinstalling over a 0.3.x Codex install replaces the skills DD wrote', asy
   await applyCodexInstall(await planCodexInstall(project));
   const { access } = await import('node:fs/promises');
   await assert.rejects(access(join(project, '.agents', 'skills', 'dd', 'SKILL.md')));
-  assert.match(await readFile(join(project, '.agents', 'skills', 'dd-audit', 'SKILL.md'), 'utf8'), /^---\r?\nname: dd-audit\r?\n/);
+  // v2 ships three skills: the ones DD wrote and no longer ships are retired too.
+  await assert.rejects(access(join(project, '.agents', 'skills', 'dd-audit', 'SKILL.md')));
+  assert.match(await readFile(join(project, '.agents', 'skills', 'dd-save', 'SKILL.md'), 'utf8'), /^---\r?\nname: dd-save\r?\n/);
   await writeFile(join(project, '.agents', 'skills', 'dd-review', 'SKILL.md'), '---\nname: my-review\n---\nMine.\n');
   await assert.rejects(planCodexInstall(project), /existing_skill_requires_review/);
+});
+
+// A marketplace install is a checkout in Claude Code's plugin cache with no
+// `deltadictum` on PATH: `npx deltadictum` would fetch the published package from
+// npm (a network request, and possibly another version than the hooks). Claude
+// Code substitutes ${CLAUDE_PLUGIN_ROOT} in a skill's body.
+test('the recall and review skills run the CLI of the installed plugin, never npx', async () => {
+  for (const [name, command] of [['recall', 'recall'], ['review', 'ui']]) {
+    const text = await read(`skills/${name}/SKILL.md`);
+    assert.match(text, new RegExp(`node "\\$\\{CLAUDE_PLUGIN_ROOT\\}/src/cli\\.js" ${command}\\b`), name);
+    assert.doesNotMatch(text, /npx/, name);
+  }
+});
+
+// Codex substitutes nothing: its copies name the directory DD runs from, the
+// same one the hooks name.
+test('the Codex copies of the skills name the plugin root in place of CLAUDE_PLUGIN_ROOT', async () => {
+  const project = await mkdtemp(join(tmpdir(), 'dd-codex-skill-root-'));
+  await mkdir(join(project, '.git'));
+  const plan = await planCodexInstall(project);
+  const root = plan.pluginRoot.replaceAll('\\', '/');
+  for (const [name, command] of [['recall', 'recall'], ['review', 'ui']]) {
+    const content = String(plan.operations.find(op => op.path.replaceAll('\\', '/').endsWith(`dd-${name}/SKILL.md`)).content);
+    assert.ok(content.includes(`node "${root}/src/cli.js" ${command}`), content);
+    assert.doesNotMatch(content, /CLAUDE_PLUGIN_ROOT|npx/);
+  }
+});
+
+// Until plan 7 maps Codex payloads, a Codex install must stay silent, not fail:
+// its hooks name the v2 entry point and it registers no MCP server (v2 has none).
+test('the Codex installer points its hooks at hooks/run.cjs and registers no MCP server', async () => {
+  const project = await mkdtemp(join(tmpdir(), 'dd-codex-v2-'));
+  await mkdir(join(project, '.git'));
+  const plan = await planCodexInstall(project);
+  const content = suffix => String(plan.operations.find(op => op.path.replaceAll('\\', '/').endsWith(suffix))?.content ?? '');
+  const hooks = JSON.parse(content('.codex/hooks.json'));
+  const commands = Object.values(hooks.hooks).flat().flatMap(group => group.hooks).map(hook => hook.command);
+  assert.ok(commands.length > 0);
+  for (const command of commands) assert.match(command, /hooks\/run\.cjs' '[a-z-]+' '--codex'/);
+  assert.doesNotMatch(content('.codex/config.toml'), /\[mcp_servers\.dd\]/);
 });

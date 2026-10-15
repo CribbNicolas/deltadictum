@@ -1,0 +1,74 @@
+{
+  "schema_version": 8,
+  "id": "614f5d61-547c-4307-8e11-486cd9cbe918",
+  "project_id": "supermem",
+  "topic": "testing/ui/seen-json-isolation",
+  "kind": "trap",
+  "status": "archived",
+  "title": "UI tests that mark items seen write the real seen.json",
+  "body": "Point CLAUDE_PLUGIN_DATA at a temporary directory for that test (restore it in t.after), or the seen state is written to the developer's real ~/.dd-data/seen.json. The same applies to a throwaway UI demo started with startUiServer on a temp store: set CLAUDE_PLUGIN_DATA before importing the modules.\n\nWhy: seen.json is not part of the store: src/store/seen.js resolves it from resolveDataBase() (plugin data env vars or ~/.dd-data), so a temp ddDir/dataDir given to createMemoryStore does not isolate it. Tests pass either way, so the pollution is silent.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/store/seen.js",
+        "tests/ui/*.test.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "seen.json",
+        "CLAUDE_PLUGIN_DATA",
+        "marks actions seen",
+        "startUiServer"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/store/seen.js",
+      "sha256": "bd0aa88ab2d6f4e01ded42afd614c6e0c49d217781b60da31ad3741fff9e1490",
+      "summary": "seenPath() joins resolveDataBase() with seen.json, independent of the store's dataDir."
+    },
+    {
+      "type": "file",
+      "path": "tests/ui/actions.test.js",
+      "sha256": "cf7f8c7c3f879931e6aa1ba115cbeed40802972953390715d1ce5686fec2e49f",
+      "summary": "The action seen test sets CLAUDE_PLUGIN_DATA to a temp dir for this reason."
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "18d311ec-060a-4cd4-9446-8e41f0e1b584",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "archived_by_person: describes seen.json and the v1 data directory"
+    ],
+    "v1": {
+      "trigger": "When writing a test or demo script that reads a memory through GET /api/atoms/:id or marks actions seen through the audit UI server"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:11.790Z"
+    }
+  },
+  "created": "2026-09-27T02:37:08.942Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

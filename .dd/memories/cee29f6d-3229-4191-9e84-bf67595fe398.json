@@ -1,0 +1,86 @@
+{
+  "schema_version": 8,
+  "id": "cee29f6d-3229-4191-9e84-bf67595fe398",
+  "project_id": "supermem",
+  "topic": "memory/retrieval/embeddings-resident-only",
+  "kind": "decision",
+  "status": "archived",
+  "title": "Embeddings run only in the resident process; without it DD is inactive",
+  "body": "Load embedding models only in the resident DD process (src/resident.js), never in a hook process. Store vectors in the SQLite index, not an external vector store. Without a resident whose model is loaded, DD is inactive and says so; lexical-only retrieval (DD_RETRIEVAL=lexical) exists for tests and evaluation, not as a user-facing fallback. Keep trigger activation, applicability gates and abstention; embeddings widen candidates and add a calibrated activation fused with the full-text ranking.\n\nWhy: An in-process ONNX runtime (@huggingface/transformers) measured 0.5 s cached load and 3 ms per query, so it cannot run per hook (L1) but works in a long-lived process; on the supermem benchmark semantic retrieval beat lexical on every metric. The previous version kept lexical retrieval as the fallback; L2 in docs/architecture/plugin-constraints.md now makes the resident required, and src/hooks/session-start.js keeps lexical mode for tests and evaluation only.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/semantic/**",
+        "src/resident.js",
+        "src/engine/retrieve.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "embeddings",
+        "embedding",
+        "vector search",
+        "model runtime",
+        "vectors",
+        "semantic floor",
+        "floor semantico"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/architecture/plugin-constraints.md",
+      "sha256": "b0270042b6604cf90753ecd56e944e46de49bc3b933ce5c2d990d3f19d93eb41",
+      "summary": "L2: one resident per machine; without it DD is inactive (never blocking) and says why."
+    },
+    {
+      "type": "file",
+      "path": "src/hooks/session-start.js",
+      "sha256": "a8c035bccb0d0d036e706b1f27c381482f6afe41ece29f4090031c11014bf067",
+      "summary": "lexicalMode(): DD_RETRIEVAL=lexical, for tests and evaluation; otherwise DD is inactive until the resident's model is ready."
+    },
+    {
+      "type": "file",
+      "path": "src/semantic/provider.js",
+      "sha256": "cdf3a7e88788f220c0b9040f269fba854747518ec7b27d4a43d584dd19fc98b0",
+      "summary": "Semantic activation calibrated against the query's mean similarity (floor 0.035)."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "1606e14c-aad8-43f3-8788-db93cbcf5d5f",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "description": "calibration or provider design changes",
+      "path": "src/semantic/provider.js",
+      "hash": "cdf3a7e88788f220c0b9040f269fba854747518ec7b27d4a43d584dd19fc98b0"
+    }
+  ],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "archived_by_person: describes embeddings and the resident"
+    ],
+    "v1": {
+      "trigger": "when adding embeddings, vector search or any model runtime to DD retrieval"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-06T19:08:51.991Z"
+    }
+  },
+  "created": "2026-10-06T17:40:50.573Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

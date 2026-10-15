@@ -1,0 +1,61 @@
+{
+  "schema_version": 8,
+  "id": "d4451758-2b19-4a09-9001-79ead0471f42",
+  "project_id": "supermem",
+  "topic": "maintenance/retirement-spares-what-review-holds",
+  "kind": "trap",
+  "status": "active",
+  "title": "Retirement by disuse must not touch what a review holds",
+  "body": "Keep the exclusions of retireByDisuse (src/maintenance/retire.js) in the selector itself, so health never names a memory the sweep would decline to touch: a contested memory, a memory a pending candidate names in `replaces`, and a memory a person accepted or edited (review.accepted.by \"person\") stay out of it, whatever retire.after_sessions says. Why: a revision whose target was retired can never be accepted, and the candidate looks normal until someone presses Accept; a reviewer's held memories must not move under them. v1 shipped the race in 2026-09 and v2 re-learned it in the retire tests on 2026-10-13.",
+  "not_derivable": "The code exempts them; that a retired revision target strands its candidate, and that v1 shipped the race, is written nowhere in it.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/maintenance/retire.js",
+        "src/maintenance/health.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "retirement",
+        "retire by disuse",
+        "retired automatically",
+        "after_sessions"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/maintenance/retire.js",
+      "sha256": "6ec8a16155280f605e291ff958bda085c67416e80553f4654179a9d0185350da",
+      "summary": "retireByDisuse retires only active memories not accepted by a person and not named by a pending candidate's replaces."
+    },
+    {
+      "type": "file",
+      "path": "tests/maintenance/retire.test.js",
+      "sha256": "87de8ef6b1b7dbff852e489c4e77032b4dfd19c550c2714cae2bfa3203821cdc",
+      "summary": "A memory a pending candidate revises is not retired."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "9dc49d33-f37e-4fa7-90ac-ae3e1e7cc841",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.921Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

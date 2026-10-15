@@ -1,0 +1,49 @@
+{
+  "schema_version": 8,
+  "id": "7b5d2510-a33e-4d28-8793-4c031292f51f",
+  "project_id": "supermem",
+  "topic": "testing/quote-test-globs",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Quote node --test globs in npm scripts",
+  "body": "Wrap each glob in escaped double quotes in package.json so node --test expands it itself. Unquoted, sh on Linux and macOS expands ** without globstar as a single level and silently skips nested test files, while Windows passes the pattern through and runs them all.\n\nWhy: On 2026-09-22 the same suite ran 323 tests on Windows and 245 on Linux with no error; quoting the globs brought Linux to the full count.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "package.json"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "package.json",
+      "sha256": "69c3ea9027c0526b9dcb24adaf17fade4cc2dcaa7c85f39d821814cab7f11493",
+      "summary": "test scripts with quoted globs"
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing"
+    ],
+    "v1": {
+      "trigger": "when adding or editing an npm script that passes glob patterns such as tests/**/*.test.js"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-22T23:54:49.775Z"
+    }
+  },
+  "created": "2026-09-22T23:51:54.302Z",
+  "updated": "2026-09-27T14:57:14.290Z"
+}

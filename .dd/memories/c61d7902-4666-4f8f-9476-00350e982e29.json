@@ -1,0 +1,71 @@
+{
+  "schema_version": 8,
+  "id": "c61d7902-4666-4f8f-9476-00350e982e29",
+  "project_id": "supermem",
+  "topic": "distribution/repo-internal-install-facts",
+  "kind": "trap",
+  "status": "superseded",
+  "title": "Repo-internal facts that change the harness-install plan",
+  "body": "(1) .grok-plugin/marketplace.json and .grok/hooks/dd.json + .grok/rules/dd.md already exist in this repo since its first commit, untested — the marketplace.json's plugins[0].source uses {\"type\":\"local\",\"path\":\"./\"}, which does not match Grok Build's documented schema (a plain source string); fix it, don't recreate it, and don't assume the project-level .grok/hooks/dd.json is new work — it already runs the same code path Claude Code's project-level hooks/hooks.json does. (2) src/mcp/server.js has no exported entry point — it's a top-level-await script that runs fully on import (confirmed by reading lines 8-27); any CLI subcommand that needs to start the MCP server must do a plain side-effecting `await import('./mcp/server.js')`, not import a named function. (3) src/cli.js's main() currently calls openStore() unconditionally before checking the command; any new subcommand that shouldn't open a store for the *current* directory (install, mcp) must branch before that call — and if a plan adds two such subcommands across separate tasks, the task that first restructures main() this way must land before any task whose subcommand depends on that restructuring (Codex's `install` branch before OpenCode's `mcp` branch, in this case).\n\nWhy: Found 2026-09-19 while writing the implementation plan: the first draft ordered the OpenCode task before the Codex task, which would have made the OpenCode task's own steps reference a src/cli.js shape (the install branch, the pre-openStore() branching) that didn't exist yet. Caught during the plan's required self-review, before any code was written.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/cli.js",
+        "src/mcp/server.js",
+        ".grok-plugin/marketplace.json",
+        ".grok/hooks/dd.json"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": ".grok-plugin/marketplace.json",
+      "sha256": "3423d69eff71e0d62b84f232f9695afa65ead2d7d8758ad7ae87d4c4f55ee563",
+      "summary": "Pre-existing, wrong-schema marketplace stub from the project's first commit (48ff34e / 23e446e), discovered while confirming ground truth for the install plan."
+    },
+    {
+      "type": "file",
+      "path": ".grok/hooks/dd.json",
+      "sha256": "b5189aeca34abda413c3a9c514b0c19fa2e94f139e6363a83eb54fcfb8954d3f",
+      "summary": "Pre-existing, untested project-level Grok hook config reusing the same hooks/run.cjs commands as Claude Code's root hooks/hooks.json."
+    },
+    {
+      "type": "file",
+      "path": "src/mcp/server.js",
+      "sha256": "6d10ce8d49852e84f368d7eeb2c667dab5c66068f630a513ba6f73a17672e905",
+      "summary": "Top-level-await script, lines 8-27, no export statement anywhere in the file."
+    },
+    {
+      "type": "file",
+      "path": "docs/plans/2026-09-19-harness-native-install-plan.md",
+      "sha256": "afcabb1a457ee145989e823052e54287187f94d6aca032825d6af7fa141d4dd0",
+      "summary": "Implementation plan where Task 3 (Codex) and Task 4 (OpenCode) were reordered during self-review for this exact dependency."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "body_too_long"
+    ],
+    "v1": {
+      "trigger": "Implementing or re-planning docs/plans/2026-09-19-harness-native-install-plan.md, or touching src/cli.js, src/mcp/server.js, .grok-plugin/, or .grok/ for distribution work."
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-19T10:35:57.418Z"
+    }
+  },
+  "created": "2026-09-19T05:31:39.074Z",
+  "updated": "2026-09-27T14:57:13.178Z"
+}

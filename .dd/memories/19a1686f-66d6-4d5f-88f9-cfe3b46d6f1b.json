@@ -1,0 +1,89 @@
+{
+  "schema_version": 8,
+  "id": "19a1686f-66d6-4d5f-88f9-cfe3b46d6f1b",
+  "project_id": "supermem",
+  "topic": "dd/engine/auto-accept-threshold-reachable-ceilings",
+  "kind": "trap",
+  "status": "archived",
+  "title": "auto_accept threshold must be one of the reachable reliability ceilings",
+  "body": "Use only a reachable ceiling as the auto_accept confidence_threshold. Check any value against the reachable set computed by autoAcceptThresholdLevels() in src/engine/reliability.js -- the full cross of RELIABILITY_CAP x CAPTURE_ORIGIN_FACTOR: 0.45, 0.5, 0.63, 0.7, 0.765, 0.85, 0.855, 0.95. A value between two of these is a dead zone: no candidate's ceiling can ever land there, so the threshold silently behaves exactly like the next reachable value above it, while looking like a distinct, deliberate setting. Flag any off-ladder value and replace it with the nearest real ceiling that matches the intended policy, rather than leaving or introducing an arbitrary number.\n\nWhy: DEFAULT_CONFIG.auto_accept.confidence_threshold in src/store/paths.js shipped as 0.8, which is not reachable by any source-reliability x capture-origin combination. It behaved identically to 0.85 (only user_explicit+filesystem or user_correction sources ever cleared it) but looked like a meaningfully different, lower bar. This produced a real debugging session (recorded in PENDIENTES.md item 0.2) where a model-initiated + verified-filesystem proposal was expected to auto-accept under a 0.8 threshold and never could, because its real ceiling (0.765) sits below the 0.8 dead zone. The UI itself already codes this distinction (src/ui/public/index.html:628 labels an off-ladder value 'Not one of the reachable ceilings'), confirming this is a recognized invariant of the auto-accept design, not a one-off assumption.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/engine/reliability.js",
+        "src/store/paths.js",
+        "src/ui/public/index.html",
+        "src/ui/server.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "auto_accept",
+        "auto-accept",
+        "confidence_threshold",
+        "autoAcceptThresholdLevels",
+        "threshold"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/store/paths.js",
+      "sha256": "a1d2b536934c9d83e7dd0dc306562b2f1083974989c861d32d035e376e6116c8",
+      "summary": "DEFAULT_CONFIG.auto_accept.confidence_threshold changed from 0.8 (dead zone) to 0.85 (reachable ceiling: filesystem cap x user_explicit factor)"
+    },
+    {
+      "type": "file",
+      "path": "src/engine/reliability.js",
+      "sha256": "36d430dd2bbbc6316feba36e398a543de5164810ea6e216706078db704aebdec",
+      "summary": "autoAcceptThresholdLevels() computes the exact reachable set (cross of RELIABILITY_CAP and CAPTURE_ORIGIN_FACTOR) and documents in-code that any value between two levels is a dead zone"
+    },
+    {
+      "type": "file",
+      "path": "src/ui/public/index.html",
+      "sha256": "ee860e8ce574ed893bd08e73224fbd4b6cd46e7246de3d3f5e765c6486b2fa9c",
+      "summary": "Line 628: UI already labels a stored threshold not in the reachable set as 'Not one of the reachable ceilings -- pick a step to replace it'"
+    },
+    {
+      "type": "file",
+      "path": "tests/ui/server.test.js",
+      "sha256": "27b229aa606f20c753d692257d2b102523ebd78d02bd315461a4edabb777d2c4",
+      "summary": "Updated default-threshold assertion from 0.8 to 0.85 and reran tests/ui/server.test.js plus tests/ui/form.test.js: 14 pass, 0 fail"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "d3d5bf57-a811-4a48-b183-c1601c0886f8",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "archived_by_person: describes the auto-accept confidence threshold; v2 auto-accept is a boolean"
+    ],
+    "v1": {
+      "trigger": "Setting or reviewing auto_accept.confidence_threshold (config default in src/store/paths.js, a project's .dd/config.json, or the audit UI slider at src/ui/public/index.html)."
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-29T19:41:34.750Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.422Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

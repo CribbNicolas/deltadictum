@@ -1,0 +1,75 @@
+{
+  "schema_version": 8,
+  "id": "fd17a9db-3c88-46b8-831a-da644b3bd3fd",
+  "project_id": "supermem",
+  "topic": "dd/testing/backdated-created-at",
+  "kind": "trap",
+  "status": "archived",
+  "title": "Backdating created_at reaches the health snapshot only after a reindex",
+  "body": "Call store.reindex() after the backdated putAtom. upsertAtom's ON CONFLICT clause updates every column except created_at, so a memory that already has an index row keeps its original date and loadHealthSnapshot reports the wrong age. The rebuild reads the git file, which is where the truth is.\n\nWhy: created_at is immutable identity and the index enforces that. Without the rebuild an age test passes or fails for a reason unrelated to what it claims to measure.",
+  "not_derivable": "",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/store/sqlite-index.js",
+        "tests/engine/forgetting.test.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "created_at",
+        "backdates",
+        "backdated",
+        "reindex",
+        "dead_inferred"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/store/sqlite-index.js",
+      "sha256": "bff9d74f3a79ee45dc5e315faf3dd9431d00ae3f07b28995459aec534145c1cb",
+      "summary": "upsertAtom ON CONFLICT DO UPDATE sets updated_at but never created_at"
+    },
+    {
+      "type": "file",
+      "path": "tests/engine/forgetting.test.js",
+      "sha256": "e834d677839c3520104a7b65538bf64a073ba10a8db2c7d3fec0f6e8d9a1be48",
+      "summary": "seedEffective calls db.reindex() after the backdated putAtom for exactly this reason"
+    },
+    {
+      "type": "observation",
+      "ref": "supermem bench (patriark/supermem scenarios), 2026-09-26",
+      "summary": "Anchored delivery: keywords validated against this memory's own text and a generic-request corpus before proposing."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "e03da901-94fb-4df3-8dd4-925b768fb5e4",
+  "revisit_when": [],
+  "review": {
+    "migrated": true,
+    "issues": [
+      "not_derivable_missing",
+      "archived_by_person: describes the v1 sqlite index (upsertAtom)"
+    ],
+    "v1": {
+      "trigger": "when a test backdates a memory's created_at to exercise an age threshold, such as dead_inferred or retirement"
+    },
+    "accepted": {
+      "by": "person",
+      "at": "2026-09-28T06:47:10.506Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.953Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

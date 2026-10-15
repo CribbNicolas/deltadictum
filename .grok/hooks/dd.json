@@ -1,63 +1,31 @@
 {
-  "description": "DD capture, budgeted recall, and session banner. Failures must not block the host.",
+  "description": "DD v2 delivery and capture for Grok Build inside this checkout: the hooks hooks/hooks.json registers, as a project-level configuration. Failures never block the host.",
   "hooks": {
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ../../hooks/run.cjs session-start",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ../../hooks/run.cjs pre-tool",
-            "timeout": 10
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs session-start", "timeout": 30 } ] }
     ],
     "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ../../hooks/run.cjs prompt",
-            "timeout": 15
-          }
-        ]
-      }
+      { "hooks": [
+        { "type": "command", "command": "node ../../hooks/run.cjs prompt", "timeout": 10 },
+        { "type": "command", "command": "node ../../hooks/run.cjs observe-prompt", "timeout": 10, "async": true }
+      ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs pre-tool", "timeout": 10 } ] }
     ],
     "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ../../hooks/run.cjs observe",
-            "timeout": 15,
-            "async": true
-          }
-        ]
-      }
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs observe", "timeout": 10, "async": true } ] },
+      { "matcher": "Write|Edit|MultiEdit",
+        "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs inbox", "timeout": 30 } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|Grep|Glob",
+        "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs observe", "timeout": 10, "async": true } ] }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ../../hooks/run.cjs stop",
-            "timeout": 10
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs stop", "timeout": 10 } ] }
     ]
   }
 }

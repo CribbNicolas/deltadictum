@@ -1,0 +1,65 @@
+{
+  "schema_version": 8,
+  "id": "ee8ae98a-c6f6-4598-a3b1-79ff38d1f552",
+  "project_id": "supermem",
+  "topic": "hooks/paths/fold-case-never-realpath",
+  "kind": "decision",
+  "status": "active",
+  "title": "Fold letter case when matching paths on win32 and darwin; never canonicalise with realpath",
+  "body": "Compare and match repository paths with letter case folded on win32 and darwin (relativize in src/hooks/v2/events.cjs lowercases both sides; FOLD_CASE in src/engine/clause.cjs compiles globs with the i flag on those platforms) and never canonicalise a hook's cwd or file path with realpath: it also resolves junctions and symlinks (macOS /tmp is /private/tmp), so a project reached through a link stops relativizing to the repository root and nothing matches. Linux keeps case apart on purpose. Why: v1 compared resolve() strings and split one project into two data directories by case; v2's first fix used realpathSync.native and broke linked projects, so plan 3 replaced it with case folding (2026-10-12).",
+  "not_derivable": "The code folds case; that realpath was tried and rejected, and why, is only in a plan ledger kept outside git.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/hooks/v2/events.cjs",
+        "src/engine/clause.cjs",
+        "src/engine/match.cjs",
+        "src/engine/locate.cjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "realpath",
+        "symlink",
+        "junction",
+        "case-insensitive",
+        "path case",
+        "letter case"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/v2/events.cjs",
+      "sha256": "4f938b4173069553624acba209745ea3556ba30857739f8c5ac059e1e7691d3c",
+      "summary": "relativize folds case on both sides."
+    },
+    {
+      "type": "file",
+      "path": "src/engine/clause.cjs",
+      "sha256": "ff56dbd3a2aa08cf8bf86caab6ecb447fe779f569bc28a23c4ca08dce91e1f47",
+      "summary": "FOLD_CASE and PATH_FLAGS."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "ad3fdaa9-6571-4812-a5d1-9f1714723442",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:09.295Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}

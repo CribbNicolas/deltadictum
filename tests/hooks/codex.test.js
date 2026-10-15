@@ -1,193 +1,130 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { planCodexInstall, applyCodexInstall } from '../../scripts/install-codex.mjs';
-import { createMemoryStore } from '../../src/store/create-store.js';
-import { buildPreToolContext } from '../../src/hooks/pre-tool.js';
-import { buildSessionStartContext } from '../../src/hooks/session-start.js';
-import { startUiServer } from '../../src/ui/server.js';
-import { registerResident, useTempRegistry } from '../helpers/resident.js';
-import { PROVENANCE } from '../helpers/atom.js';
+import { applyCodexInstall, planCodexInstall } from '../../scripts/install-codex.mjs';
+import { compileProject } from '../../src/engine/compile.js';
+import { shellKind } from '../../src/hooks/v2/codex.cjs';
+import { createMemoryFiles } from '../../src/memory/store.js';
 
-// Hook processes spawned here must not start a resident DD process (src/resident.js).
-process.env.DD_RESIDENT = '0';
-// Nor reach the machine's own resident through its registry.
-await useTempRegistry();
-// No resident here: these tests exercise the hooks in the explicit lexical mode.
-process.env.DD_RETRIEVAL = 'lexical';
+// Codex payloads as v1 recorded them from real sessions (2026-09): Claude Code's
+// shape, with the shell tool as Bash and edits through apply_patch, whose patch
+// text is tool_input.command.
+const RUN = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
+const memory = (id, title, triggers) => ({
+  schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title, body: `${title}, always.`,
+  not_derivable: 'Hidden.', triggers, evidence: [], origin: 'model_initiated', replaces: null, revisit_when: [],
+  review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
+});
 
-async function fixture() {
-  const root = join(await mkdtemp(join(tmpdir(), 'dd-codex-')), 'Project with spaces');
-  await mkdir(root);
-  await writeFile(join(root, 'project.godot'), '[application]\nconfig/name="Fixture"\n');
+async function project(t) {
+  const root = mkdtempSync(join(tmpdir(), 'dd-codex-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.git'));
+  mkdirSync(join(root, 'src'));
+  writeFileSync(join(root, 'src', 'a.js'), 'export const a = 1;\n');
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [
+    memory('m1', 'Close stores', [{ on: ['read', 'edit'], paths: ['src/a.js'] }]),
+  ] });
+  await compileProject(root);
   return root;
 }
-function hook(project, command, payload) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [fileURLToPath(new URL('../../src/hooks/run.js', import.meta.url)), command,
-      '--codex', '--data', join(project, '.dd/local')], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
-    let output = '';
-    child.stdout.on('data', chunk => { output += chunk; });
-    child.stderr.resume();
-    child.on('error', reject);
-    child.on('close', code => code ? reject(new Error(`hook_failed:${code}`)) : resolve(output.trim() ? JSON.parse(output) : {}));
-    child.stdin.end(JSON.stringify({ cwd: project, session_id: 'codex-fixture', ...payload }));
+const hook = (command, payload) => spawnSync(process.execPath, [RUN, command, '--codex'], { input: JSON.stringify(payload), encoding: 'utf8' });
+const context = result => (result.stdout ? JSON.parse(result.stdout).hookSpecificOutput.additionalContext : '');
+const patch = file => `*** Begin Patch\n*** Update File: ${file}\n@@\n-export const a = 1;\n+export const a = 2;\n*** End Patch`;
+
+test('an apply_patch delivers the memories of the files its headers name', async t => {
+  const root = await project(t);
+  const result = hook('pre-tool', { session_id: 'c1', cwd: root, tool_name: 'apply_patch', tool_input: { command: patch('src/a.js') } });
+  assert.equal(result.status, 0);
+  assert.match(context(result), /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores/);
+});
+
+test('a shell command that only reads a file is a read; one that writes is not', async t => {
+  const root = await project(t);
+  const reads = hook('pre-tool', { session_id: 'c2', cwd: root, tool_name: 'Bash', tool_input: { command: ['bash', '-lc', "sed -n '1,40p' src/a.js"] } });
+  assert.match(context(reads), /Close stores/);
+  const writes = hook('pre-tool', { session_id: 'c3', cwd: root, tool_name: 'Bash', tool_input: { command: "sed -i 's/1/2/' src/a.js" } });
+  assert.equal(writes.stdout, '');
+});
+
+test('shell commands are read, search or run by every step they take', () => {
+  assert.equal(shellKind('cat src/a.js'), 'read');
+  assert.equal(shellKind('cd src && head -n 20 a.js | nl'), 'read');
+  assert.equal(shellKind('rg -n "createStore" src 2>/dev/null'), 'search');
+  assert.equal(shellKind('git grep -n store -- src'), 'search');
+  assert.equal(shellKind('Get-Content src/a.js'), 'read');
+  assert.equal(shellKind('npm test'), null);
+  assert.equal(shellKind('cat a.js > b.js'), null);
+  assert.equal(shellKind('cat a.js &> b.txt'), null);
+  assert.equal(shellKind('cat a.js && npm test'), null);
+  assert.equal(shellKind('cd src'), null);
+});
+
+test('a Stop with something to say blocks with the reason, as Codex expects', async t => {
+  const root = await project(t);
+  // A failure followed by a fix in the turn: the evidence that makes Stop ask for a memory.
+  const run = (code, output) => hook('observe', { session_id: 'c4', cwd: root, tool_name: 'Bash', tool_input: { command: 'npm test' },
+    tool_response: { exit_code: code, output } });
+  run(1, 'FAIL src/a.js: store left open');
+  hook('observe', { session_id: 'c4', cwd: root, tool_name: 'apply_patch', tool_input: { command: patch('src/a.js') }, tool_response: { exit_code: 0, output: 'Done' } });
+  run(0, 'pass');
+  const stop = hook('stop', { session_id: 'c4', cwd: root, stop_hook_active: false });
+  assert.equal(stop.status, 0);
+  const output = JSON.parse(stop.stdout);
+  assert.equal(output.decision, 'block');
+  assert.match(output.reason, /DD/);
+  assert.equal(output.hookSpecificOutput, undefined);
+});
+
+test('a proposal written through apply_patch into .dd/inbox is ingested', async t => {
+  const root = await project(t);
+  const proposal = { topic: 'testing/codex-inbox', kind: 'trap', title: 'The constant a in src/a.js is read at import time',
+    body: 'Changing `a` in src/a.js needs a restart: callers copy it when the module loads, so a later edit is not seen.',
+    not_derivable: 'Only a stale value in a long session shows it; no test covers it.',
+    triggers: [{ on: ['edit'], paths: ['src/a.js'] }], evidence: [{ type: 'file', path: 'src/a.js' }] };
+  const file = '.dd/inbox/p1.json';
+  mkdirSync(join(root, '.dd', 'inbox'), { recursive: true });
+  writeFileSync(join(root, file), JSON.stringify(proposal));
+  const added = `*** Begin Patch\n*** Add File: ${file}\n+${JSON.stringify(proposal)}\n*** End Patch`;
+  const result = hook('inbox', { session_id: 'c5', cwd: root, tool_name: 'apply_patch', tool_input: { command: added } });
+  assert.match(context(result), /testing\/codex-inbox: stored/);
+  assert.equal(existsSync(join(root, file)), false);
+});
+
+test('the Codex installer registers the v2 hooks and writes no MCP server', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-codex-install-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.codex'));
+  writeFileSync(join(root, '.codex', 'config.toml'), 'model_reasoning_effort = "high"\n');
+  await applyCodexInstall(await planCodexInstall(root));
+  const hooks = JSON.parse(readFileSync(join(root, '.codex', 'hooks.json'), 'utf8')).hooks;
+  const commands = Object.fromEntries(Object.entries(hooks).map(([event, groups]) => [event,
+    groups.flatMap(group => group.hooks.map(handler => `${group.matcher ?? ''} ${handler.command.match(/run\.cjs' '([\w-]+)'/)[1]}`))]));
+  assert.deepEqual(commands, {
+    SessionStart: [' session-start'], UserPromptSubmit: [' prompt', ' observe-prompt'], PreToolUse: ['* pre-tool'],
+    PostToolUse: ['* observe', 'apply_patch inbox'], Stop: [' stop'],
   });
-}
-
-test('Codex project installation preserves unrelated configuration and is idempotent', async () => {
-  const root = await fixture();
-  await mkdir(join(root, '.codex'));
-  await writeFile(join(root, '.codex/config.toml'), 'model_reasoning_effort = "high"\n');
-  await writeFile(join(root, 'AGENTS.md'), '# Existing project guidance\nKeep domain tests independent.\n');
-  await writeFile(join(root, '.codex/hooks.json'), JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command: 'existing-hook' }] }] } }));
-  const plan = await planCodexInstall(root);
-  // config, hooks, AGENTS.md, .dd/.gitignore and the eight dd-* command skills.
-  assert.equal(plan.operations.length, 12);
-  await applyCodexInstall(plan);
-  const config = await readFile(join(root, '.codex/config.toml'), 'utf8');
+  assert.ok(Object.values(hooks).flat().every(group => group.hooks.every(handler => !handler.command.includes('--data'))));
+  const config = readFileSync(join(root, '.codex', 'config.toml'), 'utf8');
   assert.match(config, /^model_reasoning_effort = "high"/);
-  assert.match(config, /\[mcp_servers.dd.env\]/);
-  // The installer writes the real path; a Windows runner's TEMP is an 8.3 short name (RUNNER~1).
-  assert.ok(config.includes((await realpath(root)).replaceAll('\\', '/')));
-  const hooks = JSON.parse(await readFile(join(root, '.codex/hooks.json'), 'utf8'));
-  assert.equal(hooks.hooks.Stop[0].hooks[0].command, 'existing-hook');
-  assert.equal(hooks.hooks.Stop.length, 2);
-  assert.match(hooks.hooks.PreToolUse[0].hooks[0].commandWindows, /^& '/);
-  assert.match(await readFile(join(root, 'AGENTS.md'), 'utf8'), /^# Existing project guidance/);
+  assert.doesNotMatch(config, /mcp_servers/);
+  const agents = readFileSync(join(root, 'AGENTS.md'), 'utf8');
+  assert.doesNotMatch(agents, /MCP|orient|retrieve/);
+  assert.match(agents, /dd-save/);
+  // The install is the project's opt-in: DD records and asks from the first session.
+  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')).project_id, basename(root));
   assert.equal((await planCodexInstall(root)).operations.length, 0);
 });
 
-test('Codex upgrades refresh owned hook settings and preserve other handlers', async () => {
-  const root = await fixture();
+test('the Codex installer leaves an existing .dd/config.json alone', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-codex-config-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.dd'));
+  writeFileSync(join(root, '.dd', 'config.json'), '{ "auto_accept": false }\n');
   await applyCodexInstall(await planCodexInstall(root));
-  // Plans name the real path: macOS tmpdir is a symlink, a Windows runner's TEMP an 8.3 short name.
-  const path = join(await realpath(root), '.codex/hooks.json');
-  const hooks = JSON.parse(await readFile(path, 'utf8'));
-  const custom ={ type: 'command', command: 'custom-start', additionalContextLimit: 123 };
-  hooks.hooks.SessionStart[0].matcher = 'startup|resume';
-  hooks.hooks.SessionStart[0].hooks[0].additionalContextLimit = 800;
-  hooks.hooks.SessionStart[0].hooks[0].timeout = 30;
-  hooks.hooks.SessionStart[0].hooks.push(custom);
-  hooks.hooks.PostToolUse[0].hooks[0].async = false;
-  await writeFile(path, JSON.stringify(hooks));
-  const plan = await planCodexInstall(root);
-  assert.ok(plan.operations.some(op => op.path === path));
-  await applyCodexInstall(plan);
-  const updated = JSON.parse(await readFile(path, 'utf8'));
-  assert.equal(updated.hooks.SessionStart.length, 1);
-  assert.equal(updated.hooks.SessionStart[0].matcher, 'startup|resume');
-  assert.equal(updated.hooks.SessionStart[0].hooks.length, 2);
-  assert.equal(updated.hooks.SessionStart[0].hooks[0].additionalContextLimit, 24000);
-  assert.equal(updated.hooks.SessionStart[0].hooks[0].timeout, 10);
-  assert.deepEqual(updated.hooks.SessionStart[0].hooks[1], custom);
-  assert.equal(updated.hooks.PostToolUse[0].hooks[0].async, true);
-  assert.equal((await planCodexInstall(root)).operations.length, 0);
-});
-
-test('Codex reinstalls from a moved DD replace its hooks instead of adding a second copy', async () => {
-  const root = await fixture();
-  await applyCodexInstall(await planCodexInstall(root));
-  const path = join(root, '.codex/hooks.json');
-  const hooks = JSON.parse(await readFile(path, 'utf8'));
-  const current = hooks.hooks.PreToolUse[0].hooks[0];
-  // As written by a source checkout under another Node, then installed again from there.
-  const moved = handler => ({ ...handler,
-    command: `'/old/node' '/old/checkout/src/hooks/run.js' ${handler.command.split("src/hooks/run.js' ")[1]}`,
-    commandWindows: `& '/old/node' '/old/checkout/src/hooks/run.js' ${handler.commandWindows.split("src/hooks/run.js' ")[1]}` });
-  for (const groups of Object.values(hooks.hooks)) for (const group of groups) group.hooks = group.hooks.map(moved);
-  hooks.hooks.PreToolUse[0].hooks.push({ type: 'command', command: 'custom-pre-tool' });
-  hooks.hooks.PreToolUse.push({ matcher: '*', hooks: [moved(current)] });
-  await writeFile(path, JSON.stringify(hooks));
-  await applyCodexInstall(await planCodexInstall(root));
-  const updated = JSON.parse(await readFile(path, 'utf8'));
-  for (const [event, groups] of Object.entries(updated.hooks)) {
-    const dd = groups.flatMap(group => group.hooks).filter(h => h.command.includes('src/hooks/run.js'));
-    assert.equal(dd.length, 1, event);
-    assert.ok(!dd[0].command.includes('/old/'), event);
-  }
-  assert.equal(updated.hooks.PreToolUse.length, 1);
-  assert.deepEqual(updated.hooks.PreToolUse[0].hooks.map(h => h.command), [current.command, 'custom-pre-tool']);
-  assert.equal((await planCodexInstall(root)).operations.length, 0);
-});
-
-test('Codex upgrades preserve per-tool preferences in the DD managed block', async () => {
-  const root = await fixture();
-  await applyCodexInstall(await planCodexInstall(root));
-  const path = join(await realpath(root), '.codex/config.toml');
-  const preferences = '[mcp_servers.dd.tools.get]\napproval_mode = "approve"\noutput_token_limit = 2048\n\n[mcp_servers.dd.tools."propose"]\napproval_mode = "prompt"';
-  const config = await readFile(path, 'utf8');
-  await writeFile(path, config.replace('# END DD MANAGED CONFIG', `${preferences}\n# END DD MANAGED CONFIG`)
-    .replace('startup_timeout_sec = 30', 'startup_timeout_sec = 99'));
-  const plan = await planCodexInstall(root);
-  assert.ok(plan.operations.some(op => op.path === path));
-  await applyCodexInstall(plan);
-  const updated = await readFile(path, 'utf8');
-  assert.ok(updated.includes(preferences));
-  assert.match(updated, /startup_timeout_sec = 30/);
-  assert.equal((updated.match(/\[mcp_servers\.dd\.tools\.get\]/g) ?? []).length, 1);
-  assert.equal((await planCodexInstall(root)).operations.length, 0);
-});
-
-test('Codex installer refuses to overwrite an unrelated DD server', async () => {
-  const root = await fixture();
-  await mkdir(join(root, '.codex'));
-  await writeFile(join(root, '.codex/config.toml'), '[mcp_servers.dd]\ncommand="existing"\n');
-  await assert.rejects(() => planCodexInstall(root), /existing_dd_server_requires_review/);
-});
-
-test('Codex hook capture can recur in later turns, without loops or repeated evidence, through both store paths', async t => {
-  const root = await fixture();
-  await applyCodexInstall(await planCodexInstall(root));
-  const start = await hook(root, 'session-start', { source: 'startup' });
-  assert.equal(start.hookSpecificOutput.hookEventName, 'SessionStart');
-  assert.match(start.hookSpecificOutput.additionalContext, /codex-fixture/);
-  assert.deepEqual(await hook(root, 'stop', {}), {});
-  const skipped = await hook(root, 'pre-tool', { tool_name: 'mcp__dd__retrieve' });
-  assert.deepEqual(skipped, {});
-  await hook(root, 'observe', { tool_name: 'Bash', tool_input: { command: 'dotnet test' }, tool_response: { exit_code: 0, output: 'Passed.' } });
-  const stop = await hook(root, 'stop', {});
-  assert.equal(stop.decision, 'block');
-  assert.match(stop.reason, /propose/);
-  assert.match(stop.reason, /Available recorded evidence/);
-  assert.deepEqual(await hook(root, 'stop', { stop_hook_active: true }), {});
-  assert.deepEqual(await hook(root, 'stop', {}), {});
-  await hook(root, 'prompt', { prompt: 'Continue the next part of the task.' });
-  assert.deepEqual(await hook(root, 'stop', {}), {});
-  await hook(root, 'observe', { tool_name: 'Bash', tool_input: { command: 'dotnet test' }, tool_response: { exit_code: 1, output: 'New failure.' } });
-  assert.equal((await hook(root, 'stop', {})).decision, 'block');
-  await hook(root, 'observe', { tool_name: 'Bash', tool_input: { command: 'dotnet test' }, tool_response: { exit_code: 0, output: 'Validation during capture.' } });
-  assert.deepEqual(await hook(root, 'stop', { stop_hook_active: true }), {});
-  assert.deepEqual(await hook(root, 'stop', {}), {});
-
-  const ddDir = join(root, '.dd');
-  const store = await createMemoryStore({ ddDir, dataDir: join(ddDir, 'local') });
-  const projectId = (await store.loadConfig()).project_id;
-  const ui = await startUiServer({ store, projectId, port: 0 });
-  t.after(async () => { await ui.close(); store.close(); });
-  await registerResident(t, ui);
-  await hook(root, 'prompt', { prompt: 'Start another task in this long conversation.' });
-  assert.equal(store.index.db.prepare('SELECT stopped FROM capture_prompts WHERE project_id=? AND session_id=?').get(projectId, 'codex-fixture').stopped, 0);
-  await hook(root, 'observe', { tool_name: 'Bash', tool_input: { command: 'dotnet test' }, tool_response: { exit_code: 0, output: 'A later task passed.' } });
-  assert.equal((await hook(root, 'stop', {})).decision, 'block');
-  assert.deepEqual(await hook(root, 'stop', {}), {});
-});
-
-test('Codex patch paths activate file scopes and compaction makes advice available again', async t => {
-  const root = await fixture();
-  const store = await createMemoryStore({ ddDir: join(root, '.dd'), dataDir: join(root, '.dd/local') });
-  t.after(() => store.close());
-  await store.putAtom({ id: 'fixture', project_id: 'demo', topic_key: 'domain/tests/isolation', memory_type: 'lesson', scope: 'project',
-    title: 'Keep domain pure', trigger: 'when editing domain tests', behavior_delta: 'Keep domain independent of Godot.', what: 'Keep domain independent of Godot.', why: 'Headless testing.',
-    ...PROVENANCE, lifecycle_state: 'active', authority: 'validated', confidence: 0.85, valid_from: '2026-01-01T00:00:00Z',
-    applies_to: { files: ['domain/**'] }, retrieval_forms: { micro: 'Keep domain independent of Godot.' } });
-  const payload = { session_id: 'codex', tool_name: 'apply_patch', tool_input: { command: '*** Begin Patch\n*** Update File: domain/Inventory.cs\n@@\n-old\n+new\n*** End Patch' } };
-  assert.match((await buildPreToolContext(payload, { store, projectId: 'demo' })).hookSpecificOutput.additionalContext, /Keep domain independent/);
-  assert.equal((await buildPreToolContext(payload, { store, projectId: 'demo' })).hookSpecificOutput, undefined);
-  await buildSessionStartContext({ store, projectId: 'demo', sessionId: 'codex', source: 'compact' });
-  assert.ok((await buildPreToolContext(payload, { store, projectId: 'demo' })).hookSpecificOutput);
+  assert.equal(readFileSync(join(root, '.dd', 'config.json'), 'utf8'), '{ "auto_accept": false }\n');
 });

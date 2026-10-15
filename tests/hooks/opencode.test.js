@@ -1,95 +1,79 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as adapter from '../../adapters/opencode/index.js';
 import { ADVISORY_FRAME } from '../../adapters/opencode/frame.js';
+import { compileProject } from '../../src/engine/compile.js';
+import { createMemoryFiles } from '../../src/memory/store.js';
 
 const DeltaDictum = adapter.default;
-import { useTempRegistry } from '../helpers/resident.js';
+const memory = (id, title, triggers) => ({
+  schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title, body: `${title}, always.`,
+  not_derivable: 'Hidden.', triggers, evidence: [], origin: 'model_initiated', replaces: null, revisit_when: [],
+  review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
+});
 
-// The adapter must not start a resident DD process here (src/resident.js).
-process.env.DD_RESIDENT = '0';
-// Nor reach the machine's own resident through its registry.
-await useTempRegistry();
-
-async function fixture(t) {
-  await useTempRegistry(t);
-  const base = await mkdtemp(join(tmpdir(), 'dd-opencode-'));
-  const root = join(base, 'project');
-  await mkdir(root);
-  await writeFile(join(root, 'package.json'), '{"name":"fixture"}\n');
-  const previous = process.env.DD_DATA;
-  process.env.DD_DATA = join(base, 'data');
-  t.after(() => { if (previous === undefined) delete process.env.DD_DATA; else process.env.DD_DATA = previous; });
+async function project(t) {
+  const root = mkdtempSync(join(tmpdir(), 'dd-opencode-'));
+  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 }));
+  mkdirSync(join(root, '.git'));
+  mkdirSync(join(root, 'src'));
+  writeFileSync(join(root, 'src', 'a.js'), 'export const a = 1;\n');
+  await createMemoryFiles(join(root, '.dd')).commit({ put: [memory('m1', 'Close stores', [{ on: ['read', 'edit'], paths: ['src/a.js'] }])] });
+  await compileProject(root);
   return root;
 }
 
-async function turn(hooks, sessionID) {
-  const output = { system: [] };
-  await hooks['experimental.chat.system.transform']({ sessionID, model: {} }, output);
-  return output.system;
+// The plugin API's shapes (@opencode-ai/plugin Hooks): a tool call's input names
+// the tool, the session and the call; its result is { title, output, metadata }.
+async function toolCall(hooks, sessionID, tool, args) {
+  const input = { tool, sessionID, callID: `${tool}-${Math.random()}` };
+  await hooks['tool.execute.before'](input, { args });
+  const output = { title: tool, output: 'tool result', metadata: {} };
+  await hooks['tool.execute.after'](input, output);
+  return output.output;
 }
 
-test('OpenCode adapter says DD is inactive, once per session, when no resident serves it', async t => {
-  const root = await fixture(t);
+test('a tool call delivers its memories in the tool result, once per session', async t => {
+  const root = await project(t);
   const hooks = await DeltaDictum({ directory: root });
-  const first = await turn(hooks, 's1');
-  assert.equal(first.length, 1);
-  assert.match(first[0], /DD - Inactive: the resident DD process is disabled/);
-  assert.doesNotMatch(first[0], /Project context/i);
-  assert.deepEqual(await turn(hooks, 's1'), []);
-  assert.equal((await turn(hooks, 's2')).length, 1);
+  const first = await toolCall(hooks, 's1', 'read', { filePath: join(root, 'src', 'a.js') });
+  assert.ok(first.startsWith('tool result\n\n'));
+  assert.ok(first.includes(ADVISORY_FRAME));
+  assert.match(first, /DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores/);
+  assert.equal(await toolCall(hooks, 's1', 'edit', { filePath: 'src/a.js', oldString: '1', newString: '2' }), 'tool result');
+  assert.match(await toolCall(hooks, 's2', 'edit', { filePath: 'src/a.js', oldString: '1', newString: '2' }), /Close stores/);
+  assert.equal(await toolCall(hooks, 's3', 'bash', { command: 'npm test' }), 'tool result');
 });
 
-test('OpenCode adapter injects session context in the explicit lexical mode', async t => {
-  const root = await fixture(t);
-  process.env.DD_RETRIEVAL = 'lexical';
-  t.after(() => { delete process.env.DD_RETRIEVAL; });
+test('the system prompt is left alone, so the prompt cache holds', async t => {
+  const root = await project(t);
   const hooks = await DeltaDictum({ directory: root });
-  const [context] = await turn(hooks, 's1');
-  assert.ok(context);
-  assert.doesNotMatch(context, /Inactive/);
-  // It lands in the system prompt, so it says it is advisory and ranks below the user and the host.
-  assert.ok(context.startsWith(ADVISORY_FRAME));
+  const output = { system: ['host prompt'] };
+  await hooks['experimental.chat.system.transform']({ sessionID: 's1', model: {} }, output);
+  assert.deepEqual(output.system, ['host prompt']);
 });
 
-test('OpenCode adapter ignores turns without a session id', async t => {
-  const root = await fixture(t);
-  const hooks = await DeltaDictum({ directory: root });
-  assert.deepEqual(await turn(hooks, undefined), []);
+test('a tool call without a session or in a project without DD changes nothing', async t => {
+  const bare = mkdtempSync(join(tmpdir(), 'dd-opencode-bare-'));
+  t.after(() => rmSync(bare, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 }));
+  const hooks = await DeltaDictum({ directory: bare });
+  assert.equal(await toolCall(hooks, 's1', 'read', { filePath: join(bare, 'a.js') }), 'tool result');
+  const root = await project(t);
+  assert.equal(await toolCall(await DeltaDictum({ directory: root }), undefined, 'read', { filePath: 'src/a.js' }), 'tool result');
 });
 
 // OpenCode runs plugins in Bun, which has no node:sqlite: importing DD's store
 // failed the plugin at load (OpenCode 1.16.2, 2026-09-24). The adapter imports
-// no DD module and runs the SessionStart hook in Node instead.
-test('the OpenCode adapter imports nothing Bun cannot load, exports only the plugin, and OpenCode finds its server entrypoint', async () => {
-  const source = await readFile(new URL('../../adapters/opencode/index.js', import.meta.url), 'utf8');
+// no DD module and runs DD's hooks in Node instead.
+test('the OpenCode adapter imports nothing Bun cannot load, exports only the plugin, and OpenCode finds its server entrypoint', () => {
+  const source = readFileSync(new URL('../../adapters/opencode/index.js', import.meta.url), 'utf8');
   const imports = [...source.matchAll(/^import .* from '([^']+)';/gm)].map(m => m[1]);
   assert.deepEqual(imports.sort(), ['./frame.js', 'node:child_process', 'node:url']);
   // OpenCode calls every export of the module as a plugin function.
   assert.deepEqual(Object.keys(adapter), ['default']);
-  const pkg = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
+  const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.exports['./server'], './adapters/opencode/index.js');
-});
-
-// OpenCode cannot inject per tool call, so the session memory map is how its
-// agent sees every memory it can pull.
-test('OpenCode receives the memory map in its system prompt', async t => {
-  const root = await fixture(t);
-  process.env.DD_RETRIEVAL = 'lexical';
-  t.after(() => { delete process.env.DD_RETRIEVAL; });
-  const { openStore } = await import('../../src/project.js');
-  const { PROVENANCE } = await import('../helpers/atom.js');
-  const { store, projectId } = await openStore({ cwd: root });
-  await store.putAtom({ id: 'map-1', project_id: projectId, memory_type: 'lesson', scope: 'project', title: 'Keep the tray stable',
-    trigger: 'when changing the dice tray', behavior_delta: 'Keep it stable.', what: 'x', why: 'y', authority: 'validated', confidence: 0.8,
-    valid_from: '2026-09-01T00:00:00.000Z', topic_key: 'dice/tray/stable', tags: [], ...PROVENANCE, lifecycle_state: 'active',
-    retrieval_forms: { micro: 'Keep it stable.' } });
-  store.close();
-  const hooks = await DeltaDictum({ directory: root });
-  const [context] = await turn(hooks, 's1');
-  assert.match(context, /DD - Memory map \(1\)/);
-  assert.ok(context.includes('dice/tray/stable — when changing the dice tray'));
 });

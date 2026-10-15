@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "77396484-dea3-41e0-b847-907276bd1cd3",
+  "project_id": "supermem",
+  "topic": "distribution/claude-code/command-namespace",
+  "kind": "trap",
+  "status": "active",
+  "title": "Claude Code plugin commands are prefixed with the plugin name",
+  "body": "Expect every plugin skill to appear as /<plugin name>:<skill name>, where the plugin name is the \"name\" in .claude-plugin/plugin.json. DD's plugin is named dd, so its skills are /dd:save, /dd:recall and /dd:review, and the marketplace install id is dd@deltadictum. Renaming the plugin changes both the command prefix and the install id and makes existing users reinstall; the npm package name (deltadictum) is separate. Why: the prefix comes from the plugin manifest, not from the skill names, so naming the skills alone does not produce it; an earlier version of this memory predated the rename and said the plugin was named deltadictum.",
+  "not_derivable": "The prefix comes from the plugin manifest's name, which no skill file shows; renaming the plugin changes the install id for every user.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        ".claude-plugin/plugin.json",
+        ".claude-plugin/marketplace.json"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "plugin name",
+        "command prefix",
+        "install id",
+        "dd@deltadictum",
+        "skill name"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": ".claude-plugin/plugin.json",
+      "sha256": "3eee8f642ca9fca163a650bbdc472416a31116e79f17d12163ba2fff9bea91d5",
+      "summary": "\"name\": \"dd\"."
+    },
+    {
+      "type": "file",
+      "path": "README.md",
+      "sha256": "ad27465a33260b972e241975a2108d9b83dda545c3d4ddb52584f383dd16e778",
+      "summary": "Install section: /plugin install dd@deltadictum; the command table lists /dd:* commands."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "27c7fd7f-027b-4a2c-ac4f-507496faf3d0",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-15T07:29:31.448Z"
+    }
+  },
+  "created": "2026-09-27T02:37:08.691Z",
+  "updated": "2026-10-15T07:29:31.504Z"
+}
