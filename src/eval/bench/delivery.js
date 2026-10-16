@@ -45,8 +45,26 @@ export function deliveries(stream, known = []) {
   return out;
 }
 
-export function listed(stream) {
-  const delivered = new Set(deliveries(stream).map(d => d.title));
-  const titles = events(stream).flatMap(e => [...contextOf(e).matchAll(TAIL)].flatMap(m => m[1].split('; ')));
+// The tail joins titles with "; ": a known title holding one is taken whole first, longest first.
+function tailTitles(tail, known) {
+  const found = [];
+  let rest = `; ${tail}; `;
+  for (const title of [...known].filter(k => k.includes('; ')).sort((a, b) => b.length - a.length)) {
+    const at = rest.indexOf(`; ${title}; `);
+    if (at < 0) continue;
+    found.push([at, title]);
+    rest = `${rest.slice(0, at)};${' '.repeat(title.length + 1)}${rest.slice(at + title.length + 2)}`;
+  }
+  let at = 0;
+  for (const part of rest.split(';')) {
+    if (part.trim()) found.push([at, part.trim()]);
+    at += part.length + 1;
+  }
+  return found.sort((a, b) => a[0] - b[0]).map(([, title]) => title);
+}
+
+export function listed(stream, known = []) {
+  const delivered = new Set(deliveries(stream, known).map(d => d.title));
+  const titles = events(stream).flatMap(e => [...contextOf(e).matchAll(TAIL)].flatMap(m => tailTitles(m[1], known)));
   return [...new Set(titles)].filter(title => !delivered.has(title));
 }

@@ -34,6 +34,12 @@ test('a known title holding " - " is read whole, not cut at its first dash', () 
   assert.deepEqual(deliveries(stream).map(d => d.title), ['Dice fallback', 'Plain rule']);
 });
 
+test('a known title holding "; " is listed whole from the tail', () => {
+  const known = ['State JSON is strict; versions are scattered', 'Plain rule'];
+  const stream = [call('r1', 'Read'), hook('PreToolUse', 'DD - project knowledge (a.cs):\n[TRAP] Other - Body.\n... and 2 more: State JSON is strict; versions are scattered; Plain rule'), result('r1')].join('\n');
+  assert.deepEqual(listed(stream, known), ['State JSON is strict; versions are scattered', 'Plain rule']);
+});
+
 test('broken lines and hooks without context are ignored', () => {
   const stream = ['not json', JSON.stringify({ type: 'system', subtype: 'hook_response', hook_event: 'Stop', stdout: '' }), call('e1', 'Edit')].join('\n');
   assert.deepEqual(deliveries(stream), []);

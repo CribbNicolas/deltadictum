@@ -3,7 +3,9 @@
 // decides on checks alone.
 import { TASKS as TRIAL } from '../../../agent/tasks-v2.js';
 
-const BASE = 'accd5b4';
+// accd5b4's parent: accd5b4 itself added tasks-v2.js and trial-memories.js, the trial's answer key, and its
+// src/ outside src/eval is the parent's.
+const BASE = '4b5f0ee';
 const SITUATIONS = {
   'maintain-fires-test': 'S3', 'cli-archive': 'S4', 'clause-kind': 'S5', 'stop-asks-telemetry': 'S2',
   'test-capture-script': 'S20', 'maintenance-log': 'S13', 'keyword-ies-plural': 'S11', 'recall-json': 'S11', 'ui-kind-filter': 'S11',

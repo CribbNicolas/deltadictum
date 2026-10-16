@@ -7,8 +7,10 @@ import { addedLines, exec } from '../fixture-checks.js';
 
 const HIDDEN = join(dirname(fileURLToPath(import.meta.url)), 'hidden');
 
-// dotnet localizes its test results to the machine's language; the checks and the suite parse English.
-export const DOTNET_ENV = { DOTNET_CLI_UI_LANGUAGE: 'en', VSLANG: '1033', DOTNET_CLI_TELEMETRY_OPTOUT: '1', DOTNET_NOLOGO: '1' };
+// dotnet localizes its test results to the machine's language; the checks and the suite parse English. No
+// MSBuild node or compiler server outlives a build: under --conc one would hold a clone's files open.
+export const DOTNET_ENV = { DOTNET_CLI_UI_LANGUAGE: 'en', VSLANG: '1033', DOTNET_CLI_TELEMETRY_OPTOUT: '1', DOTNET_NOLOGO: '1',
+  MSBUILDDISABLENODEREUSE: '1', UseSharedCompilation: 'false' };
 
 export async function dotnetHidden(dir, { file, tests }) {
   const copies = ['ZzBenchSession.cs', file].map(name => [join(HIDDEN, name), join(dir, 'tests', name)]);

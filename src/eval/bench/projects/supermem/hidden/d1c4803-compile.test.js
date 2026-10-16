@@ -82,22 +82,24 @@ test('each build writes its own bodies file, and a reader of the previous index 
 });
 
 // Windows refuses a rename over a file another process holds open for a moment.
+// The bench's version of d1c4803's test: the fix commit also gave each build its own bodies file, which the
+// task does not ask for, so the written index is told apart by its manifest hash, as the parent writes it.
 test('a rename the system refuses for a moment is retried, and a lasting refusal leaves no temp file', t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-compile-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const paths = localPaths(root);
-  const compiled = compileIndex({ memories: [memory('m1')], manifest: { count: 1, hash: 'h' }, fingerprint: 'f', bodiesFile: 'bodies-a.json' });
+  const build = hash => compileIndex({ memories: [memory('m1')], manifest: { count: 1, hash }, fingerprint: 'f' });
   let refusals = 2;
   const flaky = (from, to) => {
     if (refusals > 0) { refusals -= 1; throw Object.assign(new Error('busy'), { code: 'EPERM' }); }
     renameSync(from, to);
   };
-  writeCompiled(paths, compiled, { rename: flaky });
-  assert.equal(loadIndex(root).bodies, 'bodies-a.json');
+  writeCompiled(paths, build('h-a'), { rename: flaky });
+  assert.equal(loadIndex(root).manifest.hash, 'h-a');
   const refuse = () => { throw Object.assign(new Error('busy'), { code: 'EBUSY' }); };
-  assert.throws(() => writeCompiled(paths, { ...compiled, index: { ...compiled.index, bodies: 'bodies-b.json' } }, { rename: refuse }), /busy/);
+  assert.throws(() => writeCompiled(paths, build('h-b'), { rename: refuse }), /busy/);
   assert.deepEqual(readdirSync(paths.v2).filter(name => name.endsWith('.tmp')), []);
-  assert.equal(loadIndex(root).bodies, 'bodies-a.json');
+  assert.equal(loadIndex(root).manifest.hash, 'h-a');
 });
 
 test('dead and broad triggers are reported, never dropped', () => {

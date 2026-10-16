@@ -79,6 +79,17 @@ test('work the agent committed is still its change: the diff is taken against th
   assert.match(rowsOf(out)[0].numstat, /answer\.txt/);
 });
 
+test('a check that reads the change against HEAD sees work the agent committed', async t => {
+  const extra = `{ ...task, id: 'fx-head', async check(dir) {
+    const { execFileSync } = await import('node:child_process');
+    const ok = execFileSync('git', ['-C', dir, 'diff', 'HEAD', '--name-only']).toString().includes('answer.txt');
+    return { passed: ok, detail: 'changed against HEAD ' + ok, requirements: { answered: ok } }; } }`;
+  const { root, registry } = fixture(t, { extra });
+  const out = join(root, 'out', 'results.json');
+  runner([`--registry=${registry}`, '--model=fake', `--out=${out}`, '--repeat=1', '--conditions=none', '--tasks=fx-head'], { FAKE_AGENT_COMMIT: '1' });
+  assert.equal(rowsOf(out)[0].passed, true, rowsOf(out)[0].detail);
+});
+
 test('an agent that changed nothing, on a suite that always fails, is recorded as undecided and the run goes on', async t => {
   const { root, registry } = fixture(t, { suite: "['-e', 'process.exit(1)']" });
   const out = join(root, 'out', 'results.json');

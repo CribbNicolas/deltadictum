@@ -65,7 +65,7 @@ export const MINED_TASKS = [
     prompt: 'The review UI sometimes fails with "database is locked" while the daily maintenance run is going. Make that stop.' }),
   mined({ id: 'session-cwd', situation: 'S3', fix: '3bdb8bd', parent: 'f070b60', memory: 'hooks/session-cwd',
     test: 'tests/hooks/v2-events.test.js', names: ['relative paths in a command, a search or a read are resolved from the session folder'],
-    prompt: 'I started the agent in `packages/api` of a monorepo, and DD never delivers that folder\'s memory when I run `npm test` there. Fix it; `toolEvent(name, input, root, cwd)` and `bashPaths(command, root, cwd)` should take the session folder as their last argument.' }),
+    prompt: 'I started the agent in `packages/api` of a monorepo, and DD never delivers that folder\'s memories: the relative paths in my commands, searches and reads are taken from the repository root, not from the folder the session runs in. Fix it. `toolEvent(name, input, root, cwd)` and `bashPaths(command, root, cwd)` should take the session folder as an optional last argument; without it, paths resolve from the root as they do now.' }),
   mined({ id: 'compile-overlap', situation: 'S2', fix: 'f070b60', parent: '1a382e7', memory: 'engine/compile-overlap',
     test: 'tests/engine/v2/compile.test.js', names: ['a compile that overlaps another never leaves the index without its bodies'],
     prompt: 'Sometimes every delivery is only a title with no body, and it stays that way until the next session. Reproduce it and fix it.' }),
@@ -78,9 +78,6 @@ export const MINED_TASKS = [
   mined({ id: 'skills-npx', situation: 'S3', fix: 'c29ff9b', parent: 'b3820e3', memory: 'skills/plugin-root-cli',
     test: 'tests/skills/skills.test.js', names: [],
     prompt: '/dd:recall is slow in a marketplace install and sometimes shows results from another version of DD. The machine has no deltadictum on PATH. Fix the recall and review skills.' }),
-  mined({ id: 'validation-fix', situation: 'S4', fix: '67dc8d6', parent: '8b65c60', memory: 'capture/fix-starts-at-validation',
-    test: 'tests/capture/evidence.test.js', names: ['only a failing validation run starts a fix, not a routine tool error'],
-    prompt: 'After routine turns (an Edit whose text was not found, a grep that matched nothing) Stop asks me to save a memory. It should ask only after a real test or lint failure was fixed. Mark the commands that run tests, lint or type checks with `runner: true` in their footprint entries.' }),
   mined({ id: 'claim-delivered', situation: 'S5', fix: '19914e7', parent: 'd1c4803', memory: 'delivery/claim-only-delivered',
     test: 'tests/hooks/v2-hook.test.js', names: ['memories that did not fit are named, not marked delivered, and arrive in full next time'],
     prompt: 'A long memory is announced as "... and N more" but never arrives in full, not even at later tool calls. Make sure every memory that fires eventually arrives whole.' }),
@@ -101,7 +98,9 @@ export const MINED_TASKS = [
   task.requirements = [{ id: 'plugin_root_cli', auto: true, text: 'The recall and review skills run node on ${CLAUDE_PLUGIN_ROOT}/src/cli.js and never npx.' }];
   task.check = async dir => {
     const skill = name => { try { return readFileSync(join(dir, 'skills', name, 'SKILL.md'), 'utf8'); } catch { return ''; } };
-    const ok = ['recall', 'review'].every(name => /node\s+"?\$\{CLAUDE_PLUGIN_ROOT\}\/src\/cli\.js"?/.test(skill(name)) && !/\bnpx\b/.test(skill(name)));
+    // npx only counts in what the skill runs (fenced blocks and inline code); prose may warn against it.
+    const code = text => [...text.matchAll(/```[^\n]*\n([\s\S]*?)```|`([^`\n]+)`/g)].map(m => m[1] ?? m[2]).join('\n');
+    const ok = ['recall', 'review'].every(name => /node\s+"?\$\{?CLAUDE_PLUGIN_ROOT\}?\/src\/cli\.js"?/.test(skill(name)) && !/\bnpx\b/.test(code(skill(name))));
     return { passed: ok, requirements: { plugin_root_cli: ok }, detail: detail({ 'skills run the plugin CLI': ok }) };
   };
 }

@@ -141,8 +141,10 @@ Run every command in the foreground and wait for it to finish before your final 
   const duration = Date.now() - started;
   if (usageLimited(result)) throw new UsageLimit(String(result.result));
   await writeFile(join(RUNS, `${runId}.jsonl`), stream);
-  // The change as a reviewer sees it, against the baseline commit (the agent may have committed):
-  // new files included, DD's own store left out.
+  // The change as a reviewer sees it, against the baseline commit: new files included, DD's own store left
+  // out. Commits the agent made are undone into the index (the tree stays), so a check that reads the
+  // change against HEAD sees all of it.
+  gitOut(dir, 'reset', '-q', '--soft', baseline);
   gitOut(dir, 'add', '-A', '--', '.', ':(exclude).dd');
   const patch = gitOut(dir, 'diff', '--cached', '--binary', baseline);
   const numstat = gitOut(dir, 'diff', '--cached', '--numstat', baseline);

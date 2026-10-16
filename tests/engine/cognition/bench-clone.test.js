@@ -51,6 +51,7 @@ test('a clone has no remote and no ref but its own branch, so the source reposit
   writeFileSync(join(repo, 'answer.txt'), 'secret\n');
   git(repo, 'add', '-A');
   git(repo, 'commit', '-q', '-m', 'the answer');
+  const answer = git(repo, 'rev-parse', 'HEAD').trim();
   git(repo, 'checkout', '-q', '-');
   git(repo, 'tag', 'v1');
   const { dir, baseline } = await prepareClone(project(repo), task, 'none');
@@ -59,26 +60,31 @@ test('a clone has no remote and no ref but its own branch, so the source reposit
   assert.deepEqual(git(dir, 'for-each-ref', '--format=%(refname)').trim().split('\n'), ['refs/heads/main']);
   assert.doesNotMatch(git(dir, 'log', '--all', '--oneline'), /the answer/);
   assert.equal(baseline, git(dir, 'rev-parse', 'HEAD').trim());
+  // Not even as an object: the clone holds what the base reaches and nothing else.
+  assert.throws(() => git(dir, 'cat-file', '-e', answer), undefined, 'the answer commit is in the clone');
 });
 
-test('a task\'s setup is its own commit by the project\'s team, so the baseline commit does not show it', async t => {
-  const repo = source(t);
-  const p = project(repo);
-  const { dir } = await prepareClone(p, { ...task, setupMessage: 'Tidy the retry loop' }, 'docref');
-  t.after(() => removeClone(dir, p));
-  const [baseline, setup] = git(dir, 'log', '-2', '--format=%an|%s').trim().split('\n');
-  assert.equal(setup, 'fx team|Tidy the retry loop');
-  assert.match(baseline, /^eval\|eval baseline$/);
-  const shown = git(dir, 'show', '--name-only', '--format=', 'HEAD');
-  assert.doesNotMatch(shown, /setup\.txt/);
-  // The stripped rule goes with the setup commit too, not with the baseline.
-  assert.doesNotMatch(git(dir, 'show', 'HEAD'), /^-Always jitter retries\.$/m);
-});
+for (const condition of ['dd2', 'docref', 'doc', 'none']) {
+  test(`a task's setup is the last commit, by the project's team, in a ${condition} clone too`, async t => {
+    const repo = source(t);
+    const p = project(repo);
+    const { dir, baseline } = await prepareClone(p, { ...task, setupMessage: 'Tidy the retry loop' }, condition);
+    t.after(() => removeClone(dir, p));
+    assert.equal(baseline, git(dir, 'rev-parse', 'HEAD').trim());
+    const [setup, before] = git(dir, 'log', '-2', '--format=%an|%s').trim().split('\n');
+    assert.equal(setup, 'fx team|Tidy the retry loop');
+    assert.equal(before, 'fx team|Update');
+    // "The last commit" a prompt names is the teammate's change alone: the condition's files and the
+    // stripped rule went into the commit before it.
+    assert.equal(git(dir, 'show', '--name-only', '--format=', 'HEAD').trim(), 'setup.txt');
+    assert.match(git(dir, 'show', 'HEAD~1'), /^-Always jitter retries\.$/m);
+  });
+}
 
-test('a project\'s prepare step runs in every condition and goes with the setup commit', async t => {
+test('a project\'s prepare step runs in every condition and goes before the setup commit', async t => {
   const repo = source(t);
   const p = { ...project(repo), prepare: async dir => writeFileSync(join(dir, 'CLAUDE.md'), '# Rules\n') };
-  const { dir } = await prepareClone(p, { id: 'fx-a' }, 'none');
+  const { dir } = await prepareClone(p, task, 'none');
   t.after(() => removeClone(dir, p));
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '# Rules\n');
   assert.doesNotMatch(git(dir, 'show', '--name-only', '--format=', 'HEAD'), /CLAUDE\.md/);
