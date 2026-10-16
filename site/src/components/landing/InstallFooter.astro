@@ -1,0 +1,29 @@
+---
+import { SITE, href } from '../../config.js';
+---
+<footer class="foot">
+  <div class="wrap row">
+    <div>
+      <p class="lead">Twenty minutes to a first memory.</p>
+      <pre><code><span>$</span> /plugin marketplace add CribbNicolas/deltadictum
+<span>$</span> /plugin install dd@deltadictum
+<span>$</span> npx deltadictum init</code></pre>
+    </div>
+    <div class="meta">
+      <p><a href={href('getting-started.html')}>Docs</a> · <a href={SITE.repo}>GitHub</a> · <a href={SITE.npm}>npm</a></p>
+      <p>Source-available under the <a href={`${SITE.repo}/blob/main/LICENSE`}>PolyForm Shield License 1.0.0</a> · a community project</p>
+    </div>
+  </div>
+</footer>
+<style>
+  .foot { background: var(--surface-2); border-top: 1px solid var(--border-1); }
+  .row { padding-top: 56px; padding-bottom: 56px; display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; align-items: center; }
+  .row > div:first-child { min-width: 0; max-width: 100%; }
+  .lead { margin: 0 0 14px; color: var(--text-muted); }
+  pre { margin: 0; font-size: 15px; line-height: 1.9; color: #e6e9ee; overflow-x: auto; }
+  pre span { color: var(--text-faint); }
+  .meta { font-size: 14px; color: var(--text-faint); }
+  .meta p { margin: 0 0 8px; }
+  .meta a { color: var(--text-muted); text-decoration: none; }
+  .meta a:hover { color: var(--text-strong); }
+</style>

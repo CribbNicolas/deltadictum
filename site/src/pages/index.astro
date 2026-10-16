@@ -1,5 +1,29 @@
 ---
+import pkg from '../../../package.json';
 import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/landing/Hero.astro';
+import Features from '../components/landing/Features.astro';
+import Measured from '../components/landing/Measured.astro';
+import InstallFooter from '../components/landing/InstallFooter.astro';
+import { loadSummaries } from '../lib/summaries.js';
+import { pickFeatured } from '../lib/bench.js';
 import { SITE } from '../config.js';
+
+const summary = pickFeatured(loadSummaries(), SITE.featuredTrial);
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: SITE.name, description: SITE.description,
+  applicationCategory: 'DeveloperApplication', operatingSystem: 'Windows, macOS, Linux', softwareVersion: pkg.version,
+  license: 'https://polyformproject.org/licenses/shield/1.0.0', codeRepository: SITE.repo, url: new URL(SITE.base, SITE.url).href,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
 ---
-<Base description={SITE.description}><main id="main" class="wrap"><h1>DeltaDictum</h1></main></Base>
+<Base description={SITE.description} jsonLd={jsonLd}>
+  <Header />
+  <main id="main">
+    <Hero />
+    <Features />
+    <Measured summary={summary} />
+  </main>
+  <InstallFooter />
+</Base>

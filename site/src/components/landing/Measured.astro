@@ -1,0 +1,45 @@
+---
+import { tableFor } from '../../lib/bench.js';
+import { href } from '../../config.js';
+const { summary } = Astro.props;
+const table = tableFor(summary);
+const last = table.columns.at(-1).id;
+---
+<section class="measured wrap" aria-labelledby="measured-title">
+  <p class="eyebrow">TABLE 1 · MEASURED</p>
+  <h2 id="measured-title">{summary.title}, blind judge.</h2>
+  <p class="sub">{summary.tasks} tasks, {summary.runs_per_condition} {summary.runs_per_condition === 1 ? 'run' : 'runs'} per condition. Change against the agent alone.</p>
+  <div class="table">
+    <table>
+      <thead>
+        <tr><th scope="col"><span class="visually-hidden">Metric</span></th>{table.columns.map(c => <th scope="col" class:list={{ strong: c.id === last }}>{c.label}</th>)}</tr>
+      </thead>
+      <tbody>
+        {table.rows.map(row => (
+          <tr>
+            <th scope="row">{row.label}</th>
+            {row.cells.map((cell, i) => <td class:list={{ base: table.columns[i].base, better: cell.better === true }}>{cell.text}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <p class="caveat">{summary.caveat} <a href={href('benchmarks/')}>All trials and how they are measured →</a></p>
+</section>
+<style>
+  .measured { padding-top: 96px; padding-bottom: 96px; }
+  h2 { margin: 0; font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.025em; color: var(--text-strong); font-weight: 600; }
+  .sub { margin: 10px 0 0; color: var(--text-muted); }
+  .table { margin-top: 28px; overflow-x: auto; background: var(--surface-2); border: 1px solid var(--border-3); border-radius: var(--radius-m); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 640px; }
+  th, td { padding: 13px 20px; text-align: left; border-bottom: 1px solid var(--border-1); }
+  thead th { font-weight: 500; color: var(--text-muted); border-bottom-color: var(--border-3); }
+  thead th.strong { color: var(--text-heading); font-weight: 600; }
+  tbody th { font-weight: 400; color: var(--text); }
+  tbody tr:last-child > * { border-bottom: 0; }
+  td { font-family: var(--font-mono); color: var(--text-heading); }
+  td.base { color: var(--text-faint); }
+  td.better { color: var(--accent); font-weight: 500; }
+  .caveat { margin: 14px 0 0; font-size: 14px; color: var(--text-faint); }
+  .caveat a { color: var(--accent); text-decoration: none; }
+</style>
