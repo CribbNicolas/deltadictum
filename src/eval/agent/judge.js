@@ -27,7 +27,9 @@ const MODEL = args.model ?? 'claude-opus-5-5';
 const IN = join(REPO, 'output', 'eval', args.in ?? 'agent-results.json');
 // The task set the results were made with decides which tasks and guidance apply.
 const TASKSET = JSON.parse(await readFile(IN, 'utf8')).taskset ?? 'v1';
-const { TASKS } = await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
+const bench = TASKSET === 'bench' ? await import('../bench/tasks.js') : null;
+const benchSet = bench ? await bench.loadBench(await bench.registryAt(args.registry)) : null;
+const { TASKS } = benchSet ? { TASKS: benchSet.tasks } : await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
 const OUT = IN.replace(/\.json$/, '') + '.judge.json';
 const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
 const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
@@ -41,6 +43,7 @@ const claude = (prompt, cwd) => run('claude', ['-p', '--model', MODEL, '--output
 
 // The guidance a task's memory carries, as the guide writes it.
 async function guidance() {
+  if (benchSet) return new Map();
   if (TASKSET === 'v2') {
     return new Map(TRIAL_MEMORIES.map(m => [m.topic, guideSectionV2({ ...m, status: 'active', evidence: m.evidence.map(e => ({ type: 'file', ...e })) })]));
   }
@@ -60,7 +63,7 @@ const judgedRequirements = task => [...(task.requirements ?? []).filter(r => !r.
 
 function prompt(task, guide, row, diff) {
   const requirements = judgedRequirements(task);
-  return `You are reviewing a change to a JavaScript repository, made by a developer for the task below. Decide, as a senior reviewer of this codebase would, whether the change meets each requirement listed.
+  return `You are reviewing a change to a ${task.language ?? 'JavaScript'} repository, made by a developer for the task below. Decide, as a senior reviewer of this codebase would, whether the change meets each requirement listed.
 
 Task given to the developer:
 "${task.prompt}"
@@ -133,7 +136,7 @@ async function worker() {
     const task = TASKS.find(t => t.id === row.task);
     const diff = await readFile(join(results.runs, `${row.run_id}.diff`), 'utf8').catch(() => '');
     const ids = judgedRequirements(task).map(r => r.id);
-    const verdict = await review(prompt(task, task.memory ? guides.get(task.memory) : null, row, diff), ids, empty);
+    const verdict = await review(prompt(task, benchSet ? bench.guidanceFor(task, benchSet.projects) : (task.memory ? guides.get(task.memory) : null), row, diff), ids, empty);
     const judged = { run_id: row.run_id, task: row.task, kind: row.kind, condition: condition(row), ...verdict };
     await appendFile(ROWS, JSON.stringify(judged) + '\n');
     console.log(JSON.stringify({ run_id: row.run_id, requirements: judged.requirements, cost_usd: judged.cost_usd, error: judged.error }));
