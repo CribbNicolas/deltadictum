@@ -1,0 +1,35 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { deliveries, listed } from '../../../src/eval/bench/delivery.js';
+
+const hook = (event, context) => JSON.stringify({ type: 'system', subtype: 'hook_response', hook_event: event,
+  stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: context } }) });
+const call = (id, name) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input: {} }] } });
+const result = id => JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
+
+test('each title is timed against the first edit, once', () => {
+  const stream = [
+    hook('UserPromptSubmit', 'DD - project knowledge (prompt):\n[FACT] Partner API - Signs with v2.'),
+    call('r1', 'Read'), hook('PreToolUse', 'DD - project knowledge (a.go):\n[TRAP] Retry jitter - Always jitter.'), result('r1'),
+    call('e1', 'Edit'), hook('PreToolUse', 'DD - project knowledge (b.go):\n[DECISION] Logs go to stderr - Never stdout.\n[TRAP] Retry jitter - Always jitter.'), result('e1'),
+    call('w1', 'Write'), hook('PostToolUse', 'DD - project knowledge (c.go):\n[PROCEDURE] [DISPUTED] Bump schema - Then regenerate.'), result('w1'),
+  ].join('\n');
+  assert.deepEqual(deliveries(stream), [
+    { title: 'Partner API', at: 'before_edit', event: 'UserPromptSubmit' },
+    { title: 'Retry jitter', at: 'before_edit', event: 'PreToolUse' },
+    { title: 'Logs go to stderr', at: 'at_edit', event: 'PreToolUse' },
+    { title: 'Bump schema', at: 'after_edit', event: 'PostToolUse' },
+  ]);
+});
+
+test('a run without edits reports no_edit, and the tail lists titles without delivering them', () => {
+  const stream = [call('r1', 'Read'), hook('PreToolUse', 'DD - project knowledge (a.go):\n[TRAP] Retry jitter - Always jitter.\n... and 2 more: Logs go to stderr; Bump schema'), result('r1')].join('\n');
+  assert.deepEqual(deliveries(stream), [{ title: 'Retry jitter', at: 'no_edit', event: 'PreToolUse' }]);
+  assert.deepEqual(listed(stream), ['Logs go to stderr', 'Bump schema']);
+});
+
+test('broken lines and hooks without context are ignored', () => {
+  const stream = ['not json', JSON.stringify({ type: 'system', subtype: 'hook_response', hook_event: 'Stop', stdout: '' }), call('e1', 'Edit')].join('\n');
+  assert.deepEqual(deliveries(stream), []);
+  assert.deepEqual(listed(stream), []);
+});
