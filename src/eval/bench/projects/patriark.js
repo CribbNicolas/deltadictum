@@ -54,7 +54,11 @@ export default {
   strip: [],
   links: [],
   probeFile: 'src/application/views/GameProjection.cs',
+  // A timing assertion (under 250 ms) that a loaded machine misses: --conc runs builds side by side.
+  knownFlaky: ['Patriark.Tests.DicePhysicsTests.FiveDiceSimulateFast'],
   parseFailures: out => [...new Set([...out.matchAll(/^\s*Failed (\S+) \[/gm)].map(m => m[1]))],
   prepare,
+  // The generated setups and overlays, once before any worker starts (run.js calls setup per base).
+  setup: async () => (await import('./patriark/generate.mjs')).ensureGenerated(),
   tasks: available ? TASKS : [],
 };

@@ -41,7 +41,7 @@ export function enrichRow(row, task, stream, judgedRequirements, titleOf, { requ
     keys_delivered: keysDelivered, key_at: keyAt,
     applied: keysDelivered && specificValues.length && !unjudged ? specificValues.every(Boolean) : null,
     withheld_ok: withheldTitles.length ? !withheldTitles.some(title => byTitle.has(title)) : null,
-    noise: delivered.filter(d => !keyTitles.includes(d.title)).length, listed: listed(stream).length };
+    noise: delivered.filter(d => !keyTitles.includes(d.title)).length, listed: listed(stream, titles).length };
 }
 
 const nums = (rows, key) => rows.map(r => r[key]).filter(v => typeof v === 'number');

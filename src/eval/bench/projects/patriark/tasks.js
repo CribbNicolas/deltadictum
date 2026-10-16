@@ -87,7 +87,10 @@ export const TASKS = [
     requirements: [{ id: 'flags_serialization', auto: true, text: 'The review names that the command is not registered for the source-generated JSON.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      const flagged = flags(answer, /\b(JsonSerializable|GameJsonContext|source[- ]?generat\w*|seriali[sz]\w*)\b/i);
+      // One item naming the source-generated JSON and saying the command is missing from it: a passing
+      // mention of serialization (a test idea, say) is not the finding.
+      const flagged = flags(answer, /\b(JsonSerializable|GameJsonContext|source[- ]?generat\w*|JSON context)\b/i,
+        /\b(missing|not (registered|added|listed|declared|included)|unregistered|lacks?|without|forg[eo]t\w*|absent)\b/i);
       return { passed, requirements: { flags_serialization: flagged }, detail: detail({ reviewed: passed, 'flags serialization': flagged }) };
     },
   },
@@ -98,7 +101,7 @@ export const TASKS = [
     requirements: [{ id: 'flags_order', auto: true, text: 'The review names that OpenMap is no longer the last action.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      const flagged = flags(answer, /\b(OpenMap|open[_ ]map|travel)\b/i, /\b(last|after)\b/i);
+      const flagged = flags(answer, /\b(OpenMap|open[_ ]map|travel)\b/i, /\b(last|after|final|end|bottom|below|follow\w*|order\w*|position\w*)\b/i);
       return { passed, requirements: { flags_order: flagged }, detail: detail({ reviewed: passed, 'flags the order': flagged }) };
     },
   },

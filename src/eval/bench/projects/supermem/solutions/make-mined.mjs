@@ -16,7 +16,7 @@ const FILES = {
   'supermem-telemetry-locked': 'tests/maintenance/telemetry.test.js', 'supermem-session-cwd': 'tests/hooks/v2-events.test.js',
   'supermem-compile-overlap': 'tests/engine/v2/compile.test.js', 'supermem-rename-retry': 'tests/engine/v2/compile.test.js',
   'supermem-dead-symbol': 'tests/engine/v2/compile.test.js', 'supermem-skills-npx': null,
-  'supermem-validation-fix': 'tests/capture/evidence.test.js', 'supermem-claim-delivered': 'tests/hooks/v2-hook.test.js',
+  'supermem-claim-delivered': 'tests/hooks/v2-hook.test.js',
   'supermem-subfolder-committed': 'tests/capture/turn-checks.test.js', 'supermem-symbols-not-prompts': 'tests/engine/v2/clause.test.js',
   'supermem-inbox-ignored': 'tests/capture/inbox.test.js',
 };
