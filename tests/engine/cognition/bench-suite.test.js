@@ -28,6 +28,21 @@ test('named failures twice are regressions unless the baseline fails them too', 
   assert.deepEqual(preexisting.baseline_failed, ['a']);
 });
 
+// The smoke's supermem suite failed one set of tests, then another, under load: no test failed twice.
+test('two runs failing different tests is flakiness, without a baseline run', async () => {
+  const out = await suiteOutcome(runs({ passed: false, failed: ['a'] }, { passed: false, failed: ['b'] }), never);
+  assert.equal(out.passed, true);
+  assert.deepEqual(out.flaky, ['a', 'b']);
+});
+
+test('a first run that names no test leaves the second run\'s failures to the baseline', async () => {
+  const crash = () => runs({ passed: false, failed: [] }, { passed: false, failed: ['a'] });
+  const regression = await suiteOutcome(crash(), async () => ({ passed: true, failed: [] }));
+  assert.equal(regression.passed, false);
+  assert.deepEqual(regression.regressions, ['a']);
+  assert.equal((await suiteOutcome(crash(), async () => ({ passed: false, failed: ['a'] }))).passed, true);
+});
+
 test('without test names a baseline that passes makes it a regression', async () => {
   const fail = () => runs({ passed: false, failed: [] }, { passed: false, failed: [] });
   assert.equal((await suiteOutcome(fail(), async () => ({ passed: true, failed: [] }))).passed, false);

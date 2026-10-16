@@ -20,11 +20,15 @@ export async function suiteOutcome(runSuite, runBaseline, knownFlaky = []) {
   if (first.passed || flakyOnly(first)) return outcome({ first_passed: first.passed });
   const second = await runSuite();
   if (second.passed || flakyOnly(second)) return outcome({ flaky: first.failed.filter(name => !second.failed.includes(name)) });
-  const failedTwice = second.failed.filter(name => first.failed.includes(name) && !knownFlaky.includes(name));
+  // A first run that named no test (a crash) leaves the second run's failures as the ones seen twice.
+  const failedTwice = (first.failed.length ? second.failed.filter(name => first.failed.includes(name)) : second.failed)
+    .filter(name => !knownFlaky.includes(name));
+  // Two runs failing different tests: none failed twice, which is flakiness, not the change.
+  if (second.failed.length && !failedTwice.length) return outcome({ flaky: [...new Set([...first.failed, ...second.failed])] });
   const baseline = await runBaseline();
   // Without test names a baseline that passes makes it a regression; one that fails as well leaves it
   // undecided (null): the suite cannot run here, which is the harness's fault, not the agent's.
   if (!second.failed.length) return outcome({ passed: baseline.passed ? false : null, baseline_failed: baseline.failed, baseline_passed: baseline.passed });
   const regressions = failedTwice.filter(name => !baseline.failed.includes(name));
-  return outcome({ passed: failedTwice.length > 0 && !regressions.length, failed_twice: failedTwice, regressions, baseline_failed: baseline.failed, baseline_passed: baseline.passed });
+  return outcome({ passed: !regressions.length, failed_twice: failedTwice, regressions, baseline_failed: baseline.failed, baseline_passed: baseline.passed });
 }
