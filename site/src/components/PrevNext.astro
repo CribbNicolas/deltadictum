@@ -1,0 +1,15 @@
+---
+import { href } from '../config.js';
+const { prev, next } = Astro.props;
+---
+<nav class="prevnext" aria-label="Previous and next page">
+  {prev ? <a href={href(prev.href)}><span>Previous</span>{prev.title}</a> : <span />}
+  {next && <a class="next" href={href(next.href)}><span>Next</span>{next.title}</a>}
+</nav>
+<style>
+  .prevnext { margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  a { display: block; border: 1px solid var(--border-2); border-radius: var(--radius-m); padding: 14px 18px; color: var(--text-heading); font-weight: 600; text-decoration: none; }
+  a:hover { border-color: var(--border-3); background: var(--surface-2); }
+  .next { text-align: right; }
+  span { display: block; font-size: 13px; font-weight: 400; color: var(--text-faint); }
+</style>

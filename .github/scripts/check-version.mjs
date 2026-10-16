@@ -1,10 +1,11 @@
-// Fails unless the package version is strictly greater than the base branch's,
+// Fails unless a change that ships to npm raises the package version over the base branch's,
 // every manifest that carries a version agrees with package.json, and
 // CHANGELOG.md has a section for it (the GitHub release is written from it).
 // Usage: node .github/scripts/check-version.mjs <base-ref>
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { releaseNotes } from './release-notes.mjs';
+import { changedFiles, needsRelease } from './version-rule.mjs';
 
 const MANIFESTS = ['package.json', '.claude-plugin/plugin.json'];
 const baseRef = process.argv[2] ?? 'origin/main';
@@ -22,6 +23,13 @@ function greater(a, b) {
 
 const errors = [];
 const head = JSON.parse(readFileSync('package.json', 'utf8')).version;
+const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
+const changed = changedFiles(baseRef);
+const baseVersion = JSON.parse(execFileSync('git', ['show', `${baseRef}:package.json`], { encoding: 'utf8' })).version;
+if (head === baseVersion && !needsRelease(changed, manifest.files ?? [])) {
+  console.log(`no release needed: nothing the package ships changed (${changed.length} files)`);
+  process.exit(0);
+}
 
 for (const file of MANIFESTS.slice(1)) {
   const version = JSON.parse(readFileSync(file, 'utf8')).version;

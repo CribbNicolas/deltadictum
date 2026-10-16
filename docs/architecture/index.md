@@ -1,5 +1,6 @@
 ---
 title: Architecture
+description: "Why DeltaDictum is built the way it is: the behavioural contract, the limits of a plugin, the invariants and the history behind them."
 nav_order: 7
 has_children: true
 ---

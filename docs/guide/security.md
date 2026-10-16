@@ -1,5 +1,6 @@
 ---
 title: Security boundary
+description: "What DeltaDictum protects a project's knowledge and its review from, and what it does not."
 parent: Reference
 nav_order: 5
 ---

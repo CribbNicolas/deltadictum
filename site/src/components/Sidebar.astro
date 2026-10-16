@@ -1,0 +1,39 @@
+---
+import { href } from '../config.js';
+const { groups, current } = Astro.props;
+---
+<details class="sidebar" open data-sidebar>
+  <summary>Menu</summary>
+  <nav aria-label="Documentation">
+    {groups.map(group => (
+      <div class="group">
+        <p class="group-title">{group.title}</p>
+        <ul>
+          {group.items.map(item => (
+            <li><a href={href(item.href)} aria-current={item.id === current ? 'page' : undefined}>{item.title}</a></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</details>
+<script>
+  // On a narrow screen the menu is closed behind its summary; on a wide one, where the summary is
+  // hidden, it must be open, also after a rotation or a resize. Without JavaScript it stays open.
+  const sidebar = document.querySelector('[data-sidebar]');
+  const narrow = matchMedia('(max-width: 959px)');
+  const fit = () => { if (sidebar) sidebar.open = !narrow.matches; };
+  fit();
+  narrow.addEventListener('change', fit);
+</script>
+<style>
+  .sidebar { padding: 32px 0; font-size: 14px; }
+  summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--text-heading); font-weight: 600; }
+  @media (min-width: 960px) { summary { display: none; } .sidebar { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; } }
+  .group { margin-bottom: 22px; }
+  .group-title { margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  a { display: block; padding: 6px 10px; border-radius: var(--radius-s); color: var(--text); text-decoration: none; }
+  a:hover { background: var(--surface-3); color: var(--text-strong); }
+  a[aria-current='page'] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+</style>

@@ -1,5 +1,6 @@
 ---
 title: Memories
+description: "The DeltaDictum memory format: one JSON file per memory in .dd/memories/, with its triggers, checks and evidence."
 parent: Reference
 nav_order: 2
 ---

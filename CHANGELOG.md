@@ -4,6 +4,17 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.7] - 2026-10-15
+
+- Documentation site: rebuilt as a custom Astro site in `site/`, deployed to GitHub Pages by Actions. A
+  landing page, docs with search, a table of contents and prev/next, Open Graph images, structured data and
+  a sitemap. It reads the Markdown in `docs/` in place and keeps every URL the Jekyll site published.
+- Benchmark tables on the site come from `docs/benchmarks/data/*.summary.json`, written from a trial's
+  report by `src/eval/agent/summary.js`.
+- The "How DD works" loop diagram is an SVG image instead of a Mermaid block, and every docs page has a
+  description.
+- A pull request that changes nothing the npm package ships no longer needs a version bump.
+
 ## [0.9.6] - 2026-10-15
 
 - Documentation site: the loop diagram on "How DD works" runs top to bottom; six steps in a row did not

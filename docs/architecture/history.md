@@ -1,5 +1,6 @@
 ---
 title: Where DD came from
+description: "Where DeltaDictum v1 went wrong, what measurement showed about it, and the mistakes v2 must not repeat."
 parent: Architecture
 nav_order: 4
 ---

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 560" role="img" aria-labelledby="t d">
+  <title id="t">The DD loop</title>
+  <desc id="d">Session start compiles the index; each prompt or tool call is matched against the triggers; matching memories are delivered once per session; edits and commands are checked; at the stop DD asks to save after a fix; the review UI or auto-accept activates proposals; the memories go back through git to the next session start.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9aa4b2"/></marker>
+  </defs>
+  <style>
+    .box { fill: #0f1318; stroke: #2b333d; stroke-width: 1.5; }
+    .key { stroke: #e8b84a; }
+    .t { font: 600 15px 'Geist Sans', system-ui, sans-serif; fill: #f0f3f6; }
+    .s { font: 400 13px 'Geist Mono', ui-monospace, monospace; fill: #9aa4b2; }
+    .l { stroke: #9aa4b2; stroke-width: 1.5; fill: none; }
+  </style>
+  <g>
+    <rect class="box" x="40" y="16" width="300" height="60" rx="10"/><text class="t" x="60" y="42">Session start</text><text class="s" x="60" y="62">compile the index</text>
+    <rect class="box" x="40" y="106" width="300" height="60" rx="10"/><text class="t" x="60" y="132">Prompt or tool call</text><text class="s" x="60" y="152">match the triggers</text>
+    <rect class="box key" x="40" y="196" width="300" height="60" rx="10"/><text class="t" x="60" y="222">Deliver</text><text class="s" x="60" y="242">once per session</text>
+    <rect class="box" x="40" y="286" width="300" height="60" rx="10"/><text class="t" x="60" y="312">Check</text><text class="s" x="60" y="332">edits and commands</text>
+    <rect class="box" x="40" y="376" width="300" height="60" rx="10"/><text class="t" x="60" y="402">Stop</text><text class="s" x="60" y="422">ask to save after a fix</text>
+    <rect class="box" x="40" y="466" width="300" height="60" rx="10"/><text class="t" x="60" y="492">Review UI</text><text class="s" x="60" y="512">or auto-accept</text>
+  </g>
+  <g class="l" marker-end="url(#a)">
+    <path d="M190 76V104"/><path d="M190 166V194"/><path d="M190 256V284"/><path d="M190 346V374"/><path d="M190 436V464"/>
+    <path d="M340 496H380V46H344"/>
+  </g>
+  <text class="s" transform="translate(400 330) rotate(-90)">memories in git</text>
+</svg>

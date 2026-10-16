@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "id": "trial-v2-haiku",
+  "date": "2026-10-14",
+  "title": "Trial v2, Claude Haiku 5.5",
+  "model": "claude-haiku-5-5",
+  "tasks": 10,
+  "runs_per_condition": 1,
+  "judge": "claude-opus-5-5",
+  "report": "benchmarks/2026-10-v2-trial-opus-haiku.md",
+  "caveat": "One project, ten tasks, one run per condition: on track, not a promise for yours.",
+  "base": "none",
+  "conditions": [
+    {
+      "id": "none",
+      "label": "Agent alone"
+    },
+    {
+      "id": "docref",
+      "label": "With documentation"
+    },
+    {
+      "id": "dd2",
+      "label": "With DD"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "resolution",
+      "label": "Tasks resolved",
+      "unit": "pct",
+      "better": "higher",
+      "values": {
+        "none": 100,
+        "docref": 100,
+        "dd2": 100
+      },
+      "ci95": {
+        "none": [
+          72,
+          100
+        ],
+        "docref": [
+          72,
+          100
+        ],
+        "dd2": [
+          72,
+          100
+        ]
+      }
+    },
+    {
+      "id": "quality",
+      "label": "Code quality",
+      "unit": "pct",
+      "better": "higher",
+      "values": {
+        "none": 100,
+        "docref": 100,
+        "dd2": 100
+      },
+      "ci95": {
+        "none": [
+          100,
+          100
+        ],
+        "docref": [
+          100,
+          100
+        ],
+        "dd2": [
+          100,
+          100
+        ]
+      }
+    },
+    {
+      "id": "requirements",
+      "label": "The project's own requirements met",
+      "unit": "pct",
+      "better": "higher",
+      "values": {
+        "none": 100,
+        "docref": 100,
+        "dd2": 100
+      },
+      "ci95": {
+        "none": [
+          100,
+          100
+        ],
+        "docref": [
+          100,
+          100
+        ],
+        "dd2": [
+          100,
+          100
+        ]
+      }
+    },
+    {
+      "id": "context",
+      "label": "Context",
+      "unit": "tokens",
+      "better": "lower",
+      "values": {
+        "none": 45643,
+        "docref": 46615,
+        "dd2": 46203
+      }
+    },
+    {
+      "id": "cost",
+      "label": "Cost per task",
+      "unit": "usd",
+      "better": "lower",
+      "values": {
+        "none": 0.0213,
+        "docref": 0.0203,
+        "dd2": 0.0198
+      }
+    }
+  ]
+}

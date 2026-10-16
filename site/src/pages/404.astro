@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import { href } from '../config.js';
+---
+<Base title="Page not found" description="This page does not exist on the DeltaDictum site.">
+  <Header />
+  <main id="main" class="wrap missing">
+    <p class="eyebrow">404</p>
+    <h1>Nothing here.</h1>
+    <p>The page moved or never existed. Start from the docs, or search them.</p>
+    <p><a class="btn btn-primary" href={href('getting-started.html')}>Getting started</a> <a class="btn btn-ghost" href={href('')}>Home</a></p>
+  </main>
+</Base>
+<style>
+  .missing { padding-top: 96px; padding-bottom: 120px; }
+  h1 { margin: 0 0 12px; font-size: 48px; letter-spacing: -0.03em; color: var(--text-strong); }
+  p { color: var(--text-muted); }
+</style>
