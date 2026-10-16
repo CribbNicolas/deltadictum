@@ -42,7 +42,7 @@ export const TASKS = [
   {
     id: 'tollgate-network-retry', project: 'tollgate', situation: 'S2', origin: 'invented', kind: 'memory',
     memories: ['relay/retries-through-backoff'],
-    prompt: 'Forwarding gives up at once on network errors (connection refused, reset, timeout). Retry those the same number of times as a 429.',
+    prompt: 'Bug in the relay: forwarding an event retries a 429, but gives up at once on a network error (connection refused, reset, timeout). Change the relay so a network error is retried the same number of times as a 429.',
     requirements: [{ id: 'jittered_backoff', auto: true, text: 'Network retries wait through the relay\'s jittered backoff and its Sleep, not a fixed or real sleep.' }],
     async check(dir) {
       const run = await hidden(dir, { pkg: 'internal/relay', file: 'relay_network_retry_test.go', pass: ['TestBenchRetriesNetworkErrors'],
