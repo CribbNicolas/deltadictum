@@ -1,12 +1,56 @@
-<button class="search" type="button" data-search-open aria-label="Search the docs">
+---
+import { href } from '../config.js';
+const ui = href('pagefind/');
+---
+<button class="search" type="button" data-search-open aria-label="Search the docs" aria-keyshortcuts="Control+K Meta+K">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg>
   <span>Search the docs</span>
   <kbd>Ctrl K</kbd>
 </button>
+<dialog class="search-dialog" data-search-dialog aria-label="Search the docs" data-ui={ui}>
+  <div class="search-box" data-search-box></div>
+  <form method="dialog"><button class="close" type="submit">Close</button></form>
+</dialog>
+<script>
+  // Pagefind's index is built after Astro (npm run build); it loads on first use only.
+  const dialog = document.querySelector('[data-search-dialog]');
+  let loaded = false;
+  async function open() {
+    dialog.showModal();
+    if (loaded) return dialog.querySelector('input')?.focus();
+    loaded = true;
+    const ui = dialog.dataset.ui;
+    const css = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: `${ui}pagefind-ui.css` });
+    document.head.append(css);
+    try {
+      // A classic script, loaded as one: a dynamic import() gets a bundler preload wrapper that breaks inline.
+      await new Promise((resolve, reject) => {
+        const script = Object.assign(document.createElement('script'), { src: `${ui}pagefind-ui.js` });
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.append(script);
+      });
+      new window.PagefindUI({ element: '[data-search-box]', showSubResults: true, resetStyles: false });
+      dialog.querySelector('input')?.focus();
+    } catch {
+      dialog.querySelector('[data-search-box]').textContent = 'Search is available on the built site (npm run build).';
+    }
+  }
+  document.querySelector('[data-search-open]')?.addEventListener('click', open);
+  addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); open(); }
+  });
+</script>
 <style>
   .search { flex: 1 1 240px; max-width: 420px; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px;
     background: var(--surface-3); border: 1px solid var(--border-2); border-radius: 8px; color: var(--text-muted); font: inherit; font-size: 14px; cursor: pointer; }
   .search:hover { border-color: var(--border-3); color: var(--text); }
   .search span { flex: 1; text-align: left; }
   kbd { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--border-3); border-radius: 4px; padding: 0 6px; }
+  .search-dialog { width: min(680px, calc(100vw - 32px)); max-height: 80vh; margin-top: 10vh; padding: 20px; border: 1px solid var(--border-3); border-radius: var(--radius-l);
+    background: var(--surface-2); color: var(--text);
+    --pagefind-ui-primary: var(--accent); --pagefind-ui-text: var(--text); --pagefind-ui-background: var(--surface-2);
+    --pagefind-ui-border: var(--border-3); --pagefind-ui-tag: var(--surface-3); --pagefind-ui-font: var(--font-sans); }
+  .search-dialog::backdrop { background: rgba(5, 7, 10, 0.7); }
+  .close { margin-top: 12px; min-height: 36px; padding: 0 14px; background: transparent; border: 1px solid var(--border-3); border-radius: var(--radius-s); color: var(--text-muted); font: inherit; cursor: pointer; }
 </style>
