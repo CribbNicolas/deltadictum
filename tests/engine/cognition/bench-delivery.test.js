@@ -28,6 +28,12 @@ test('a run without edits reports no_edit, and the tail lists titles without del
   assert.deepEqual(listed(stream), ['Logs go to stderr', 'Bump schema']);
 });
 
+test('a known title holding " - " is read whole, not cut at its first dash', () => {
+  const stream = [call('e1', 'Edit'), hook('PreToolUse', 'DD - project knowledge (a.cs):\n[DECISION] Dice fallback - physics first - Use the simulation.\n[TRAP] Plain rule - Body.')].join('\n');
+  assert.deepEqual(deliveries(stream, ['Dice fallback - physics first']).map(d => d.title), ['Dice fallback - physics first', 'Plain rule']);
+  assert.deepEqual(deliveries(stream).map(d => d.title), ['Dice fallback', 'Plain rule']);
+});
+
 test('broken lines and hooks without context are ignored', () => {
   const stream = ['not json', JSON.stringify({ type: 'system', subtype: 'hook_response', hook_event: 'Stop', stdout: '' }), call('e1', 'Edit')].join('\n');
   assert.deepEqual(deliveries(stream), []);

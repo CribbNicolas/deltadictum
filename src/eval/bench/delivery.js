@@ -18,7 +18,13 @@ function contextOf(event) {
 
 const hasPart = (event, type, match) => (event.message?.content ?? []).some(part => part.type === type && match(part));
 
-export function deliveries(stream) {
+// A delivered title is cut at its first " - "; a known title that holds one is matched whole instead.
+function titlesIn(text, known) {
+  const found = [...text.matchAll(DELIVERED)].map(m => m[1]);
+  return found.map(title => known.find(k => k.startsWith(`${title} - `) && text.includes(`] ${k} - `)) ?? title);
+}
+
+export function deliveries(stream, known = []) {
   const all = events(stream);
   let editId = null;
   for (const e of all) {
@@ -30,10 +36,10 @@ export function deliveries(stream) {
   for (const e of all) {
     if (editId && e.type === 'assistant' && hasPart(e, 'tool_use', c => c.id === editId)) phase = 'at_edit';
     if (phase === 'at_edit' && e.type === 'user' && hasPart(e, 'tool_result', c => c.tool_use_id === editId)) phase = 'after_edit';
-    for (const m of contextOf(e).matchAll(DELIVERED)) {
-      if (seen.has(m[1])) continue;
-      seen.add(m[1]);
-      out.push({ title: m[1], at: phase, event: e.hook_event });
+    for (const title of titlesIn(contextOf(e), known)) {
+      if (seen.has(title)) continue;
+      seen.add(title);
+      out.push({ title, at: phase, event: e.hook_event });
     }
   }
   return out;

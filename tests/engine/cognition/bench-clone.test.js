@@ -75,6 +75,15 @@ test('a task\'s setup is its own commit by the project\'s team, so the baseline 
   assert.doesNotMatch(git(dir, 'show', 'HEAD'), /^-Always jitter retries\.$/m);
 });
 
+test('a project\'s prepare step runs in every condition and goes with the setup commit', async t => {
+  const repo = source(t);
+  const p = { ...project(repo), prepare: async dir => writeFileSync(join(dir, 'CLAUDE.md'), '# Rules\n') };
+  const { dir } = await prepareClone(p, { id: 'fx-a' }, 'none');
+  t.after(() => removeClone(dir, p));
+  assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '# Rules\n');
+  assert.doesNotMatch(git(dir, 'show', '--name-only', '--format=', 'HEAD'), /CLAUDE\.md/);
+});
+
 test('a link that git does not ignore stops the clone', async t => {
   const repo = source(t);
   const p = { ...project(repo), links: ['deps'], link: async dir => { mkdirSync(join(dir, 'deps')); writeFileSync(join(dir, 'deps', 'x'), 'x'); } };
