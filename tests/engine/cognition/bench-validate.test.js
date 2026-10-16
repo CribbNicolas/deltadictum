@@ -59,3 +59,9 @@ test('a project is refused for a missing command, an unknown store or guide targ
   assert.ok(projectProblems(project({ guideTarget: 'README.md' })).includes('guideTarget'));
   assert.ok(projectProblems(project({ id: 'Bad Id' })).includes('id'));
 });
+
+test('a task on a project with an existing store runs at the project base, where the store was read', () => {
+  const p = project({ invented: false, store: 'existing' });
+  assert.ok(taskProblems(task({ origin: 'authored', base: 'abc1234' }), p).includes('base'));
+  assert.deepEqual(taskProblems(task({ origin: 'authored' }), p), []);
+});

@@ -60,3 +60,13 @@ test('the guide holds the live memories and is named in the guide target only wh
   await writeGuide(root, project(), memories, true);
   assert.match(readFileSync(join(root, 'CLAUDE.md'), 'utf8'), /docs\/engineering-guide\.md/);
 });
+
+test('a bench store starts from an empty .dd: v1 atoms and other leftovers do not stay', async t => {
+  const root = repo(t);
+  mkdirSync(join(root, '.dd', 'atoms'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'atoms', 'lesson.json'), '{}');
+  writeFileSync(join(root, '.dd', 'relations.json'), '{}');
+  await installStore(root, project());
+  assert.ok(!existsSync(join(root, '.dd', 'atoms')));
+  assert.ok(!existsSync(join(root, '.dd', 'relations.json')));
+});

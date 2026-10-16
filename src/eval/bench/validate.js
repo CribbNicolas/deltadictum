@@ -36,6 +36,8 @@ export function taskProblems(task, project) {
   if (typeof task.check !== 'function') problems.push('check');
   if (!Array.isArray(task.requirements)) problems.push('requirements');
   else if (task.kind === 'memory' && !task.requirements.some(r => r.auto)) problems.push('auto_requirement');
+  // An existing store is read at the project base; a task elsewhere would run dd2 on another store than the guide's.
+  if (project.store === 'existing' && task.base) problems.push('base');
   if (task.origin === 'mined' && !/^[0-9a-f]{7,40}$/.test(task.source ?? '')) problems.push('source');
   return [...new Set(problems)];
 }

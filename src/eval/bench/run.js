@@ -11,7 +11,7 @@
 // This spends real model usage. It runs only when invoked:
 //   node src/eval/bench/run.js --model=claude-haiku-5-5 --effort=high --out=bench-2026-10/haiku/results.json
 //     [--projects=a,b] [--tasks=a,b] [--selection=path] [--conditions=dd2,docref,doc,none] [--repeat=3]
-//     [--conc=1] [--seed=1] [--resume] [--recheck=a,b|all] [--check-only] [--registry=path]
+//     [--conc=1] [--seed=1] [--resume | --fresh] [--recheck=a,b|all] [--check-only] [--registry=path]
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { appendFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -38,6 +38,8 @@ const CONDITIONS = list(args.conditions) ?? ALL_CONDITIONS;
 if (CONDITIONS.some(c => !ALL_CONDITIONS.includes(c))) throw new Error(`unknown condition in ${args.conditions}`);
 const OUT = resolve(REPO, 'output', 'eval', args.out ?? 'bench-results.json');
 const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
+// Runs the harness itself failed (a broken setup, a git error): logged, never a row, so --resume runs them again.
+const ERRORS = OUT.replace(/\.json$/, '') + '.errors.jsonl';
 const RUNS = join(dirname(OUT), 'runs');
 const TIMEOUT_MS = 20 * 60 * 1000;
 // A Node script standing in for claude, for the harness's own test.
@@ -84,22 +86,29 @@ async function lintOf(project, dir, env) {
   return { lint_ok: out.ok, lint_output: out.ok ? null : out.out.slice(-1500) };
 }
 
-async function suiteOf(project, dir, env) {
-  const once = async () => {
-    const out = await runCommand(project.suite, dir, env);
-    return { passed: out.ok, failed: out.ok ? [] : (project.parseFailures?.(out.out) ?? []) };
-  };
+async function suiteIn(project, dir, env) {
+  const out = await runCommand(project.suite, dir, env);
+  return { passed: out.ok, failed: out.ok ? [] : (project.parseFailures?.(out.out) ?? []) };
+}
+
+// The baseline is a fresh clone of the same task and condition: the change may be
+// committed, and a stash of nothing cannot be popped.
+async function suiteOf(project, task, condition, dir, env) {
   const baseline = async () => {
-    gitOut(dir, '-c', 'user.name=eval', '-c', 'user.email=eval@localhost', 'stash', 'push', '-u', '-q');
-    try { return await once(); } finally { gitOut(dir, 'stash', 'pop', '-q'); }
+    const { dir: clean } = await prepareClone(project, task, condition);
+    try { return await suiteIn(project, clean, env); } finally { await removeClone(clean, project); }
   };
-  return suiteOutcome(once, baseline, project.knownFlaky ?? []);
+  return suiteOutcome(() => suiteIn(project, dir, env), baseline, project.knownFlaky ?? []);
 }
 
 async function runOnce(task, condition, index) {
   const project = projectOf(task);
   const runId = `${task.id}-${condition}-${index}`;
-  const { dir, store_warnings: storeWarnings, index_memories: indexMemories } = await prepareClone(project, task, condition);
+  const { dir, baseline, store_warnings: storeWarnings, index_memories: indexMemories } = await prepareClone(project, task, condition);
+  try { return await agentRun(project, task, condition, runId, dir, baseline, storeWarnings, indexMemories); } finally { await removeClone(dir, project); }
+}
+
+async function agentRun(project, task, condition, runId, dir, baseline, storeWarnings, indexMemories) {
   const env = { ...HOST_ENV, DD_DATA: join(dir, '..', 'dd-data'), DD_MAINTENANCE: '0' };
   // A headless session ends with its answer; a command left running in the background is never read back.
   const prompt = `${task.prompt}
@@ -127,33 +136,30 @@ Run every command in the foreground and wait for it to finish before your final 
     result = events.findLast(event => event?.type === 'result') ?? { is_error: true, result: timedOut ? 'timeout' : (stream.slice(-2000) + out.err) };
   } catch (err) { result = { is_error: true, result: err.message }; }
   const duration = Date.now() - started;
-  if (usageLimited(result)) {
-    await removeClone(dir, project);
-    throw new UsageLimit(String(result.result));
-  }
+  if (usageLimited(result)) throw new UsageLimit(String(result.result));
   await writeFile(join(RUNS, `${runId}.jsonl`), stream);
-  // The change as a reviewer sees it: new files included, DD's own store left out.
+  // The change as a reviewer sees it, against the baseline commit (the agent may have committed):
+  // new files included, DD's own store left out.
   gitOut(dir, 'add', '-A', '--', '.', ':(exclude).dd');
-  const patch = gitOut(dir, 'diff', '--cached', 'HEAD');
-  const numstat = gitOut(dir, 'diff', '--cached', '--numstat', 'HEAD');
+  const patch = gitOut(dir, 'diff', '--cached', '--binary', baseline);
+  const numstat = gitOut(dir, 'diff', '--cached', '--numstat', baseline);
   await writeFile(join(RUNS, `${runId}.diff`), patch);
   // With DD the session's final result is the reply to DD's Stop-hook reminder, not the task report.
   const report = taskReport(stream) ?? String(result.result ?? '');
   const check = await task.check(dir, report).catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
   const lint = await lintOf(project, dir, env);
-  const suite = await suiteOf(project, dir, env);
+  const suite = await suiteOf(project, task, condition, dir, env);
   const usage = result.usage ?? {};
   const row = { run_id: runId, task: task.id, project: project.id, situation: task.situation, origin: task.origin, kind: task.kind,
     memories: task.memories, withheld: task.withheld ?? [], condition, base: task.base ?? project.base, model: MODEL, effort: EFFORT, taskset: 'bench',
     dd_ready: ddReady, store_warnings: storeWarnings, index_memories: indexMemories,
     passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
     suite_passed: suite.passed, suite_first_passed: suite.first_passed, suite_failed_twice: suite.failed_twice, suite_regressions: suite.regressions,
-    suite_baseline_failed: suite.baseline_failed, suite_flaky: suite.flaky, numstat, ...latency,
+    suite_baseline_failed: suite.baseline_failed, suite_baseline_passed: suite.baseline_passed, suite_flaky: suite.flaky, numstat, ...latency,
     input_tokens: (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0),
     output_tokens: usage.output_tokens ?? 0, cost_usd: result.total_cost_usd ?? null, turns: result.num_turns ?? null,
     duration_ms: duration, timed_out: timedOut, answer: report.slice(0, 8000), final_answer: String(result.result ?? '').slice(0, 2000),
     error: result.is_error ? String(result.result).slice(0, 300) : null };
-  await removeClone(dir, project);
   return row;
 }
 
@@ -181,6 +187,7 @@ for (const project of usedProjects()) {
 // --check-only runs every task's check on an untouched clone: each must fail, or
 // the check passes work that was never done. No agent runs.
 if ('check-only' in args) {
+  // Checks that pass on an untouched clone, and projects whose suite or lint fails there.
   let passing = 0;
   for (const task of TASKS) {
     const project = projectOf(task);
@@ -191,9 +198,17 @@ if ('check-only' in args) {
       console.log(JSON.stringify({ task: task.id, passed: check.passed, requirements: check.requirements ?? {}, detail: check.detail }));
     } finally { await removeClone(dir, project); }
   }
-  // Each condition's clone, as the project's first task would get it.
+  // Each condition's clone, as the project's first task would get it; and the project's own suite
+  // and lint, which must pass on an untouched tree before any run is paid for.
   for (const project of usedProjects()) {
     const task = TASKS.find(t => t.project === project.id);
+    const { dir: clean } = await prepareClone(project, task, 'none');
+    try {
+      const suite = await suiteIn(project, clean, HOST_ENV);
+      const lint = await lintOf(project, clean, HOST_ENV);
+      if (!suite.passed || lint.lint_ok === false) passing += 1;
+      console.log(JSON.stringify({ project: project.id, suite_passes_untouched: suite.passed, lint_ok_untouched: lint.lint_ok, lint_output: lint.lint_output }));
+    } finally { await removeClone(clean, project); }
     for (const condition of CONDITIONS) {
       const { dir, index_memories: indexMemories, store_warnings: warnings } = await prepareClone(project, task, condition);
       try {
@@ -226,6 +241,8 @@ if ('resume' in args) {
   const kept = (await readFile(ROWS, 'utf8').catch(() => '')).split('\n').filter(Boolean).filter(line => !usageLimited(JSON.parse(line).error ?? ''));
   await writeFile(ROWS, kept.map(line => `${line}\n`).join(''));
   for (const line of kept) done.add(JSON.parse(line).run_id);
+} else if ((await readFile(ROWS, 'utf8').catch(() => '')).trim() && !('fresh' in args)) {
+  throw new Error(`rows_exist: ${ROWS} holds recorded runs; pass --resume to continue them or --fresh to discard them`);
 } else await rm(ROWS, { force: true });
 const jobs = schedule(TASKS, CONDITIONS, REPEAT, done, SEED);
 // --conc=N overlaps runs: each has its own clone and data directory.
@@ -233,7 +250,12 @@ async function worker() {
   for (let job = jobs.shift(); job; job = jobs.shift()) {
     let row;
     try { row = await runOnce(...job); } catch (err) {
-      if (!(err instanceof UsageLimit)) throw err;
+      if (!(err instanceof UsageLimit)) {
+        const runId = `${job[0].id}-${job[1]}-${job[2]}`;
+        await appendFile(ERRORS, JSON.stringify({ run_id: runId, at: new Date().toISOString(), error: String(err.stack ?? err).slice(0, 2000) }) + '\n');
+        console.log(JSON.stringify({ run_id: runId, harness_error: err.message }));
+        continue;
+      }
       console.log(JSON.stringify({ run_id: `${job[0].id}-${job[1]}-${job[2]}`, waiting_minutes: Math.round(err.wait / 60000), error: err.message }));
       jobs.unshift(job);
       await new Promise(r => setTimeout(r, err.wait));

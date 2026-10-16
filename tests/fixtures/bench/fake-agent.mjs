@@ -1,10 +1,17 @@
 // Stands in for `claude -p` in the bench harness's own test: writes the answer
 // file the fixture task checks and prints the stream-json lines the runner reads.
+// FAKE_AGENT_COMMIT=1 also commits the change, as an agent may; FAKE_AGENT_NOOP=1
+// changes nothing, as a review task's agent does.
+import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const cwd = process.cwd();
-writeFileSync(join(cwd, 'answer.txt'), 'done\n');
+if (!process.env.FAKE_AGENT_NOOP) writeFileSync(join(cwd, 'answer.txt'), 'done\n');
+if (process.env.FAKE_AGENT_COMMIT) {
+  execFileSync('git', ['-C', cwd, 'add', '-A']);
+  execFileSync('git', ['-C', cwd, '-c', 'user.name=agent', '-c', 'user.email=agent@localhost', 'commit', '-q', '-m', 'answer']);
+}
 const lines = [
   { type: 'system', subtype: 'init', cwd },
   { type: 'assistant', message: { id: 'm1', usage: { input_tokens: 100, output_tokens: 10 }, content: [{ type: 'tool_use', id: 'w1', name: 'Write', input: { file_path: join(cwd, 'answer.txt') } }] } },

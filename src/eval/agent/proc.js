@@ -14,7 +14,8 @@ export function killTree(pid) {
 // still shows what the agent did. A descendant that outlives the child keeps its
 // pipes open and 'close' never comes, so the child's exit settles the run after
 // a grace period.
-export function run(command, argv, { input, timeout, grace = 10000, ...options } = {}) {
+// errLimit caps what is kept of stderr; a suite that reports there (unittest, go vet) raises it.
+export function run(command, argv, { input, timeout, grace = 10000, errLimit = 4000, ...options } = {}) {
   return new Promise((resolveRun, reject) => {
     const child = spawn(command, argv, { windowsHide: true, ...options, stdio: [input == null ? 'ignore' : 'pipe', 'pipe', 'pipe'] });
     let out = '', err = '', timedOut = false, settled = false, pending;
@@ -29,7 +30,7 @@ export function run(command, argv, { input, timeout, grace = 10000, ...options }
       pending = setTimeout(() => settle(resolveRun, { code: null, out, err, timedOut }), Math.min(grace, 5000));
     }, timeout);
     child.stdout.on('data', d => { out += d; });
-    child.stderr.on('data', d => { if (err.length < 4000) err += d; });
+    child.stderr.on('data', d => { if (err.length < errLimit) err += d; });
     child.on('error', e => settle(reject, e));
     child.on('exit', code => { clearTimeout(pending); pending = setTimeout(() => settle(resolveRun, { code, out, err, timedOut }), grace); });
     child.on('close', code => settle(resolveRun, { code, out, err, timedOut }));
