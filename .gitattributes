@@ -1,3 +1,5 @@
 # The invented bench projects are kept byte for byte: their builds must be the same on every
 # machine, Go sources are LF, and their CSV fixtures keep CRLF and Latin-1 bytes.
 src/eval/bench/projects/*/src/** -text
+src/eval/bench/projects/*/solutions/** -text
+src/eval/bench/projects/*/hidden/** -text
