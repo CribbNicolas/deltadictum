@@ -1,5 +1,5 @@
 [
-  { "date": "2025-02-03T09:12:00Z", "message": "Start tollgate: module and readme", "paths": ["go.mod", "README.md", ".gitignore"] },
+  { "date": "2025-02-03T09:12:00Z", "message": "Start tollgate: module and readme", "paths": ["go.mod", "README.md", ".gitignore", ".gitattributes"] },
   { "date": "2025-02-03T15:40:00Z", "message": "Add configuration loading", "paths": ["internal/config/config.go", "config.example.json"] },
   { "date": "2025-02-04T10:05:00Z", "message": "Add a clock interface for tests", "paths": ["internal/clock/clock.go"] },
   { "date": "2025-02-05T11:30:00Z", "message": "Add key=value logger", "paths": ["internal/logx/logx.go"] },
