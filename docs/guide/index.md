@@ -1,5 +1,6 @@
 ---
 title: Reference
+description: "Reference for DeltaDictum: how it works, the memory format, configuration, storage and the security boundary."
 nav_order: 4
 has_children: true
 ---

@@ -1,0 +1,81 @@
+---
+import { getCollection } from 'astro:content';
+import Base from './Base.astro';
+import Header from '../components/Header.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Toc from '../components/Toc.astro';
+import PrevNext from '../components/PrevNext.astro';
+import { buildNav, neighbours } from '../lib/nav.js';
+import { describe } from '../lib/describe.js';
+import { routeFor } from '../lib/routes.js';
+import { SITE, href } from '../config.js';
+import '../styles/prose.css';
+
+const { page, headings } = Astro.props;
+const pages = (await getCollection('docs')).map(p => ({ id: p.id, ...p.data }));
+const groups = buildNav(pages);
+const { prev, next } = neighbours(groups, page.id);
+const group = groups.find(g => g.items.some(i => i.id === page.id));
+let description = page.data.description;
+if (!description) {
+  description = describe(page.body ?? '');
+  console.warn(`[docs] ${page.id} has no description in its front matter; using: ${description}`);
+}
+const home = new URL(SITE.base, SITE.url).href;
+const url = new URL(href(routeFor(page.id)), Astro.site).href;
+const inSection = group && group.title !== 'Start';
+const jsonLd = [
+  { '@context': 'https://schema.org', '@type': 'TechArticle', headline: page.data.title, description, url,
+    isPartOf: { '@type': 'WebSite', name: SITE.name, url: home } },
+  { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: SITE.name, item: home },
+    ...(inSection ? [{ '@type': 'ListItem', position: 2, name: group.title, item: new URL(href(group.items[0].href), SITE.url).href }] : []),
+    { '@type': 'ListItem', position: inSection ? 3 : 2, name: page.data.title, item: url },
+  ] },
+];
+---
+<Base title={page.data.title} description={description} ogImage={`og/${page.id}.png`} jsonLd={jsonLd}>
+  <Header docs />
+  <div class="layout">
+    <div class="side"><Sidebar groups={groups} current={page.id} /></div>
+    <main id="main" class="main" data-pagefind-body>
+      <p class="crumbs">Docs / {group?.title ?? 'Start'}</p>
+      <article class="prose">
+        <slot />
+      </article>
+      <PrevNext prev={prev} next={next} />
+      <p class="edit"><a href={`${SITE.repo}/edit/main/docs/${page.id}.md`}>Edit this page on GitHub</a></p>
+    </main>
+    <div class="toc-col"><Toc headings={headings} /></div>
+  </div>
+  <script>
+    // A copy button on every code block, a scroll box around every table, an anchor on every section heading.
+    for (const heading of document.querySelectorAll('.prose h2[id], .prose h3[id]')) {
+      heading.append(Object.assign(document.createElement('a'), { className: 'anchor', href: `#${heading.id}`, textContent: '#', ariaLabel: `Link to ${heading.textContent}` }));
+    }
+    for (const pre of document.querySelectorAll('.prose pre')) {
+      const button = Object.assign(document.createElement('button'), { type: 'button', className: 'copy', textContent: 'Copy' });
+      button.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(pre.querySelector('code')?.innerText ?? pre.innerText);
+        button.textContent = 'Copied';
+        setTimeout(() => { button.textContent = 'Copy'; }, 1500);
+      });
+      pre.append(button);
+    }
+    for (const table of document.querySelectorAll('.prose table')) {
+      const wrap = Object.assign(document.createElement('div'), { className: 'table-wrap' });
+      table.replaceWith(wrap);
+      wrap.append(table);
+    }
+  </script>
+</Base>
+<style>
+  .layout { max-width: 1360px; margin: 0 auto; padding: 0 var(--gutter); display: flex; flex-wrap: wrap; gap: 0 48px; align-items: flex-start; }
+  .side { flex: 1 1 220px; max-width: 250px; }
+  .main { flex: 999 1 560px; min-width: 0; max-width: 760px; padding: 40px 0 80px; }
+  .toc-col { flex: 1 1 180px; max-width: 220px; }
+  .crumbs { margin: 0 0 10px; font-size: 14px; color: var(--text-faint); }
+  .edit { margin: 22px 0 0; font-size: 14px; }
+  .edit a { color: var(--text-muted); }
+  @media (max-width: 959px) { .side { max-width: none; flex-basis: 100%; } }
+</style>

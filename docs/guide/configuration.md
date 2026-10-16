@@ -1,5 +1,6 @@
 ---
 title: Configuration
+description: "Every key of .dd/config.json, the file that opts a project into DeltaDictum and holds its settings."
 parent: Reference
 nav_order: 3
 ---

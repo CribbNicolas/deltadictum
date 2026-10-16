@@ -1,0 +1,15 @@
+---
+import { getCollection, render } from 'astro:content';
+import Doc from '../../layouts/Doc.astro';
+
+// Section overviews (docs/<section>/index.md). Benchmarks has its own page.
+export async function getStaticPaths() {
+  const pages = await getCollection('docs');
+  return pages.filter(page => /^[^/]+\/index$/.test(page.id) && page.id !== 'benchmarks/index')
+    .map(page => ({ params: { section: page.id.split('/')[0] }, props: { page } }));
+}
+
+const { page } = Astro.props;
+const { Content, headings } = await render(page);
+---
+<Doc page={page} headings={headings}><Content /></Doc>

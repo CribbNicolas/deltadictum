@@ -12,15 +12,7 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 
 ## The loop
 
-```mermaid
-flowchart TB
-  A["Session start<br>compile the index"] --> B["Prompt or tool call<br>match the triggers"]
-  B --> C["Deliver<br>once per session"]
-  C --> D["Check<br>edits and commands"]
-  D --> E["Stop<br>ask to save after a fix"]
-  E --> F["Review UI<br>or auto-accept"]
-  F -- "memories in git" --> A
-```
+![The DD loop: session start, prompt or tool call, deliver, check, stop, review, and back through git](../assets/dd-loop.svg)
 
 1. **Compile.** At session start, DD compiles the project's memories into an index when they changed
    (`.dd/local/v2/index.json`). Session start injects nothing into the agent's context; it shows you one

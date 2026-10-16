@@ -1,5 +1,6 @@
 ---
 title: OpenCode
+description: "Running DeltaDictum in OpenCode: how to install it, what the adapter supports, and how far it is verified."
 parent: Harnesses
 nav_order: 2
 ---
