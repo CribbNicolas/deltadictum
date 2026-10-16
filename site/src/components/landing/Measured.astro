@@ -18,7 +18,11 @@ const last = table.columns.at(-1).id;
         {table.rows.map(row => (
           <tr>
             <th scope="row">{row.label}</th>
-            {row.cells.map((cell, i) => <td class:list={{ base: table.columns[i].base, better: cell.better === true }}>{cell.text}</td>)}
+            {row.cells.map((cell, i) => (
+              <td class:list={{ base: table.columns[i].base, better: cell.better === true }}>
+                {cell.text}{cell.value && <span class="raw">{cell.value}</span>}
+              </td>
+            ))}
           </tr>
         ))}
       </tbody>
@@ -39,6 +43,7 @@ const last = table.columns.at(-1).id;
   tbody tr:last-child > * { border-bottom: 0; }
   td { font-family: var(--font-mono); color: var(--text-heading); }
   td.base { color: var(--text-faint); }
+  .raw { margin-left: 10px; color: var(--text); }
   td.better { color: var(--accent); font-weight: 500; }
   .caveat { margin: 14px 0 0; font-size: 14px; color: var(--text-faint); }
   .caveat a { color: var(--accent); text-underline-offset: 3px; }

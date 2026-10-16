@@ -12,39 +12,101 @@ import { href } from '../../config.js';
     </div>
     <p class="install"><span aria-hidden="true">$</span> <code>/plugin install dd@deltadictum</code></p>
   </div>
-  <figure class="terminal" aria-label="An agent session: DD adds a memory to the edit it applies to">
-    <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>claude · my-project</span></div>
+  <figure class="terminal" data-terminal aria-label="An agent session: DD adds a memory to the edit it applies to">
+    <div class="chrome" aria-hidden="true">
+      <i></i><i></i><i></i><span>claude · my-project</span>
+      <b class="dd" data-dd>DD</b>
+    </div>
     <div class="screen">
-      <p class="dim">DD - 12 memories live in this project. Review UI: /dd:review</p>
-      <p><span class="accent">&gt;</span> add a test for the store's close() method</p>
-      <p class="muted">● Edit tests/store.test.js</p>
-      <div class="delivery">
-        <p class="accent">DD - project knowledge (tests/store.test.js):</p>
+      <p class="dim step" data-step>DD - 12 memories live in this project. Review UI: /dd:review</p>
+      <p class="step" data-step><span class="accent">&gt;</span> <span data-type>add a test for the store's close() method</span></p>
+      <p class="muted step" data-step>● Edit <span class="path" data-match>tests/store.test.js</span></p>
+      <div class="delivery step" data-step>
+        <p class="accent">DD - project knowledge (<span class="path hit">tests/store.test.js</span>):</p>
         <p>[TRAP] Close stores in t.after</p>
         <p class="muted">A failing assertion otherwise leaves the handle open and node --test never ends.</p>
       </div>
-      <p class="muted">● Wrote t.after(() =&gt; store.close())</p>
+      <p class="muted step" data-step><span class="ok">✓</span> Wrote t.after(() =&gt; store.close())</p>
     </div>
   </figure>
 </section>
+<script>
+  // Plays the session once every few seconds: the prompt is typed, the edit's path matches a
+  // memory's trigger, the memory arrives with the tool call, the agent writes the fix. Without
+  // JavaScript, or with reduced motion asked for, the whole session shows still.
+  const terminal = document.querySelector('[data-terminal]');
+  if (terminal && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const steps = [...terminal.querySelectorAll('[data-step]')];
+    const typed = terminal.querySelector('[data-type]');
+    const match = terminal.querySelector('[data-match]');
+    const dd = terminal.querySelector('[data-dd]');
+    const prompt = typed.textContent;
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const show = i => steps[i].classList.add('on');
+    terminal.classList.add('animated');
+    const play = async () => {
+      for (;;) {
+        steps.forEach(step => step.classList.remove('on'));
+        match.classList.remove('hit');
+        dd.classList.remove('hit');
+        typed.textContent = '';
+        typed.classList.add('typing');
+        await wait(500); show(0);
+        await wait(900); show(1);
+        for (let n = 1; n <= prompt.length; n += 1) { typed.textContent = prompt.slice(0, n); await wait(32); }
+        typed.classList.remove('typing');
+        await wait(600); show(2);
+        await wait(700); match.classList.add('hit'); dd.classList.add('hit');
+        await wait(700); show(3);
+        await wait(1600); show(4);
+        await wait(4200);
+        terminal.classList.add('fade');
+        await wait(500);
+        terminal.classList.remove('fade');
+      }
+    };
+    play();
+  }
+</script>
 <style>
   .hero { padding-top: 72px; padding-bottom: 88px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center; }
   .copy { flex: 1 1 420px; min-width: 0; }
-  h1 { margin: 0; font-size: clamp(40px, 6vw, 60px); line-height: 1.04; letter-spacing: -0.035em; color: var(--text-strong); font-weight: 700; }
+  h1 { margin: 0; font-size: clamp(36px, 6vw, 60px); line-height: 1.04; letter-spacing: -0.035em; color: var(--text-strong); font-weight: 700; }
   .lede { margin: 24px 0 0; font-size: 19px; color: var(--text-muted); max-width: 520px; }
   .actions { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
-  .install { margin: 28px 0 0; display: inline-flex; gap: 12px; font-family: var(--font-mono); font-size: 14px; background: var(--surface-3); border: 1px solid var(--border-1); border-radius: 8px; padding: 10px 14px; color: var(--text); }
+  .install { margin: 28px 0 0; display: inline-flex; gap: 12px; max-width: 100%; font-family: var(--font-mono); font-size: 14px; background: var(--surface-3); border: 1px solid var(--border-1); border-radius: 8px; padding: 10px 14px; color: var(--text); overflow-x: auto; }
   .install span { color: var(--text-faint); }
-  .install code { font-size: inherit; }
-  .terminal { flex: 1 1 460px; min-width: 0; margin: 0; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); overflow: hidden; }
+  .install code { font-size: inherit; white-space: nowrap; }
+  .terminal { flex: 1 1 460px; min-width: 0; margin: 0; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); overflow: hidden; transition: opacity 0.45s ease; }
+  .terminal.fade { opacity: 0.25; }
   .chrome { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-1); }
   .chrome i { width: 11px; height: 11px; border-radius: 50%; background: var(--border-3); }
   .chrome span { margin-left: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
-  .screen { padding: 22px 22px 26px; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; overflow-x: auto; color: #e6e9ee; }
+  .dd { margin-left: auto; font: 600 11px var(--font-mono); letter-spacing: 0.06em; color: var(--text-faint); border: 1px solid var(--border-3); border-radius: 999px; padding: 2px 8px; transition: color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+  .dd.hit { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px rgba(232, 184, 74, 0.45); }
+  .screen { padding: 22px 22px 26px; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; color: #e6e9ee; overflow-wrap: anywhere; }
   .screen p { margin: 0; }
   .screen > * + * { margin-top: 14px; }
   .dim { color: var(--text-faint); }
   .muted { color: var(--text-muted); }
   .accent { color: var(--accent); }
+  .ok { color: #7ee2a8; }
   .delivery { margin-top: 10px !important; border-left: 2px solid var(--accent); padding: 10px 14px; background: #151a21; border-radius: 0 6px 6px 0; }
+  .path { border-radius: 3px; padding: 0 2px; transition: background 0.35s, color 0.35s, box-shadow 0.35s; }
+  .path.hit { background: rgba(232, 184, 74, 0.16); color: var(--accent); box-shadow: 0 0 0 1px rgba(232, 184, 74, 0.45); }
+  .animated .step { opacity: 0; transform: translateY(6px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .animated .step.on { opacity: 1; transform: none; }
+  .animated .delivery.on { animation: arrive 1.4s ease-out; }
+  .typing::after { content: ''; display: inline-block; width: 0.55em; height: 1.05em; margin-left: 1px; vertical-align: text-bottom; background: var(--accent); animation: blink 0.9s steps(1) infinite; }
+  @keyframes arrive {
+    0% { box-shadow: 0 0 0 0 rgba(232, 184, 74, 0.5); background: #1d1a12; }
+    100% { box-shadow: 0 0 0 16px rgba(232, 184, 74, 0); background: #151a21; }
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (max-width: 520px) {
+    .hero { padding-top: 40px; padding-bottom: 56px; gap: 40px; }
+    .lede { font-size: 17px; }
+    .screen { padding: 18px 16px 20px; font-size: 12.5px; }
+    .delivery { padding: 8px 10px; }
+  }
 </style>
