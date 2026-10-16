@@ -1,5 +1,6 @@
 ---
 title: Harnesses
+description: "DeltaDictum on harnesses other than Claude Code: Codex, OpenCode and Grok Build, and how far each is verified."
 nav_order: 5
 has_children: true
 ---

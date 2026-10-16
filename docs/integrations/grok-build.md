@@ -1,5 +1,6 @@
 ---
 title: Grok Build
+description: "Running DeltaDictum in Grok Build: how to install it, what works, and why it is not verified yet."
 parent: Harnesses
 nav_order: 3
 ---

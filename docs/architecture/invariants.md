@@ -1,5 +1,6 @@
 ---
 title: Invariants
+description: "Properties of DeltaDictum that must never break, each with what enforces it in v2."
 parent: Architecture
 nav_order: 3
 ---

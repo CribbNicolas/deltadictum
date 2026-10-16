@@ -1,5 +1,6 @@
 ---
 title: Plugin constraints
+description: "The seven limits DeltaDictum works inside as a plugin for coding-agent harnesses: ephemeral hooks, no resident process, no dependencies, local-first."
 parent: Architecture
 nav_order: 2
 artifact_class: authored

@@ -1,5 +1,6 @@
 ---
 title: Behavioural contract
+description: "The behavioural contract DeltaDictum guarantees today: what it keeps, when it delivers, what it never does, and how each promise is enforced."
 parent: Architecture
 nav_order: 1
 ---

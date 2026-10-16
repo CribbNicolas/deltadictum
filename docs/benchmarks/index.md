@@ -1,5 +1,6 @@
 ---
 title: Benchmarks
+description: "How DeltaDictum is measured against an agent alone and against written documentation, trial by trial, with the numbers and their intervals."
 nav_order: 6
 has_children: true
 ---
