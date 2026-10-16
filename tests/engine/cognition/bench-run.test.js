@@ -90,6 +90,17 @@ test('a check that reads the change against HEAD sees work the agent committed',
   assert.equal(rowsOf(out)[0].passed, true, rowsOf(out)[0].detail);
 });
 
+test('--no-suite (calibration decides on checks alone) runs neither the suite nor lint and says so in the row', async t => {
+  const { root, registry } = fixture(t, { suite: "['-e', 'process.exit(1)']" });
+  const out = join(root, 'out', 'results.json');
+  runner([`--registry=${registry}`, '--model=fake', `--out=${out}`, '--repeat=1', '--conditions=none', '--no-suite']);
+  const [row] = rowsOf(out);
+  assert.equal(row.passed, true);
+  assert.equal(row.suite_passed, null);
+  assert.equal(row.suite_skipped, true);
+  assert.equal(row.suite_baseline_passed, null);
+});
+
 test('an agent that changed nothing, on a suite that always fails, is recorded as undecided and the run goes on', async t => {
   const { root, registry } = fixture(t, { suite: "['-e', 'process.exit(1)']" });
   const out = join(root, 'out', 'results.json');

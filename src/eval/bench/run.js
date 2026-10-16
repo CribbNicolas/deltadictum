@@ -11,7 +11,7 @@
 // This spends real model usage. It runs only when invoked:
 //   node src/eval/bench/run.js --model=claude-haiku-5-5 --effort=high --out=bench-2026-10/haiku/results.json
 //     [--projects=a,b] [--tasks=a,b] [--selection=path] [--conditions=dd2,docref,doc,none] [--repeat=3]
-//     [--conc=1] [--seed=1] [--resume | --fresh] [--recheck=a,b|all] [--check-only] [--registry=path]
+//     [--conc=1] [--seed=1] [--resume | --fresh] [--recheck=a,b|all] [--check-only] [--no-suite] [--registry=path]
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { appendFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -45,6 +45,7 @@ const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
 const ERRORS = OUT.replace(/\.json$/, '') + '.errors.jsonl';
 const RUNS = join(dirname(OUT), 'runs');
 const TIMEOUT_MS = 20 * 60 * 1000;
+const NO_SUITE = 'no-suite' in args;
 // A Node script standing in for claude, for the harness's own test.
 const AGENT = process.env.DD_BENCH_AGENT ?? null;
 const HOST_ENV = { ...process.env };
@@ -152,14 +153,16 @@ Run every command in the foreground and wait for it to finish before your final 
   // With DD the session's final result is the reply to DD's Stop-hook reminder, not the task report.
   const report = taskReport(stream) ?? String(result.result ?? '');
   const check = await task.check(dir, report).catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
-  const lint = await lintOf(project, dir, env);
-  const suite = await suiteOf(project, task, condition, dir, env);
+  // --no-suite: calibration decides on checks alone, so neither the suite nor lint is paid for.
+  const lint = NO_SUITE ? { lint_ok: null, lint_output: null } : await lintOf(project, dir, env);
+  const suite = NO_SUITE ? { passed: null, first_passed: null, failed_twice: [], regressions: [], baseline_failed: null, baseline_passed: null, flaky: [] }
+    : await suiteOf(project, task, condition, dir, env);
   const usage = result.usage ?? {};
   const row = { run_id: runId, task: task.id, project: project.id, situation: task.situation, origin: task.origin, kind: task.kind,
     memories: task.memories, withheld: task.withheld ?? [], condition, base: task.base ?? project.base, model: MODEL, effort: EFFORT, taskset: 'bench',
     dd_ready: ddReady, store_warnings: storeWarnings, compile_warnings: compileWarnings, index_memories: indexMemories,
     passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
-    suite_passed: suite.passed, suite_first_passed: suite.first_passed, suite_failed_twice: suite.failed_twice, suite_regressions: suite.regressions,
+    suite_passed: suite.passed, suite_skipped: NO_SUITE, suite_first_passed: suite.first_passed, suite_failed_twice: suite.failed_twice, suite_regressions: suite.regressions,
     suite_baseline_failed: suite.baseline_failed, suite_baseline_passed: suite.baseline_passed, suite_flaky: suite.flaky, numstat, ...latency,
     input_tokens: (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0),
     output_tokens: usage.output_tokens ?? 0, cost_usd: result.total_cost_usd ?? null, turns: result.num_turns ?? null,
