@@ -1,0 +1,50 @@
+---
+import { href } from '../../config.js';
+---
+<section class="hero wrap">
+  <div class="copy">
+    <p class="eyebrow">PLUGIN FOR CLAUDE CODE · CODEX · OPENCODE</p>
+    <h1>What your code doesn't say, said at the right moment.</h1>
+    <p class="lede">DeltaDictum keeps the decisions, traps and unwritten steps of your project as memories in git, and hands each one to the agent right before the tool call it applies to.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href={href('getting-started.html')}>Get started</a>
+      <a class="btn btn-ghost" href={href('guide/how-it-works.html')}>How it works</a>
+    </div>
+    <p class="install"><span aria-hidden="true">$</span> <code>/plugin install dd@deltadictum</code></p>
+  </div>
+  <figure class="terminal" aria-label="An agent session: DD adds a memory to the edit it applies to">
+    <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>claude · my-project</span></div>
+    <div class="screen">
+      <p class="dim">DD - 12 memories live in this project. Review UI: /dd:review</p>
+      <p><span class="accent">&gt;</span> add a test for the store's close() method</p>
+      <p class="muted">● Edit tests/store.test.js</p>
+      <div class="delivery">
+        <p class="accent">DD - project knowledge (tests/store.test.js):</p>
+        <p>[TRAP] Close stores in t.after</p>
+        <p class="muted">A failing assertion otherwise leaves the handle open and node --test never ends.</p>
+      </div>
+      <p class="muted">● Wrote t.after(() =&gt; store.close())</p>
+    </div>
+  </figure>
+</section>
+<style>
+  .hero { padding-top: 72px; padding-bottom: 88px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center; }
+  .copy { flex: 1 1 420px; min-width: 0; }
+  h1 { margin: 0; font-size: clamp(40px, 6vw, 60px); line-height: 1.04; letter-spacing: -0.035em; color: var(--text-strong); font-weight: 700; }
+  .lede { margin: 24px 0 0; font-size: 19px; color: var(--text-muted); max-width: 520px; }
+  .actions { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .install { margin: 28px 0 0; display: inline-flex; gap: 12px; font-family: var(--font-mono); font-size: 14px; background: var(--surface-3); border: 1px solid var(--border-1); border-radius: 8px; padding: 10px 14px; color: var(--text); }
+  .install span { color: var(--text-faint); }
+  .install code { font-size: inherit; }
+  .terminal { flex: 1 1 460px; min-width: 0; margin: 0; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); overflow: hidden; }
+  .chrome { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-1); }
+  .chrome i { width: 11px; height: 11px; border-radius: 50%; background: var(--border-3); }
+  .chrome span { margin-left: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+  .screen { padding: 22px 22px 26px; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; overflow-x: auto; color: #e6e9ee; }
+  .screen p { margin: 0; }
+  .screen > * + * { margin-top: 14px; }
+  .dim { color: var(--text-faint); }
+  .muted { color: var(--text-muted); }
+  .accent { color: var(--accent); }
+  .delivery { margin-top: 10px !important; border-left: 2px solid var(--accent); padding: 10px 14px; background: #151a21; border-radius: 0 6px 6px 0; }
+</style>
