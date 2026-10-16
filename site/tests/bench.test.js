@@ -40,6 +40,13 @@ test('the landing table: Base in the base column, changes elsewhere', () => {
   assert.deepEqual(table.rows[1].cells.map(c => c.text), ['Base', '+14%', '+0%']);
 });
 
+test('the base cell shows the base value beside the word Base', () => {
+  const table = tableFor(SUMMARY);
+  assert.equal(table.rows[0].cells[0].value, '70%');
+  assert.equal(table.rows[1].cells[0].value, '27.2k tokens');
+  assert.equal(table.rows[0].cells[1].value, undefined);
+});
+
 test('the detail table carries values, intervals and changes', () => {
   const row = tableFor(SUMMARY, { detail: true }).rows[0];
   assert.deepEqual(row.cells.map(c => c.text), ['70%', '72%', '77%']);

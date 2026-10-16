@@ -40,7 +40,7 @@ export function tableFor(summary, { detail = false } = {}) {
     const cells = columns.map(column => {
       const value = metric.values[column.id];
       const change = column.base ? null : formatChange(value, base, metric.unit, metric.better);
-      if (!detail) return column.base ? { text: 'Base', better: null } : change;
+      if (!detail) return column.base ? { text: 'Base', value: formatValue(value, metric.unit), better: null } : change;
       const ci = metric.ci95?.[column.id];
       return { text: formatValue(value, metric.unit), ci: ci ? `${Math.round(ci[0])}–${Math.round(ci[1])}` : null,
         change: change?.text ?? null, better: change?.better ?? null };
