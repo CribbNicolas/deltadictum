@@ -13,7 +13,7 @@ class Bench(unittest.TestCase):
         with tempfile.TemporaryDirectory() as book:
             cli.import_file(book, JANUARY)
             path = os.path.join(book, "export.se")
-            sie.export_sie(Ledger.load(os.path.join(book, "ledger.jsonl")), path)
+            sie.write_sie(Ledger.load(os.path.join(book, "ledger.jsonl")), path)
             with open(path, "rb") as f:
                 text = f.read().decode("latin-1")
         self.assertEqual(text.count("#VER"), 9)

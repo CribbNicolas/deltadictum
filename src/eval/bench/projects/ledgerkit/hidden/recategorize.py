@@ -22,6 +22,9 @@ def run(book, *argv):
             return cli.main(["--book", book, *argv])
         except SystemExit as e:
             return e.code
+        except Exception:
+            # A refusal by exception, with the entry left as it was, is a refusal too.
+            return 1
 
 
 class Bench(unittest.TestCase):

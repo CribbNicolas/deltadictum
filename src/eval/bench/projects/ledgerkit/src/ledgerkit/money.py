@@ -19,5 +19,5 @@ def fmt(amount: int) -> str:
 
 
 def round_half_up(value: Decimal) -> int:
-    """Round a Decimal amount of cents for display."""
+    """Round a Decimal amount of cents, halves away from zero."""
     return int(value.to_integral_value(rounding=ROUND_HALF_UP))

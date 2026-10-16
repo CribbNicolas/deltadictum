@@ -22,3 +22,12 @@ export async function goHidden(dir, { pkg, file, tests }) {
 }
 
 export const addedGo = (dir, prefix) => addedLines(dir, prefix, ['.go']);
+
+// A client that keeps idle connections under 30 seconds: the shared constructor, or an
+// IdleConnTimeout of at most 29 s as a field or an assignment; never the default client.
+export function idleUnder30s(source) {
+  if (/http\.DefaultClient/.test(source)) return false;
+  if (/relay\.NewHTTPClient\(/.test(source)) return true;
+  const seconds = [...source.matchAll(/IdleConnTimeout\s*[:=]\s*(\d+)\s*\*\s*time\.Second/g)].map(m => Number(m[1]));
+  return seconds.length > 0 && seconds.every(s => s <= 29);
+}

@@ -3,6 +3,7 @@ package intake
 import (
 	"bytes"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -31,9 +32,12 @@ func benchInvalid(t *testing.T) (int, string, string) {
 	errR, errW, _ := os.Pipe()
 	stdout, stderr := os.Stdout, os.Stderr
 	os.Stdout, os.Stderr = outW, errW
+	// The log package keeps the stderr it started with: point it at the pipe too.
+	log.SetOutput(errW)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/v1/events", strings.NewReader(body)))
 	os.Stdout, os.Stderr = stdout, stderr
+	log.SetOutput(stderr)
 	outW.Close()
 	errW.Close()
 	out, _ := io.ReadAll(outR)

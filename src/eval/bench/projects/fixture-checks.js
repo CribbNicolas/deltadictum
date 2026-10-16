@@ -33,3 +33,19 @@ export async function addedLines(dir, prefix, extensions) {
 }
 
 export const detail = parts => Object.entries(parts).map(([k, v]) => `${k} ${v}`).join(', ');
+
+// A review report flags a problem when one of its items (a numbered or bulleted line with what
+// follows it, or a paragraph) matches every pattern: words scattered over the report do not count.
+export function flags(answer, ...patterns) {
+  const items = String(answer ?? '').split(/\n\s*\n|\n(?=\s*(?:\d+[.)]|[-*•])\s)/);
+  return items.some(item => patterns.every(pattern => pattern.test(item)));
+}
+
+// The lines a change added under prefix, leaving out files that are themselves the sanctioned helper.
+export async function addedLinesExcept(dir, prefix, extensions, excluded) {
+  const out = [];
+  for (const file of (await changedFiles(dir, prefix)).filter(f => extensions.some(ext => f.endsWith(ext)) && !excluded.includes(f))) {
+    out.push(await addedLines(dir, file, extensions));
+  }
+  return out.join('\n');
+}

@@ -3,7 +3,7 @@
 from ledgerkit import money
 
 
-def export_sie(ledger, path: str) -> None:
+def write_sie(ledger, path: str) -> None:
     """Write the ledger to path as an SIE 4 file: one #VER per entry, its #TRANS on the bank account."""
     lines = ["#FLAGGA 0", "#SIETYP 4", '#PROGRAM "ledgerkit" 1.4.0']
     for n, e in enumerate(ledger.entries(), start=1):

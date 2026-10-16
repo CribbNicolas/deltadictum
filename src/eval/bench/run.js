@@ -104,11 +104,11 @@ async function suiteOf(project, task, condition, dir, env) {
 async function runOnce(task, condition, index) {
   const project = projectOf(task);
   const runId = `${task.id}-${condition}-${index}`;
-  const { dir, baseline, store_warnings: storeWarnings, index_memories: indexMemories } = await prepareClone(project, task, condition);
-  try { return await agentRun(project, task, condition, runId, dir, baseline, storeWarnings, indexMemories); } finally { await removeClone(dir, project); }
+  const { dir, baseline, store_warnings: storeWarnings, compile_warnings: compileWarnings, index_memories: indexMemories } = await prepareClone(project, task, condition);
+  try { return await agentRun(project, task, condition, runId, dir, baseline, storeWarnings, compileWarnings, indexMemories); } finally { await removeClone(dir, project); }
 }
 
-async function agentRun(project, task, condition, runId, dir, baseline, storeWarnings, indexMemories) {
+async function agentRun(project, task, condition, runId, dir, baseline, storeWarnings, compileWarnings, indexMemories) {
   const env = { ...HOST_ENV, DD_DATA: join(dir, '..', 'dd-data'), DD_MAINTENANCE: '0' };
   // A headless session ends with its answer; a command left running in the background is never read back.
   const prompt = `${task.prompt}
@@ -152,7 +152,7 @@ Run every command in the foreground and wait for it to finish before your final 
   const usage = result.usage ?? {};
   const row = { run_id: runId, task: task.id, project: project.id, situation: task.situation, origin: task.origin, kind: task.kind,
     memories: task.memories, withheld: task.withheld ?? [], condition, base: task.base ?? project.base, model: MODEL, effort: EFFORT, taskset: 'bench',
-    dd_ready: ddReady, store_warnings: storeWarnings, index_memories: indexMemories,
+    dd_ready: ddReady, store_warnings: storeWarnings, compile_warnings: compileWarnings, index_memories: indexMemories,
     passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
     suite_passed: suite.passed, suite_first_passed: suite.first_passed, suite_failed_twice: suite.failed_twice, suite_regressions: suite.regressions,
     suite_baseline_failed: suite.baseline_failed, suite_baseline_passed: suite.baseline_passed, suite_flaky: suite.flaky, numstat, ...latency,
