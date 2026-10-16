@@ -70,3 +70,17 @@ test('a bench store starts from an empty .dd: v1 atoms and other leftovers do no
   assert.ok(!existsSync(join(root, '.dd', 'atoms')));
   assert.ok(!existsSync(join(root, '.dd', 'relations.json')));
 });
+
+test('a definition\'s check reaches the stored memory', async t => {
+  const root = repo(t);
+  const check = { on: ['edit'], paths: ['src/**/*.go'], if_content: 'os\\.Rename\\(', say: 'Use fsx.ReplaceFile.', examples: { violates: 'os.Rename(a, b)', passes: 'fsx.ReplaceFile(a, b)' } };
+  const { memories } = await materializeMemories(root, project({ memories: [definition('net/retry', { check })] }));
+  assert.deepEqual(memories[0].check, check);
+});
+
+test('the compiler\'s warnings come back from installing a store', async t => {
+  const root = repo(t);
+  const check = { on: ['edit'], paths: ['src/**/*.go'], if_content: 'os\\.Rename\\(', say: 'Use fsx.ReplaceFile.', examples: { violates: 'fsx.ReplaceFile(a, b)', passes: 'os.Rename(a, b)' } };
+  const out = await installStore(root, project({ memories: [definition('net/retry', { check })] }));
+  assert.ok(out.compile_warnings.some(w => w.kind === 'check_examples_fail'), JSON.stringify(out.compile_warnings));
+});

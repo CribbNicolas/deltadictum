@@ -30,7 +30,7 @@ export async function materializeMemories(root, project) {
       evidence.push({ type: 'file', path: entry.path, sha256: createHash('sha256').update(await readFile(path)).digest('hex'), summary: entry.summary });
     }
     memories.push({ schema_version: 8, id: benchMemoryId(project.id, d.topic), project_id: project.id, topic: d.topic, kind: d.kind,
-      status: d.status ?? 'active', title: d.title, body: d.body, not_derivable: d.not_derivable, triggers: d.triggers, evidence,
+      status: d.status ?? 'active', title: d.title, body: d.body, not_derivable: d.not_derivable, triggers: d.triggers, ...(d.check ? { check: d.check } : {}), evidence,
       origin: 'user_explicit', replaces: d.replaces ? benchMemoryId(project.id, d.replaces) : null, revisit_when: [],
       review: { migrated: false, issues: [], accepted: { by: 'person', at: CREATED } }, created: CREATED, updated: CREATED });
   }
@@ -46,9 +46,9 @@ export async function installStore(root, project) {
     await initProject(root, { projectId: project.id });
     await createMemoryFiles(dd).commit({ put: memories });
   }
-  await compileProject(root);
+  const { warnings: compileWarnings } = await compileProject(root);
   const index = JSON.parse(await readFile(join(dd, 'local', 'v2', 'index.json'), 'utf8').catch(() => 'null'));
-  return { memories, warnings, index_memories: index ? Object.keys(index.memories ?? {}).length : null };
+  return { memories, warnings, compile_warnings: compileWarnings, index_memories: index ? Object.keys(index.memories ?? {}).length : null };
 }
 
 export async function writeGuide(root, project, memories, referenced) {
