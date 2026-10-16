@@ -66,9 +66,6 @@ export const MINED_TASKS = [
   mined({ id: 'session-cwd', situation: 'S3', fix: '3bdb8bd', parent: 'f070b60', memory: 'hooks/session-cwd',
     test: 'tests/hooks/v2-events.test.js', names: ['relative paths in a command, a search or a read are resolved from the session folder'],
     prompt: 'I started the agent in `packages/api` of a monorepo, and DD never delivers that folder\'s memories: the relative paths in my commands, searches and reads are taken from the repository root, not from the folder the session runs in. Fix it. `toolEvent(name, input, root, cwd)` and `bashPaths(command, root, cwd)` should take the session folder as an optional last argument; without it, paths resolve from the root as they do now.' }),
-  mined({ id: 'compile-overlap', situation: 'S2', fix: 'f070b60', parent: '1a382e7', memory: 'engine/compile-overlap',
-    test: 'tests/engine/v2/compile.test.js', names: ['a compile that overlaps another never leaves the index without its bodies'],
-    prompt: 'Sometimes every delivery is only a title with no body, and it stays that way until the next session. Reproduce it and fix it.' }),
   mined({ id: 'rename-retry', situation: 'S17', fix: 'd1c4803', parent: '7fa5e99', memory: 'engine/windows-rename-retry',
     test: 'tests/engine/v2/compile.test.js', names: ['a rename the system refuses for a moment is retried, and a lasting refusal leaves no temp file'],
     prompt: 'On Windows, writing the compiled index sometimes dies with EPERM while a hook is reading it. Make the write robust; let `writeCompiled(paths, compiled, { rename })` take the rename function as an option, defaulting to the real one, so a test can stand in for the system.' }),
@@ -98,9 +95,17 @@ export const MINED_TASKS = [
   task.requirements = [{ id: 'plugin_root_cli', auto: true, text: 'The recall and review skills run node on ${CLAUDE_PLUGIN_ROOT}/src/cli.js and never npx.' }];
   task.check = async dir => {
     const skill = name => { try { return readFileSync(join(dir, 'skills', name, 'SKILL.md'), 'utf8'); } catch { return ''; } };
-    // npx only counts in what the skill runs (fenced blocks and inline code); prose may warn against it.
-    const code = text => [...text.matchAll(/```[^\n]*\n([\s\S]*?)```|`([^`\n]+)`/g)].map(m => m[1] ?? m[2]).join('\n');
-    const ok = ['recall', 'review'].every(name => /node\s+"?\$\{?CLAUDE_PLUGIN_ROOT\}?\/src\/cli\.js"?/.test(skill(name)) && !/\bnpx\b/.test(code(skill(name))));
+    // npx only counts in what the skill runs: anywhere in a fenced block, and in inline code unless its
+    // sentence forbids it ("Do not run `npx deltadictum`", as every calibration run wrote).
+    const FENCE = /```[^\n]*\n([\s\S]*?)```/g;
+    const FORBIDS = /\b(?:do not|don't|never|instead of|rather than|avoid)\b/i;
+    const runsNpx = text => {
+      const sentences = text.replace(/\r/g, '').replace(FENCE, '\n\n').split(/\n\s*\n/)
+        .flatMap(paragraph => paragraph.replace(/\n/g, ' ').split(/(?<=[.!?])\s+/));
+      return [...text.matchAll(FENCE)].some(m => /\bnpx\b/.test(m[1]))
+        || sentences.some(s => [...s.matchAll(/`([^`]+)`/g)].some(m => /\bnpx\b/.test(m[1])) && !FORBIDS.test(s));
+    };
+    const ok = ['recall', 'review'].every(name => /node\s+"?\$\{?CLAUDE_PLUGIN_ROOT\}?\/src\/cli\.js"?/.test(skill(name)) && !runsNpx(skill(name)));
     return { passed: ok, requirements: { plugin_root_cli: ok }, detail: detail({ 'skills run the plugin CLI': ok }) };
   };
 }

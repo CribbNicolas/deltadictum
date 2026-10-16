@@ -14,17 +14,20 @@ const FILES = {
   'supermem-crlf-edit-check': 'tests/hooks/v2-checks.test.js', 'supermem-run-is-not-edit': 'tests/capture/turn-checks.test.js',
   'supermem-pattern-empty-class': 'tests/engine/v2/check-pattern.test.js', 'supermem-glob-star-chain': 'tests/engine/v2/clause.test.js',
   'supermem-telemetry-locked': 'tests/maintenance/telemetry.test.js', 'supermem-session-cwd': 'tests/hooks/v2-events.test.js',
-  'supermem-compile-overlap': 'tests/engine/v2/compile.test.js', 'supermem-rename-retry': 'tests/engine/v2/compile.test.js',
+  'supermem-rename-retry': 'tests/engine/v2/compile.test.js',
   'supermem-dead-symbol': 'tests/engine/v2/compile.test.js', 'supermem-skills-npx': null,
   'supermem-claim-delivered': 'tests/hooks/v2-hook.test.js',
   'supermem-subfolder-committed': 'tests/capture/turn-checks.test.js', 'supermem-symbols-not-prompts': 'tests/engine/v2/clause.test.js',
   'supermem-inbox-ignored': 'tests/capture/inbox.test.js',
 };
 
+// Hidden tests edited for the benchmark (each edit says so in the file): rewriting them from git would undo it.
+const EDITED = new Set(['d1c4803-compile.test.js', '7160d15-clause.test.js']);
+
 for (const task of MINED_TASKS) {
   const fix = task.source;
   const test = FILES[task.id];
-  if (test) {
+  if (test && !EDITED.has(`${fix}-${basename(test)}`)) {
     const file = join(HERE, '..', 'hidden', `${fix}-${basename(test)}`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, git('show', `${fix}:${test}`));

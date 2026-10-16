@@ -1,19 +1,41 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clauseMatches, globToRegExp, hasCommand, hasSymbol, memoryMatch } from '../../../src/engine/clause.cjs';
+import * as clause from '../../../src/engine/clause.cjs';
+import { compileIndex } from '../../../src/engine/compile.js';
+import { matchEvent, prepareIndex } from '../../../src/engine/match.cjs';
+
+// Benchmark edit: a namespace import, so a fix that renames globToRegExp fails only the tests that use it.
+const { clauseMatches, globToRegExp, hasCommand, hasSymbol, memoryMatch } = clause;
 
 const ev = (kind, paths = [], text = '') => ({ kind, paths, text });
 
+const memory = (id, triggers) => ({
+  schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title: `Memory ${id}`,
+  body: `Body of ${id}.`, not_derivable: 'Hidden.', origin: 'model_initiated', replaces: null, revisit_when: [],
+  review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
+  triggers, evidence: [{ type: 'note', ref: 'x', summary: 'n' }],
+});
+
 // Chained `**/` once compiled to nested optional groups that backtrack
 // exponentially on a path they miss: 16 of them hung every hook for minutes.
+// Benchmark edit: judged through what every design keeps, the reference matcher
+// and the compiled index the hook matches against, not through globToRegExp.
 test('chained ** segments match as one and stay fast on a path they miss', () => {
-  const chained = globToRegExp(`${'**/'.repeat(16)}*.test.js`);
-  assert.equal(chained.test('a/b/x.test.js'), true);
-  assert.equal(chained.test('x.test.js'), true);
+  const chained = `${'**/'.repeat(16)}*.test.js`;
+  const { index } = compileIndex({ memories: [memory('m1', [{ on: ['read'], paths: [chained] }]),
+    memory('m2', [{ on: ['read'], paths: ['src/**/**'] }])], manifest: { count: 2, hash: 'h' } });
+  const runtime = prepareIndex(index);
+  const fired = path => matchEvent(runtime, ev('read', [path])).map(hit => hit.id);
+  const reference = (glob, path) => clauseMatches({ on: ['read'], paths: [glob] }, ev('read', [path])).matched;
+  assert.deepEqual(fired('a/b/x.test.js'), ['m1']);
+  assert.deepEqual(fired('x.test.js'), ['m1']);
+  assert.equal(reference(chained, 'a/b/x.test.js'), true);
+  assert.equal(reference(chained, 'x.test.js'), true);
   const deep = `${Array.from({ length: 22 }, (_, i) => `d${i}`).join('/')}/x.txt`;
   const started = performance.now();
-  assert.equal(chained.test(deep), false);
-  assert.equal(globToRegExp('src/**/**').test(deep), false);
+  assert.deepEqual(fired(deep), []);
+  assert.equal(reference(chained, deep), false);
+  assert.equal(reference('src/**/**', deep), false);
   assert.ok(performance.now() - started < 50, `took ${performance.now() - started} ms`);
 });
 
