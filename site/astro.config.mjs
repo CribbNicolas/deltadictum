@@ -3,8 +3,11 @@ import sitemap from '@astrojs/sitemap';
 import { unified } from '@astrojs/markdown-remark';
 import { fileURLToPath } from 'node:url';
 import { SITE } from './src/config.js';
+import { remarkDocLinks } from './src/lib/links.js';
+import { remarkCallouts } from './src/lib/callouts.js';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+const docsRoot = fileURLToPath(new URL('../docs', import.meta.url));
 
 export default defineConfig({
   site: SITE.url,
@@ -13,7 +16,7 @@ export default defineConfig({
   build: { format: 'preserve' },
   integrations: [sitemap()],
   markdown: {
-    processor: unified({ remarkPlugins: [] }),
+    processor: unified({ remarkPlugins: [remarkDocLinks({ docsRoot, repoRoot, base: SITE.base }), remarkCallouts] }),
     shikiConfig: { theme: 'github-dark-default' },
   },
   vite: { server: { fs: { allow: [repoRoot] } } },
