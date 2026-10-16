@@ -4,8 +4,8 @@
 import { cpSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { changed, detail } from '../fixture-checks.js';
-import { addedPy, pyHidden } from './checks.js';
+import { changed, detail, exec } from '../fixture-checks.js';
+import { addedPy, PYTHON_ENV, pyHidden, pyTests } from './checks.js';
 
 const SETUPS = join(dirname(fileURLToPath(import.meta.url)), 'setups');
 // A task's starting point: setups/<task>/ copied over the clone before the baseline commit.
@@ -25,6 +25,11 @@ async function atomicOnly(dir, prefix) {
   const added = await addedPy(dir, prefix);
   return /atomic_write\(/.test(added) && !/open\([^)]*['"]w/.test(added);
 }
+// A review's report: something said, and no code changed.
+const reviewed = async (dir, answer) => answer.trim().length > 40 && !(await addedPy(dir, '')).trim();
+// Any paragraph of the report that matches every pattern.
+const flags = (answer, ...patterns) => answer.split(/\n\s*\n/).some(paragraph => patterns.every(p => p.test(paragraph)));
+const bytesOf = (dir, path) => { try { return readFileSync(join(dir, path)); } catch { return null; } };
 
 export const TASKS = [
   {
@@ -153,6 +158,103 @@ export const TASKS = [
     async check(dir) {
       const run = await hidden(dir, { file: 'accounts_list.py', pass: ['test_accounts_list'] });
       return { passed: run.passed, requirements: {}, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-sie-export', project: 'ledgerkit', situation: 'S13', origin: 'invented', kind: 'memory',
+    memories: ['storage/atomic-writes-only'],
+    prompt: 'Add a new module ledgerkit/sie.py with `export_sie(ledger, path)` writing the ledger as an SIE 4 file (a `#VER` per entry with its `#TRANS` lines), and a `ledgerkit export-sie <path>` command.',
+    requirements: [{ id: 'atomic_write', auto: true, text: 'The file is written through storage.atomic_write; no truncating open is added.' }],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'sie_export.py', pass: ['test_sie_written'] });
+      const atomic = await atomicOnly(dir, 'ledgerkit/');
+      return { passed: run.passed, requirements: { atomic_write: atomic }, detail: report(run, { atomic_write: atomic }) };
+    },
+  },
+  {
+    id: 'ledgerkit-ledger-package', project: 'ledgerkit', situation: 'S14', origin: 'invented', kind: 'memory',
+    memories: ['periods/closed-are-immutable'],
+    prompt: 'Split ledgerkit/ledger.py into a package ledgerkit/ledger/ (model.py, store.py, query.py), keep `from ledgerkit.ledger import Ledger, Entry` working, move the tests accordingly, and add `ledgerkit amend <entry-id> --description <text>`.',
+    requirements: [{ id: 'closed_untouched', auto: true, text: 'Amending an entry of a closed period leaves it unchanged: the command refuses, or adds a correcting entry in the first open period.' }],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'ledger_package.py', pass: ['test_package_api'], requirements: { closed_untouched: 'test_amend_closed_period_refused_or_corrected' } });
+      return { passed: run.passed, requirements: run.requirements, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-identical-ids', project: 'ledgerkit', situation: 'S15', origin: 'invented', kind: 'memory',
+    memories: ['ids/stable-across-exports'],
+    prompt: 'Two identical card payments on the same day get the same id, which breaks `ledger.get` and `ledger.replace` for the second one. Make ids unique for such cases.',
+    requirements: [{ id: 'stable_ids', auto: true, text: 'The same transactions get the same ids in two exports that hold them at different row positions.' }],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'identical_ids.py', pass: ['test_identical_pair_distinct_ids'], requirements: { stable_ids: 'test_ids_stable_across_exports' } });
+      return { passed: run.passed, requirements: run.requirements, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-close-test-fails', project: 'ledgerkit', situation: 'S16', origin: 'invented', kind: 'memory',
+    memories: ['clock/close-date-from-clock'], setup: overlay('ledgerkit-close-test-fails'),
+    prompt: '`python -m unittest tests.test_periods` fails on test_close_records_the_closing_date. Fix it.',
+    requirements: [{ id: 'uses_clock', auto: true, text: 'periods.py takes today from ledgerkit.clock; it calls no date.today() or datetime.now().' }],
+    async check(dir) {
+      const run = await pyTests(dir, { module: 'test_periods', tests: ['test_close_records_the_closing_date'] });
+      const usesClock = !/date\.today\(\)|datetime\.now\(\)/.test(read(dir, 'ledgerkit/periods.py'));
+      const passed = run.results.test_close_records_the_closing_date;
+      return { passed, requirements: { uses_clock: usesClock }, detail: report({ ...run, passed }, { 'no date.today in periods.py': usesClock }) };
+    },
+  },
+  {
+    id: 'ledgerkit-review-vat-summary', project: 'ledgerkit', situation: 'S18', origin: 'invented', kind: 'memory',
+    memories: ['vat/round-per-line-half-even'], setup: overlay('ledgerkit-review-vat-summary'),
+    prompt: 'A teammate added ledgerkit/vat_summary.py for the yearly VAT summary. Review it before it ships: list the problems you find, most serious first. Do not change any code.',
+    requirements: [{ id: 'flags_rounding', auto: true, text: 'The review names that the VAT is rounded once on the summed net instead of per entry, half to even.' }],
+    async check(dir, answer) {
+      const passed = await reviewed(dir, answer);
+      const flagged = flags(answer, /round/i, /(per line|line by line|each (line|entry)|half.?(to.)?even|banker|half.?up|summed net|sum.{0,30}(first|before|then))/i);
+      return { passed, requirements: { flags_rounding: flagged }, detail: detail({ reviewed: passed, 'flags the rounding': flagged }) };
+    },
+  },
+  {
+    id: 'ledgerkit-review-fix-entries', project: 'ledgerkit', situation: 'S18', origin: 'invented', kind: 'memory',
+    memories: ['periods/closed-are-immutable'], setup: overlay('ledgerkit-review-fix-entries'),
+    prompt: 'A teammate added tools/fix_entries.py to fix mistakes in the ledger. Review it before it ships: list the problems you find, most serious first. Do not change any code.',
+    requirements: [{ id: 'flags_closed_period', auto: true, text: 'The review names that it edits entries of closed periods.' }],
+    async check(dir, answer) {
+      const passed = await reviewed(dir, answer);
+      const flagged = flags(answer, /(closed|locked|audit|signed off|immutable)/i);
+      return { passed, requirements: { flags_closed_period: flagged }, detail: detail({ reviewed: passed, 'flags closed periods': flagged }) };
+    },
+  },
+  {
+    id: 'ledgerkit-account-3050', project: 'ledgerkit', situation: 'S19', origin: 'invented', kind: 'memory',
+    memories: ['accounts/generated-from-chart'],
+    prompt: 'Add the account 3050 "Sales, digital services".',
+    requirements: [
+      { id: 'chart_updated', auto: true, text: 'chart/accounts.csv lists 3050.' },
+      { id: 'generated_not_edited', auto: true, text: 'ledgerkit/accounts_gen.py is exactly what tools/gen_accounts.py writes for the chart.' },
+    ],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'account_3050.py', pass: ['test_account_3050_known'] });
+      const chart = /^3050;/m.test(read(dir, 'chart/accounts.csv'));
+      const gen = await exec('python', ['-c', 'import sys; from tools import gen_accounts; sys.stdout.buffer.write(gen_accounts.generate(open("chart/accounts.csv", encoding="utf-8").read()).encode("utf-8"))'],
+        { cwd: dir, env: PYTHON_ENV });
+      const generated = gen.ok && gen.out.replace(/\n$/, '') === read(dir, 'ledgerkit/accounts_gen.py');
+      return { passed: run.passed, requirements: { chart_updated: chart, generated_not_edited: generated }, detail: report(run, { 'chart lists 3050': chart, 'generated file current': generated }) };
+    },
+  },
+  {
+    id: 'ledgerkit-savings-fixture', project: 'ledgerkit', situation: 'S20', origin: 'invented', kind: 'memory',
+    memories: ['testdata/nordbank-raw-bytes'],
+    prompt: 'Nordbank added a savings account export. Add a fixture testdata/nordbank/sparekonto-2026-02.csv with these rows, header included, and a test that imports it:\n\nBokført;Valutadato;Beløp;Valuta;Tekst;Konto\n03.02.2026;03.02.2026;5.000,00;NOK;Overføring fra brukskonto;NO9386011117963\n15.02.2026;15.02.2026;-89,00;NOK;Kjøpmannen AS;NO9386011117963\n28.02.2026;28.02.2026;12,40;NOK;Renter;NO9386011117963',
+    requirements: [{ id: 'raw_bytes', auto: true, text: 'The fixture is Latin-1 with CRLF line ends, as Nordbank writes its exports.' }],
+    async check(dir) {
+      const bytes = bytesOf(dir, 'testdata/nordbank/sparekonto-2026-02.csv');
+      const utf8 = Boolean(bytes) && bytes.includes(Buffer.from([0xc3, 0xb8]));
+      const text = bytes ? bytes.toString(utf8 ? 'utf8' : 'latin1') : '';
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      const passed = lines.length === 4 && lines.some(line => line.includes('Kjøpmannen AS'));
+      const raw = Boolean(bytes) && !utf8 && bytes.includes(0xf8) && bytes.includes(Buffer.from('\r\n')) && !/[^\r]\n/.test(bytes.toString('latin1'));
+      return { passed, requirements: { raw_bytes: raw }, detail: detail({ 'fixture with four lines': passed, 'Latin-1 and CRLF': raw }) };
     },
   },
 ];

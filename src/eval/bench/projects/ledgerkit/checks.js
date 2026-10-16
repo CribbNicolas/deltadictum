@@ -7,14 +7,17 @@ import { addedLines, exec, withHidden } from '../fixture-checks.js';
 const HIDDEN = join(dirname(fileURLToPath(import.meta.url)), 'hidden');
 export const PYTHON_ENV = { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONIOENCODING: 'utf-8' };
 
+// The named tests of one test module of the clone (tests.<module>).
+export async function pyTests(dir, { module, tests }) {
+  const run = await exec('python', ['-m', 'unittest', `tests.${module}`, '-v'], { cwd: dir, env: PYTHON_ENV });
+  const text = run.out.replaceAll('\r', '');
+  const results = Object.fromEntries(tests.map(name => [name, new RegExp(`^${name} \\(.*\\) \\.\\.\\. ok$`, 'm').test(text)]));
+  return { ok: run.ok, results, out: run.out.slice(-3000) };
+}
+
 export async function pyHidden(dir, { file, tests }) {
   const module = `zz_bench_${file.replace(/\.py$/, '')}`;
-  return withHidden(join(HIDDEN, file), join(dir, 'tests', `${module}.py`), async () => {
-    const run = await exec('python', ['-m', 'unittest', `tests.${module}`, '-v'], { cwd: dir, env: PYTHON_ENV });
-    const text = run.out.replaceAll('\r', '');
-    const results = Object.fromEntries(tests.map(name => [name, new RegExp(`^${name} \\(.*\\) \\.\\.\\. ok$`, 'm').test(text)]));
-    return { ok: run.ok, results, out: run.out.slice(-3000) };
-  });
+  return withHidden(join(HIDDEN, file), join(dir, 'tests', `${module}.py`), () => pyTests(dir, { module, tests }));
 }
 
 export const addedPy = (dir, prefix) => addedLines(dir, prefix, ['.py']);
