@@ -4,6 +4,22 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.8] - 2026-10-16
+
+- Review UI: the page updates itself as the store changes. The server watches the memories, the inbox, the
+  agent's requests, the session files and the settings, and tells the open page (`/api/events`); the UI's
+  own reads are left out, so a refresh never announces the next one. A "live" mark beside the DD logo says
+  it is connected.
+- Review UI: the views come in three groups (Dashboard and New memory; Candidates, Agent requests, Accepted
+  by DD; Recent deliveries, All memories and the health queues), with the DD logo and a settings button at
+  the bottom. Settings open in a dialog.
+- Review UI: the dashboard is its own full-width view with charts: memories by status, what waits for a
+  person, coverage, sessions and deliveries per day, the capture funnel, fires by trigger and by event, and
+  the memories that fire most. The counts the header used to show live there; the header is gone.
+- Review UI: Batches and Agent requests are one view: the batches the agent named, then the requests no
+  batch names. New memory opens full width. The open view is kept in the address, so a reload returns to it.
+- Review UI on a phone: the views are one scrolling row above the content.
+
 ## [0.9.7] - 2026-10-15
 
 - Documentation site: rebuilt as a custom Astro site in `site/`, deployed to GitHub Pages by Actions. A

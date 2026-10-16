@@ -143,23 +143,25 @@ Rules for checks:
 ## The review UI
 
 `/dd:review` runs `deltadictum doctor`, shows its summary, and starts the UI. Open the printed address,
-key included. The queues:
+key included. The page updates itself as the store changes (a memory saved, a request from the agent, a
+session recorded); the "live" mark beside the DD logo says it is connected. The views, in three groups:
 
-| Queue | What waits there |
+| View | What it shows |
 |---|---|
+| **Dashboard** | The store by status, what waits for you, sessions, deliveries, coverage, the capture funnel, fires by trigger and by event, and the memories that fire most |
+| **+ New memory** | A memory written by hand, validated as the agent's proposals are |
 | **Candidates** | Proposals waiting for a person: accept, edit, or archive |
-| **Batches** | Proposals the agent saved together under one name; accept or reject the lot in one action |
+| **Agent requests** | What the agent asked: batches of proposals saved under one name (accept or reject the lot in one action), then requests to archive or revise a memory, with their reasons |
 | **Accepted by DD** | Memories auto-accept activated; already firing. Mark each reviewed once you have read it |
-| **Agent requests** | The agent asked to archive or revise a memory, with its reason |
+| **Recent deliveries**, **All memories** | The last deliveries; the whole store |
 | **Stale evidence** | The file a memory cites changed since it was hashed: re-verify or revise |
 | **Hubs** | Memories whose triggers match much of the repository |
 | **Dead triggers** | Globs or symbols that match nothing |
 | **Suspected false alarms** | Checks that fired on a file the agent then left unchanged |
 | **Duplicates** | Pairs of memories that say the same thing: merge |
 | **Missing not_derivable** | Memories converted from v1 that still need their one line |
-| **All memories**, **Recent deliveries**, **Dashboard** | The whole store; the last deliveries; coverage, fires by trigger, check outcomes over the last days |
 
-The header shows the capture funnel: how often DD asked the agent for a memory, and how many proposals
+The dashboard's capture card shows the funnel: how often DD asked the agent for a memory, and how many proposals
 were stored, activated or rejected, with the rejection reasons. A funnel with many asks and no proposals
 means the agent is declining; with many rejections, read the reasons.
 
@@ -167,7 +169,7 @@ Each memory opens with its evidence (verified or stale), its breadth (how much o
 triggers cover), its use (fires by the trigger dimension that matched), similar memories, and the dry run.
 Every edit is validated as ingestion validates, and followed by a recompile.
 
-Settings pane: `auto_accept` and the delivery cap (`delivery_limit`, 2,000 to 50,000 characters per
+Settings, the gear beside the DD logo: `auto_accept` and the delivery cap (`delivery_limit`, 2,000 to 50,000 characters per
 delivery).
 
 ## A working rhythm
