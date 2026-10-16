@@ -1,0 +1,7 @@
+{
+  "listen": ":8080",
+  "partner_url": "https://api.meridian.example/v2/events",
+  "secret_env": "TOLLGATE_SECRET",
+  "store_dir": "data",
+  "retry": { "max": 8, "base_ms": 500, "cap_ms": 30000 }
+}

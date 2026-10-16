@@ -1,0 +1,1 @@
+{"id":"evt_ic_1","type":"invoice.created","occurred_at":"2026-03-02T09:30:00Z","payload":{"invoice_id":"in_9001","amount_cents":125000,"currency":"NOK"}}
