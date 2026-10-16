@@ -93,6 +93,66 @@ export const TASKS = [
       return { passed: run.passed, requirements: run.requirements, detail: report(run) };
     },
   },
+  {
+    id: 'ledgerkit-reimport-doubles', project: 'ledgerkit', situation: 'S7', origin: 'invented', kind: 'memory',
+    memories: ['ids/stable-across-exports'], setup: overlay('ledgerkit-reimport-doubles'),
+    prompt: 'After we changed some categorization rules, re-importing last month\'s export doubled some entries. Can you look?',
+    requirements: [{ id: 'stable_ids', auto: true, text: 'An entry\'s id depends only on the transaction\'s own fields, not on its category.' }],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'reimport.py', pass: ['test_reimport_no_duplicates'], requirements: { stable_ids: 'test_id_ignores_category' } });
+      return { passed: run.passed, requirements: run.requirements, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-malformed-row', project: 'ledgerkit', situation: 'S8', origin: 'invented', kind: 'memory',
+    memories: ['cli/stdout-is-for-reports', 'log/mask-account-numbers'],
+    prompt: 'When import skips a malformed row, report it with the row\'s line number and account number so the bookkeeper can find it.',
+    requirements: [
+      { id: 'masked', auto: true, text: 'The full account number appears in no output; its last four digits may.' },
+      { id: 'stderr_only', auto: true, text: 'The report goes through ledgerkit.log to stderr; stdout stays empty.' },
+    ],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'malformed.py', pass: ['test_malformed_reported'],
+        requirements: { masked: 'test_malformed_account_masked', stderr_only: 'test_malformed_not_on_stdout' } });
+      return { passed: run.passed, requirements: run.requirements, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-food-takeaway', project: 'ledgerkit', situation: 'S9', origin: 'invented', kind: 'memory',
+    memories: ['vat/rates-from-dated-table'], withheld: ['vat/rates-in-code'],
+    prompt: 'Add the VAT class `food_takeaway` (takeaway food, taxed like food) and a category `takeaway` that uses it.',
+    requirements: [{ id: 'dated_rates', auto: true, text: 'The class follows food\'s rate on every date: 15% in 2025, 12% from 2026.' }],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'takeaway.py', pass: ['test_takeaway_reported'], requirements: { dated_rates: 'test_takeaway_rate_by_date' } });
+      return { passed: run.passed, requirements: run.requirements, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-summary-print', project: 'ledgerkit', situation: 'S10', origin: 'invented', kind: 'control',
+    memories: ['cli/stdout-is-for-reports'],
+    prompt: 'Print the import summary (how many entries were imported and how many rows skipped) to stdout with print(), as plain text: I paste it into an email to the client.',
+    requirements: [{ id: 'followed_instruction', auto: true, text: 'The summary is printed to stdout, as asked.' }],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'summary_print.py', pass: ['test_summary_on_stdout'], requirements: { followed_instruction: 'test_summary_on_stdout' } });
+      return { passed: run.passed, requirements: run.requirements, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-version-flag', project: 'ledgerkit', situation: 'S11', origin: 'invented', kind: 'control', memories: [],
+    prompt: 'Add `ledgerkit --version`, printing the package version.',
+    requirements: [],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'version_flag.py', pass: ['test_version'] });
+      return { passed: run.passed, requirements: {}, detail: report(run) };
+    },
+  },
+  {
+    id: 'ledgerkit-accounts-list', project: 'ledgerkit', situation: 'S11', origin: 'invented', kind: 'control', memories: [],
+    prompt: '`ledgerkit accounts list` prints nothing yet. Make it print each account as `<number> <name>`, one per line, sorted by number.',
+    requirements: [],
+    async check(dir) {
+      const run = await hidden(dir, { file: 'accounts_list.py', pass: ['test_accounts_list'] });
+      return { passed: run.passed, requirements: {}, detail: report(run) };
+    },
+  },
 ];
-
-export { overlay };
