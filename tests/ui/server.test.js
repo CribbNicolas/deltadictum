@@ -120,7 +120,10 @@ test('the page hears about a change to the store, and not about the UI\'s own re
   assert.match(res.headers['content-type'], /text\/event-stream/);
   const { mkdirSync } = await import('node:fs');
   mkdirSync(join(root, '.dd', 'local', 'v2'), { recursive: true });
-  await settle(300);
+  // macOS reports file events with a delay and can still deliver the project's own setup writes:
+  // let those land, then listen from a clean slate.
+  await settle(1200);
+  live.events.length = 0;
   writeFileSync(join(root, '.dd', 'local', 'telemetry.sqlite-wal'), 'x');
   writeFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), '{}');
   await settle(800);
