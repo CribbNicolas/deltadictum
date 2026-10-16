@@ -18,9 +18,13 @@ const { groups, current } = Astro.props;
   </nav>
 </details>
 <script>
-  // On a narrow screen the menu starts closed; without JavaScript it stays open.
+  // On a narrow screen the menu is closed behind its summary; on a wide one, where the summary is
+  // hidden, it must be open, also after a rotation or a resize. Without JavaScript it stays open.
   const sidebar = document.querySelector('[data-sidebar]');
-  if (sidebar && matchMedia('(max-width: 959px)').matches) sidebar.removeAttribute('open');
+  const narrow = matchMedia('(max-width: 959px)');
+  const fit = () => { if (sidebar) sidebar.open = !narrow.matches; };
+  fit();
+  narrow.addEventListener('change', fit);
 </script>
 <style>
   .sidebar { padding: 32px 0; font-size: 14px; }
