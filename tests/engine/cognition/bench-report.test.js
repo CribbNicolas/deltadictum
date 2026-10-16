@@ -65,3 +65,12 @@ test('the site summary reads a bench report', () => {
   assert.equal(summary.tasks, 1);
   assert.equal(summary.metrics.find(m => m.id === 'requirements').values.dd2, 100);
 });
+
+test('with a judge, a run the judge did not decide is counted and left out of quality', () => {
+  const row = enrichRow(base, task, result, null, titleOf, { requireJudge: true });
+  assert.equal(row.unjudged, true);
+  assert.equal(row.quality, null);
+  assert.equal(row.specific_quality, null);
+  assert.equal(group([row]).unjudged, 1);
+  assert.equal(enrichRow(base, task, result, null, titleOf).unjudged, false);
+});

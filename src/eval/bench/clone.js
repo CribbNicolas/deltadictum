@@ -19,25 +19,50 @@ async function strip(dir, entries) {
   }
 }
 
+// One local branch at the base and nothing else: no remote (a push would reach the
+// source repository), no other branch or tag (a mined task's fix, the bench's own
+// branches) and no reflog that still names them.
+function isolate(dir, base) {
+  git(dir, 'checkout', '-q', '-B', 'bench', base);
+  git(dir, 'remote', 'remove', 'origin');
+  for (const ref of git(dir, 'for-each-ref', '--format=%(refname)').split('\n').filter(Boolean)) {
+    if (ref !== 'refs/heads/bench') git(dir, 'update-ref', '-d', ref);
+  }
+  git(dir, 'reflog', 'expire', '--expire=now', '--all');
+}
+
+// A shared link git does not ignore would be committed, stashed or removed with the change.
+function checkLinks(dir, links) {
+  for (const link of links) {
+    try { git(dir, 'check-ignore', '-q', link); } catch { throw new Error(`link_not_ignored: ${link}`); }
+  }
+}
+
 export async function prepareClone(project, task, condition) {
   const base = task.base ?? project.base;
   const dir = join(await mkdtemp(join(tmpdir(), 'dd-bench-')), project.id);
-  execFileSync('git', ['clone', '-q', project.repo, dir]);
-  git(dir, 'checkout', '-q', base);
-  await project.link?.(dir, base);
-  await strip(dir, project.strip ?? []);
-  if (task.setup) await task.setup(dir);
-  let warnings = [], indexMemories = null;
-  if (condition === 'doc' || condition === 'docref') {
-    const { memories, warnings: found } = await materializeMemories(dir, project);
-    warnings = found;
-    await writeGuide(dir, project, memories, condition === 'docref');
+  try {
+    execFileSync('git', ['clone', '-q', project.repo, dir]);
+    isolate(dir, base);
+    await project.link?.(dir, base);
+    checkLinks(dir, project.links ?? []);
+    await strip(dir, project.strip ?? []);
+    if (task.setup) await task.setup(dir);
+    let warnings = [], indexMemories = null;
+    if (condition === 'doc' || condition === 'docref') {
+      const { memories, warnings: found } = await materializeMemories(dir, project);
+      warnings = found;
+      await writeGuide(dir, project, memories, condition === 'docref');
+    }
+    if (condition === 'dd2') ({ warnings, index_memories: indexMemories } = await installStore(dir, project));
+    else await rm(join(dir, '.dd'), { recursive: true, force: true });
+    git(dir, 'add', '-A');
+    git(dir, '-c', 'user.name=eval', '-c', 'user.email=eval@localhost', 'commit', '-q', '--allow-empty', '--no-verify', '-m', 'eval baseline');
+    return { dir, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, index_memories: indexMemories };
+  } catch (err) {
+    await removeClone(dir, project);
+    throw err;
   }
-  if (condition === 'dd2') ({ warnings, index_memories: indexMemories } = await installStore(dir, project));
-  else await rm(join(dir, '.dd'), { recursive: true, force: true });
-  git(dir, 'add', '-A');
-  git(dir, '-c', 'user.name=eval', '-c', 'user.email=eval@localhost', 'commit', '-q', '--allow-empty', '--no-verify', '-m', 'eval baseline');
-  return { dir, store_warnings: warnings, index_memories: indexMemories };
 }
 
 // Links first: a recursive delete that follows a junction empties its target.

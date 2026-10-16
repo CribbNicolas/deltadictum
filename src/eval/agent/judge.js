@@ -32,7 +32,8 @@ const benchSet = bench ? await bench.loadBench(await bench.registryAt(args.regis
 const { TASKS } = benchSet ? { TASKS: benchSet.tasks } : await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
 const OUT = IN.replace(/\.json$/, '') + '.judge.json';
 const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
-const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
+// A bench judges every condition, dd2 and none included.
+const CONDITIONS = (args.conditions ?? (TASKSET === 'bench' ? 'dd2,docref,doc,none' : 'dd,doc,docref')).split(',');
 const LIMIT = args.limit ? Number(args.limit) : Infinity;
 const MAX_DIFF = 60000;
 const TIMEOUT_MS = 5 * 60 * 1000;

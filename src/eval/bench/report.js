@@ -17,7 +17,8 @@ const GENERAL = new Set(GENERAL_REQUIREMENTS.map(r => r.id));
 const TIMING = ['before_edit', 'at_edit', 'after_edit', 'no_edit'];
 const LABELS = { dd2: 'With DD v2', docref: 'Guide, referenced', doc: 'Guide, not referenced', none: 'No project knowledge' };
 
-export function enrichRow(row, task, stream, judgedRequirements, titleOf) {
+// requireJudge: a judge ran over these results, so a run it did not decide is left out of quality.
+export function enrichRow(row, task, stream, judgedRequirements, titleOf, { requireJudge = false } = {}) {
   const metrics = streamMetrics(stream, null);
   const delivered = deliveries(stream);
   const byTitle = new Map(delivered.map(d => [d.title, d]));
@@ -30,13 +31,14 @@ export function enrichRow(row, task, stream, judgedRequirements, titleOf) {
   // The latest arrival among the keys: a task needing two memories is served when the second arrives.
   const keyAt = keysDelivered ? keyTitles.map(title => byTitle.get(title).at).sort((a, b) => TIMING.indexOf(b) - TIMING.indexOf(a))[0] : null;
   const timedOut = Boolean(row.timed_out && !metrics.finished);
+  const unjudged = requireJudge && !judgedRequirements;
   return { ...row, ...parseNumstat(row.numstat), tool_calls: metrics.tool_calls, peak_context_tokens: metrics.peak_context_tokens,
     injected_tokens: metrics.injected_tokens, guide_reads: metrics.guide_reads, time_ms: metrics.session_ms ?? row.duration_ms, timed_out: timedOut,
     // A project without lint (lint_ok null) is not held against the run.
     resolved: Boolean(row.passed && row.suite_passed && row.lint_ok !== false && !timedOut && !row.error),
-    quality: qualityScore(requirements), specific_quality: qualityScore(specific),
+    unjudged, quality: unjudged ? null : qualityScore(requirements), specific_quality: unjudged ? null : qualityScore(specific),
     keys_delivered: keysDelivered, key_at: keyAt,
-    applied: keysDelivered && specificValues.length ? specificValues.every(Boolean) : null,
+    applied: keysDelivered && specificValues.length && !unjudged ? specificValues.every(Boolean) : null,
     withheld_ok: withheldTitles.length ? !withheldTitles.some(title => byTitle.has(title)) : null,
     noise: delivered.filter(d => !keyTitles.includes(d.title)).length, listed: listed(stream).length };
 }
@@ -56,7 +58,7 @@ export function group(rows) {
     median_minutes: Number(((med(rows, 'time_ms') ?? 0) / 60000).toFixed(2)),
     mean_cost_usd: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(4)) : null,
     total_cost_usd: Number(costs.reduce((a, b) => a + b, 0).toFixed(2)),
-    median_tool_calls: med(rows, 'tool_calls'), timeouts: rows.filter(r => r.timed_out).length, errors: rows.filter(r => r.error).length,
+    median_tool_calls: med(rows, 'tool_calls'), unjudged: rows.filter(r => r.unjudged).length, timeouts: rows.filter(r => r.timed_out).length, errors: rows.filter(r => r.error).length,
     guide_read_pct: percent(rows.filter(r => r.guide_reads > 0).length, rows.length),
     keys_delivered_pct: share(rows, 'keys_delivered'),
     key_at: Object.fromEntries(TIMING.map(t => [t, rows.filter(r => r.key_at === t).length])),
@@ -121,7 +123,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   for (const row of results.rows) {
     const task = tasks.find(t => t.id === row.task);
     const stream = await readFile(join(results.runs, `${row.run_id}.jsonl`), 'utf8').catch(() => '');
-    rows.push(enrichRow(row, task, stream, judged.get(row.run_id) ?? null, titleOf));
+    rows.push(enrichRow(row, task, stream, judged.get(row.run_id) ?? null, titleOf, { requireJudge: Boolean(judge) }));
   }
   const report = { input: IN, ...buildReport(rows, ['dd2', 'docref', 'doc', 'none'], results.model) };
   await writeFile(IN.replace(/\.json$/, '') + '.report.json', JSON.stringify(report, null, 2));

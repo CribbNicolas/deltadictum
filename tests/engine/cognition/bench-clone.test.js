@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { prepareClone, removeClone } from '../../../src/eval/bench/clone.js';
@@ -43,4 +43,26 @@ test('a strip line that is not in the file stops the clone', async t => {
   const repo = source(t);
   const p = { ...project(repo), strip: [{ file: 'CLAUDE.md', line: 'Not there.' }] };
   await assert.rejects(prepareClone(p, task, 'none'), /strip_not_found: CLAUDE.md: Not there\./);
+});
+
+test('a clone has no remote and no ref but its own branch, so the source repository and other branches are out of reach', async t => {
+  const repo = source(t);
+  git(repo, 'checkout', '-q', '-b', 'answers');
+  writeFileSync(join(repo, 'answer.txt'), 'secret\n');
+  git(repo, 'add', '-A');
+  git(repo, 'commit', '-q', '-m', 'the answer');
+  git(repo, 'checkout', '-q', '-');
+  git(repo, 'tag', 'v1');
+  const { dir, baseline } = await prepareClone(project(repo), task, 'none');
+  t.after(() => removeClone(dir, project(repo)));
+  assert.equal(git(dir, 'remote').trim(), '');
+  assert.deepEqual(git(dir, 'for-each-ref', '--format=%(refname)').trim().split('\n'), ['refs/heads/bench']);
+  assert.doesNotMatch(git(dir, 'log', '--all', '--oneline'), /the answer/);
+  assert.equal(baseline, git(dir, 'rev-parse', 'HEAD').trim());
+});
+
+test('a link that git does not ignore stops the clone', async t => {
+  const repo = source(t);
+  const p = { ...project(repo), links: ['deps'], link: async dir => { mkdirSync(join(dir, 'deps')); writeFileSync(join(dir, 'deps', 'x'), 'x'); } };
+  await assert.rejects(prepareClone(p, task, 'none'), /link_not_ignored: deps/);
 });

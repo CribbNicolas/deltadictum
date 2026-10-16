@@ -28,10 +28,9 @@ test('named failures twice are regressions unless the baseline fails them too', 
   assert.deepEqual(preexisting.baseline_failed, ['a']);
 });
 
-test('without test names the baseline decides', async () => {
+test('without test names a baseline that passes makes it a regression', async () => {
   const fail = () => runs({ passed: false, failed: [] }, { passed: false, failed: [] });
   assert.equal((await suiteOutcome(fail(), async () => ({ passed: true, failed: [] }))).passed, false);
-  assert.equal((await suiteOutcome(fail(), async () => ({ passed: false, failed: [] }))).passed, true);
 });
 
 test('a command reports its exit and output', async () => {
@@ -39,4 +38,15 @@ test('a command reports its exit and output', async () => {
   assert.equal(ok.ok, true);
   assert.match(ok.out, /hi/);
   assert.equal((await runCommand({ command: process.execPath, args: ['-e', 'process.exit(3)'], timeoutMs: 30000 }, process.cwd(), process.env)).ok, false);
+});
+
+test('a suite that fails on the baseline too, without test names, is undecided', async () => {
+  const out = await suiteOutcome(runs({ passed: false, failed: [] }, { passed: false, failed: [] }), async () => ({ passed: false, failed: [] }));
+  assert.equal(out.passed, null);
+  assert.equal(out.baseline_passed, false);
+});
+
+test('a command\'s output carries its standard error in full', async () => {
+  const out = await runCommand({ command: process.execPath, args: ['-e', 'process.stderr.write("x".repeat(6000) + "FAILED test_close")'], timeoutMs: 30000 }, process.cwd(), process.env);
+  assert.match(out.out, /FAILED test_close/);
 });

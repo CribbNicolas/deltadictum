@@ -4,7 +4,7 @@
 // project's own, as it stands at the base commit.
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { compileProject } from '../../engine/compile.js';
 import { initProject } from '../../memory/init.js';
@@ -41,9 +41,9 @@ export async function installStore(root, project) {
   const { memories, warnings } = await materializeMemories(root, project);
   const dd = join(root, '.dd');
   if (project.store === 'bench') {
-    const dir = join(dd, 'memories');
-    for (const name of await readdir(dir).catch(() => [])) await rm(join(dir, name), { force: true });
-    if (!existsSync(join(dd, 'config.json'))) await initProject(root, { projectId: project.id });
+    // From an empty .dd: an older base can hold a v1 store (atoms, archive, legacy) only this condition would see.
+    await rm(dd, { recursive: true, force: true });
+    await initProject(root, { projectId: project.id });
     await createMemoryFiles(dd).commit({ put: memories });
   }
   await compileProject(root);

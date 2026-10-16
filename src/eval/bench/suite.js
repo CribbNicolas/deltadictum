@@ -4,22 +4,25 @@
 import { run } from '../agent/proc.js';
 
 export async function runCommand(spec, cwd, env) {
-  const out = await run(spec.command, spec.args, { cwd, env, shell: Boolean(spec.shell), timeout: spec.timeoutMs })
-    .catch(err => ({ code: 1, out: err.message, timedOut: false }));
-  return { ok: out.code === 0 && !out.timedOut, out: String(out.out ?? '') };
+  const out = await run(spec.command, spec.args, { cwd, env, shell: Boolean(spec.shell), timeout: spec.timeoutMs, errLimit: 4 * 1024 * 1024 })
+    .catch(err => ({ code: 1, out: '', err: err.message, timedOut: false }));
+  // Test runners report on either stream: python -m unittest writes its results to stderr.
+  return { ok: out.code === 0 && !out.timedOut, out: `${out.out ?? ''}
+${out.err ?? ''}` };
 }
 
 export async function suiteOutcome(runSuite, runBaseline, knownFlaky = []) {
   const flakyOnly = s => s.failed.length > 0 && s.failed.every(name => knownFlaky.includes(name));
-  const outcome = over => ({ passed: true, first_passed: false, failed_twice: [], regressions: [], baseline_failed: null, flaky: [], ...over });
+  const outcome = over => ({ passed: true, first_passed: false, failed_twice: [], regressions: [], baseline_failed: null, baseline_passed: null, flaky: [], ...over });
   const first = await runSuite();
   if (first.passed || flakyOnly(first)) return outcome({ first_passed: first.passed });
   const second = await runSuite();
   if (second.passed || flakyOnly(second)) return outcome({ flaky: first.failed.filter(name => !second.failed.includes(name)) });
   const failedTwice = second.failed.filter(name => first.failed.includes(name) && !knownFlaky.includes(name));
   const baseline = await runBaseline();
-  // Without test names, the baseline failing as well is the only way to tell the machine from the change.
-  if (!second.failed.length) return outcome({ passed: !baseline.passed, baseline_failed: baseline.failed });
+  // Without test names a baseline that passes makes it a regression; one that fails as well leaves it
+  // undecided (null): the suite cannot run here, which is the harness's fault, not the agent's.
+  if (!second.failed.length) return outcome({ passed: baseline.passed ? false : null, baseline_failed: baseline.failed, baseline_passed: baseline.passed });
   const regressions = failedTwice.filter(name => !baseline.failed.includes(name));
-  return outcome({ passed: failedTwice.length > 0 && !regressions.length, failed_twice: failedTwice, regressions, baseline_failed: baseline.failed });
+  return outcome({ passed: failedTwice.length > 0 && !regressions.length, failed_twice: failedTwice, regressions, baseline_failed: baseline.failed, baseline_passed: baseline.passed });
 }
