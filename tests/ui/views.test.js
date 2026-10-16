@@ -53,4 +53,6 @@ test('batches group the pending candidates and open requests that name them', as
   const batches = await listBatches(root);
   assert.deepEqual(batches.map(b => [b.name, b.candidates.map(c => c.id), b.requests.map(r => r.id)]), [['lot-a', ['c1'], ['r1']], ['lot-b', ['c2'], []]]);
   assert.equal((await overview(root)).queues.batches, 2);
+  // One view for what the agent asked: two batches and the request no batch names.
+  assert.equal((await overview(root)).queues.from_agent, 3);
 });

@@ -51,7 +51,11 @@ function queueIds({ memories, health, signals, pairs }, queue) {
 export async function overview(root) {
   const snap = await snapshot(root);
   const queues = Object.fromEntries(QUEUES.filter(q => !OWN_LISTS.includes(q)).map(q => [q, queueIds(snap, q).length]));
-  return { status: await status(root), queues: { ...queues, requests: listRequests(root).length, batches: (await listBatches(root)).length },
+  const requests = listRequests(root);
+  const batches = await listBatches(root);
+  // The page shows batches and the requests no batch names as one view of what the agent asked.
+  const fromAgent = batches.length + requests.filter(request => typeof request.batch !== 'string').length;
+  return { status: await status(root), queues: { ...queues, requests: requests.length, batches: batches.length, from_agent: fromAgent },
     capture: snap.health.capture, recent: snap.health.recent };
 }
 

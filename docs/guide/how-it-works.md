@@ -55,7 +55,7 @@ ingests it in the same turn and answers:
 
 When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive or
 revise a memory wait for a person in the review UI, and what DD activated on its own waits in the "Accepted
-by DD" queue until a person marks it reviewed. The review UI's header shows the capture funnel (asks,
+by DD" queue until a person marks it reviewed. The review UI's dashboard shows the capture funnel (asks,
 proposals, stored, activated, rejected), and `deltadictum health` adds the rejection reasons and each
 memory's fires by the trigger dimension that matched.
 
