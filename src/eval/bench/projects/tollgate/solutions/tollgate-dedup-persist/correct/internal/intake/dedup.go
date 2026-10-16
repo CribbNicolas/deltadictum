@@ -13,9 +13,8 @@ import (
 type Dedup struct {
 	Window time.Duration
 
-	mu     sync.Mutex
-	seen   map[string]time.Time
-	pruned time.Time
+	mu   sync.Mutex
+	seen map[string]time.Time
 }
 
 // NewDedup returns a Dedup with the production window.
@@ -27,14 +26,6 @@ func NewDedup() *Dedup {
 func (d *Dedup) Seen(id string, now time.Time) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if now.Sub(d.pruned) > time.Minute {
-		for k, at := range d.seen {
-			if now.Sub(at) > d.Window {
-				delete(d.seen, k)
-			}
-		}
-		d.pruned = now
-	}
 	if at, ok := d.seen[id]; ok && now.Sub(at) <= d.Window {
 		return true
 	}
