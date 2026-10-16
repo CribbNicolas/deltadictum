@@ -1,5 +1,6 @@
 ---
 title: Storage
+description: "Everything DeltaDictum keeps for a project in its .dd/ folder: what is committed, what stays on the machine, and how it is rebuilt."
 parent: Reference
 nav_order: 4
 ---

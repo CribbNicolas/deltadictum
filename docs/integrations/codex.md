@@ -1,5 +1,6 @@
 ---
 title: Codex
+description: "Running DeltaDictum in Codex: how to install it, what the adapter supports, and how far it is verified."
 parent: Harnesses
 nav_order: 1
 ---
