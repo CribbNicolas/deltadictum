@@ -20,9 +20,11 @@ import { limitWait, redact, usageLimited } from './metrics.js';
 import { run } from './proc.js';
 import { GENERAL_REQUIREMENTS } from './tasks.js';
 import { TRIAL_MEMORIES } from './trial-memories.js';
+import { assertSubscription } from '../bench/billing.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
+assertSubscription(process.env, args);
 const MODEL = args.model ?? 'claude-opus-5-5';
 const IN = join(REPO, 'output', 'eval', args.in ?? 'agent-results.json');
 // The task set the results were made with decides which tasks and guidance apply.

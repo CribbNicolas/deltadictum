@@ -23,6 +23,7 @@ import { allowedTools } from '../agent/permissions.js';
 import { run } from '../agent/proc.js';
 import { prepareClone, removeClone } from './clone.js';
 import { CONDITIONS as ALL_CONDITIONS } from './situations.js';
+import { assertSubscription } from './billing.js';
 import { schedule } from './stats.js';
 import { runCommand, suiteOutcome } from './suite.js';
 import { loadBench, registryAt } from './tasks.js';
@@ -30,6 +31,8 @@ import { loadBench, registryAt } from './tasks.js';
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, ...v] = a.replace(/^--/, '').split('='); return [k, v.join('=')]; }));
 const list = value => (value ? value.split(',') : null);
+// --check-only and --recheck run no agent.
+if (!('check-only' in args) && !args.recheck) assertSubscription(process.env, args);
 const MODEL = args.model ?? 'claude-haiku-5-5';
 const EFFORT = args.effort ?? null;
 const REPEAT = Number(args.repeat ?? 3);
