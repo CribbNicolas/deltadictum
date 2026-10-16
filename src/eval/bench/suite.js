@@ -4,6 +4,8 @@
 import { run } from '../agent/proc.js';
 
 export async function runCommand(spec, cwd, env) {
+  // A project's own variables (a test runner forced to English for its parser) go on top of the run's.
+  if (spec.env) env = { ...(env ?? process.env), ...spec.env };
   const out = await run(spec.command, spec.args, { cwd, env, shell: Boolean(spec.shell), timeout: spec.timeoutMs, errLimit: 4 * 1024 * 1024 })
     .catch(err => ({ code: 1, out: '', err: err.message, timedOut: false }));
   // Test runners report on either stream: python -m unittest writes its results to stderr.

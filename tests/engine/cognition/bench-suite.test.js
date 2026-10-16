@@ -50,3 +50,8 @@ test('a command\'s output carries its standard error in full', async () => {
   const out = await runCommand({ command: process.execPath, args: ['-e', 'process.stderr.write("x".repeat(6000) + "FAILED test_close")'], timeoutMs: 30000 }, process.cwd(), process.env);
   assert.match(out.out, /FAILED test_close/);
 });
+
+test("a suite's own environment is added to the run's (a localized test runner forced to English)", async () => {
+  const spec = { command: process.execPath, args: ['-e', 'console.log(process.env.BENCH_LANG, process.env.BENCH_RUN)'], timeoutMs: 30000, env: { BENCH_LANG: 'en' } };
+  assert.match((await runCommand(spec, process.cwd(), { ...process.env, BENCH_RUN: 'yes' })).out, /en yes/);
+});

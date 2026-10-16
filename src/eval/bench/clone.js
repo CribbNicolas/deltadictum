@@ -5,7 +5,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { installStore, materializeMemories, writeGuide } from './store.js';
 
 const git = (dir, ...args) => execFileSync('git', ['-C', dir, ...args], { maxBuffer: 64 * 1024 * 1024 }).toString();
@@ -42,7 +42,10 @@ export async function prepareClone(project, task, condition) {
   const base = task.base ?? project.base;
   const dir = join(await mkdtemp(join(tmpdir(), 'dd-bench-')), project.id);
   try {
-    execFileSync('git', ['clone', '-q', project.repo, dir]);
+    // A source repository owned by another account (a sandbox user) is trusted for this clone only. Git
+    // clears GIT_CONFIG_* for a local transport, so the setting rides on the upload-pack command itself.
+    const source = resolve(project.repo).replaceAll('\\', '/');
+    execFileSync('git', ['clone', '-q', '--no-local', '--upload-pack', `git -c safe.directory=${source} -c safe.directory=${source}/.git upload-pack`, project.repo, dir]);
     isolate(dir, base);
     await project.link?.(dir, base);
     checkLinks(dir, project.links ?? []);
