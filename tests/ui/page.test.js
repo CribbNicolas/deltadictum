@@ -29,7 +29,7 @@ async function firstLine(root, args, check) {
 test('the page calls only routes the server has, and carries the nonce placeholder', async () => {
   const page = await readFile(new URL('../../src/ui/public/review.html', import.meta.url), 'utf8');
   assert.match(page, /<script nonce="__NONCE__">/);
-  for (const route of ['/api/overview', '/api/memories', '/api/requests', '/api/merge']) assert.ok(page.includes(route), route);
+  for (const route of ['/api/overview', '/api/memories', '/api/requests', '/api/merge', '/api/batches', '/api/dashboard', '/api/config', '/api/events']) assert.ok(page.includes(route), route);
   for (const action of ['accept', 'reject', 'archive', 'restore', 'retopic', 'dry-run', 'reviewed']) assert.ok(page.includes(`/${action}`), action);
   assert.doesNotMatch(page, /\bon(?:click|submit|change|input)=/);
   assert.doesNotMatch(page, /innerHTML/);

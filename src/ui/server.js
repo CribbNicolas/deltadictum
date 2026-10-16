@@ -1,4 +1,5 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { existsSync, watch } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +10,51 @@ import { dashboard } from './dashboard.js';
 import { dryRun } from './dry-run.js';
 import { closeRequest, listRequests } from './requests.js';
 import { listMemories, memoryDetail, overview, QUEUES } from './views.js';
+import { localPaths } from '../engine/locate.cjs';
+
+// What the page shows changes when these do: memories, the inbox, the agent's requests, the
+// session files a roll-up reads, the settings. The UI's own reads write telemetry and the
+// index under local/; those are left out, or every refresh would announce the next one.
+const LIVE = /^(memories|inbox)([\\/]|$)|^local[\\/](requests|sessions)([\\/]|$)|^config\.json$/;
+const QUIET_MS = 250;
+const HEARTBEAT_MS = 25000;
+
+// Tells every open page that the store changed, once per burst of writes.
+function liveFeed(root) {
+  const clients = new Set();
+  const dd = localPaths(root).dd;
+  let timer = null;
+  const announce = () => { timer = null; for (const res of clients) res.write('data: changed\n\n'); };
+  let watcher = null;
+  if (existsSync(dd)) {
+    try {
+      watcher = watch(dd, { recursive: true }, (_event, name) => {
+        if (!name || !LIVE.test(String(name))) return;
+        clearTimeout(timer);
+        timer = setTimeout(announce, QUIET_MS);
+      });
+      watcher.on('error', () => {});
+    } catch { watcher = null; }
+  }
+  const heartbeat = setInterval(() => { for (const res of clients) res.write(': still here\n\n'); }, HEARTBEAT_MS);
+  heartbeat.unref?.();
+  return {
+    live: Boolean(watcher),
+    open(req, res) {
+      res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+      res.write(`: ${watcher ? 'live' : 'no watcher'}\n\n`);
+      clients.add(res);
+      req.on('close', () => clients.delete(res));
+    },
+    close() {
+      clearTimeout(timer);
+      clearInterval(heartbeat);
+      watcher?.close();
+      for (const res of clients) res.end();
+      clients.clear();
+    },
+  };
+}
 
 // The review UI (spec section 8), started by a person, for one project. Anyone on
 // the machine can reach a loopback port: the UI answers only its own Host, only a
@@ -98,6 +144,7 @@ async function route(root, req, url, body) {
 export async function startReviewServer({ root, port = 0, host = '127.0.0.1' }) {
   if (!['127.0.0.1', '::1', 'localhost'].includes(host)) throw new Error('review_ui_requires_loopback');
   const key = randomBytes(16).toString('hex');
+  const feed = liveFeed(root);
   const server = createServer(async (req, res) => {
     try {
       const actual = server.address().port;
@@ -114,6 +161,7 @@ export async function startReviewServer({ root, port = 0, host = '127.0.0.1' }) 
         const nonce = randomBytes(16).toString('hex');
         return send(res, 200, (await readFile(PAGE, 'utf8')).replaceAll('__NONCE__', nonce), 'text/html', nonce);
       }
+      if (req.method === 'GET' && url.pathname === '/api/events') return feed.open(req, res);
       if (!url.pathname.startsWith('/api/')) return send(res, 404, { error: 'not_found' });
       if (req.method !== 'GET' && !String(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: 'json_required' });
       const result = await route(root, req, url, req.method === 'GET' ? {} : await bodyOf(req));
@@ -129,6 +177,6 @@ export async function startReviewServer({ root, port = 0, host = '127.0.0.1' }) 
   const actual = server.address().port;
   return {
     port: actual, key, url: `http://${host}:${actual}/?key=${key}`,
-    close: () => new Promise(resolve => { server.closeAllConnections?.(); server.close(() => resolve()); }),
+    close: () => new Promise(resolve => { feed.close(); server.closeAllConnections?.(); server.close(() => resolve()); }),
   };
 }
