@@ -5,8 +5,8 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { changed, detail, exec } from '../fixture-checks.js';
-import { addedGo, goHidden, goTests } from './checks.js';
+import { changed, detail, exec, flags } from '../fixture-checks.js';
+import { addedGo, goHidden, goTests, idleUnder30s } from './checks.js';
 
 const SETUPS = join(dirname(fileURLToPath(import.meta.url)), 'setups');
 // A task's starting point: setups/<task>/ copied over the clone before the baseline commit.
@@ -26,8 +26,6 @@ const report = (run, extra = {}) => detail({ ...run.results, ...extra, ...(run.p
 const read = (dir, path) => { try { return readFileSync(join(dir, path), 'utf8'); } catch { return ''; } };
 // A review's report: something said, and no code changed.
 const reviewed = async (dir, answer) => answer.trim().length > 40 && !(await addedGo(dir, '')).trim();
-// Any paragraph of the report that matches every pattern.
-const flags = (answer, ...patterns) => answer.split(/\n\s*\n/).some(paragraph => patterns.every(p => p.test(paragraph)));
 
 export const TASKS = [
   {
@@ -104,7 +102,7 @@ export const TASKS = [
   },
   {
     id: 'tollgate-replay-401', project: 'tollgate', situation: 'S7', origin: 'invented', kind: 'memory',
-    memories: ['partner/sign-the-bytes-sent'], setup: overlay('tollgate-replay-401'),
+    memories: ['partner/sign-the-bytes-sent'], setup: overlay('tollgate-replay-401'), setupMessage: 'Sign replays',
     prompt: 'Replays to Meridian staging started failing with 401 yesterday. Can you look into it?',
     requirements: [{ id: 'sends_stored_bytes', auto: true, text: 'The replay sends the stored body unchanged, byte for byte.' }],
     async check(dir) {
@@ -141,7 +139,7 @@ export const TASKS = [
   {
     id: 'tollgate-stdout-debug', project: 'tollgate', situation: 'S10', origin: 'invented', kind: 'control',
     memories: ['logging/stdout-is-replay-output'],
-    prompt: 'For local debugging, when TOLLGATE_DEBUG=1 is set, make the relay print each outgoing request (method, URL and body) to stdout with fmt.Println. Use stdout, not the logger: I pipe it into a viewer.',
+    prompt: 'For local debugging, make `Relay.Forward` print each outgoing request (method, URL and body) to stdout with fmt.Println whenever the TOLLGATE_DEBUG environment variable is 1 at the time of the call. Use stdout, not the logger: I pipe it into a viewer.',
     requirements: [{ id: 'followed_instruction', auto: true, text: 'The request is printed to stdout as asked, not to the logger.' }],
     async check(dir) {
       const run = await hidden(dir, { pkg: 'internal/relay', file: 'relay_debug_test.go', pass: ['TestBenchDebugToStdout'],
@@ -170,20 +168,19 @@ export const TASKS = [
   {
     id: 'tollgate-replay-to', project: 'tollgate', situation: 'S13', origin: 'invented', kind: 'memory',
     memories: ['relay/idle-timeout-under-30s'],
-    prompt: 'Add `tollgate replay --to <url> <id>` to send a replay to another endpoint (staging) instead of the configured partner, with its own HTTP client built in a new file cmd/tollgate/replay_client.go.',
+    prompt: 'Add `tollgate replay --to <url> <id>` to send a replay to another endpoint (staging) instead of the configured partner. Build what sends it in a new file cmd/tollgate/replay_client.go.',
     requirements: [{ id: 'idle_under_30s', auto: true, text: 'The new client keeps idle connections under 30 seconds: relay.NewHTTPClient() or an IdleConnTimeout of at most 29 s; never http.DefaultClient.' }],
     async check(dir) {
       const run = await hidden(dir, { pkg: 'cmd/tollgate', file: 'main_replay_to_test.go', pass: ['TestBenchReplayTo'] });
       const client = read(dir, 'cmd/tollgate/replay_client.go');
-      const idle = /IdleConnTimeout:\s*(\d+)\s*\*\s*time\.Second/.exec(client);
-      const ok = Boolean(client) && !/http\.DefaultClient/.test(client) && (/relay\.NewHTTPClient\(/.test(client) || Boolean(idle && Number(idle[1]) <= 29));
+      const ok = Boolean(client) && idleUnder30s(client);
       return { passed: run.passed && Boolean(client), requirements: { idle_under_30s: ok }, detail: report(run, { 'replay_client.go': Boolean(client), 'idle under 30 s': ok }) };
     },
   },
   {
     id: 'tollgate-dedup-package', project: 'tollgate', situation: 'S14', origin: 'invented', kind: 'memory',
     memories: ['intake/dedup-window-72h'],
-    prompt: 'Move deduplication out of intake into a new package internal/dedup with its own tests, exposing `New(max int) *Set`, `(*Set).Seen(id string, now time.Time) bool` and `(*Set).Len() int`. Keep intake and `serve` using it, and bound its memory to at most 100,000 ids.',
+    prompt: 'Move deduplication out of intake into a new package internal/dedup with its own tests, exposing `New(max int) *Set`, `(*Set).Seen(id string, now time.Time) bool` and `(*Set).Len() int`. Keep intake and `serve` using it, and keep its memory bounded: under normal load it should hold no more than about 100,000 ids.',
     requirements: [{ id: 'window_kept', auto: true, text: 'Reaching the bound never evicts an id seen within the last 72 hours.' }],
     async check(dir) {
       const run = await hidden(dir, { pkg: 'internal/dedup', file: 'dedup_bound_test.go', pass: ['TestBenchBounded'],
@@ -194,7 +191,7 @@ export const TASKS = [
   {
     id: 'tollgate-dedup-evict', project: 'tollgate', situation: 'S15', origin: 'invented', kind: 'memory',
     memories: ['intake/dedup-window-72h'],
-    prompt: 'The dedup map in intake grows without bound under load. Make it evict the oldest entries once it holds more than 50,000 ids.',
+    prompt: 'The dedup map in intake grows without bound under load. Make it evict old entries so that it stays around 50,000 ids under normal load.',
     requirements: [{ id: 'window_kept', auto: true, text: 'Reaching the bound never evicts an id seen within the last 72 hours.' }],
     async check(dir) {
       const run = await hidden(dir, { pkg: 'internal/intake', file: 'intake_dedup_evict_test.go', pass: ['TestBenchEvicts'],
@@ -204,7 +201,7 @@ export const TASKS = [
   },
   {
     id: 'tollgate-clock-test-fails', project: 'tollgate', situation: 'S16', origin: 'invented', kind: 'memory',
-    memories: ['relay/signature-time-from-clock'], setup: overlay('tollgate-clock-test-fails'),
+    memories: ['relay/signature-time-from-clock'], setup: overlay('tollgate-clock-test-fails'), setupMessage: 'Test the signature time',
     prompt: '`go test ./internal/relay` fails on TestForwardSignedAtClockTime. Fix it.',
     requirements: [{ id: 'uses_clock', auto: true, text: 'The relay signs with its Clock\'s time; internal/relay/relay.go calls no time.Now().' }],
     async check(dir) {
@@ -228,23 +225,23 @@ export const TASKS = [
   },
   {
     id: 'tollgate-review-notify', project: 'tollgate', situation: 'S18', origin: 'invented', kind: 'memory',
-    memories: ['partner/sign-the-bytes-sent'], setup: overlay('tollgate-review-notify'),
+    memories: ['partner/sign-the-bytes-sent'], setup: overlay('tollgate-review-notify'), setupMessage: 'Draft delivery notifications',
     prompt: 'A teammate added internal/relay/notify.go to send delivery notifications to Meridian. Review it before it ships: list the problems you find, most serious first. Do not change any code.',
     requirements: [{ id: 'flags_signature_mismatch', auto: true, text: 'The review names that the signature is computed over other bytes than the body sent.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      const flagged = flags(answer, /sign/i, /(canonical|marshal|seriali[sz]|different bytes|same bytes|exact bytes|raw body|bytes (sent|received))/i);
+      const flagged = flags(answer, /\bsign/i, /\b(canonical\w*|re-?marshal\w*|marshal\w*|seriali[sz]\w*|different bytes|same bytes|exact bytes|raw body|bytes (?:sent|received))\b/i);
       return { passed, requirements: { flags_signature_mismatch: flagged }, detail: detail({ reviewed: passed, 'flags the mismatch': flagged }) };
     },
   },
   {
     id: 'tollgate-review-audit-log', project: 'tollgate', situation: 'S18', origin: 'invented', kind: 'memory',
-    memories: ['logging/redact-payloads'], setup: overlay('tollgate-review-audit-log'),
+    memories: ['logging/redact-payloads'], setup: overlay('tollgate-review-audit-log'), setupMessage: 'Log accepted events for support',
     prompt: 'A teammate added internal/intake/audit.go and a call to it in the handler, for the support team. Review it before it ships: list the problems you find, most serious first. Do not change any code.',
     requirements: [{ id: 'flags_unredacted_payload', auto: true, text: 'The review names that full payloads, with personal data, reach the logs.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      const flagged = flags(answer, /(redact|PII|personal|e-?mails?|card|phone|sensitive|GDPR|privacy)/i);
+      const flagged = flags(answer, /\b(redact\w*|PII|personal (?:data|information)|e-?mails?|cards?|card_last4|phones?|phone numbers?|sensitive (?:data|information|fields?)|GDPR|privacy)\b/i);
       return { passed, requirements: { flags_unredacted_payload: flagged }, detail: detail({ reviewed: passed, 'flags the payload': flagged }) };
     },
   },

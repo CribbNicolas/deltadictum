@@ -61,6 +61,20 @@ test('a clone has no remote and no ref but its own branch, so the source reposit
   assert.equal(baseline, git(dir, 'rev-parse', 'HEAD').trim());
 });
 
+test('a task\'s setup is its own commit by the project\'s team, so the baseline commit does not show it', async t => {
+  const repo = source(t);
+  const p = project(repo);
+  const { dir } = await prepareClone(p, { ...task, setupMessage: 'Tidy the retry loop' }, 'docref');
+  t.after(() => removeClone(dir, p));
+  const [baseline, setup] = git(dir, 'log', '-2', '--format=%an|%s').trim().split('\n');
+  assert.equal(setup, 'fx team|Tidy the retry loop');
+  assert.match(baseline, /^eval\|eval baseline$/);
+  const shown = git(dir, 'show', '--name-only', '--format=', 'HEAD');
+  assert.doesNotMatch(shown, /setup\.txt/);
+  // The stripped rule goes with the setup commit too, not with the baseline.
+  assert.doesNotMatch(git(dir, 'show', 'HEAD'), /^-Always jitter retries\.$/m);
+});
+
 test('a link that git does not ignore stops the clone', async t => {
   const repo = source(t);
   const p = { ...project(repo), links: ['deps'], link: async dir => { mkdirSync(join(dir, 'deps')); writeFileSync(join(dir, 'deps', 'x'), 'x'); } };

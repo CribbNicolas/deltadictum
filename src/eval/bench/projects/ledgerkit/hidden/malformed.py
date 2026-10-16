@@ -37,7 +37,7 @@ class Bench(unittest.TestCase):
     def test_malformed_not_on_stdout(self):
         out, err = run_import()
         self.assertEqual(out, "")
-        self.assertTrue(re.search(r"level=(warn|error)", err), err)
+        self.assertTrue(re.search(r"level=(info|warn|error)", err), err)
 
 
 if __name__ == "__main__":

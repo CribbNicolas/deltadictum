@@ -11,6 +11,12 @@ const swap = (text, from, to) => {
   return text.replace(from, to);
 };
 const cli = src('ledgerkit/cli.py');
+const PERCENT = `
+
+def percent(text: str) -> Decimal:
+    """Read "12,5 %" or "25%" as a Decimal fraction (0.125, 0.25)."""
+    return Decimal(text.strip().rstrip("%").strip().replace(",", ".")) / 100
+`;
 const ids = src('ledgerkit/ids.py');
 const importLoop = '    for row in rows:\n        entry_id = ids.entry_id(row["booked"], row["amount_cents"], row["description"], row["account"])\n        ledger.add(Entry(id=entry_id, date=row["booked"], amount_cents=row["amount_cents"], currency=row["currency"],\n                         description=row["description"], account=row["account"], category=rules.categorize(rs, row["description"])))\n';
 
@@ -62,13 +68,9 @@ put('ledgerkit-summary-print', 'correct', 'ledgerkit/cli.py', swap(cli,
   '    log.info("imported", file=os.path.basename(args.csv), count=imported, skipped=skipped)\n',
   '    log.info("imported", file=os.path.basename(args.csv), count=imported, skipped=skipped)\n    print(f"Imported {imported} entries, skipped {skipped} rows.")\n'));
 
-// S11: --version and accounts list.
-put('ledgerkit-version-flag', 'correct', 'ledgerkit/cli.py', swap(swap(cli,
-  '    parser.add_argument("--book", default=".", help="the folder holding ledger.jsonl, rules.json and periods.json")\n',
-  '    parser.add_argument("--book", default=".", help="the folder holding ledger.jsonl, rules.json and periods.json")\n    parser.add_argument("--version", action="version", version=f"ledgerkit {__version__}")\n'),
-  'from ledgerkit import csvio, ids, log, periods, report, rules\n', 'from ledgerkit import __version__, csvio, ids, log, periods, report, rules\n'));
-put('ledgerkit-accounts-list', 'correct', 'ledgerkit/cli.py', swap(swap(cli,
-  'def _accounts_list(args) -> int:\n    return 0\n',
-  'def _accounts_list(args) -> int:\n    for number, name in sorted(accounts_gen.ACCOUNTS.items()):\n        sys.stdout.write(f"{number} {name}\\n")\n    return 0\n'),
-  'from ledgerkit import csvio, ids, log, periods, report, rules\n', 'from ledgerkit import accounts_gen, csvio, ids, log, periods, report, rules\n'));
+// S11 controls: a plus sign in amounts, and Ledger.find.
+put('ledgerkit-percent', 'correct', 'ledgerkit/money.py', src('ledgerkit/money.py') + PERCENT);
+put('ledgerkit-find-entries', 'correct', 'ledgerkit/ledger.py', swap(src('ledgerkit/ledger.py'),
+  '    def get(self, entry_id: str) -> Optional[Entry]:\n',
+  '    def find(self, text: str) -> list:\n        """The entries whose description contains text, ignoring case, in ledger order."""\n        needle = text.lower()\n        return [e for e in self._entries if needle in e.description.lower()]\n\n    def get(self, entry_id: str) -> Optional[Entry]:\n'));
 console.log('ok');

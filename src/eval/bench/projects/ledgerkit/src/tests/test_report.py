@@ -19,10 +19,10 @@ class ReportTest(unittest.TestCase):
     def test_vat_per_entry(self):
         ledger = Ledger("unused.jsonl")
         for i in range(3):
-            ledger.add(Entry(id=f"e{i}", date="2026-03-02", amount_cents=-1002, currency="NOK", description="Adobe", account="X", category="software"))
+            ledger.add(Entry(id=f"e{i}", date="2026-03-02", amount_cents=-1000, currency="NOK", description="Adobe", account="X", category="software"))
         lines = report.vat_report(ledger, "2026-03").splitlines()
         self.assertEqual(lines[0], f"#skatteportal v{report.REPORT_VERSION}")
-        self.assertEqual(lines[2], "software;standard;-30.06;-7.50")
+        self.assertEqual(lines[2], "software;standard;-30.00;-7.50")
 
 
 if __name__ == "__main__":

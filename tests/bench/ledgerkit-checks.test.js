@@ -15,7 +15,8 @@ test('a hidden unittest module reports each test by name, finds the clone\'s pac
   writeFileSync(join(dir, 'ledgerkit', '__init__.py'), 'ONE = 1\n');
   mkdirSync(join(dir, 'tests'));
   writeFileSync(join(dir, 'tests', '__init__.py'), '');
-  const out = await pyHidden(dir, { file: 'selftest.py', tests: ['test_passes', 'test_fails', 'test_missing'] });
-  assert.deepEqual(out.results, { test_passes: true, test_fails: false, test_missing: false });
+  const out = await pyHidden(dir, { file: 'selftest.py', tests: ['test_passes', 'test_passes_while_logging', 'test_fails', 'test_missing'] });
+  // A test whose code writes to stderr still reads as passed: unittest buffers its output.
+  assert.deepEqual(out.results, { test_passes: true, test_passes_while_logging: true, test_fails: false, test_missing: false });
   assert.deepEqual(readdirSync(join(dir, 'tests')).sort(), ['__init__.py']);
 });

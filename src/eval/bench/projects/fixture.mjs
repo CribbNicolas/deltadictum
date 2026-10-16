@@ -59,7 +59,8 @@ export async function buildFixture(name, { out = join(REPO, 'output', 'eval', 'b
       cpSync(from, join(out, path), { recursive: statSync(from).isDirectory() });
     }
     git(['add', '-A']);
-    git(['commit', '-q', '--allow-empty', '-m', step.message], step.date);
+    // The machine's own git setup (signing, hooks) must not change or stall the build.
+    git(['-c', 'commit.gpgsign=false', 'commit', '-q', '--no-verify', '--allow-empty', '-m', step.message], step.date);
   }
   writeFileSync(hashFile, hash);
   return { repo: out, head: git(['rev-parse', 'HEAD']).toString().trim(), rebuilt: true };

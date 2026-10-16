@@ -48,17 +48,23 @@ export async function prepareClone(project, task, condition) {
     checkLinks(dir, project.links ?? []);
     await strip(dir, project.strip ?? []);
     if (task.setup) await task.setup(dir);
-    let warnings = [], indexMemories = null;
+    // The starting point is the project's own history: a setup and the stripped lines are a commit by
+    // its team, so the baseline commit's diff shows only the condition's files.
+    if (git(dir, 'status', '--porcelain').trim()) {
+      git(dir, 'add', '-A');
+      git(dir, '-c', `user.name=${project.id} team`, '-c', `user.email=team@${project.id}.invalid`, 'commit', '-q', '--no-verify', '-m', task.setupMessage ?? 'Update');
+    }
+    let warnings = [], indexMemories = null, compileWarnings = [];
     if (condition === 'doc' || condition === 'docref') {
       const { memories, warnings: found } = await materializeMemories(dir, project);
       warnings = found;
       await writeGuide(dir, project, memories, condition === 'docref');
     }
-    if (condition === 'dd2') ({ warnings, index_memories: indexMemories } = await installStore(dir, project));
+    if (condition === 'dd2') ({ warnings, index_memories: indexMemories, compile_warnings: compileWarnings } = await installStore(dir, project));
     else await rm(join(dir, '.dd'), { recursive: true, force: true });
     git(dir, 'add', '-A');
     git(dir, '-c', 'user.name=eval', '-c', 'user.email=eval@localhost', 'commit', '-q', '--allow-empty', '--no-verify', '-m', 'eval baseline');
-    return { dir, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, index_memories: indexMemories };
+    return { dir, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, compile_warnings: compileWarnings, index_memories: indexMemories };
   } catch (err) {
     await removeClone(dir, project);
     throw err;

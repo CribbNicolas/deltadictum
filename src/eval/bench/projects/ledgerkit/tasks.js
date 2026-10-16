@@ -4,8 +4,8 @@
 import { cpSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { changed, detail, exec } from '../fixture-checks.js';
-import { addedPy, PYTHON_ENV, pyHidden, pyTests } from './checks.js';
+import { addedLinesExcept, changed, detail, exec, flags } from '../fixture-checks.js';
+import { addedPy, PYTHON_ENV, pyHidden, pyTests, truncatingOpen } from './checks.js';
 
 const SETUPS = join(dirname(fileURLToPath(import.meta.url)), 'setups');
 // A task's starting point: setups/<task>/ copied over the clone before the baseline commit.
@@ -21,14 +21,13 @@ async function hidden(dir, { file, pass, requirements = {} }) {
 const report = (run, extra = {}) => detail({ ...run.results, ...extra, ...(run.passed ? {} : { output: run.out.slice(-600).replace(/\s+/g, ' ') }) });
 const read = (dir, path) => { try { return readFileSync(join(dir, path), 'utf8'); } catch { return ''; } };
 // Writes in the lines the change added: through atomic_write, never a truncating open.
+// storage.py is the sanctioned writer: a change to atomic_write itself is not a violation.
 async function atomicOnly(dir, prefix) {
-  const added = await addedPy(dir, prefix);
-  return /atomic_write\(/.test(added) && !/open\([^)]*['"]w/.test(added);
+  const added = await addedLinesExcept(dir, prefix, ['.py'], ['ledgerkit/storage.py']);
+  return /atomic_write\(/.test(added) && !truncatingOpen(added);
 }
 // A review's report: something said, and no code changed.
 const reviewed = async (dir, answer) => answer.trim().length > 40 && !(await addedPy(dir, '')).trim();
-// Any paragraph of the report that matches every pattern.
-const flags = (answer, ...patterns) => answer.split(/\n\s*\n/).some(paragraph => patterns.every(p => p.test(paragraph)));
 const bytesOf = (dir, path) => { try { return readFileSync(join(dir, path)); } catch { return null; } };
 
 export const TASKS = [
@@ -100,8 +99,8 @@ export const TASKS = [
   },
   {
     id: 'ledgerkit-reimport-doubles', project: 'ledgerkit', situation: 'S7', origin: 'invented', kind: 'memory',
-    memories: ['ids/stable-across-exports'], setup: overlay('ledgerkit-reimport-doubles'),
-    prompt: 'After we changed some categorization rules, re-importing last month\'s export doubled some entries. Can you look?',
+    memories: ['ids/stable-across-exports'], setup: overlay('ledgerkit-reimport-doubles'), setupMessage: 'Skip entries already imported',
+    prompt: 'After we changed some categorization rules, re-importing last month\'s export gave us some entries twice. Can you look?',
     requirements: [{ id: 'stable_ids', auto: true, text: 'An entry\'s id depends only on the transaction\'s own fields, not on its category.' }],
     async check(dir) {
       const run = await hidden(dir, { file: 'reimport.py', pass: ['test_reimport_no_duplicates'], requirements: { stable_ids: 'test_id_ignores_category' } });
@@ -143,27 +142,27 @@ export const TASKS = [
     },
   },
   {
-    id: 'ledgerkit-version-flag', project: 'ledgerkit', situation: 'S11', origin: 'invented', kind: 'control', memories: [],
-    prompt: 'Add `ledgerkit --version`, printing the package version.',
+    id: 'ledgerkit-percent', project: 'ledgerkit', situation: 'S11', origin: 'invented', kind: 'control', memories: [],
+    prompt: 'Add `money.percent(text)` reading a percentage as Nordbank writes it ("12,5 %", "25%") and returning it as a Decimal fraction (Decimal("0.125")).',
     requirements: [],
     async check(dir) {
-      const run = await hidden(dir, { file: 'version_flag.py', pass: ['test_version'] });
+      const run = await hidden(dir, { file: 'percent.py', pass: ['test_percent'] });
       return { passed: run.passed, requirements: {}, detail: report(run) };
     },
   },
   {
-    id: 'ledgerkit-accounts-list', project: 'ledgerkit', situation: 'S11', origin: 'invented', kind: 'control', memories: [],
-    prompt: '`ledgerkit accounts list` prints nothing yet. Make it print each account as `<number> <name>`, one per line, sorted by number.',
+    id: 'ledgerkit-find-entries', project: 'ledgerkit', situation: 'S11', origin: 'invented', kind: 'control', memories: [],
+    prompt: 'Add `Ledger.find(text)` returning the entries whose description contains the text, ignoring case, in ledger order.',
     requirements: [],
     async check(dir) {
-      const run = await hidden(dir, { file: 'accounts_list.py', pass: ['test_accounts_list'] });
+      const run = await hidden(dir, { file: 'find_entries.py', pass: ['test_find'] });
       return { passed: run.passed, requirements: {}, detail: report(run) };
     },
   },
   {
     id: 'ledgerkit-sie-export', project: 'ledgerkit', situation: 'S13', origin: 'invented', kind: 'memory',
     memories: ['storage/atomic-writes-only'],
-    prompt: 'Add a new module ledgerkit/sie.py with `export_sie(ledger, path)` writing the ledger as an SIE 4 file (a `#VER` per entry with its `#TRANS` lines), and a `ledgerkit export-sie <path>` command.',
+    prompt: 'Add a new module ledgerkit/sie.py with `write_sie(ledger, path)` writing the ledger as an SIE 4 file (a `#VER` per entry with its `#TRANS` lines), and a `ledgerkit sie <path>` command.',
     requirements: [{ id: 'atomic_write', auto: true, text: 'The file is written through storage.atomic_write; no truncating open is added.' }],
     async check(dir) {
       const run = await hidden(dir, { file: 'sie_export.py', pass: ['test_sie_written'] });
@@ -193,7 +192,7 @@ export const TASKS = [
   },
   {
     id: 'ledgerkit-close-test-fails', project: 'ledgerkit', situation: 'S16', origin: 'invented', kind: 'memory',
-    memories: ['clock/close-date-from-clock'], setup: overlay('ledgerkit-close-test-fails'),
+    memories: ['clock/close-date-from-clock'], setup: overlay('ledgerkit-close-test-fails'), setupMessage: 'Record the closing date',
     prompt: '`python -m unittest tests.test_periods` fails on test_close_records_the_closing_date. Fix it.',
     requirements: [{ id: 'uses_clock', auto: true, text: 'periods.py takes today from ledgerkit.clock; it calls no date.today() or datetime.now().' }],
     async check(dir) {
@@ -205,23 +204,23 @@ export const TASKS = [
   },
   {
     id: 'ledgerkit-review-vat-summary', project: 'ledgerkit', situation: 'S18', origin: 'invented', kind: 'memory',
-    memories: ['vat/round-per-line-half-even'], setup: overlay('ledgerkit-review-vat-summary'),
+    memories: ['vat/round-per-line-half-even'], setup: overlay('ledgerkit-review-vat-summary'), setupMessage: 'Yearly VAT summary',
     prompt: 'A teammate added ledgerkit/vat_summary.py for the yearly VAT summary. Review it before it ships: list the problems you find, most serious first. Do not change any code.',
     requirements: [{ id: 'flags_rounding', auto: true, text: 'The review names that the VAT is rounded once on the summed net instead of per entry, half to even.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      const flagged = flags(answer, /round/i, /(per line|line by line|each (line|entry)|half.?(to.)?even|banker|half.?up|summed net|sum.{0,30}(first|before|then))/i);
+      const flagged = flags(answer, /\bround/i, /\bhalf[ -](?:to[ -])?even\b|\bper (?:line|entry)\b|\beach (?:line|entry)\b|\bline by line\b|\bbanker|\bsummed net\b|\bsum\w*\b.{0,40}\b(?:first|before|then)\b/i);
       return { passed, requirements: { flags_rounding: flagged }, detail: detail({ reviewed: passed, 'flags the rounding': flagged }) };
     },
   },
   {
     id: 'ledgerkit-review-fix-entries', project: 'ledgerkit', situation: 'S18', origin: 'invented', kind: 'memory',
-    memories: ['periods/closed-are-immutable'], setup: overlay('ledgerkit-review-fix-entries'),
+    memories: ['periods/closed-are-immutable'], setup: overlay('ledgerkit-review-fix-entries'), setupMessage: 'Tool to fix ledger entries',
     prompt: 'A teammate added tools/fix_entries.py to fix mistakes in the ledger. Review it before it ships: list the problems you find, most serious first. Do not change any code.',
     requirements: [{ id: 'flags_closed_period', auto: true, text: 'The review names that it edits entries of closed periods.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      const flagged = flags(answer, /(closed|locked|audit|signed off|immutable)/i);
+      const flagged = flags(answer, /\b(closed periods?|closed months?|locked periods?|locked|signed[ -]off|immutable|auditors?)\b/i);
       return { passed, requirements: { flags_closed_period: flagged }, detail: detail({ reviewed: passed, 'flags closed periods': flagged }) };
     },
   },
