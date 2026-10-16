@@ -1,0 +1,9 @@
+[project]
+name = "ledgerkit"
+version = "1.4.0"
+description = "Bookkeeping for small clients: bank imports, categories, periods and the VAT report"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+ledgerkit = "ledgerkit.cli:main"

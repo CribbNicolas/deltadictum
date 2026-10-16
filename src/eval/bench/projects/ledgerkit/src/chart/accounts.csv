@@ -1,0 +1,12 @@
+number;name
+1500;Customer receivables
+1920;Bank
+2400;Supplier payables
+2700;Output VAT
+2710;Input VAT
+3000;Sales, standard rate
+3100;Sales, exempt
+4000;Purchases, food
+6540;Software
+7140;Travel
+7770;Bank fees
