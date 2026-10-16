@@ -93,3 +93,40 @@ test('delivery_limit is a setting with bounds, compiled into the index when chan
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 5000 }) })).status, 200);
   assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8')).limit, 5000);
 });
+
+// Opens the live stream and collects its events until the test closes it.
+function listen(server, cookie) {
+  const events = [];
+  const req = request({ host: '127.0.0.1', port: server.port, path: '/api/events', headers: { host: `127.0.0.1:${server.port}`, cookie } });
+  const ready = new Promise((resolve, reject) => {
+    req.on('response', res => {
+      res.setEncoding('utf8');
+      res.on('data', chunk => { for (const line of chunk.split('\n')) if (line.startsWith('data:')) events.push(line.slice(5).trim()); });
+      resolve(res);
+    });
+    req.on('error', reject);
+  });
+  req.end();
+  return { events, ready, close: () => req.destroy() };
+}
+const settle = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+test('the page hears about a change to the store, and not about the UI\'s own reads', async t => {
+  const { root, server, cookie } = await serve(t);
+  assert.equal((await call(server, '/api/events')).status, 403);
+  const live = listen(server, cookie);
+  t.after(live.close);
+  const res = await live.ready;
+  assert.match(res.headers['content-type'], /text\/event-stream/);
+  const { mkdirSync } = await import('node:fs');
+  mkdirSync(join(root, '.dd', 'local', 'v2'), { recursive: true });
+  await settle(300);
+  writeFileSync(join(root, '.dd', 'local', 'telemetry.sqlite-wal'), 'x');
+  writeFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), '{}');
+  await settle(800);
+  assert.deepEqual(live.events, []);
+  mkdirSync(join(root, '.dd', 'local', 'requests'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'local', 'requests', 'r1.json'), JSON.stringify({ id: 'r1', request: 'review', target: 'm1', why: 'x' }));
+  for (let i = 0; i < 30 && !live.events.length; i += 1) await settle(100);
+  assert.deepEqual(live.events, ['changed']);
+});
