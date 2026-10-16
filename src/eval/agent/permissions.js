@@ -16,4 +16,8 @@ const PROGRAMS = ['node', 'npm', 'git', 'cat', 'head', 'tail', 'sed', 'grep', 'r
   'sort', 'uniq', 'tr', 'cut', 'true', 'test'];
 const INVOCATIONS = ['npx eslint'];
 
-export const ALLOWED_TOOLS = ['Read', 'Edit', 'Write', 'Grep', 'Glob', ...[...PROGRAMS, ...INVOCATIONS].map(program => `Bash(${program}:*)`), 'mcp__dd'];
+// A bench project on another stack adds its own tool chain (go, python, dotnet).
+export const allowedTools = (programs = []) => ['Read', 'Edit', 'Write', 'Grep', 'Glob',
+  ...[...new Set([...PROGRAMS, ...programs]), ...INVOCATIONS].map(program => `Bash(${program}:*)`), 'mcp__dd'];
+
+export const ALLOWED_TOOLS = allowedTools();
