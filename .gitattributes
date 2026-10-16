@@ -3,3 +3,4 @@
 src/eval/bench/projects/*/src/** -text
 src/eval/bench/projects/*/solutions/** -text
 src/eval/bench/projects/*/hidden/** -text
+src/eval/bench/projects/*/setups/** -text
