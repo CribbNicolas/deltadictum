@@ -47,6 +47,8 @@ export async function prepareClone(project, task, condition) {
     await project.link?.(dir, base);
     checkLinks(dir, project.links ?? []);
     await strip(dir, project.strip ?? []);
+    // What a project needs removed or changed in every condition (a committed plugin setting, say).
+    await project.prepare?.(dir);
     if (task.setup) await task.setup(dir);
     // The starting point is the project's own history: a setup and the stripped lines are a commit by
     // its team, so the baseline commit's diff shows only the condition's files.

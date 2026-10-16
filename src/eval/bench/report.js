@@ -18,12 +18,13 @@ const TIMING = ['before_edit', 'at_edit', 'after_edit', 'no_edit'];
 const LABELS = { dd2: 'With DD v2', docref: 'Guide, referenced', doc: 'Guide, not referenced', none: 'No project knowledge' };
 
 // requireJudge: a judge ran over these results, so a run it did not decide is left out of quality.
-export function enrichRow(row, task, stream, judgedRequirements, titleOf, { requireJudge = false } = {}) {
+export function enrichRow(row, task, stream, judgedRequirements, titleOf, { requireJudge = false, titles = [] } = {}) {
   const metrics = streamMetrics(stream, null);
-  const delivered = deliveries(stream);
-  const byTitle = new Map(delivered.map(d => [d.title, d]));
   const keyTitles = (task.memories ?? []).map(topic => titleOf(task.project, topic)).filter(Boolean);
   const withheldTitles = (task.withheld ?? []).map(topic => titleOf(task.project, topic)).filter(Boolean);
+  // Titles with " - " in them are read whole when the store knows them.
+  const delivered = deliveries(stream, [...keyTitles, ...withheldTitles, ...titles]);
+  const byTitle = new Map(delivered.map(d => [d.title, d]));
   const requirements = judgedRequirements ? { ...row.requirements, ...judgedRequirements } : { ...row.requirements };
   const specific = Object.fromEntries(Object.entries(requirements).filter(([id]) => !GENERAL.has(id)));
   const specificValues = Object.values(specific).filter(v => typeof v === 'boolean');
@@ -118,12 +119,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const judged = new Map((judge?.judgments ?? []).filter(j => !j.error).map(j => [j.run_id, j.requirements]));
   const { loadBench, registryAt } = await import('./tasks.js');
   const { projects, tasks } = await loadBench(await registryAt(args.registry));
-  const titleOf = (projectId, topic) => projects.find(p => p.id === projectId)?.memories.find(m => m.topic === topic)?.title ?? null;
+  // A topic can recur across statuses in a real store: a live memory's title first.
+  const titleOf = (projectId, topic) => { const all = projects.find(p => p.id === projectId)?.memories.filter(m => m.topic === topic) ?? []; return (all.find(m => ['active', 'contested'].includes(m.status ?? 'active')) ?? all[0])?.title ?? null; };
   const rows = [];
   for (const row of results.rows) {
     const task = tasks.find(t => t.id === row.task);
     const stream = await readFile(join(results.runs, `${row.run_id}.jsonl`), 'utf8').catch(() => '');
-    rows.push(enrichRow(row, task, stream, judged.get(row.run_id) ?? null, titleOf, { requireJudge: Boolean(judge) }));
+    const titles = projects.find(p => p.id === row.project)?.memories.map(m => m.title) ?? [];
+    rows.push(enrichRow(row, task, stream, judged.get(row.run_id) ?? null, titleOf, { requireJudge: Boolean(judge), titles }));
   }
   const report = { input: IN, ...buildReport(rows, ['dd2', 'docref', 'doc', 'none'], results.model) };
   await writeFile(IN.replace(/\.json$/, '') + '.report.json', JSON.stringify(report, null, 2));
