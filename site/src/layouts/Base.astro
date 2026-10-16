@@ -1,0 +1,48 @@
+---
+import '@fontsource/geist-sans/400.css';
+import '@fontsource/geist-sans/500.css';
+import '@fontsource/geist-sans/600.css';
+import '@fontsource/geist-sans/700.css';
+import '@fontsource/geist-mono/400.css';
+import '@fontsource/geist-mono/500.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import { SITE, href } from '../config.js';
+
+const { title, description, ogImage = 'og/index.png', jsonLd } = Astro.props;
+const fullTitle = title ? `${title} · ${SITE.name}` : SITE.homeTitle;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const image = new URL(href(ogImage), Astro.site).href;
+const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0d10" />
+    <link rel="icon" type="image/svg+xml" href={href('favicon.svg')} />
+    <link rel="sitemap" href={href('sitemap-index.xml')} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content={title ? 'article' : 'website'} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+    {ld.map(item => <script type="application/ld+json" is:inline set:html={JSON.stringify(item)} />)}
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>
