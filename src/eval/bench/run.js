@@ -1,0 +1,250 @@
+#!/usr/bin/env node
+// The full agent benchmark (docs/superpowers/specs/2026-10-16-bench-full-design.md):
+// every task of every registered project, done by Claude Code headless in a fresh
+// clone under each knowledge condition, with the task's check, the project's
+// suite and lint on the changed tree, and the run's stream and diff kept.
+//   dd2     DD v2 hooks from this checkout, the project's store compiled
+//   docref  the same memories as docs/engineering-guide.md, named in CLAUDE.md or AGENTS.md
+//   doc     the same guide, nothing points to it
+//   none    no .dd/, no guide
+//
+// This spends real model usage. It runs only when invoked:
+//   node src/eval/bench/run.js --model=claude-haiku-5-5 --effort=high --out=bench-2026-10/haiku/results.json
+//     [--projects=a,b] [--tasks=a,b] [--selection=path] [--conditions=dd2,docref,doc,none] [--repeat=3]
+//     [--conc=1] [--seed=1] [--resume] [--recheck=a,b|all] [--check-only] [--registry=path]
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { appendFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+import { performance } from 'node:perf_hooks';
+import { fileURLToPath } from 'node:url';
+import { limitWait, taskReport, usageLimited } from '../agent/metrics.js';
+import { allowedTools } from '../agent/permissions.js';
+import { run } from '../agent/proc.js';
+import { prepareClone, removeClone } from './clone.js';
+import { CONDITIONS as ALL_CONDITIONS } from './situations.js';
+import { schedule } from './stats.js';
+import { runCommand, suiteOutcome } from './suite.js';
+import { loadBench, registryAt } from './tasks.js';
+
+const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
+const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, ...v] = a.replace(/^--/, '').split('='); return [k, v.join('=')]; }));
+const list = value => (value ? value.split(',') : null);
+const MODEL = args.model ?? 'claude-haiku-5-5';
+const EFFORT = args.effort ?? null;
+const REPEAT = Number(args.repeat ?? 3);
+const SEED = Number(args.seed ?? 1);
+const CONDITIONS = list(args.conditions) ?? ALL_CONDITIONS;
+if (CONDITIONS.some(c => !ALL_CONDITIONS.includes(c))) throw new Error(`unknown condition in ${args.conditions}`);
+const OUT = resolve(REPO, 'output', 'eval', args.out ?? 'bench-results.json');
+const ROWS = OUT.replace(/\.json$/, '') + '.rows.jsonl';
+const RUNS = join(dirname(OUT), 'runs');
+const TIMEOUT_MS = 20 * 60 * 1000;
+// A Node script standing in for claude, for the harness's own test.
+const AGENT = process.env.DD_BENCH_AGENT ?? null;
+const HOST_ENV = { ...process.env };
+delete HOST_ENV.DD_BENCH_AGENT;
+
+const { projects, tasks: ALL } = await loadBench(await registryAt(args.registry));
+const selection = args.selection ? new Set(JSON.parse(await readFile(resolve(REPO, args.selection), 'utf8')).selected) : null;
+const TASKS = ALL.filter(t => (!list(args.projects) || list(args.projects).includes(t.project))
+  && (!list(args.tasks) || list(args.tasks).includes(t.id)) && (!selection || selection.has(t.id)));
+const projectOf = task => projects.find(p => p.id === task.project);
+const usedProjects = () => projects.filter(p => TASKS.some(t => t.project === p.id));
+
+// The hot path as the host pays it: a fresh hook process per tool call, next to a bare Node start.
+async function hookLatency(dir, env, project) {
+  const payload = JSON.stringify({ cwd: dir, session_id: 'eval-latency', hook_event_name: 'PreToolUse', tool_name: 'Read',
+    tool_input: { file_path: join(dir, project.probeFile) } });
+  const time = async (argv, input) => { const t = performance.now(); await run(process.execPath, argv, { cwd: dir, env, input, timeout: 30000 }); return performance.now() - t; };
+  const hook = [], node = [];
+  for (let i = 0; i < 10; i += 1) {
+    hook.push(await time([join(REPO, 'hooks', 'run.cjs'), 'pre-tool'], payload));
+    node.push(await time(['-e', '']));
+  }
+  const median = values => [...values].sort((a, b) => a - b)[Math.floor((values.length - 1) / 2)];
+  return { hook_ms: Math.round(median(hook)), node_ms: Math.round(median(node)) };
+}
+
+// The plugin's own registration, anchored at this checkout, as a marketplace install gets it.
+async function ddSettings() {
+  const { hooks } = JSON.parse(await readFile(join(REPO, 'hooks', 'hooks.json'), 'utf8'));
+  return { hooks: JSON.parse(JSON.stringify(hooks).replaceAll('${CLAUDE_PLUGIN_ROOT}', REPO.replaceAll('\\', '/'))) };
+}
+
+class UsageLimit extends Error {
+  constructor(text) { super(`usage limit: ${text}`); this.wait = limitWait(text); }
+}
+
+const gitOut = (dir, ...argv) => execFileSync('git', ['-C', dir, ...argv], { maxBuffer: 64 * 1024 * 1024 }).toString();
+
+async function lintOf(project, dir, env) {
+  if (!project.lint) return { lint_ok: null, lint_output: null };
+  const out = await runCommand(project.lint, dir, env);
+  return { lint_ok: out.ok, lint_output: out.ok ? null : out.out.slice(-1500) };
+}
+
+async function suiteOf(project, dir, env) {
+  const once = async () => {
+    const out = await runCommand(project.suite, dir, env);
+    return { passed: out.ok, failed: out.ok ? [] : (project.parseFailures?.(out.out) ?? []) };
+  };
+  const baseline = async () => {
+    gitOut(dir, '-c', 'user.name=eval', '-c', 'user.email=eval@localhost', 'stash', 'push', '-u', '-q');
+    try { return await once(); } finally { gitOut(dir, 'stash', 'pop', '-q'); }
+  };
+  return suiteOutcome(once, baseline, project.knownFlaky ?? []);
+}
+
+async function runOnce(task, condition, index) {
+  const project = projectOf(task);
+  const runId = `${task.id}-${condition}-${index}`;
+  const { dir, store_warnings: storeWarnings, index_memories: indexMemories } = await prepareClone(project, task, condition);
+  const env = { ...HOST_ENV, DD_DATA: join(dir, '..', 'dd-data'), DD_MAINTENANCE: '0' };
+  // A headless session ends with its answer; a command left running in the background is never read back.
+  const prompt = `${task.prompt}
+
+Run every command in the foreground and wait for it to finish before your final answer; give test runs a timeout of up to 10 minutes.`;
+  const argv = ['-p', prompt, '--model', MODEL, '--output-format', 'stream-json', '--verbose', '--include-hook-events',
+    '--no-session-persistence', '--setting-sources', 'project', '--strict-mcp-config', '--allowedTools', ...allowedTools(project.programs)];
+  if (EFFORT) argv.push('--effort', EFFORT);
+  let ddReady = null, latency = {};
+  if (condition === 'dd2') {
+    ddReady = existsSync(join(dir, '.dd', 'local', 'v2', 'index.json'));
+    if (ddReady) latency = await hookLatency(dir, env, project).catch(() => ({}));
+    const settings = join(dir, '..', 'dd-settings.json');
+    await writeFile(settings, JSON.stringify(await ddSettings()));
+    argv.push('--settings', settings);
+  }
+  const started = Date.now();
+  let result, stream = '', timedOut = false;
+  try {
+    // No shell: it would join the arguments unquoted and split the prompt.
+    const out = AGENT ? await run(process.execPath, [AGENT, ...argv], { cwd: dir, env, timeout: TIMEOUT_MS })
+      : await run('claude', argv, { cwd: dir, env, timeout: TIMEOUT_MS });
+    stream = out.out; timedOut = out.timedOut;
+    const events = stream.split('\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } });
+    result = events.findLast(event => event?.type === 'result') ?? { is_error: true, result: timedOut ? 'timeout' : (stream.slice(-2000) + out.err) };
+  } catch (err) { result = { is_error: true, result: err.message }; }
+  const duration = Date.now() - started;
+  if (usageLimited(result)) {
+    await removeClone(dir, project);
+    throw new UsageLimit(String(result.result));
+  }
+  await writeFile(join(RUNS, `${runId}.jsonl`), stream);
+  // The change as a reviewer sees it: new files included, DD's own store left out.
+  gitOut(dir, 'add', '-A', '--', '.', ':(exclude).dd');
+  const patch = gitOut(dir, 'diff', '--cached', 'HEAD');
+  const numstat = gitOut(dir, 'diff', '--cached', '--numstat', 'HEAD');
+  await writeFile(join(RUNS, `${runId}.diff`), patch);
+  // With DD the session's final result is the reply to DD's Stop-hook reminder, not the task report.
+  const report = taskReport(stream) ?? String(result.result ?? '');
+  const check = await task.check(dir, report).catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
+  const lint = await lintOf(project, dir, env);
+  const suite = await suiteOf(project, dir, env);
+  const usage = result.usage ?? {};
+  const row = { run_id: runId, task: task.id, project: project.id, situation: task.situation, origin: task.origin, kind: task.kind,
+    memories: task.memories, withheld: task.withheld ?? [], condition, base: task.base ?? project.base, model: MODEL, effort: EFFORT, taskset: 'bench',
+    dd_ready: ddReady, store_warnings: storeWarnings, index_memories: indexMemories,
+    passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
+    suite_passed: suite.passed, suite_first_passed: suite.first_passed, suite_failed_twice: suite.failed_twice, suite_regressions: suite.regressions,
+    suite_baseline_failed: suite.baseline_failed, suite_flaky: suite.flaky, numstat, ...latency,
+    input_tokens: (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0),
+    output_tokens: usage.output_tokens ?? 0, cost_usd: result.total_cost_usd ?? null, turns: result.num_turns ?? null,
+    duration_ms: duration, timed_out: timedOut, answer: report.slice(0, 8000), final_answer: String(result.result ?? '').slice(0, 2000),
+    error: result.is_error ? String(result.result).slice(0, 300) : null };
+  await removeClone(dir, project);
+  return row;
+}
+
+// The recorded change applied to a fresh baseline, and the task's check and lint again.
+async function recheck(row) {
+  const task = ALL.find(t => t.id === row.task);
+  const project = projectOf(task);
+  const { dir } = await prepareClone(project, task, row.condition);
+  try {
+    const patch = join(RUNS, `${row.run_id}.diff`);
+    if ((await readFile(patch, 'utf8')).trim()) gitOut(dir, 'apply', '--whitespace=nowarn', patch);
+    const check = await task.check(dir, row.answer ?? '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
+    return { ...row, passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...await lintOf(project, dir, HOST_ENV),
+      rechecked: row.rechecked ?? { passed: row.passed, detail: row.detail } };
+  } finally { await removeClone(dir, project); }
+}
+
+const resultsFile = rows => ({ model: rows[0]?.model ?? MODEL, effort: rows[0]?.effort ?? EFFORT, taskset: 'bench', repeat: REPEAT, seed: SEED, runs: RUNS, rows });
+
+await mkdir(RUNS, { recursive: true });
+for (const project of usedProjects()) {
+  for (const base of new Set(TASKS.filter(t => t.project === project.id).map(t => t.base ?? project.base))) await project.setup?.(base);
+}
+
+// --check-only runs every task's check on an untouched clone: each must fail, or
+// the check passes work that was never done. No agent runs.
+if ('check-only' in args) {
+  let passing = 0;
+  for (const task of TASKS) {
+    const project = projectOf(task);
+    const { dir } = await prepareClone(project, task, 'none');
+    try {
+      const check = await task.check(dir, '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
+      if (check.passed) passing += 1;
+      console.log(JSON.stringify({ task: task.id, passed: check.passed, requirements: check.requirements ?? {}, detail: check.detail }));
+    } finally { await removeClone(dir, project); }
+  }
+  // Each condition's clone, as the project's first task would get it.
+  for (const project of usedProjects()) {
+    const task = TASKS.find(t => t.project === project.id);
+    for (const condition of CONDITIONS) {
+      const { dir, index_memories: indexMemories, store_warnings: warnings } = await prepareClone(project, task, condition);
+      try {
+        const guide = await readFile(join(dir, 'docs', 'engineering-guide.md'), 'utf8').catch(() => null);
+        const target = await readFile(join(dir, project.guideTarget), 'utf8').catch(() => '');
+        console.log(JSON.stringify({ project: project.id, condition, dd_dir: existsSync(join(dir, '.dd')), guide_sections: guide ? (guide.match(/^### /gm) ?? []).length : null,
+          target_names_guide: /engineering-guide/.test(target), index_memories: indexMemories, store_warnings: warnings }));
+      } finally { await removeClone(dir, project); }
+    }
+  }
+  process.exit(passing ? 1 : 0);
+}
+
+if (args.recheck) {
+  const only = list(args.recheck);
+  const rows = (await readFile(ROWS, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
+  for (const [i, row] of rows.entries()) {
+    if (!(only.includes('all') || only.includes(row.task)) || usageLimited(row.error ?? '')) continue;
+    rows[i] = await recheck(row);
+    console.log(JSON.stringify({ run_id: row.run_id, was: row.passed, passed: rows[i].passed, detail: rows[i].detail }));
+  }
+  await writeFile(ROWS, rows.map(row => `${JSON.stringify(row)}\n`).join(''));
+  await writeFile(OUT, JSON.stringify(resultsFile(rows), null, 2));
+  process.exit(0);
+}
+
+const done = new Set();
+if ('resume' in args) {
+  // Rows a usage limit cut short are dropped and run again.
+  const kept = (await readFile(ROWS, 'utf8').catch(() => '')).split('\n').filter(Boolean).filter(line => !usageLimited(JSON.parse(line).error ?? ''));
+  await writeFile(ROWS, kept.map(line => `${line}\n`).join(''));
+  for (const line of kept) done.add(JSON.parse(line).run_id);
+} else await rm(ROWS, { force: true });
+const jobs = schedule(TASKS, CONDITIONS, REPEAT, done, SEED);
+// --conc=N overlaps runs: each has its own clone and data directory.
+async function worker() {
+  for (let job = jobs.shift(); job; job = jobs.shift()) {
+    let row;
+    try { row = await runOnce(...job); } catch (err) {
+      if (!(err instanceof UsageLimit)) throw err;
+      console.log(JSON.stringify({ run_id: `${job[0].id}-${job[1]}-${job[2]}`, waiting_minutes: Math.round(err.wait / 60000), error: err.message }));
+      jobs.unshift(job);
+      await new Promise(r => setTimeout(r, err.wait));
+      continue;
+    }
+    await appendFile(ROWS, JSON.stringify(row) + '\n');
+    console.log(JSON.stringify({ run_id: row.run_id, passed: row.passed, suite_passed: row.suite_passed, dd_ready: row.dd_ready,
+      lint_ok: row.lint_ok, cost_usd: row.cost_usd, minutes: Number((row.duration_ms / 60000).toFixed(1)), error: row.error }));
+  }
+}
+await Promise.all(Array.from({ length: Number(args.conc ?? 1) }, worker));
+const rows = (await readFile(ROWS, 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
+await writeFile(OUT, JSON.stringify(resultsFile(rows), null, 2));
+console.log(JSON.stringify({ model: MODEL, effort: EFFORT, runs: rows.length, report: OUT }, null, 2));
