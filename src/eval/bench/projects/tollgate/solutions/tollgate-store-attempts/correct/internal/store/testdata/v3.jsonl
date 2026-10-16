@@ -1,0 +1,2 @@
+{"format":3}
+{"id":"evt_c1","event_type":"invoice.paid","received_at":"2026-02-02T09:00:00Z","status":"delivered","body":{"id":"evt_c1","type":"invoice.paid"}}
