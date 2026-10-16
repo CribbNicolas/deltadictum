@@ -56,7 +56,7 @@ test('a clone has no remote and no ref but its own branch, so the source reposit
   const { dir, baseline } = await prepareClone(project(repo), task, 'none');
   t.after(() => removeClone(dir, project(repo)));
   assert.equal(git(dir, 'remote').trim(), '');
-  assert.deepEqual(git(dir, 'for-each-ref', '--format=%(refname)').trim().split('\n'), ['refs/heads/bench']);
+  assert.deepEqual(git(dir, 'for-each-ref', '--format=%(refname)').trim().split('\n'), ['refs/heads/main']);
   assert.doesNotMatch(git(dir, 'log', '--all', '--oneline'), /the answer/);
   assert.equal(baseline, git(dir, 'rev-parse', 'HEAD').trim());
 });

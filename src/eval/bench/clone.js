@@ -23,10 +23,10 @@ async function strip(dir, entries) {
 // source repository), no other branch or tag (a mined task's fix, the bench's own
 // branches) and no reflog that still names them.
 function isolate(dir, base) {
-  git(dir, 'checkout', '-q', '-B', 'bench', base);
+  git(dir, 'checkout', '-q', '-B', 'main', base);
   git(dir, 'remote', 'remove', 'origin');
   for (const ref of git(dir, 'for-each-ref', '--format=%(refname)').split('\n').filter(Boolean)) {
-    if (ref !== 'refs/heads/bench') git(dir, 'update-ref', '-d', ref);
+    if (ref !== 'refs/heads/main') git(dir, 'update-ref', '-d', ref);
   }
   git(dir, 'reflog', 'expire', '--expire=now', '--all');
 }
