@@ -60,7 +60,10 @@ const jsonLd = [
         button.textContent = 'Copied';
         setTimeout(() => { button.textContent = 'Copy'; }, 1500);
       });
-      pre.append(button);
+      // The button sits on a wrapper, not in the scrolling block, so long lines never pass under it.
+      const wrap = Object.assign(document.createElement('div'), { className: 'code' });
+      pre.replaceWith(wrap);
+      wrap.append(pre, button);
     }
     for (const table of document.querySelectorAll('.prose table')) {
       const wrap = Object.assign(document.createElement('div'), { className: 'table-wrap' });

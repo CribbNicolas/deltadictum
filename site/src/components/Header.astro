@@ -16,8 +16,8 @@ const { docs = false } = Astro.props;
     {docs && <Search />}
     <div class="links">
       {!docs && <a href={href('getting-started.html')}>Docs</a>}
-      {!docs && <a href={href('guide/how-it-works.html')}>How it works</a>}
-      <a href={href('benchmarks/')}>Benchmarks</a>
+      {!docs && <a class="optional" href={href('guide/how-it-works.html')}>How it works</a>}
+      <a class={docs ? undefined : 'optional'} href={href('benchmarks/')}>Benchmarks</a>
       <a href={SITE.repo}>GitHub</a>
       {docs ? <a href={SITE.npm}>npm</a> : <a class="cta" href={href('getting-started.html')}>Get started</a>}
     </div>
@@ -32,5 +32,10 @@ const { docs = false } = Astro.props;
   .links { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; font-size: 14px; }
   .links a { color: var(--text-muted); text-decoration: none; }
   .links a:hover { color: var(--text-strong); }
+  @media (max-width: 520px) {
+    .bar { padding-top: 14px; padding-bottom: 14px; }
+    .links { gap: 8px 16px; }
+    .links a.optional { display: none; }
+  }
   .links a.cta { background: var(--accent); color: var(--on-accent); font-weight: 600; padding: 0 14px; min-height: 44px; display: inline-flex; align-items: center; border-radius: var(--radius-s); }
 </style>
