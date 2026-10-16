@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
-import { routeFor } from '../src/lib/routes.js';
+import { routeFor, sitemapUrl } from '../src/lib/routes.js';
 import { rewriteHref } from '../src/lib/links.js';
 import { remarkCallouts } from '../src/lib/callouts.js';
 
@@ -39,4 +39,16 @@ test('a blockquote that opens with bold text ending in a colon or a period is a 
   const tree = { type: 'root', children: [quote('Tip:'), quote('One test.'), quote('Plain'), { type: 'blockquote', children: [{ type: 'paragraph', children: [{ type: 'text', value: 'x' }] }] }] };
   remarkCallouts()(tree);
   assert.deepEqual(tree.children.map(n => n.data?.hProperties?.className ?? null), [['callout'], ['callout'], null, null]);
+});
+
+test('sitemap URLs match the canonical URL of each page', () => {
+  const sections = new Set(['guide', 'architecture']);
+  const at = path => sitemapUrl(`https://cribbnicolas.github.io/deltadictum/${path}`, { base: '/deltadictum/', sections });
+  assert.equal(at(''), 'https://cribbnicolas.github.io/deltadictum/');
+  assert.equal(at('getting-started'), 'https://cribbnicolas.github.io/deltadictum/getting-started.html');
+  assert.equal(at('DD'), 'https://cribbnicolas.github.io/deltadictum/DD.html');
+  assert.equal(at('guide'), 'https://cribbnicolas.github.io/deltadictum/guide/');
+  assert.equal(at('guide/'), 'https://cribbnicolas.github.io/deltadictum/guide/');
+  assert.equal(at('guide/how-it-works'), 'https://cribbnicolas.github.io/deltadictum/guide/how-it-works.html');
+  assert.equal(at('getting-started.html'), 'https://cribbnicolas.github.io/deltadictum/getting-started.html');
 });
