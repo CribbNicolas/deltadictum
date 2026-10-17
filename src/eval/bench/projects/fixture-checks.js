@@ -14,7 +14,7 @@ export async function withHidden(from, to, fn) {
   try { return await fn(); } finally { await rm(to, { force: true }); }
 }
 
-async function changedFiles(dir, prefix) {
+export async function changedFiles(dir, prefix) {
   const lists = await Promise.all([git(dir, 'diff', '--cached', '--name-only', 'HEAD'), git(dir, 'diff', '--name-only', 'HEAD'), git(dir, 'ls-files', '--others', '--exclude-standard')]);
   return [...new Set(lists.join('\n').split('\n').map(l => l.trim().replaceAll('\\', '/')).filter(l => l && l.startsWith(prefix)))];
 }

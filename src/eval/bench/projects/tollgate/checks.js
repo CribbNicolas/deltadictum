@@ -2,7 +2,7 @@
 import { existsSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { addedLines, exec, withHidden } from '../fixture-checks.js';
+import { addedLines, changedFiles, exec, withHidden } from '../fixture-checks.js';
 
 const HIDDEN = join(dirname(fileURLToPath(import.meta.url)), 'hidden');
 
@@ -22,6 +22,12 @@ export async function goHidden(dir, { pkg, file, tests }) {
 }
 
 export const addedGo = (dir, prefix) => addedLines(dir, prefix, ['.go']);
+
+// The Go a change adds under prefix, its tests left out.
+export async function addedCode(dir, prefix) {
+  const files = (await changedFiles(dir, prefix)).filter(file => file.endsWith('.go') && !file.endsWith('_test.go'));
+  return (await Promise.all(files.map(file => addedLines(dir, file, ['.go'])))).join('\n');
+}
 
 // A client that keeps idle connections under 30 seconds: the shared constructor, or an
 // IdleConnTimeout of at most 29 s as a field or an assignment; never the default client.

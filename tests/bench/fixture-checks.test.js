@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { flags } from '../../src/eval/bench/projects/fixture-checks.js';
 import { idleUnder30s } from '../../src/eval/bench/projects/tollgate/checks.js';
 import { truncatingOpen } from '../../src/eval/bench/projects/ledgerkit/checks.js';
+import { SERIALIZATION_FLAG } from '../../src/eval/bench/projects/patriark/tasks.js';
 
 test('an idle timeout under 30 seconds is found as a field, an assignment or the shared constructor', () => {
   assert.equal(idleUnder30s('return &http.Client{Transport: &http.Transport{IdleConnTimeout: 25 * time.Second}}'), true);
@@ -26,4 +27,19 @@ test('a truncating open is found with nested parentheses, and atomic_write is no
   assert.equal(truncatingOpen('storage.atomic_write(path, text)'), false);
   assert.equal(truncatingOpen('with open(path, encoding="utf-8") as f:'), false);
   assert.equal(truncatingOpen('with open(path, "rb") as f:'), false);
+});
+
+// The full run's three Opus dd2 reviews named the finding with contractions and "never": all are the finding.
+test('patriark-review-command: the serialization finding is read in the words the reviews used', () => {
+  const flagged = text => flags(text, ...SERIALIZATION_FLAG);
+  assert.ok(flagged('1. Every rename throws. `RenameCharacter` isn\'t registered in `GameJsonContext`, so serializing it throws.'));
+  assert.ok(flagged('1. The commit didn\'t add `[JsonSerializable(typeof(RenameCharacter))]` next to the other commands.'));
+  assert.ok(flagged('1. `RenameCharacter` was never added to the command types the generated `GameJsonContext` knows.'));
+  assert.ok(flagged('1. The command is not registered in GameJsonContext.'));
+  // The other runs of both models, all naming the finding.
+  assert.ok(flagged('1. `RenameCharacter` is not in the `[JsonSerializable]` list in `SnapshotCodec.cs`.'));
+  assert.ok(flagged('1. `Fingerprint` serializes through `GameJsonContext`, and `SnapshotCodec.cs:72-74` lists the command types it knows, but not `RenameCharacter`.'));
+  assert.ok(flagged('1. `SnapshotCodec.cs:64-90` registers all 27 other commands with `[JsonSerializable]`, but not `RenameCharacter`.'));
+  assert.ok(flagged('**1. Every rename fails.** The game\'s JSON setup only knows the command types listed in `SnapshotCodec.cs`, and `RenameCharacter` isn\'t on that list.'));
+  assert.ok(!flagged('1. Add a test that round-trips the command through `GameJsonContext`.'));
 });
