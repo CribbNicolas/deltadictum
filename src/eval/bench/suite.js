@@ -13,6 +13,18 @@ export async function runCommand(spec, cwd, env) {
 ${out.err ?? ''}` };
 }
 
+// A row's suite verdict judged again from what it recorded, when a test is found flaky after the run:
+// the fields that change, or nothing.
+export function suiteReverdict(row, knownFlaky = []) {
+  const twice = row.suite_failed_twice ?? [];
+  const flaky = twice.filter(name => knownFlaky.includes(name));
+  if (!flaky.length) return {};
+  const failedTwice = twice.filter(name => !flaky.includes(name));
+  const regressions = (row.suite_regressions ?? []).filter(name => !flaky.includes(name));
+  return { suite_passed: !failedTwice.length || !regressions.length, suite_failed_twice: failedTwice, suite_regressions: regressions,
+    suite_flaky: [...new Set([...(row.suite_flaky ?? []), ...flaky])] };
+}
+
 export async function suiteOutcome(runSuite, runBaseline, knownFlaky = []) {
   const flakyOnly = s => s.failed.length > 0 && s.failed.every(name => knownFlaky.includes(name));
   const outcome = over => ({ passed: true, first_passed: false, failed_twice: [], regressions: [], baseline_failed: null, baseline_passed: null, flaky: [], ...over });
