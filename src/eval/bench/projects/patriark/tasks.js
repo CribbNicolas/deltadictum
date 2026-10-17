@@ -27,7 +27,7 @@ const reviewed = async (dir, answer) => answer.trim().length > 40 && !(await add
 // The calibration's and the full run's reviews named it in many words: a negation before register, add,
 // list, declare, include, or "not in/on" the list, or "but not" the command.
 export const SERIALIZATION_FLAG = [/\b(JsonSerializable|GameJsonContext|JsonTypeInfo|source[- ]?generat\w*|JSON (?:context|setup|metadata))\b/i,
-  /\b(?:missing|unregistered|lacks?|without|forg[eo]t\w*|absent|but not)\b|(?:\bnot|\bnever|n['’]t)\s+(?:\w+\s+){0,2}(?:register|add|list|declar|includ|in\b|on\b)\w*/i];
+  /\b(?:missing|unregistered|lacks?|without|forg[eo]t\w*|absent|but not|(?:has|have|had) no)\b|(?:\bnot|\bnever|n['’]t)\s+(?:\w+\s+){0,2}(?:register|add|list|declar|includ|in\b|on\b)\w*/i];
 
 export const TASKS = [
   {

@@ -36,7 +36,8 @@ test('patriark-review-command: the serialization finding is read in the words th
   assert.ok(flagged('1. The commit didn\'t add `[JsonSerializable(typeof(RenameCharacter))]` next to the other commands.'));
   assert.ok(flagged('1. `RenameCharacter` was never added to the command types the generated `GameJsonContext` knows.'));
   assert.ok(flagged('1. The command is not registered in GameJsonContext.'));
-  // The other runs of both models, all naming the finding.
+  // The other runs of both models and the calibration's, all naming the finding.
+  assert.ok(flagged('1. `GameJsonContext` (`SnapshotCodec.cs`, list around line 74) has no `[JsonSerializable(typeof(RenameCharacter))]`.'));
   assert.ok(flagged('1. `RenameCharacter` is not in the `[JsonSerializable]` list in `SnapshotCodec.cs`.'));
   assert.ok(flagged('1. `Fingerprint` serializes through `GameJsonContext`, and `SnapshotCodec.cs:72-74` lists the command types it knows, but not `RenameCharacter`.'));
   assert.ok(flagged('1. `SnapshotCodec.cs:64-90` registers all 27 other commands with `[JsonSerializable]`, but not `RenameCharacter`.'));
