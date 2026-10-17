@@ -25,7 +25,7 @@ import { prepareClone, removeClone } from './clone.js';
 import { CONDITIONS as ALL_CONDITIONS } from './situations.js';
 import { assertSubscription } from './billing.js';
 import { schedule } from './stats.js';
-import { runCommand, suiteOutcome } from './suite.js';
+import { runCommand, suiteOutcome, suiteReverdict } from './suite.js';
 import { loadBench, registryAt } from './tasks.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
@@ -171,7 +171,8 @@ Run every command in the foreground and wait for it to finish before your final 
   return row;
 }
 
-// The recorded change applied to a fresh baseline, and the task's check and lint again.
+// The recorded change applied to a fresh baseline, and the task's check and lint again; the suite's
+// recorded verdict is judged again against the project's known flaky tests.
 async function recheck(row) {
   const task = ALL.find(t => t.id === row.task);
   const project = projectOf(task);
@@ -181,7 +182,8 @@ async function recheck(row) {
     if ((await readFile(patch, 'utf8')).trim()) gitOut(dir, 'apply', '--whitespace=nowarn', patch);
     const check = await task.check(dir, row.answer ?? '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
     return { ...row, passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...await lintOf(project, dir, HOST_ENV),
-      rechecked: row.rechecked ?? { passed: row.passed, detail: row.detail } };
+      ...suiteReverdict(row, project.knownFlaky ?? []),
+      rechecked: row.rechecked ?? { passed: row.passed, detail: row.detail, suite_passed: row.suite_passed } };
   } finally { await removeClone(dir, project); }
 }
 

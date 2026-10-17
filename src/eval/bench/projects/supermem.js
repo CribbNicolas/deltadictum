@@ -27,6 +27,8 @@ export default {
   links: [],
   probeFile: 'src/cli.js',
   parseFailures,
-  knownFlaky: ['a write waits for another process holding the telemetry lock instead of failing'],
+  // The second failed twice in a full run whose change touched only the UI, then passed 5/5 on that change.
+  knownFlaky: ['a write waits for another process holding the telemetry lock instead of failing',
+    'session start starts maintenance in the background when it is due, and says nothing'],
   tasks: [...MINED_TASKS, ...PORTED_TASKS],
 };

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runCommand, suiteOutcome } from '../../../src/eval/bench/suite.js';
+import { runCommand, suiteOutcome, suiteReverdict } from '../../../src/eval/bench/suite.js';
 
 const runs = (...results) => { const queue = [...results]; return async () => queue.shift(); };
 const never = async () => { throw new Error('baseline must not run'); };
@@ -46,6 +46,16 @@ test('a first run that names no test leaves the second run\'s failures to the ba
 test('without test names a baseline that passes makes it a regression', async () => {
   const fail = () => runs({ passed: false, failed: [] }, { passed: false, failed: [] });
   assert.equal((await suiteOutcome(fail(), async () => ({ passed: true, failed: [] }))).passed, false);
+});
+
+// A test found flaky after a run: the row's recorded failures are judged again against the list.
+test('a recorded suite verdict is judged again against the known flaky tests', () => {
+  const row = { suite_passed: false, suite_failed_twice: ['timing', 'real'], suite_regressions: ['timing', 'real'], suite_flaky: [] };
+  assert.deepEqual(suiteReverdict(row, ['timing']), { suite_passed: false, suite_failed_twice: ['real'], suite_regressions: ['real'], suite_flaky: ['timing'] });
+  const flakeOnly = { ...row, suite_failed_twice: ['timing'], suite_regressions: ['timing'] };
+  assert.deepEqual(suiteReverdict(flakeOnly, ['timing']), { suite_passed: true, suite_failed_twice: [], suite_regressions: [], suite_flaky: ['timing'] });
+  assert.deepEqual(suiteReverdict({ suite_passed: true, suite_failed_twice: [], suite_regressions: [], suite_flaky: [] }, ['timing']), {});
+  assert.deepEqual(suiteReverdict({ suite_passed: null, suite_skipped: true }, ['timing']), {});
 });
 
 test('a command reports its exit and output', async () => {
