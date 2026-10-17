@@ -22,6 +22,13 @@ async function hidden(dir, { file, pass, requirements = {} }) {
 const report = (run, extra = {}) => detail({ ...run.results, ...extra, ...(run.passed ? {} : { output: run.out.slice(-600).replace(/\s+/g, ' ') }) });
 const reviewed = async (dir, answer) => answer.trim().length > 40 && !(await addedCs(dir, 'src/')).trim();
 
+// One item naming the source-generated JSON and saying the command is missing from it: a passing
+// mention of serialization (a test idea, say) is not the finding.
+// The calibration's and the full run's reviews named it in many words: a negation before register, add,
+// list, declare, include, or "not in/on" the list, or "but not" the command.
+export const SERIALIZATION_FLAG = [/\b(JsonSerializable|GameJsonContext|JsonTypeInfo|source[- ]?generat\w*|JSON (?:context|setup|metadata))\b/i,
+  /\b(?:missing|unregistered|lacks?|without|forg[eo]t\w*|absent|but not)\b|(?:\bnot|\bnever|n['’]t)\s+(?:\w+\s+){0,2}(?:register|add|list|declar|includ|in\b|on\b)\w*/i];
+
 export const TASKS = [
   {
     id: 'patriark-rename-character', project: 'patriark', situation: 'S2', origin: 'authored', kind: 'memory',
@@ -87,10 +94,7 @@ export const TASKS = [
     requirements: [{ id: 'flags_serialization', auto: true, text: 'The review names that the command is not registered for the source-generated JSON.' }],
     async check(dir, answer) {
       const passed = await reviewed(dir, answer);
-      // One item naming the source-generated JSON and saying the command is missing from it: a passing
-      // mention of serialization (a test idea, say) is not the finding.
-      const flagged = flags(answer, /\b(JsonSerializable|GameJsonContext|source[- ]?generat\w*|JSON context)\b/i,
-        /\b(missing|not (registered|added|listed|declared|included)|unregistered|lacks?|without|forg[eo]t\w*|absent)\b/i);
+      const flagged = flags(answer, ...SERIALIZATION_FLAG);
       return { passed, requirements: { flags_serialization: flagged }, detail: detail({ reviewed: passed, 'flags serialization': flagged }) };
     },
   },
