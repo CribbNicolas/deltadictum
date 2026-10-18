@@ -29,6 +29,11 @@ export async function addedCode(dir, prefix) {
   return (await Promise.all(files.map(file => addedLines(dir, file, ['.go'])))).join('\n');
 }
 
+// The code that builds the client a replay --to uses: comments and the lines that still send to the
+// configured partner (the change rewrites them, so they count as added) left out.
+export const toClientCode = source => String(source).split('\n').map(line => line.replace(/\/\/.*$/, ''))
+  .filter(line => !/PartnerURL/.test(line)).join('\n');
+
 // A client that keeps idle connections under 30 seconds: the shared constructor, or an
 // IdleConnTimeout of at most 29 s as a field or an assignment; never the default client.
 export function idleUnder30s(source) {

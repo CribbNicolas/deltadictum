@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { flags } from '../../src/eval/bench/projects/fixture-checks.js';
-import { idleUnder30s } from '../../src/eval/bench/projects/tollgate/checks.js';
+import { idleUnder30s, toClientCode } from '../../src/eval/bench/projects/tollgate/checks.js';
 import { truncatingOpen } from '../../src/eval/bench/projects/ledgerkit/checks.js';
 import { SERIALIZATION_FLAG } from '../../src/eval/bench/projects/patriark/tasks.js';
 
@@ -43,4 +43,24 @@ test('patriark-review-command: the serialization finding is read in the words th
   assert.ok(flagged('1. `SnapshotCodec.cs:64-90` registers all 27 other commands with `[JsonSerializable]`, but not `RenameCharacter`.'));
   assert.ok(flagged('**1. Every rename fails.** The game\'s JSON setup only knows the command types listed in `SnapshotCodec.cs`, and `RenameCharacter` isn\'t on that list.'));
   assert.ok(!flagged('1. Add a test that round-trips the command through `GameJsonContext`.'));
+  // A review that clears the registration does not name the finding (the final review's cases).
+  assert.ok(!flagged('1. `RenameCharacter` is registered in `GameJsonContext`, so serialization is fine; but the handler has no length check.'));
+  assert.ok(!flagged('1. The command round-trips through `GameJsonContext` without issues.'));
+  assert.ok(!flagged('1. Serialization through `GameJsonContext` is fine, but the rule does not check in advance that the name is new.'));
+  assert.ok(!flagged('1. The source-generated context is fine. The rule doesn\'t address duplicate names.'));
+});
+
+// tollgate-replay-to judges the client --to uses: the partner line the change rewrites and comments do not count.
+test('tollgate-replay-to: the --to client is judged, not the partner line or a comment', () => {
+  const judged = code => idleUnder30s(toClientCode(code));
+  const bareTo = [
+    'func newReplayClient() *http.Client { return &http.Client{Timeout: 10 * time.Second} }',
+    'if *to != "" { err = send(newReplayClient(), *to, rec) } else {',
+    '	err = send(relay.NewHTTPClient(), cfg.PartnerURL, rec)',
+    '}',
+  ].join('\n');
+  assert.equal(judged(bareTo), false);
+  const sharedTo = ['target := cfg.PartnerURL', 'if *to != "" { target = *to }', 'err = send(relay.NewHTTPClient(), target, rec)'].join('\n');
+  assert.equal(judged(sharedTo), true);
+  assert.equal(judged('// never http.DefaultClient: it keeps idle connections too long\nc := relay.NewHTTPClient()'), true);
 });
