@@ -23,7 +23,8 @@ export default {
   strip: [],
   links: [],
   probeFile: 'internal/relay/relay.go',
-  parseFailures: out => [...new Set([...out.matchAll(/^\s*--- FAIL: (\S+)/gm)].map(m => m[1]))],
+  // Failed tests by name, and packages that did not build or set up by theirs: those name no test.
+  parseFailures: out => [...new Set([...out.matchAll(/^\s*--- FAIL: (\S+)|^FAIL\s+(\S+ \[(?:build|setup) failed\])/gm)].map(m => m[1] ?? m[2]))],
   setup: async () => { await buildFixture('tollgate'); },
   tasks: TASKS,
 };

@@ -139,3 +139,45 @@ test('a run into recorded rows without --resume or --fresh is refused and the ro
   assert.equal(readFileSync(join(root, 'out', 'results.rows.jsonl'), 'utf8').trim().split('\n').length, 1);
   assert.doesNotThrow(() => runner([...args, '--fresh']));
 });
+
+// A check that throws (a lost connection, say) says nothing about the agent: the row says so, the
+// report refuses it until --recheck has decided it, and the recheck keeps what the row first recorded.
+test('a check that throws is a check error: reported nowhere until --recheck decides it', async t => {
+  const extra = `{ ...task, id: 'fx-flaky', async check(dir) { const fs = await import('node:fs');
+    const once = ${JSON.stringify('MARKER')}; if (!fs.existsSync(once)) { fs.writeFileSync(once, '1'); throw new Error('read ECONNRESET'); } return task.check(dir); } }`;
+  const probe = fixture(t);
+  const marker = join(probe.root, 'thrown-once');
+  const { root, registry } = fixture(t, { extra: extra.replace('"MARKER"', JSON.stringify(marker)) });
+  const out = join(root, 'out', 'results.json');
+  const args = [`--registry=${registry}`, '--model=fake', `--out=${out}`, '--repeat=1', '--conditions=none', '--tasks=fx-flaky'];
+  runner(args);
+  const [row] = rowsOf(out);
+  assert.equal(row.passed, null);
+  assert.match(row.check_error, /ECONNRESET/);
+  const report = () => execFileSync(process.execPath, [join(REPO, 'src', 'eval', 'bench', 'report.js'), `--in=${out}`, `--registry=${registry}`], { cwd: REPO, stdio: 'pipe' });
+  assert.throws(report, /check_error/);
+  runner([...args, '--recheck=fx-flaky']);
+  const [rechecked] = rowsOf(out);
+  assert.equal(rechecked.passed, true);
+  assert.equal(rechecked.check_error, null);
+  assert.deepEqual(rechecked.rechecked, { passed: null, detail: row.detail, requirements: {}, lint_ok: row.lint_ok, suite_passed: row.suite_passed, check_error: row.check_error });
+  assert.doesNotThrow(report);
+});
+
+// A mined task starts at its own commit: the suite must pass untouched there too, not only at the
+// project's first task's base.
+test('check-only runs the untouched suite at every base a task starts from', async t => {
+  const probe = fixture(t);
+  const repo = join(probe.root, 'repo');
+  writeFileSync(join(repo, 'broken.txt'), 'x\n');
+  git(repo, 'add', '-A');
+  git(repo, 'commit', '-q', '-m', 'break the suite');
+  const broken = git(repo, 'rev-parse', 'HEAD').trim();
+  git(repo, 'rm', '-q', 'broken.txt');
+  git(repo, 'commit', '-q', '-m', 'fix the suite');
+  const registry = readFileSync(probe.registry, 'utf8')
+    .replace("args: ['-e', '']", "args: ['-e', 'process.exit(require(\"fs\").existsSync(\"broken.txt\") ? 1 : 0)']")
+    .replace('tasks: [task]', `tasks: [task, { ...task, id: 'fx-old', base: ${JSON.stringify(broken)} }]`);
+  writeFileSync(probe.registry, registry);
+  assert.throws(() => runner([`--registry=${probe.registry}`, '--check-only']));
+});

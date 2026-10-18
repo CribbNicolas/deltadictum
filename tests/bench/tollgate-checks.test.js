@@ -18,3 +18,11 @@ test('a hidden test reports each test by name and leaves nothing behind', { skip
   assert.deepEqual(out.results, { TestBenchPasses: true, TestBenchFails: false, TestBenchMissing: false });
   assert.deepEqual(readdirSync(join(dir, 'p')), ['p.go']);
 });
+
+// A package that does not build names no test: without its own name, one differently named flaky failure
+// in each suite run would hide it (the suite's verdict compares names).
+test('the suite parser names a package that failed to build, beside the tests that failed', async () => {
+  const { default: tollgate } = await import('../../src/eval/bench/projects/tollgate.js');
+  const out = '--- FAIL: TestRetry (0.01s)\nFAIL\ttollgate/internal/relay [build failed]\nFAIL tollgate/internal/store [setup failed]\nok  \ttollgate/internal/sign\t0.2s\n';
+  assert.deepEqual(tollgate.parseFailures(out), ['TestRetry', 'tollgate/internal/relay [build failed]', 'tollgate/internal/store [setup failed]']);
+});

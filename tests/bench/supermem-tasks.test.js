@@ -29,4 +29,12 @@ test('supermem-skills-npx: npx named only to forbid it passes; npx the skill run
   assert.equal((await task.check(dir)).passed, false);
   write(`${cli('recall')}\n\n\`\`\`\nnpx deltadictum recall "x"  # do not use\n\`\`\`\n`, cli('ui'));
   assert.equal((await task.check(dir)).passed, false);
+  // The final review's lenient cases: npx offered as a fallback, an alternative or a next step.
+  for (const runs of ['If node is missing, run `npx deltadictum recall` instead of failing.',
+    'Use `npx deltadictum recall` rather than the plugin CLI when offline.',
+    'Don\'t stop there: also run `npx deltadictum recall`.',
+    '- Never edit the store by hand\n- Fallback: `npx deltadictum recall`']) {
+    write(`${cli('recall')}\n\n${runs}\n`, cli('ui'));
+    assert.equal((await task.check(dir)).passed, false, runs);
+  }
 });

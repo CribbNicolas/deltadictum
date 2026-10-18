@@ -27,8 +27,9 @@ export default {
   links: [],
   probeFile: 'src/cli.js',
   parseFailures,
-  // The second failed twice in a full run whose change touched only the UI, then passed 5/5 on that change.
+  // The second failed twice in a full run whose change touched only the UI, then passed 5/5 on that change:
+  // forgiven only when the change leaves maintenance and the hooks alone.
   knownFlaky: ['a write waits for another process holding the telemetry lock instead of failing',
-    'session start starts maintenance in the background when it is due, and says nothing'],
+    { test: 'session start starts maintenance in the background when it is due, and says nothing', unlessChanged: ['src/maintenance/', 'src/hooks/'] }],
   tasks: [...MINED_TASKS, ...PORTED_TASKS],
 };

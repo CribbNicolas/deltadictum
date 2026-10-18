@@ -115,6 +115,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, ...v] = a.replace(/^--/, '').split('='); return [k, v.join('=')]; }));
   const IN = resolve(REPO, 'output', 'eval', args.in);
   const results = JSON.parse(await readFile(IN, 'utf8'));
+  // A run whose check threw was never judged: it is decided by run.js --recheck first.
+  const undecided = results.rows.filter(row => row.check_error).map(row => row.run_id);
+  if (undecided.length) throw new Error(`check_error: ${undecided.join(', ')}; run run.js --recheck=<task> on them first`);
   const judge = JSON.parse(await readFile(IN.replace(/\.json$/, '') + '.judge.json', 'utf8').catch(() => 'null'));
   const judged = new Map((judge?.judgments ?? []).filter(j => !j.error).map(j => [j.run_id, j.requirements]));
   const { loadBench, registryAt } = await import('./tasks.js');
