@@ -161,7 +161,7 @@ export function taskReport(stream) {
 // A usage limit ends a run before or during the agent's work, which says nothing
 // about the condition: the run is repeated after the reset, never recorded.
 // result: a stream-json result event, or the error text a row kept.
-const LIMIT = /usage_limit_reached|hit your (?:session|usage|weekly) limit/i;
+const LIMIT = /usage_limit_reached|usage limit reached|hit your (?:session|usage|weekly|5-hour|opus|sonnet) limit/i;
 export function usageLimited(result) {
   if (!result) return false;
   return result.api_error === 'usage_limit_reached' || LIMIT.test(typeof result === 'string' ? result : String(result.result ?? ''));
@@ -170,7 +170,7 @@ export function usageLimited(result) {
 // Milliseconds until the reset the message states ("resets 6:30pm"), in local
 // time, plus a margin; half an hour when it states none.
 export function limitWait(text, now = new Date()) {
-  const m = /resets (\d{1,2})(?::(\d{2}))?\s*(am|pm)/i.exec(String(text ?? ''));
+  const m = /(?:resets|reset at) (\d{1,2})(?::(\d{2}))?\s*(am|pm)/i.exec(String(text ?? ''));
   if (!m) return 30 * 60 * 1000;
   const at = new Date(now);
   at.setHours(Number(m[1]) % 12 + (m[3].toLowerCase() === 'pm' ? 12 : 0), Number(m[2] ?? 0), 0, 0);

@@ -1,0 +1,4 @@
+[
+  { "from": "2025-01-01", "rates": { "standard": "0.25", "food": "0.15", "exempt": "0" } },
+  { "from": "2026-01-01", "rates": { "standard": "0.25", "food": "0.12", "exempt": "0" } }
+]

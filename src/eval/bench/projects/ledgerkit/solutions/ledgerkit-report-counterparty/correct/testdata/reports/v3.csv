@@ -1,0 +1,9 @@
+#skatteportal v3
+category;counterparty;vat_class;net;vat
+fees;Gebyr;exempt;-35.00;0.00
+groceries;Kiwi;food;-378.00;-45.36
+groceries;Kjøpmannen;food;-89.50;-10.74
+groceries;Meny;food;-612.40;-73.49
+income;Innbetaling;standard;23400.00;5850.00
+software;Adobe;standard;-1299.00;-324.75
+travel;Vy;standard;-2450.00;-612.50

@@ -1,0 +1,26 @@
+{
+  "types": [
+    {
+      "name": "customer.updated",
+      "fields": [
+        { "name": "customer_id", "type": "string" },
+        { "name": "email", "type": "string" }
+      ]
+    },
+    {
+      "name": "invoice.created",
+      "fields": [
+        { "name": "invoice_id", "type": "string" },
+        { "name": "amount_cents", "type": "int" },
+        { "name": "currency", "type": "string" }
+      ]
+    },
+    {
+      "name": "invoice.paid",
+      "fields": [
+        { "name": "invoice_id", "type": "string" },
+        { "name": "paid_at", "type": "string" }
+      ]
+    }
+  ]
+}

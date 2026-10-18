@@ -1,0 +1,9 @@
+{
+  "groceries": "food",
+  "software": "standard",
+  "travel": "standard",
+  "fees": "exempt",
+  "income": "standard",
+  "uncategorized": "standard",
+  "takeaway": "food_takeaway"
+}

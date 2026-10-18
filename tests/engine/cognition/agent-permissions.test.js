@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ALLOWED_TOOLS } from '../../../src/eval/agent/permissions.js';
+import { ALLOWED_TOOLS, allowedTools } from '../../../src/eval/agent/permissions.js';
 
 // The 2026-10-14 trial refused 37 commands across the four conditions: pipes into
 // grep or head, a cat of a module, npx eslint, a redirection into a log. The
@@ -17,4 +17,11 @@ test('the trial allow list covers the project tooling and the shell commands tha
   for (const forbidden of ['npx:', 'find', 'curl', 'wget', 'ssh', 'scp', 'rm', 'sudo', 'powershell', 'pwsh', 'bash', 'sh:', 'python', 'eval', 'xargs']) {
     assert.ok(!ALLOWED_TOOLS.some(rule => rule.startsWith(`Bash(${forbidden}`)), forbidden);
   }
+});
+
+test('extra programs are allowed as Bash prefixes after the default list', () => {
+  const tools = allowedTools(['go', 'gofmt']);
+  assert.ok(tools.includes('Bash(go:*)') && tools.includes('Bash(gofmt:*)'));
+  assert.deepEqual(allowedTools(), ALLOWED_TOOLS);
+  assert.equal(new Set(allowedTools(['node'])).size, allowedTools(['node']).length);
 });

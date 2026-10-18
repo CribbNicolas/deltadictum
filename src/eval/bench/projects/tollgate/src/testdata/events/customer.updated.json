@@ -1,0 +1,1 @@
+{"id":"evt_cu_1","type":"customer.updated","occurred_at":"2026-03-01T10:00:00Z","payload":{"customer_id":"cus_381","email":"finance@harbor-supplies.example"}}

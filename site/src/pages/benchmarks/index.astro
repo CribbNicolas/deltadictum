@@ -39,7 +39,8 @@ const trialHeadings = summaries.map(s => ({ depth: 2, slug: s.id, text: s.title 
   })}
 </Doc>
 <style>
-  .ci { color: var(--text-faint); font-size: 0.9em; }
+  /* The interval and the change go under the value: four conditions fit beside the metric. */
+  .ci { display: block; color: var(--text-faint); font-size: 0.9em; }
   .change { font-family: var(--font-mono); font-size: 0.9em; color: var(--text-muted); }
   .change.better { color: var(--accent); }
   td { white-space: nowrap; }
