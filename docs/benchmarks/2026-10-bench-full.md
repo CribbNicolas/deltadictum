@@ -50,7 +50,8 @@ key memories arrived and what else came with them.
   (`bench-2026-10-calibration.json`, commit e21b16f). The rule: no task, check or memory changes after that
   commit except a harness fault, recorded in its commit.
 - **Proof per task.** Every check fails on an untouched clone, passes the correct overlay, and (memory
-  tasks) catches the naive overlay, which does what was asked and breaks the memory (`tests/bench/`).
+  tasks with one) catches the naive overlay, which does what was asked and breaks the memory
+  (`tests/bench/`). Mined and ported tasks have no naive overlay: the fix's own test decides them.
 - **The guide is the store.** The documentation conditions carry the same memories as DD, so they differ
   from `dd2` only in the channel.
 - **Blind judge.** Claude Opus 5.5, no tools, an empty directory; it sees the task, the guidance, the
@@ -66,8 +67,13 @@ key memories arrived and what else came with them.
 ## Harness faults found and fixed
 
 Every row was read against its diff before any number was taken. Each fault below made a check fail
-work that was correct; each was fixed with a failing test first, proven, and the recorded diffs were
-checked again (`run.js --recheck`, the original verdict kept on the row under `rechecked`).
+work that was correct. Each fix was shown to fail the recorded diffs before and pass them after, the task's
+proof was run again, and the recorded diffs were checked again (`run.js --recheck`, the original verdict
+kept on the row under `rechecked`). Unit tests pin the suite rules, the review matcher (with reviews that
+must not count), the replay client rule and the skills check; the other fixes rest on the recorded diffs
+and the proofs. A final review of the fixes found two of them too lenient (the review matcher credited
+reviews that clear the registration, the replay rule credited a partner line the change rewrites); both
+were tightened, with no verdict changing on the recorded runs.
 
 Before selection (from the calibration):
 
@@ -131,11 +137,12 @@ Project requirements are over the 15 memory tasks; the other rows over all 26.
 
 ## Results: Claude Haiku 5.5, effort high
 
-312 runs, no harness error, no timeout.
+312 runs, no timeout. One check lost its connection to the review UI server it started (`ECONNRESET`)
+and was run again on the recorded change.
 
 | | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge |
 |---|---|---|---|---|
-| Resolution | 92% (84-96) | 97% (91-99) | 99% (93-100) | 92% (84-96) |
+| Resolution | 92% (84-96) | 97% (91-99) | 100% (95-100) | 92% (84-96) |
 | Code quality | 94% (91-97) | 97% (95-99) | 97% (95-99) | 85% (81-90) |
 | Project requirements met | 96% (89-100) | 98% (93-100) | 100% (100-100) | 43% (30-57) |
 | Context (0 = least) | +9% (50.1k) | +19% (54.8k) | +14% (52.6k) | +0% (46.1k) |
@@ -152,7 +159,7 @@ Project requirements are over the 15 memory tasks; the other rows over all 26.
   is that delivered knowledge never outranks the user; with Haiku, a delivered memory did. It is the
   benchmark's clearest finding against DD.
 - **Against the guide**, DD is behind: 5 points less resolution against the referenced guide (−13 to 1)
-  and 6 against the unreferenced one (−17 to 1). Of the six `dd2` runs not resolved, three are the refusal
+  and 8 against the unreferenced one (−18 to 0). Of the six `dd2` runs not resolved, three are the refusal
   above, two `supermem-run-is-not-edit` and one review that left scratch files in the repository.
   Requirements are level within their intervals (−2 against the referenced guide, −13 to 7). Alone, Haiku
   fails the task or breaks a rule in 28 of 45 memory runs; with DD in 3.

@@ -21,7 +21,7 @@
           "median_peak_context_tokens": 54757
         },
         "doc": {
-          "resolution_pct": 99,
+          "resolution_pct": 100,
           "specific_quality_pct": 100,
           "mean_cost_usd": 0.0237,
           "median_peak_context_tokens": 52618
@@ -71,10 +71,10 @@
           },
           "doc": {
             "n": 26,
-            "mean": -0.06410256410256411,
+            "mean": -0.07692307692307693,
             "ci95": [
-              -0.16666666666666669,
-              0.012820512820512822
+              -0.1794871794871795,
+              0
             ]
           },
           "none": {
@@ -197,7 +197,7 @@
           },
           "doc": {
             "runs": 15,
-            "resolution_pct": 93,
+            "resolution_pct": 100,
             "specific_quality_pct": 100
           },
           "none": {
@@ -287,7 +287,7 @@
           },
           "doc": {
             "runs": 27,
-            "resolution_pct": 96,
+            "resolution_pct": 100,
             "specific_quality_pct": null
           },
           "none": {
@@ -509,7 +509,7 @@
           },
           "doc": {
             "runs": 18,
-            "resolution_pct": 94,
+            "resolution_pct": 100,
             "specific_quality_pct": 100
           },
           "none": {

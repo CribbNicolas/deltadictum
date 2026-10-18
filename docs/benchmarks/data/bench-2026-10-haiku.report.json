@@ -276,10 +276,10 @@
         },
         "doc": {
           "runs": 33,
-          "resolution_pct": 97,
+          "resolution_pct": 100,
           "resolution_ci95": [
-            85,
-            99
+            90,
+            100
           ],
           "quality_pct": 98,
           "quality_ci95": [
@@ -460,9 +460,9 @@
         },
         "doc": {
           "runs": 78,
-          "resolution_pct": 99,
+          "resolution_pct": 100,
           "resolution_ci95": [
-            93,
+            95,
             100
           ],
           "quality_pct": 97,
@@ -1014,10 +1014,10 @@
         },
         "doc": {
           "runs": 15,
-          "resolution_pct": 93,
+          "resolution_pct": 100,
           "resolution_ci95": [
-            70,
-            99
+            80,
+            100
           ],
           "quality_pct": 100,
           "quality_ci95": [
@@ -1746,10 +1746,10 @@
         },
         "doc": {
           "runs": 27,
-          "resolution_pct": 96,
+          "resolution_pct": 100,
           "resolution_ci95": [
-            82,
-            99
+            88,
+            100
           ],
           "quality_pct": 100,
           "quality_ci95": [
@@ -3582,10 +3582,10 @@
         },
         "doc": {
           "runs": 18,
-          "resolution_pct": 94,
+          "resolution_pct": 100,
           "resolution_ci95": [
-            74,
-            99
+            82,
+            100
           ],
           "quality_pct": 100,
           "quality_ci95": [
@@ -4461,7 +4461,7 @@
       },
       "doc": {
         "runs": 3,
-        "resolved": 2,
+        "resolved": 3,
         "specific_quality_pct": null
       },
       "none": {
@@ -4663,10 +4663,10 @@
       },
       "doc": {
         "n": 26,
-        "mean": -0.06410256410256411,
+        "mean": -0.07692307692307693,
         "ci95": [
-          -0.16666666666666669,
-          0.012820512820512822
+          -0.1794871794871795,
+          0
         ]
       },
       "none": {
@@ -4731,5 +4731,5 @@
       }
     }
   },
-  "table": "| | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge |\n|---|---|---|---|---|\n| Resolution | 92% (84-96) | 97% (91-99) | 99% (93-100) | 92% (84-96) |\n| Code quality | 94% (91-97) | 97% (95-99) | 97% (95-99) | 85% (81-90) |\n| Project requirements met | 96% (89-100) | 98% (93-100) | 100% (100-100) | 43% (30-57) |\n| Context (0 = least) | +9% (50.1k) | +19% (54.8k) | +14% (52.6k) | +0% (46.1k) |\n| Time (0 = fastest) | +19% (1.54 min) | +18% (1.52 min) | +12% (1.44 min) | +0% (1.29 min) |\n| Cost (0 = cheapest) | +30% ($0.0266) | +13% ($0.0231) | +16% ($0.0237) | +0% ($0.0205) |"
+  "table": "| | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge |\n|---|---|---|---|---|\n| Resolution | 92% (84-96) | 97% (91-99) | 100% (95-100) | 92% (84-96) |\n| Code quality | 94% (91-97) | 97% (95-99) | 97% (95-99) | 85% (81-90) |\n| Project requirements met | 96% (89-100) | 98% (93-100) | 100% (100-100) | 43% (30-57) |\n| Context (0 = least) | +9% (50.1k) | +19% (54.8k) | +14% (52.6k) | +0% (46.1k) |\n| Time (0 = fastest) | +19% (1.54 min) | +18% (1.52 min) | +12% (1.44 min) | +0% (1.29 min) |\n| Cost (0 = cheapest) | +30% ($0.0266) | +13% ($0.0231) | +16% ($0.0237) | +0% ($0.0205) |"
 }

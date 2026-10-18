@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { changed, detail, exec, flags } from '../fixture-checks.js';
-import { addedCode, addedGo, goHidden, goTests, idleUnder30s } from './checks.js';
+import { addedCode, addedGo, goHidden, goTests, idleUnder30s, toClientCode } from './checks.js';
 
 const SETUPS = join(dirname(fileURLToPath(import.meta.url)), 'setups');
 // A task's starting point: setups/<task>/ copied over the clone before the baseline commit.
@@ -174,7 +174,7 @@ export const TASKS = [
       const run = await hidden(dir, { pkg: 'cmd/tollgate', file: 'main_replay_to_test.go', pass: ['TestBenchReplayTo'] });
       const client = read(dir, 'cmd/tollgate/replay_client.go');
       // The client may be built in replay_client.go or where the subcommand wires it: the change's code in cmd/.
-      const ok = Boolean(client) && idleUnder30s(await addedCode(dir, 'cmd/'));
+      const ok = Boolean(client) && idleUnder30s(toClientCode(await addedCode(dir, 'cmd/')));
       return { passed: run.passed && Boolean(client), requirements: { idle_under_30s: ok }, detail: report(run, { 'replay_client.go': Boolean(client), 'idle under 30 s': ok }) };
     },
   },
