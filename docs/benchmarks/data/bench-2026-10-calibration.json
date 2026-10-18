@@ -1,0 +1,754 @@
+{
+  "schema": 1,
+  "model": "claude-haiku-5-5",
+  "selected": [
+    "ledgerkit-find-entries",
+    "ledgerkit-import-dir",
+    "ledgerkit-ledger-package",
+    "ledgerkit-malformed-row",
+    "ledgerkit-percent",
+    "ledgerkit-recategorize",
+    "ledgerkit-review-fix-entries",
+    "ledgerkit-sie-export",
+    "ledgerkit-summary-print",
+    "ledgerkit-usd-import",
+    "ledgerkit-vat-summary",
+    "patriark-living-characters",
+    "patriark-review-command",
+    "patriark-short-hash",
+    "supermem-keyword-ies-plural",
+    "supermem-recall-json",
+    "supermem-run-is-not-edit",
+    "supermem-symbols-not-prompts",
+    "supermem-ui-kind-filter",
+    "tollgate-dedup-evict",
+    "tollgate-dedup-package",
+    "tollgate-healthz",
+    "tollgate-replay-to",
+    "tollgate-stdout-debug",
+    "tollgate-store-attempts",
+    "tollgate-version-flag"
+  ],
+  "candidates": [
+    {
+      "id": "tollgate-received-at-field",
+      "project": "tollgate",
+      "situation": "S1",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-network-retry",
+      "project": "tollgate",
+      "situation": "S2",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-dedup-persist",
+      "project": "tollgate",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-large-payload-warn",
+      "project": "tollgate",
+      "situation": "S4",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-store-attempts",
+      "project": "tollgate",
+      "situation": "S5",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "tollgate-sent-at-header",
+      "project": "tollgate",
+      "situation": "S6",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-replay-401",
+      "project": "tollgate",
+      "situation": "S7",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-invalid-payload-log",
+      "project": "tollgate",
+      "situation": "S8",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-replay-signed",
+      "project": "tollgate",
+      "situation": "S9",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-stdout-debug",
+      "project": "tollgate",
+      "situation": "S10",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "tollgate-version-flag",
+      "project": "tollgate",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "tollgate-healthz",
+      "project": "tollgate",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "tollgate-replay-to",
+      "project": "tollgate",
+      "situation": "S13",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "tollgate-dedup-package",
+      "project": "tollgate",
+      "situation": "S14",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "tollgate-dedup-evict",
+      "project": "tollgate",
+      "situation": "S15",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "tollgate-clock-test-fails",
+      "project": "tollgate",
+      "situation": "S16",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-store-compact",
+      "project": "tollgate",
+      "situation": "S17",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-review-notify",
+      "project": "tollgate",
+      "situation": "S18",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-review-audit-log",
+      "project": "tollgate",
+      "situation": "S18",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-invoice-voided",
+      "project": "tollgate",
+      "situation": "S19",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "tollgate-fixture-refund",
+      "project": "tollgate",
+      "situation": "S20",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-vat-summary",
+      "project": "ledgerkit",
+      "situation": "S1",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 1,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-import-dir",
+      "project": "ledgerkit",
+      "situation": "S2",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 1,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-rules-save",
+      "project": "ledgerkit",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-recategorize",
+      "project": "ledgerkit",
+      "situation": "S4",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-report-counterparty",
+      "project": "ledgerkit",
+      "situation": "S5",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-usd-import",
+      "project": "ledgerkit",
+      "situation": "S6",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-reimport-doubles",
+      "project": "ledgerkit",
+      "situation": "S7",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-malformed-row",
+      "project": "ledgerkit",
+      "situation": "S8",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-food-takeaway",
+      "project": "ledgerkit",
+      "situation": "S9",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-summary-print",
+      "project": "ledgerkit",
+      "situation": "S10",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "ledgerkit-percent",
+      "project": "ledgerkit",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "ledgerkit-find-entries",
+      "project": "ledgerkit",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "ledgerkit-sie-export",
+      "project": "ledgerkit",
+      "situation": "S13",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 1,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-ledger-package",
+      "project": "ledgerkit",
+      "situation": "S14",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-identical-ids",
+      "project": "ledgerkit",
+      "situation": "S15",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-close-test-fails",
+      "project": "ledgerkit",
+      "situation": "S16",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-review-vat-summary",
+      "project": "ledgerkit",
+      "situation": "S18",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-review-fix-entries",
+      "project": "ledgerkit",
+      "situation": "S18",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 1,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "ledgerkit-account-3050",
+      "project": "ledgerkit",
+      "situation": "S19",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "ledgerkit-savings-fixture",
+      "project": "ledgerkit",
+      "situation": "S20",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-crlf-edit-check",
+      "project": "supermem",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-run-is-not-edit",
+      "project": "supermem",
+      "situation": "S15",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 3,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "supermem-pattern-empty-class",
+      "project": "supermem",
+      "situation": "S1",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-glob-star-chain",
+      "project": "supermem",
+      "situation": "S2",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-telemetry-locked",
+      "project": "supermem",
+      "situation": "S2",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-session-cwd",
+      "project": "supermem",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-rename-retry",
+      "project": "supermem",
+      "situation": "S17",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-dead-symbol",
+      "project": "supermem",
+      "situation": "S15",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-skills-npx",
+      "project": "supermem",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-claim-delivered",
+      "project": "supermem",
+      "situation": "S5",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-subfolder-committed",
+      "project": "supermem",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-symbols-not-prompts",
+      "project": "supermem",
+      "situation": "S4",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 2,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "supermem-inbox-ignored",
+      "project": "supermem",
+      "situation": "S5",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-maintain-fires-test",
+      "project": "supermem",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-cli-archive",
+      "project": "supermem",
+      "situation": "S4",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-clause-kind",
+      "project": "supermem",
+      "situation": "S5",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-stop-asks-telemetry",
+      "project": "supermem",
+      "situation": "S2",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-test-capture-script",
+      "project": "supermem",
+      "situation": "S20",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-maintenance-log",
+      "project": "supermem",
+      "situation": "S13",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "supermem-keyword-ies-plural",
+      "project": "supermem",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "supermem-recall-json",
+      "project": "supermem",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "supermem-ui-kind-filter",
+      "project": "supermem",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "patriark-rename-character",
+      "project": "patriark",
+      "situation": "S2",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "patriark-rest-crash",
+      "project": "patriark",
+      "situation": "S7",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "patriark-short-rest",
+      "project": "patriark",
+      "situation": "S8",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "patriark-help-label",
+      "project": "patriark",
+      "situation": "S12",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "patriark-export-rules",
+      "project": "patriark",
+      "situation": "S3",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "patriark-review-command",
+      "project": "patriark",
+      "situation": "S18",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 1,
+      "kept": true,
+      "reason": "agent_alone_fails"
+    },
+    {
+      "id": "patriark-review-short-rest",
+      "project": "patriark",
+      "situation": "S18",
+      "kind": "memory",
+      "runs": 3,
+      "failures": 0,
+      "kept": false,
+      "reason": "agent_alone_succeeds"
+    },
+    {
+      "id": "patriark-living-characters",
+      "project": "patriark",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    },
+    {
+      "id": "patriark-short-hash",
+      "project": "patriark",
+      "situation": "S11",
+      "kind": "control",
+      "runs": 3,
+      "failures": 0,
+      "kept": true,
+      "reason": "control"
+    }
+  ]
+}

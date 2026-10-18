@@ -1,0 +1,1 @@
+{"id":"evt_legacy_1","type":"invoice.paid","occurred_at":"2025-02-10T08:00:00Z","payload":{"invoice_id":"INV-2025-0001","paid_at":"2025-02-10T07:59:12Z","legacy_ref":"A-77"}}

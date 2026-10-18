@@ -1,0 +1,1129 @@
+{
+  "schema": 1,
+  "id": "bench-2026-10-totals",
+  "date": "2026-10-18",
+  "models": [
+    {
+      "model": "claude-haiku-5-5",
+      "runs": 312,
+      "tasks": 26,
+      "headline": {
+        "dd2": {
+          "resolution_pct": 92,
+          "specific_quality_pct": 96,
+          "mean_cost_usd": 0.0266,
+          "median_peak_context_tokens": 50133
+        },
+        "docref": {
+          "resolution_pct": 97,
+          "specific_quality_pct": 98,
+          "mean_cost_usd": 0.0231,
+          "median_peak_context_tokens": 54757
+        },
+        "doc": {
+          "resolution_pct": 100,
+          "specific_quality_pct": 100,
+          "mean_cost_usd": 0.0237,
+          "median_peak_context_tokens": 52618
+        },
+        "none": {
+          "resolution_pct": 92,
+          "specific_quality_pct": 43,
+          "mean_cost_usd": 0.0205,
+          "median_peak_context_tokens": 46139
+        }
+      },
+      "paired": {
+        "requirements": {
+          "docref": {
+            "n": 15,
+            "mean": -0.022222222222222223,
+            "ci95": [
+              -0.13333333333333333,
+              0.06666666666666667
+            ]
+          },
+          "doc": {
+            "n": 15,
+            "mean": -0.044444444444444446,
+            "ci95": [
+              -0.13333333333333333,
+              0
+            ]
+          },
+          "none": {
+            "n": 15,
+            "mean": 0.5222222222222223,
+            "ci95": [
+              0.3,
+              0.7222222222222222
+            ]
+          }
+        },
+        "resolution": {
+          "docref": {
+            "n": 26,
+            "mean": -0.05128205128205129,
+            "ci95": [
+              -0.12820512820512822,
+              0.012820512820512827
+            ]
+          },
+          "doc": {
+            "n": 26,
+            "mean": -0.07692307692307693,
+            "ci95": [
+              -0.1794871794871795,
+              0
+            ]
+          },
+          "none": {
+            "n": 26,
+            "mean": 0,
+            "ci95": [
+              -0.10256410256410257,
+              0.11538461538461539
+            ]
+          }
+        },
+        "cost_usd": {
+          "docref": {
+            "n": 26,
+            "mean": 0.0035401898717948724,
+            "ci95": [
+              -0.0016148782051282052,
+              0.01259867307692308
+            ]
+          },
+          "doc": {
+            "n": 26,
+            "mean": 0.0029305579487179487,
+            "ci95": [
+              0.0007269307692307678,
+              0.005813177051282054
+            ]
+          },
+          "none": {
+            "n": 26,
+            "mean": 0.006154620897435895,
+            "ci95": [
+              0.002766924999999999,
+              0.010472837564102564
+            ]
+          }
+        },
+        "peak_context_tokens": {
+          "docref": {
+            "n": 26,
+            "mean": -863.3589743589744,
+            "ci95": [
+              -4151.24358974359,
+              2688.8589743589755
+            ]
+          },
+          "doc": {
+            "n": 26,
+            "mean": 1433.4487179487187,
+            "ci95": [
+              -575.1794871794866,
+              3650.589743589744
+            ]
+          },
+          "none": {
+            "n": 26,
+            "mean": 7145.217948717949,
+            "ci95": [
+              4152.435897435897,
+              10256.038461538461
+            ]
+          }
+        }
+      },
+      "by_project": {
+        "ledgerkit": {
+          "dd2": {
+            "runs": 33,
+            "resolution_pct": 88,
+            "specific_quality_pct": 89
+          },
+          "docref": {
+            "runs": 33,
+            "resolution_pct": 97,
+            "specific_quality_pct": 96
+          },
+          "doc": {
+            "runs": 33,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 33,
+            "resolution_pct": 100,
+            "specific_quality_pct": 57
+          }
+        },
+        "patriark": {
+          "dd2": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "supermem": {
+          "dd2": {
+            "runs": 15,
+            "resolution_pct": 87,
+            "specific_quality_pct": 67
+          },
+          "docref": {
+            "runs": 15,
+            "resolution_pct": 93,
+            "specific_quality_pct": 83
+          },
+          "doc": {
+            "runs": 15,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 15,
+            "resolution_pct": 60,
+            "specific_quality_pct": 0
+          }
+        },
+        "tollgate": {
+          "dd2": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 47
+          }
+        }
+      },
+      "by_situation": {
+        "S1": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S10": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 50,
+            "specific_quality_pct": 50
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 83
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S11": {
+          "dd2": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          },
+          "docref": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          },
+          "doc": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          },
+          "none": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          }
+        },
+        "S13": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S14": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 17
+          }
+        },
+        "S15": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 67,
+            "specific_quality_pct": 67
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 50,
+            "specific_quality_pct": 0
+          }
+        },
+        "S18": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S2": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 33
+          }
+        },
+        "S4": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 83
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 50,
+            "specific_quality_pct": 0
+          }
+        },
+        "S5": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 33
+          }
+        },
+        "S6": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 0
+          }
+        },
+        "S8": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 50
+          }
+        }
+      },
+      "by_origin": {
+        "authored": {
+          "dd2": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "invented": {
+          "dd2": {
+            "runs": 54,
+            "resolution_pct": 93,
+            "specific_quality_pct": 93
+          },
+          "docref": {
+            "runs": 54,
+            "resolution_pct": 98,
+            "specific_quality_pct": 98
+          },
+          "doc": {
+            "runs": 54,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 54,
+            "resolution_pct": 100,
+            "specific_quality_pct": 54
+          }
+        },
+        "mined": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 67,
+            "specific_quality_pct": 67
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 83
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 0,
+            "specific_quality_pct": 0
+          }
+        }
+      }
+    },
+    {
+      "model": "claude-opus-5-5",
+      "runs": 312,
+      "tasks": 26,
+      "headline": {
+        "dd2": {
+          "resolution_pct": 100,
+          "specific_quality_pct": 100,
+          "mean_cost_usd": 0.4551,
+          "median_peak_context_tokens": 39732
+        },
+        "docref": {
+          "resolution_pct": 100,
+          "specific_quality_pct": 100,
+          "mean_cost_usd": 0.5007,
+          "median_peak_context_tokens": 41262
+        },
+        "doc": {
+          "resolution_pct": 99,
+          "specific_quality_pct": 98,
+          "mean_cost_usd": 0.4742,
+          "median_peak_context_tokens": 40437
+        },
+        "none": {
+          "resolution_pct": 95,
+          "specific_quality_pct": 69,
+          "mean_cost_usd": 0.428,
+          "median_peak_context_tokens": 37793
+        }
+      },
+      "paired": {
+        "requirements": {
+          "docref": {
+            "n": 15,
+            "mean": 0,
+            "ci95": [
+              0,
+              0
+            ]
+          },
+          "doc": {
+            "n": 15,
+            "mean": 0.022222222222222223,
+            "ci95": [
+              0,
+              0.06666666666666667
+            ]
+          },
+          "none": {
+            "n": 15,
+            "mean": 0.3111111111111111,
+            "ci95": [
+              0.13333333333333333,
+              0.5111111111111112
+            ]
+          }
+        },
+        "resolution": {
+          "docref": {
+            "n": 26,
+            "mean": 0,
+            "ci95": [
+              0,
+              0
+            ]
+          },
+          "doc": {
+            "n": 26,
+            "mean": 0.012820512820512822,
+            "ci95": [
+              0,
+              0.038461538461538464
+            ]
+          },
+          "none": {
+            "n": 26,
+            "mean": 0.05128205128205129,
+            "ci95": [
+              0,
+              0.14102564102564102
+            ]
+          }
+        },
+        "cost_usd": {
+          "docref": {
+            "n": 26,
+            "mean": -0.04561454871794871,
+            "ci95": [
+              -0.08950237692307696,
+              -0.008226341025641001
+            ]
+          },
+          "doc": {
+            "n": 26,
+            "mean": -0.019095402564102543,
+            "ci95": [
+              -0.05688001282051281,
+              0.015035248717948731
+            ]
+          },
+          "none": {
+            "n": 26,
+            "mean": 0.027109035897435914,
+            "ci95": [
+              -0.0068178666666666625,
+              0.05785814871794874
+            ]
+          }
+        },
+        "peak_context_tokens": {
+          "docref": {
+            "n": 26,
+            "mean": -3987.4615384615395,
+            "ci95": [
+              -7673.3076923076915,
+              -1034.3205128205134
+            ]
+          },
+          "doc": {
+            "n": 26,
+            "mean": -898.0897435897449,
+            "ci95": [
+              -2705.025641025643,
+              850.9871794871779
+            ]
+          },
+          "none": {
+            "n": 26,
+            "mean": 2910.128205128204,
+            "ci95": [
+              1742.8717948717945,
+              4153.628205128204
+            ]
+          }
+        }
+      },
+      "by_project": {
+        "ledgerkit": {
+          "dd2": {
+            "runs": 33,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 33,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 33,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 33,
+            "resolution_pct": 100,
+            "specific_quality_pct": 89
+          }
+        },
+        "patriark": {
+          "dd2": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 9,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "supermem": {
+          "dd2": {
+            "runs": 15,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 15,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 15,
+            "resolution_pct": 93,
+            "specific_quality_pct": 83
+          },
+          "none": {
+            "runs": 15,
+            "resolution_pct": 73,
+            "specific_quality_pct": 33
+          }
+        },
+        "tollgate": {
+          "dd2": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 21,
+            "resolution_pct": 100,
+            "specific_quality_pct": 53
+          }
+        }
+      },
+      "by_situation": {
+        "S1": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S10": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S11": {
+          "dd2": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          },
+          "docref": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          },
+          "doc": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          },
+          "none": {
+            "runs": 27,
+            "resolution_pct": 100,
+            "specific_quality_pct": null
+          }
+        },
+        "S13": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S14": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 50
+          }
+        },
+        "S15": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 83
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 50,
+            "specific_quality_pct": 17
+          }
+        },
+        "S18": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "S2": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 33
+          }
+        },
+        "S4": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 83
+          }
+        },
+        "S5": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 33
+          }
+        },
+        "S6": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 67
+          }
+        },
+        "S8": {
+          "dd2": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 3,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        }
+      },
+      "by_origin": {
+        "authored": {
+          "dd2": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 18,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          }
+        },
+        "invented": {
+          "dd2": {
+            "runs": 54,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 54,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 54,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "none": {
+            "runs": 54,
+            "resolution_pct": 100,
+            "specific_quality_pct": 76
+          }
+        },
+        "mined": {
+          "dd2": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "docref": {
+            "runs": 6,
+            "resolution_pct": 100,
+            "specific_quality_pct": 100
+          },
+          "doc": {
+            "runs": 6,
+            "resolution_pct": 83,
+            "specific_quality_pct": 83
+          },
+          "none": {
+            "runs": 6,
+            "resolution_pct": 33,
+            "specific_quality_pct": 33
+          }
+        }
+      }
+    }
+  ]
+}

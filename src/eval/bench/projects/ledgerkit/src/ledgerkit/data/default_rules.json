@@ -1,0 +1,12 @@
+[
+  { "match": "kiwi", "category": "groceries" },
+  { "match": "meny", "category": "groceries" },
+  { "match": "rema", "category": "groceries" },
+  { "match": "kjøpmannen", "category": "groceries" },
+  { "match": "adobe", "category": "software" },
+  { "match": "vy ", "category": "travel" },
+  { "match": "norwegian", "category": "travel" },
+  { "match": "gebyr", "category": "fees" },
+  { "match": "innbetaling", "category": "income" },
+  { "match": "*", "category": "uncategorized" }
+]

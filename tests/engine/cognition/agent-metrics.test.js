@@ -160,6 +160,10 @@ test('a usage limit is recognised from the result event or its message', () => {
   assert.equal(usageLimited({ result: "You've hit your session limit · resets 6:30pm (America/Argentina/Buenos_Aires)" }), true);
   assert.equal(usageLimited("You've hit your session limit · resets 6:30pm"), true);
   assert.equal(usageLimited({ result: 'Fixed the reindex; tests pass.' }), false);
+  // Other phrasings Claude Code has used for the same stop.
+  assert.equal(usageLimited('Claude usage limit reached. Your limit will reset at 5pm.'), true);
+  assert.equal(usageLimited("You've hit your 5-hour limit · resets 4pm"), true);
+  assert.equal(usageLimited("You've hit your Opus limit · resets 4pm"), true);
   assert.equal(usageLimited(null), false);
 });
 
@@ -172,6 +176,7 @@ test('the wait for a usage limit runs to the stated reset, the next day when it 
   assert.equal(minutes(limitWait('resets 12pm', new Date(2026, 9, 7, 11, 0))), 62);
   // No time it can read: check again in half an hour.
   assert.equal(minutes(limitWait('usage limit reached', now)), 30);
+  assert.equal(minutes(limitWait('Your limit will reset at 6:30pm.', now)), 202);
 });
 
 test('a run scores the requirements it met among those that apply', () => {

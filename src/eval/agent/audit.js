@@ -22,7 +22,9 @@ const DIR = IN.replace(/\.json$/, '') + '.audit';
 const MAX_DIFF = 60000;
 
 const results = JSON.parse(await readFile(IN, 'utf8'));
-const { TASKS } = await import((results.taskset ?? 'v1') === 'v2' ? './tasks-v2.js' : './tasks.js');
+const bench = (results.taskset ?? 'v1') === 'bench' ? await import('../bench/tasks.js') : null;
+const { TASKS } = bench ? { TASKS: (await bench.loadBench(await bench.registryAt(args.registry))).tasks }
+  : await import((results.taskset ?? 'v1') === 'v2' ? './tasks-v2.js' : './tasks.js');
 const judge = JSON.parse(await readFile(JUDGE, 'utf8'));
 const judgedRequirements = task => [...(task.requirements ?? []).filter(r => !r.auto), ...GENERAL_REQUIREMENTS];
 
