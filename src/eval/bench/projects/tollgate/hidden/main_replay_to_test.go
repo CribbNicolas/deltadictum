@@ -15,6 +15,9 @@ import (
 )
 
 func TestBenchReplayTo(t *testing.T) {
+	// The secret is set: every Meridian request is signed, replays included, and a replay that refuses to
+	// go out unsigned follows that rule. The test decides only where the replay goes.
+	t.Setenv("TOLLGATE_SECRET", "bench-secret")
 	var got []byte
 	staging := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { got, _ = io.ReadAll(r.Body) }))
 	defer staging.Close()
