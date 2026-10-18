@@ -4,6 +4,15 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.9] - 2026-10-18
+
+- Corrections: Claude Code's own notifications are no longer recorded as user corrections. It hands a
+  finished background task, a subagent's report, a reminder or a local command's output to
+  `UserPromptSubmit` as a prompt, and their wording ("instead of", "should not have") matched; during the
+  2026-10 benchmark an auditing subagent's report was recorded as a correction three times. The blocks
+  Claude Code wraps in its own tags, and its "[SYSTEM NOTIFICATION" paragraph, are now left out before a
+  prompt is read; what the user typed beside them is still read.
+
 ## [0.9.8] - 2026-10-16
 
 - Review UI: the page updates itself as the store changes. The server watches the memories, the inbox, the

@@ -100,6 +100,15 @@ const CORRECTION = new RegExp([
   String.raw`\b(?:archivo|lugar|enfoque|funci[oó]n|rama)\s+equivocad[oa]\b`,
 ].join('|'), 'i');
 
+// Claude Code hands its own notifications to UserPromptSubmit as prompts: a finished background task, a
+// subagent's report, a reminder, a local command's output. None of that text is the user's, and a
+// subagent's report says "instead of" and "should not have" as readily as a person does. The blocks it
+// wraps in its own tags are removed (an unclosed one, cut by the bound above, to the end), and so is its
+// "[SYSTEM NOTIFICATION" paragraph; what the user typed beside them is still read.
+const HARNESS_BLOCK = /<(task-notification|agent-message|system-reminder|cross-session-message|local-command-[a-z]+|command-[a-z]+)\b[^>]*>[\s\S]*?(?:<\/\1>|$)/gi;
+const HARNESS_NOTICE = /^\[SYSTEM NOTIFICATION[^\]]*\][\s\S]*?(?:\n\s*\n|$)/gim;
+const withoutHarnessText = text => text.replace(HARNESS_BLOCK, ' ').replace(HARNESS_NOTICE, ' ').trim();
+
 // A user correction is the most reliable input DD can receive, and until now the
 // only thing that recorded it was the model remembering to propose it. This
 // records that a correction happened and what was said. It deliberately does not
@@ -111,7 +120,7 @@ export function observationFromPrompt(payload) {
   // prompt, so the cost must stay proportional to a prompt rather than to a
   // paste. Detection reads more than is kept, because a correction buried after
   // a pasted log is still a correction.
-  const raw = String(payload.prompt || payload.text || payload.user_prompt || '').slice(0, 4000);
+  const raw = withoutHarnessText(String(payload.prompt || payload.text || payload.user_prompt || '').slice(0, 4000));
   const text = redact(raw, 4000);
   if (!text || !CORRECTION.test(text)) return null;
   return { source_type: 'user_correction', source_ref: 'UserPromptSubmit',
