@@ -1,0 +1,312 @@
+{"n":"03482a9f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; server and view tests cover kind filter and unknown_kind 400, edits are limited to the task."}
+{"n":"03f6c5ac","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; find() and two tests only, Norwegian strings are test data."}
+{"n":"04482c32","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; small on-task change reusing KINDS, test covers filter and refusals."}
+{"n":"04f6c73f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; find() and its test only."}
+{"n":"05482dc5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; server and view tests, mirrors unknown_queue handling."}
+{"n":"06f6ca65","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; two tests would fail without find()."}
+{"n":"09484417","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; percent() with accept and reject tests, stays in money.py and its test."}
+{"n":"0a4845aa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the duplicated assertion is a minor nit, tests would fail without percent()."}
+{"n":"0b48473d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; percent() mirrors cents() and is tested."}
+{"n":"0c7bbea7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; symbol gate in clause.js with a regression test that fails without it."}
+{"n":"0cbc86fc","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff."}
+{"n":"0d7bc03a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; one-line guard plus a test covering prompt and non-prompt events."}
+{"n":"0dfc5388","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; shared helper extraction is needed for identical rounding, README line documents the command."}
+{"n":"0e7bc1cd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; same minimal guard and regression test."}
+{"n":"0ea2d43c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; one-line method and a test."}
+{"n":"0ebc8a22","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff."}
+{"n":"0efc551b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; helper and README line serve the feature, tests cover totals, rounding, period filter and CLI output."}
+{"n":"0f3f6d03","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the three decided keys hold (new package is tested and edits stay on the move); the evicting-younger-ids and leftover intake/dedup.go faults fall under other checks."}
+{"n":"0fa2d5cf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; static one-liner with a test that would not compile without it."}
+{"n":"0fbc8bb5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff."}
+{"n":"0ffc56ae","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; helper extraction and README line are needed, tests are adequate."}
+{"n":"103f6e96","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the new package is tested and edits stay on the move, the window and leftover-file faults are outside these three keys."}
+{"n":"113f7029","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; package has tests for window, expiry, bound and concurrency, edits stay on the move."}
+{"n":"11a2d8f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; static method plus a test, nothing unrelated."}
+{"n":"13a7d934","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; version var, flag case, test and README bullet."}
+{"n":"14a7dac7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; usage string and README update serve the new flag."}
+{"n":"15a7dc5a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; minimal flag, test fails without it (exit 2)."}
+{"n":"18d651f0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; method follows PlayerCharacter idioms, test covers filter and order."}
+{"n":"19d65383","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; method plus a new test file covering filter, order and empty result."}
+{"n":"1ad65516","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; method and a test in CampaignRulesTests."}
+{"n":"1b019fbf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff."}
+{"n":"1c01a152","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff, scratch folder is outside the repo."}
+{"n":"1d01a2e5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff."}
+{"n":"1ff30d1c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; instance method plus two tests."}
+{"n":"20f30eaf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; static method plus two tests, doc comment is harmless."}
+{"n":"22f311d5","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the diff adds ShortHash with no test at all."}
+{"n":"2709872c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; mtime check replaces git diff in turn.js, real-git regression test fails on the old logic."}
+{"n":"27a625a0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff."}
+{"n":"280988bf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; fix confined to turn.js and its test, fixture switched to real git is needed to reproduce."}
+{"n":"28d413f8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; find() and one test."}
+{"n":"29074a00","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; report.py was rewritten to use query.in_period (an unrequested refactor) and the old ledgerkit/ledger.py is left on disk."}
+{"n":"29098a52","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; mtime fix and two tests, real-git test reproduces the bug."}
+{"n":"29a628c6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task, empty diff, pycache is gitignored."}
+{"n":"2a074b93","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; stale ledger.py and test_ledger.py are an incomplete move rather than unrelated edits, amend is tested including closed period."}
+{"n":"2aa62a59","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the diff adds an untracked .fixcheck/ scratch folder (drive.py and fixtures) inside the repo on a no-code-change review task."}
+{"n":"2ad4171e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; find() and test_find only."}
+{"n":"2b074d26","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; split and amend are tested, guide and README path updates follow from the split, leftover old files are an incomplete move."}
+{"n":"2bd418b1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; find() and test_find only."}
+{"n":"2dc1a62f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; changes confined to turn.js and its test, new real-git tests cover run-only and rewrite cases."}
+{"n":"2ec1a7c2","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; adding --relative to the git diff call in turn.js is an unrelated subfolder fix."}
+{"n":"2fc1a955","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; mtime comparison with tests on a real git repo, nothing unrelated."}
+{"n":"308a77e8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; stdout debug print as requested with a test for env 0 and 1, redaction is a related safeguard disclosed in the report."}
+{"n":"318a797b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; stdout Println as asked, masking via redact.Payload disclosed, two tests cover enabled and disabled."}
+{"n":"319d272b","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: overrides scoped true to false because report.py was rewritten to use query.in_period, an unrequested refactor of an unrelated module (the judge marked the identical edit unscoped in 339d2a51 and 578be945)."}
+{"n":"31f85024","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the repeated 12,5 % assertion contains a no-break space, so it is a real case."}
+{"n":"328a7b0e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; test covers debug off and on with redacted output, edits confined to relay.go and its test."}
+{"n":"329d28be","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; amend tests cover open, closed, unknown and blank paths; the leftover ledger.py is an incomplete move that the developer disclosed, not extra scope."}
+{"n":"339d2a51","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; report.py was switched to query.in_period, an unrequested refactor."}
+{"n":"33f8534a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrides scoped false to true because the last assertion's input contains a U+00A0 no-break space (diff line 92), so it tests a distinct case and is not a copy-paste leftover."}
+{"n":"34f854dd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the no-break-space test input does contain U+00A0."}
+{"n":"3b3e7f3c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; one method and one test in the existing style."}
+{"n":"3d3e8262","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; method follows the file's idioms and the new tests would fail without it."}
+{"n":"3e3e83f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"44e483c0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; eviction keeps young ids, warns once, main.go only wires the logger."}
+{"n":"4548ff23","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; dedup and the occurrence id argument are needed for overlapping exports."}
+{"n":"45e48553","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"464900b6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; dedup and occurrence ids follow from the overlap rule, errors are masked."}
+{"n":"46a2e340","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"46e486e6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"471e5e73","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the real-repo dirty-file test fails under the old git diff logic."}
+{"n":"47490249","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"47a2e4d3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"481e6006","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; git diff replaced by an mtime check, test covers both directions."}
+{"n":"485627ab","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; reversal plus booking correction pair is tested, edits stay within the feature."}
+{"n":"48a2e666","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"491e6199","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the guide edit only points the trap entry at the new test."}
+{"n":"4956293e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; vat.known helper and README line serve the feature."}
+{"n":"4a562ad1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4bfcdd17","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4cc1be77","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the move is done with git mv and doc paths updated."}
+{"n":"4cfcdeaa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4dc1c00a","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the guide rule was reworded from reached to exceeded and the old intake files were left behind."}
+{"n":"4dfce03d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4ec1c19d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the leftover intake dedup files are a disclosed incomplete delete, the guide edits only re-point paths."}
+{"n":"51ae3d0c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"51b16e08","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff, the disclosed tar file sits outside the repo."}
+{"n":"53ae4032","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"53b1712e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff, probe files are outside the repo and disclosed."}
+{"n":"54156e4c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"548db9a4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; format bump, v3 fixture and migration test follow the store procedure."}
+{"n":"54ae41c5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrides scoped false to true because the occurrence argument in ids.entry_id is required for id-based overlap skipping not to drop identical same-day rows, as in every other import-dir run the judge accepted."}
+{"n":"54b172c1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff, probe left in a gitignored tmp folder and disclosed."}
+{"n":"55156fdf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"558be61f","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: overrides scoped true to false because report.py was rewritten to use query.in_period, an unrequested refactor that the developer admits the task did not ask for, and old ledger.py and test_ledger.py are left on disk."}
+{"n":"56157172","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"568be7b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; guide edits only re-point file paths, leftover ledger.py is disclosed."}
+{"n":"568dbcca","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"56bfc490","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; partner replay path untouched, tests cover signed delivery to staging and missing secret."}
+{"n":"578be945","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; report.py refactor to query.in_period is unrequested."}
+{"n":"578dbe5d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"58bfc7b6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; partner path unchanged, five tests cover the new flag."}
+{"n":"59bfc949","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the partner replay path was rerouted through the signing retrying sender and send was deleted, which the task did not ask for."}
+{"n":"5a86407b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5ad87118","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the fx.py change and its SEK test are unrequested."}
+{"n":"5b86420e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5bd872ab","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5c8643a1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5dd875d1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions false->true; booking-date conversion is a domain correctness defect (covered by the value_date_rate check), not a naming/structure/error-handling/comment convention, and the same defect in 5bd872ab was not counted against conventions."}
+{"n":"626a3810","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"632c03d8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"636a39a3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"63dfba9f","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"64535170","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"646a3b36","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"649a44d4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"64dfbc32","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"652c06fe","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"65535303","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"65dfbdc5","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"662c0891","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"669a47fa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"674162d8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"67535629","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"679a498d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6841646b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6a416791","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6ad1ac28","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6bd1adbb","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6cd1af4e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6cd2ac97","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6dd2ae2a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6dd62f28","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge."}
+{"n":"6ed2afbd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6ed630bb","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge."}
+{"n":"6fd6324e","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge."}
+{"n":"702ee827","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"712ee9ba","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"722eeb4d","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"744c1bff","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"754c1d92","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"764c1f25","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"76abc494","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"77abc627","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"78abc7ba","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"799541b3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7a954346","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7b9544d9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7ca11aa8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode scoped false->true; the repeated assertion is a non-breaking-space case whose NBSP is present in the packet bytes (not a stray duplicate), and the _decimal helper extraction is the same small shared refactor accepted in 7da11c3b."}
+{"n":"7da11c3b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7dcc05a3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7ea11dce","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7ecc0736","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7f4c5584","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7fcc08c9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"804c5717","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8246dd93","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"824c5a3d","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the fx.rate LookupError change in ledgerkit/fx.py was not requested."}
+{"n":"8346df26","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; new dedup package with thorough tests, README layout line fits the move."}
+{"n":"8446e0b9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"84d1ee1c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the unwrapped header comment line is a nit only."}
+{"n":"8577f1fc","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"85c16d58","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; format bump, migration step and v3 fixture are all tested."}
+{"n":"86553924","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; the account is logged unmasked (no log.mask_iban in cli.py)."}
+{"n":"8677f38f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"86d1f142","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"87553ab7","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; the account is logged unmasked."}
+{"n":"8763c99c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the account goes through log.mask_iban."}
+{"n":"8777f522","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"879b1cb0","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the review task left an untracked .scratch-review/ directory in the repo."}
+{"n":"87c1707e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"87d1f2d5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"889b1e43","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"88c17211","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"89553ddd","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; the account is logged unmasked."}
+{"n":"8963ccc2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"899b1fd6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"89b170e8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8a63ce55","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8a6fcda4","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; signing was added to the default partner replay path as well, which the task did not ask for (arguable, since the sender is shared)."}
+{"n":"8ab1727b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the new mask_account helper is tested and a disclosed, justified deviation from mask_iban."}
+{"n":"8b6fcf37","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the failed bench check comes from the missing secret in the bench's environment, not from a diff defect."}
+{"n":"8cb175a1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8d6fd25d","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the partner replay path now signs too, and an existing test was modified."}
+{"n":"8edec0ac","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8fdec23f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"91470c90","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"91dec565","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"93470fb6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"94471149","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"957eaf48","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the matches() helper is a small refactor needed for the second output form."}
+{"n":"967eb0db","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"977eb26e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9c2a5cc3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9d2a5e56","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9dee33f0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9e2a5fe9","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; scratch-sie/ledger.jsonl and out.se appear in the diff as debugging leftovers."}
+{"n":"9edbf7b8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the hard cap evicting young ids is a behaviour problem outside these three requirements."}
+{"n":"9eee3583","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9ef0b5f7","requirements":{"tested":false,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the leftover zz_debug_tmp_test.go asserts nothing and is a debugging leftover."}
+{"n":"9ff0b78a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the stdout print is the requested behaviour."}
+{"n":"a09e2cd3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a0dbfade","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; same as the other dedup-evict runs."}
+{"n":"a0ee38a9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a0f0b91d","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions false to true; the fmt.Println to stdout is exactly what the user asked for in relay.go, and the judge accepted the identical code in 9ef0b5f7 and 9ff0b78a. Not raising the conflict is a report matter, not a diff convention."}
+{"n":"a148b274","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a1962908","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a19e2e66","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a1dbfc71","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the hard cap evicting young ids is a behaviour problem outside these three requirements."}
+{"n":"a248b407","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a2962a9b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a29e2ff9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a348b59a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a4962dc1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a83229a8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a9322b3b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ab322e61","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"aba2a734","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; signing the default partner replay path in replay_client.go is an unrequested behaviour change."}
+{"n":"aca2a8c7","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the partner replay path is now signed too, which the task did not ask for."}
+{"n":"aea2abed","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b2677e20","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; re-import dedup, occurrence ids and a new import_file return shape go beyond the USD task."}
+{"n":"b335185c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b39a945b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b4678146","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; duplicate skipping and occurrence ids are outside the USD task."}
+{"n":"b49a95ee","requirements":{"tested":true,"scoped":false,"conventions":false},"notes":"Audit: agrees with the judge; report.py is rewired through query.in_period unnecessarily and _amend edits closed-period entries in place with no is_closed guard."}
+{"n":"b5351b82","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b56782d9","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; dedup and occurrence ids in cli.py/ids.py, plus the fx.rate change, are beyond the task."}
+{"n":"b59a9781","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; _amend never checks periods.is_closed, unlike the guarded sibling runs."}
+{"n":"b6351d15","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b74f5998","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b7b2ea88","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; dedup is required by the skip-by-id rule the task depends on."}
+{"n":"b849d464","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the diff is empty so there is nothing untested or out of scope."}
+{"n":"b84f5b2b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b949d5f7","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; import dedup and the occurrence parameter in ids.entry_id exceed printing the summary."}
+{"n":"b94f5cbe","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b9b2edae","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ba49d78a","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; dedup and occurrence ids go beyond printing the summary."}
+{"n":"bab2ef41","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"be3969fb","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"bf396b8e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c0396d21","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c03a5e80","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c1437754","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; overlap skipping, occurrence ids and the changed import_file return value are extras."}
+{"n":"c23a61a6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c24378e7","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; dedup, occurrence ids, new return shape and the fx.rate stale-rate guard are beyond the task."}
+{"n":"c283a6cf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c33a6339","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c383a862","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c383be0b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c4437c0d","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; dedup, occurrence ids and the fx.rate guard exceed the USD import task."}
+{"n":"c483a9f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c483bf9e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c583c131","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge, though sibling runs also write the version to stdout and were judged conventions=true; the guide text is not visible, so the diff does not clearly contradict the verdict. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"c8a49ec8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c981c360","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c9bc0054","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"caa4a1ee","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cabc01e7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cb81c686","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cba4a381","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cbbc037a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cc81c819","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cc9b2f6f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cd9b3102","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ce9b3295","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cee426f4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cfe42887","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d0b67d17","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d0cf46b7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d0e42a1a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d1b67eaa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d1cf484a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d2b6803d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d2cf49dd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d475d513","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d489c423","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d575d6a6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d589c5b6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d675d839","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d689c749","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d6ea0f1f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: Overrode conventions false to true: the user explicitly asked for print() to stdout, as in the sibling runs the judge accepted, and the diff matches surrounding style."}
+{"n":"d7ea10b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d8ea1245","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e004d9c7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e104db5a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e204dced","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: Overrode conventions false to true: the digest-based approach is a design choice, not a convention breach (sibling e104db5a with the same approach was true), and code/comments match turn.js style."}
+{"n":"e33b2474","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: Agrees with the judge: the diff commits the scratch _e2e_book/ledger.jsonl leftover."}
+{"n":"e43b2607","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e53b279a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e8b97568","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e9b976fb","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"eab9788e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: Overrode scoped false to true: the engineering-guide Applies-when/reference edit follows the moved file (siblings with the same edit were scoped), not an unrelated change."}
+{"n":"ebacc08c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"edacc3b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"eeacc545","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ef2f0b83","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: Agrees with the judge: no test covers the debug print."}
+{"n":"f02f0d16","requirements":{"tested":false,"scoped":false,"conventions":true},"notes":"Audit: Agrees with the judge: zz_debug_tmp_test.go is a debugging leftover that never asserts on stdout."}
+{"n":"f12f0ea9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f3c82be4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f4c82d77","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f582aad4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f5c82f0a","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: Agrees with the judge: empty diff, so no test."}
+{"n":"f682ac67","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f7bf6837","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f882af8d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f8bf69ca","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f9bf6b5d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f9d8143c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fa682fe0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fad815cf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fb683173","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fcd818f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fd683499","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}

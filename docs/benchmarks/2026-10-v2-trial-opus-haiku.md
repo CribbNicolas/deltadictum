@@ -2,7 +2,7 @@
 title: Opus 5.5 and Haiku 5.5 trial (2026-10-14)
 description: "DeltaDictum's second agent trial: ten tasks, four knowledge channels, Claude Opus 5.5 and Claude Haiku 5.5, with every table and its caveats."
 parent: Benchmarks
-nav_order: 1
+nav_order: 2
 ---
 
 # DD v2 agent trial: Opus 5.5 and Haiku 5.5 at high effort (2026-10-14)

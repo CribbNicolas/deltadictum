@@ -1,0 +1,312 @@
+{"n":"03482a9f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"03f6c5ac","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"04482c32","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"04f6c73f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"05482dc5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the one-line docs/DD.md note documents the new behaviour and is in scope."}
+{"n":"06f6ca65","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"09484417","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0a4845aa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0b48473d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0c7bbea7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0cbc86fc","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff, scratch folder was git-ignored and disclosed."}
+{"n":"0d7bc03a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0dfc5388","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0e7bc1cd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0ea2d43c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0ebc8a22","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"0efc551b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0f3f6d03","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the early-eviction problem is not covered by the three decided requirements."}
+{"n":"0fa2d5cf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"0fbc8bb5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"0ffc56ae","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"103f6e96","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"113f7029","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"11a2d8f5","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: overrode conventions true->false: the SnapshotCodec test was added to tests/MapGenBatteryTests.cs (map-generation battery) instead of the codec tests in DiceTests.cs, the same placement the judge failed in 20f30eaf."}
+{"n":"13a7d934","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the version goes to stdout via the writer although the guide reserves stdout for replay output. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"14a7dac7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions true->false: --version is written to stdout (fmt.Fprintln(stdout, ...)) against the stated rule that stdout carries only replay output, which the developer acknowledged; same behaviour the judge failed in 13a7d934 and 15a7dc5a. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"15a7dc5a","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the diff commits the 9MB tollgate-ver.exe build artifact and prints to stdout. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"18d651f0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"19d65383","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"1ad65516","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"1b019fbf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"1c01a152","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"1d01a2e5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"1ff30d1c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"20f30eaf","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; codec test placed in MapGenBatteryTests."}
+{"n":"22f311d5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"2709872c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"27a625a0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"280988bf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"28d413f8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"29074a00","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"29098a52","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: overrode conventions true->false: the new test loads child_process with an inline await import() instead of the file's static top-level imports, the deviation the judge failed in 2dc1a62f and 2fc1a955."}
+{"n":"29a628c6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"2a074b93","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"2aa62a59","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review task, empty diff."}
+{"n":"2ad4171e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"2b074d26","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; report.py was refactored to use query.in_period, which the task did not need."}
+{"n":"2bd418b1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"2dc1a62f","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; inline await import() of child_process and node:fs in tests."}
+{"n":"2ec1a7c2","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: overrode conventions true->false: gitProject in the test uses an inline await import('node:child_process') although the file uses static imports (same deviation the judge failed in 2dc1a62f and 2fc1a955)."}
+{"n":"2fc1a955","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; inline await import() in the test."}
+{"n":"308a77e8","requirements":{"tested":false,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; only debugBody is tested, not the Forward print, and the unrequested redaction is out of scope."}
+{"n":"318a797b","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; no test captures stdout, the bytes-sent test passes without the change."}
+{"n":"319d272b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"31f85024","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"328a7b0e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the stdout-capturing test fails without the print."}
+{"n":"329d28be","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; unused query.corrections_of and the report.py refactor to query.in_period are beyond the task."}
+{"n":"339d2a51","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"33f8534a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"34f854dd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"3b3e7f3c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"3d3e8262","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"3e3e83f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"44e483c0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4548ff23","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode scoped false to true; masking the file name with log.mask_iban sits on the _import log line rewritten for --dir and follows the log-masking convention, so it is not an unrelated edit."}
+{"n":"45e48553","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"464900b6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"46a2e340","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"46e486e6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"471e5e73","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"47490249","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"47a2e4d3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"481e6006","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the start entry and footprintFile helper serve the first-turn case."}
+{"n":"485627ab","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"48a2e666","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"491e6199","requirements":{"tested":true,"scoped":false,"conventions":false},"notes":"Audit: agrees with the judge; turn.js still gates on gitChanged and adds persisted content fingerprints, against the mtime rule."}
+{"n":"4956293e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4a562ad1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4bfcdd17","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4cc1be77","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4cfcdeaa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4dc1c00a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4dfce03d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"4ec1c19d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"51ae3d0c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"51b16e08","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with no diff, and the report puts the missing JsonSerializable registration first."}
+{"n":"53ae4032","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"53b1712e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only, empty diff, serialization blocker flagged first."}
+{"n":"54156e4c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"548db9a4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"54ae41c5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode scoped false to true; mask_iban on the single-file import log line is the same log-masking convention applied to the line being reworked for --dir, not an unrelated edit."}
+{"n":"54b172c1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only, empty diff, blocker flagged first."}
+{"n":"55156fdf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; new assertions hand-traced against iesPlural and would fail without it."}
+{"n":"558be61f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"56157172","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"568be7b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"568dbcca","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"56bfc490","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; signing plain replays follows from routing both paths through the signed relay."}
+{"n":"578be945","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"578dbe5d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"58bfc7b6","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; replay.go logs the raw --to URL (log.Error invalid --to url), which may carry credentials."}
+{"n":"59bfc949","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode scoped false to true; V2 signing of replays is required by the project rule that every Meridian request is signed, and the replay_client.go sender necessarily replaces the unsigned send."}
+{"n":"5a86407b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the misleading test comment is a nit, not a convention break."}
+{"n":"5ad87118","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5b86420e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5bd872ab","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5c8643a1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5dd875d1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"626a3810","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"632c03d8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"636a39a3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"63dfba9f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"64535170","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"646a3b36","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"649a44d4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"64dfbc32","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; the diff reworks anchor-file delivery in retrieve.js, anchors.js, docs and UI help instead of the symbol matcher."}
+{"n":"652c06fe","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"65535303","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; the edited header comment line in text.cjs is not rewrapped and runs well past the block's wrap width."}
+{"n":"65dfbdc5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"662c0891","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"669a47fa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"674162d8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"67535629","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"679a498d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6841646b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6a416791","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6ad1ac28","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6bd1adbb","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6cd1af4e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6cd2ac97","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6dd2ae2a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6dd62f28","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; Record gains a field with no FormatVersion bump, migration step or v3 fixture."}
+{"n":"6ed2afbd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6ed630bb","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; Record gains a field with no FormatVersion bump, migration step or v3 fixture."}
+{"n":"6fd6324e","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; Record gains a field with no FormatVersion bump, migration step or v3 fixture."}
+{"n":"702ee827","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"712ee9ba","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"722eeb4d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"744c1bff","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"754c1d92","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"764c1f25","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"76abc494","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"77abc627","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"78abc7ba","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"799541b3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7a954346","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7b9544d9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7ca11aa8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7da11c3b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7dcc05a3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"7ea11dce","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7ecc0736","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"7f4c5584","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"7fcc08c9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"804c5717","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8246dd93","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"824c5a3d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8346df26","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8446e0b9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"84d1ee1c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8577f1fc","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"85c16d58","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"86553924","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8677f38f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"86d1f142","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"87553ab7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8763c99c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8777f522","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"879b1cb0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge (review task, empty diff)."}
+{"n":"87c1707e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"87d1f2d5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"889b1e43","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge (review task, empty diff)."}
+{"n":"88c17211","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"89553ddd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8963ccc2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"899b1fd6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge (review task, empty diff)."}
+{"n":"89b170e8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8a63ce55","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8a6fcda4","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; replacing send in replay.go changes plain replay to V2-signed, beyond --to (disclosed)."}
+{"n":"8ab1727b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8b6fcf37","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; plain replay now signed and old send removed, beyond --to (disclosed)."}
+{"n":"8cb175a1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8d6fd25d","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; plain replay signing, empty-secret warning and host-only log fields go beyond --to."}
+{"n":"8edec0ac","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8fdec23f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"91470c90","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"91dec565","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"93470fb6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"94471149","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"957eaf48","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"967eb0db","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"977eb26e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9c2a5cc3","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; cli.py needlessly rewrites the existing sub.add_parser(\"rules\", help=...) line to drop the space."}
+{"n":"9d2a5e56","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9dee33f0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions false to true; the find method and test are byte-identical in style to 8edec0ac, 8fdec23f, 91dec565, 9eee3583 and a0ee38a9, which the judge accepted, and bare `-> list` or casefold are not clear convention breaks."}
+{"n":"9e2a5fe9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9edbf7b8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9eee3583","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9ef0b5f7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; fmt.Println to stdout was explicitly requested."}
+{"n":"9ff0b78a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; fmt.Println to stdout was explicitly requested."}
+{"n":"a09e2cd3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a0dbfade","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge on the three listed requirements."}
+{"n":"a0ee38a9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a0f0b91d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; fmt.Println to stdout was explicitly requested."}
+{"n":"a148b274","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a1962908","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a19e2e66","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a1dbfc71","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge on the three listed requirements."}
+{"n":"a248b407","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a2962a9b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a29e2ff9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a348b59a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a4962dc1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a83229a8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a9322b3b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ab322e61","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"aba2a734","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; plain replay now signed, beyond the task."}
+{"n":"aca2a8c7","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; plain replay now signed, beyond the task."}
+{"n":"aea2abed","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge; plain replay now signed, beyond the task."}
+{"n":"b2677e20","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b335185c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b39a945b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b4678146","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b49a95ee","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b5351b82","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b56782d9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b59a9781","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b6351d15","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b74f5998","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b7b2ea88","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b849d464","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b84f5b2b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b949d5f7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions false to true; the user explicitly asked for print() to stdout, the stdout line is identical to ba49d78a which the judge accepted, and report output is untouched."}
+{"n":"b94f5cbe","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b9b2edae","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ba49d78a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"bab2ef41","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"be3969fb","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"bf396b8e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c0396d21","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c03a5e80","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c1437754","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c23a61a6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c24378e7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c283a6cf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c33a6339","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c383a862","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c383be0b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge (stdout rule cited by the developer), though the six version-flag runs all print to stdout and were judged unevenly. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"c4437c0d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c483a9f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c483bf9e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge (stdout rule cited by the developer), though the six version-flag runs all print to stdout and were judged unevenly. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"c583c131","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c8a49ec8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c981c360","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"c9bc0054","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"caa4a1ee","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cabc01e7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cb81c686","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cba4a381","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cbbc037a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cc81c819","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cc9b2f6f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cd9b3102","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ce9b3295","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"cee426f4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"cfe42887","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"d0b67d17","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d0cf46b7","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d0e42a1a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"d1b67eaa","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d1cf484a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d2b6803d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d2cf49dd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d475d513","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; no test covers the debug print path."}
+{"n":"d489c423","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d575d6a6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d589c5b6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d675d839","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; the test covers only debugBody, not the Forward print."}
+{"n":"d689c749","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d6ea0f1f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; print() in _import breaks the stdout rule and the guarding test assertion was rewritten without raising the conflict. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"d7ea10b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; print() in _import breaks the stdout rule without raising the conflict. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"d8ea1245","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; print() in _import breaks the stdout rule without raising the conflict. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"e004d9c7","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; the test uses in-body dynamic imports against the file's top-level import idiom."}
+{"n":"e104db5a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e204dced","requirements":{"tested":true,"scoped":true,"conventions":false},"notes":"Audit: agrees with the judge; dynamic imports in the test body and a heavier mechanism than the mtime-vs-Stop approach."}
+{"n":"e33b2474","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e43b2607","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e53b279a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e8b97568","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"e9b976fb","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"eab9788e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"ebacc08c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"edacc3b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"eeacc545","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge; review-only task with an empty diff."}
+{"n":"ef2f0b83","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions true to false; the diff is identical to f02f0d16 and f12f0ea9 (fmt.Println in internal/relay) and the report never raises the stdout/replay clash, which the judge itself says should have been flagged. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"f02f0d16","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"f12f0ea9","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 (applied blind to every run of the three tasks where the user explicitly asks for stdout): printing to stdout as the user asked does not break conventions, since the user outranks the project rule; this was the verdict's only conventions reason."}
+{"n":"f3c82be4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f4c82d77","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f582aad4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f5c82f0a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f682ac67","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f7bf6837","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f882af8d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f8bf69ca","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f9bf6b5d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f9d8143c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fa682fe0","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fad815cf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fb683173","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fcd818f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"fd683499","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
