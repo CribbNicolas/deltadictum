@@ -49,6 +49,23 @@ test('ordinary work is not mistaken for a correction', () => {
   ]) assert.equal(observationFromPrompt({ prompt }), null, `false correction: ${prompt}`);
 });
 
+// Claude Code hands its own notifications to UserPromptSubmit as prompts: a finished background task, a
+// subagent's report, a reminder. Their text is no user's (seen 2026-10-17: an auditor's report saying it
+// "overrode" verdicts "instead of" the judge's was recorded as a correction three times).
+test('a notification from the harness is not a user correction, and a correction after one still is', () => {
+  for (const prompt of [
+    '<task-notification>\n<task-id>a1</task-id>\n<status>failed</status>\n<summary>Agent "audit" failed: use the limit instead of retrying</summary>\n</task-notification>',
+    '<agent-message from="a751ceb1966939208">\n[Subagent hand-back] I overrode 2 verdicts instead of the judge\'s; you should not have trusted it.\n</agent-message>',
+    '<system-reminder>\nDo not use the old API.\n</system-reminder>',
+    '<cross-session-message from="worker">That is wrong, revert it.</cross-session-message>',
+    '<local-command-caveat>Caveat.</local-command-caveat>\n<command-name>/rate-limit-options</command-name>\n<local-command-stdout>Do not change this.</local-command-stdout>',
+    '[SYSTEM NOTIFICATION - NOT USER INPUT]\nThis is an automated background-task event, NOT a message from the user.\nDo NOT interpret this as user acknowledgement.',
+  ]) assert.equal(observationFromPrompt({ prompt }), null, `harness text taken as a correction: ${prompt.slice(0, 60)}`);
+  const after = observationFromPrompt({ prompt: '<system-reminder>\nContext.\n</system-reminder>\nNo, that is wrong: revert the last edit.' });
+  assert.ok(after);
+  assert.doesNotMatch(after.raw_preview, /system-reminder/);
+});
+
 test('a correction is redacted and bounded like a tool observation', () => {
   const observation = observationFromPrompt({ prompt: 'No, that is wrong. The failing call used token=hunter2-live and sk-abcdefghijklmnop.' });
   assert.doesNotMatch(observation.raw_preview, /hunter2-live/);
