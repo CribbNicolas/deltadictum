@@ -95,15 +95,16 @@ export const MINED_TASKS = [
   task.requirements = [{ id: 'plugin_root_cli', auto: true, text: 'The recall and review skills run node on ${CLAUDE_PLUGIN_ROOT}/src/cli.js and never npx.' }];
   task.check = async dir => {
     const skill = name => { try { return readFileSync(join(dir, 'skills', name, 'SKILL.md'), 'utf8'); } catch { return ''; } };
-    // npx only counts in what the skill runs: anywhere in a fenced block, and in inline code unless its
-    // sentence forbids it ("Do not run `npx deltadictum`", as every calibration run wrote).
+    // npx only counts in what the skill runs: anywhere in a fenced block, and in inline code unless the
+    // words just before it on its line forbid it ("Do not run `npx deltadictum`", as the calibration's
+    // runs wrote); "instead of" or "rather than" offer it, they do not forbid it.
     const FENCE = /```[^\n]*\n([\s\S]*?)```/g;
-    const FORBIDS = /\b(?:do not|don't|never|instead of|rather than|avoid)\b/i;
+    const FORBIDDEN = /\b(?:do not|don['’]t|never|avoid)\s+(?:[\w-]+\s+){0,2}$/i;
     const runsNpx = text => {
-      const sentences = text.replace(/\r/g, '').replace(FENCE, '\n\n').split(/\n\s*\n/)
-        .flatMap(paragraph => paragraph.replace(/\n/g, ' ').split(/(?<=[.!?])\s+/));
+      const prose = text.replace(/\r/g, '').replace(FENCE, '\n');
       return [...text.matchAll(FENCE)].some(m => /\bnpx\b/.test(m[1]))
-        || sentences.some(s => [...s.matchAll(/`([^`]+)`/g)].some(m => /\bnpx\b/.test(m[1])) && !FORBIDS.test(s));
+        || prose.split('\n').some(line => [...line.matchAll(/`([^`]+)`/g)]
+          .some(m => /\bnpx\b/.test(m[1]) && !FORBIDDEN.test(line.slice(0, m.index))));
     };
     const ok = ['recall', 'review'].every(name => /node\s+"?\$\{?CLAUDE_PLUGIN_ROOT\}?\/src\/cli\.js"?/.test(skill(name)) && !runsNpx(skill(name)));
     return { passed: ok, requirements: { plugin_root_cli: ok }, detail: detail({ 'skills run the plugin CLI': ok }) };

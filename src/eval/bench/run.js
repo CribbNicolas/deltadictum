@@ -25,7 +25,7 @@ import { prepareClone, removeClone } from './clone.js';
 import { CONDITIONS as ALL_CONDITIONS } from './situations.js';
 import { assertSubscription } from './billing.js';
 import { schedule } from './stats.js';
-import { runCommand, suiteOutcome, suiteReverdict } from './suite.js';
+import { flakyFor, runCommand, suiteOutcome, suiteReverdict } from './suite.js';
 import { loadBench, registryAt } from './tasks.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
@@ -97,13 +97,16 @@ async function suiteIn(project, dir, env) {
 
 // The baseline is a fresh clone of the same task and condition: the change may be
 // committed, and a stash of nothing cannot be popped.
-async function suiteOf(project, task, condition, dir, env) {
+async function suiteOf(project, task, condition, dir, env, changed) {
   const baseline = async () => {
     const { dir: clean } = await prepareClone(project, task, condition);
     try { return await suiteIn(project, clean, env); } finally { await removeClone(clean, project); }
   };
-  return suiteOutcome(() => suiteIn(project, dir, env), baseline, project.knownFlaky ?? []);
+  return suiteOutcome(() => suiteIn(project, dir, env), baseline, flakyFor(project.knownFlaky, changed));
 }
+
+// The paths a recorded patch changes, from its headers.
+const patchPaths = patch => [...new Set([...patch.matchAll(/^diff --git a\/(\S+) b\/(\S+)$/gm)].flatMap(m => [m[1], m[2]]))];
 
 async function runOnce(task, condition, index) {
   const project = projectOf(task);
@@ -152,16 +155,16 @@ Run every command in the foreground and wait for it to finish before your final 
   await writeFile(join(RUNS, `${runId}.diff`), patch);
   // With DD the session's final result is the reply to DD's Stop-hook reminder, not the task report.
   const report = taskReport(stream) ?? String(result.result ?? '');
-  const check = await task.check(dir, report).catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
+  const check = await checkOf(task, dir, report);
   // --no-suite: calibration decides on checks alone, so neither the suite nor lint is paid for.
   const lint = NO_SUITE ? { lint_ok: null, lint_output: null } : await lintOf(project, dir, env);
   const suite = NO_SUITE ? { passed: null, first_passed: null, failed_twice: [], regressions: [], baseline_failed: null, baseline_passed: null, flaky: [] }
-    : await suiteOf(project, task, condition, dir, env);
+    : await suiteOf(project, task, condition, dir, env, patchPaths(patch));
   const usage = result.usage ?? {};
   const row = { run_id: runId, task: task.id, project: project.id, situation: task.situation, origin: task.origin, kind: task.kind,
     memories: task.memories, withheld: task.withheld ?? [], condition, base: task.base ?? project.base, model: MODEL, effort: EFFORT, taskset: 'bench',
     dd_ready: ddReady, store_warnings: storeWarnings, compile_warnings: compileWarnings, index_memories: indexMemories,
-    passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...lint,
+    passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, check_error: check.check_error, ...lint,
     suite_passed: suite.passed, suite_skipped: NO_SUITE, suite_first_passed: suite.first_passed, suite_failed_twice: suite.failed_twice, suite_regressions: suite.regressions,
     suite_baseline_failed: suite.baseline_failed, suite_baseline_passed: suite.baseline_passed, suite_flaky: suite.flaky, numstat, ...latency,
     input_tokens: (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0),
@@ -171,6 +174,11 @@ Run every command in the foreground and wait for it to finish before your final 
   return row;
 }
 
+// A check that throws (a lost connection, a tool missing) has not judged the agent's work: the row
+// records a check error, which report.js refuses until --recheck decides the run.
+const checkOf = (task, dir, answer) => task.check(dir, answer).then(check => ({ ...check, check_error: null }))
+  .catch(err => ({ passed: null, detail: `check_failed: ${err.message}`, requirements: {}, check_error: err.message.slice(0, 300) }));
+
 // The recorded change applied to a fresh baseline, and the task's check and lint again; the suite's
 // recorded verdict is judged again against the project's known flaky tests.
 async function recheck(row) {
@@ -179,11 +187,13 @@ async function recheck(row) {
   const { dir } = await prepareClone(project, task, row.condition);
   try {
     const patch = join(RUNS, `${row.run_id}.diff`);
-    if ((await readFile(patch, 'utf8')).trim()) gitOut(dir, 'apply', '--whitespace=nowarn', patch);
-    const check = await task.check(dir, row.answer ?? '').catch(err => ({ passed: false, detail: `check_failed: ${err.message}` }));
-    return { ...row, passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, ...await lintOf(project, dir, HOST_ENV),
-      ...suiteReverdict(row, project.knownFlaky ?? []),
-      rechecked: row.rechecked ?? { passed: row.passed, detail: row.detail, suite_passed: row.suite_passed } };
+    const text = await readFile(patch, 'utf8');
+    if (text.trim()) gitOut(dir, 'apply', '--whitespace=nowarn', patch);
+    const check = await checkOf(task, dir, row.answer ?? '');
+    return { ...row, passed: check.passed, detail: check.detail, requirements: check.requirements ?? {}, check_error: check.check_error,
+      ...await lintOf(project, dir, HOST_ENV), ...suiteReverdict(row, flakyFor(project.knownFlaky, patchPaths(text))),
+      rechecked: row.rechecked ?? { passed: row.passed, detail: row.detail, requirements: row.requirements, lint_ok: row.lint_ok,
+        suite_passed: row.suite_passed, check_error: row.check_error ?? null } };
   } finally { await removeClone(dir, project); }
 }
 
@@ -212,13 +222,18 @@ if ('check-only' in args) {
   // and lint, which must pass on an untouched tree before any run is paid for.
   for (const project of usedProjects()) {
     const task = TASKS.find(t => t.project === project.id);
-    const { dir: clean } = await prepareClone(project, task, 'none');
-    try {
-      const suite = await suiteIn(project, clean, HOST_ENV);
-      const lint = await lintOf(project, clean, HOST_ENV);
-      if (!suite.passed || lint.lint_ok === false) passing += 1;
-      console.log(JSON.stringify({ project: project.id, suite_passes_untouched: suite.passed, lint_ok_untouched: lint.lint_ok, lint_output: lint.lint_output }));
-    } finally { await removeClone(clean, project); }
+    // Every base a task starts from (a mined task starts at its fix's parent), with the first task there.
+    const atBase = new Map();
+    for (const t of TASKS.filter(t => t.project === project.id)) if (!atBase.has(t.base ?? project.base)) atBase.set(t.base ?? project.base, t);
+    for (const [base, first] of atBase) {
+      const { dir: clean } = await prepareClone(project, first, 'none');
+      try {
+        const suite = await suiteIn(project, clean, HOST_ENV);
+        const lint = await lintOf(project, clean, HOST_ENV);
+        if (!suite.passed || lint.lint_ok === false) passing += 1;
+        console.log(JSON.stringify({ project: project.id, base, suite_passes_untouched: suite.passed, lint_ok_untouched: lint.lint_ok, lint_output: lint.lint_output }));
+      } finally { await removeClone(clean, project); }
+    }
     for (const condition of CONDITIONS) {
       const { dir, index_memories: indexMemories, store_warnings: warnings } = await prepareClone(project, task, condition);
       try {

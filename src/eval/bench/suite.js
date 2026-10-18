@@ -13,6 +13,13 @@ export async function runCommand(spec, cwd, env) {
 ${out.err ?? ''}` };
 }
 
+// The tests forgiven as flaky for one change: a project's entry is a test name, or { test, unlessChanged }
+// when the test covers code a change can break (it is forgiven only if no changed path starts with one).
+export function flakyFor(entries = [], changed = []) {
+  return entries.filter(entry => typeof entry === 'string' || !changed.some(path => entry.unlessChanged.some(prefix => path.startsWith(prefix))))
+    .map(entry => (typeof entry === 'string' ? entry : entry.test));
+}
+
 // A row's suite verdict judged again from what it recorded, when a test is found flaky after the run:
 // the fields that change, or nothing.
 export function suiteReverdict(row, knownFlaky = []) {
