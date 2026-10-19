@@ -1,0 +1,8 @@
+diff --git a/ledgerkit/summary.py b/ledgerkit/summary.py
+new file mode 100644
+--- /dev/null
++++ b/ledgerkit/summary.py
+@@ -0,0 +1 @@
++print('total')
+diff --git a/.dd/memories/x.json b/.dd/memories/x.json
++{}

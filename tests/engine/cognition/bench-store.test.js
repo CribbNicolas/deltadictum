@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { benchMemoryId, installStore, materializeMemories, writeGuide } from '../../../src/eval/bench/store.js';
+import { benchMemories, benchMemoryId, installStore, materializeMemories, writeGuide } from '../../../src/eval/bench/store.js';
 
 const definition = (topic, over = {}) => ({ topic, kind: 'trap', title: `Rule ${topic}`, body: `Body of ${topic}.`, not_derivable: 'Hidden.',
   triggers: [{ on: ['read'], paths: ['src/a.go'] }], evidence: [{ path: 'src/a.go', summary: 'The file.' }], ...over });
@@ -83,4 +83,16 @@ test('the compiler\'s warnings come back from installing a store', async t => {
   const check = { on: ['edit'], paths: ['src/**/*.go'], if_content: 'os\\.Rename\\(', say: 'Use fsx.ReplaceFile.', examples: { violates: 'fsx.ReplaceFile(a, b)', passes: 'os.Rename(a, b)' } };
   const out = await installStore(root, project({ memories: [definition('net/retry', { check })] }));
   assert.ok(out.compile_warnings.some(w => w.kind === 'check_examples_fail'), JSON.stringify(out.compile_warnings));
+});
+
+test('bench memories without a clone carry the ids, triggers and checks the store gets', async t => {
+  const root = repo(t);
+  const p = project({ memories: [...project().memories, definition('net/checked', { check: { when: 'turn', if_content: 'x', violates: ['x'], passes: ['y'] } })] });
+  const stored = (await materializeMemories(root, p)).memories;
+  const pure = benchMemories(p);
+  const shape = m => [m.id, m.topic, m.status, JSON.stringify(m.triggers), JSON.stringify(m.check ?? null), m.replaces];
+  assert.deepEqual(pure.map(shape), stored.map(shape));
+  assert.ok(pure.every(m => Array.isArray(m.evidence) && m.evidence.length === 0));
+  const existing = { id: 'pa', store: 'existing', memories: [{ id: 'own', topic: 'x' }] };
+  assert.equal(benchMemories(existing), existing.memories);
 });

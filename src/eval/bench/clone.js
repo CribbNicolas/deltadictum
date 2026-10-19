@@ -5,7 +5,9 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { baseCommit, cleanHistory, treeFiles, uploadPackFor } from './history.js';
 import { installStore, materializeMemories, writeGuide } from './store.js';
 
 const git = (dir, ...args) => execFileSync('git', ['-C', dir, ...args], { maxBuffer: 64 * 1024 * 1024 }).toString();
@@ -19,21 +21,32 @@ async function strip(dir, entries) {
   }
 }
 
+const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
+const historyCache = () => process.env.DD_BENCH_HISTORY ?? join(REPO, 'output', 'eval', 'bench', 'history');
+
 // One local branch at the base and nothing else: no remote (a push would reach the source repository) and
 // only the objects the base reaches, so no other branch, tag or commit (a mined task's fix, the bench's own
-// solutions) is in the clone even as an unreachable object. A source repository owned by another account (a
-// sandbox user) is trusted for this fetch only: git clears GIT_CONFIG_* for a local transport, so the
-// settings ride on the upload-pack command, which also lets a commit be asked for by its id.
-async function fetchBase(repo, base, dir) {
-  const source = resolve(repo).replaceAll('\\', '/');
-  const commit = execFileSync('git', ['-c', `safe.directory=${source}`, '-C', repo, 'rev-parse', `${base}^{commit}`]).toString().trim();
+// solutions) is in the clone even as an unreachable object. The base comes from the project's history
+// rewritten without DD's store (history.js), the same commits in every condition, so no agent reads the
+// memories with `git log -p`. A source repository owned by another account (a sandbox user) is trusted for
+// the rewrite's fetch only (uploadPackFor).
+async function fetchBase(project, base, dir) {
+  const { repo, commit } = await cleanHistory({ repo: project.repo, base, strip: project.historyStrip ?? ['.dd'], cacheDir: historyCache() });
   await mkdir(dir, { recursive: true });
   git(dir, 'init', '-q', '-b', 'main');
-  const uploadPack = `git -c "safe.directory=${source}" -c "safe.directory=${source}/.git" -c uploadpack.allowAnySHA1InWant=true upload-pack`;
-  git(dir, 'fetch', '-q', '--no-tags', '--upload-pack', uploadPack, repo, commit);
+  git(dir, 'fetch', '-q', '--no-tags', '--upload-pack', uploadPackFor(repo), repo, commit);
   git(dir, 'checkout', '-q', '-B', 'main', commit);
   await rm(join(dir, '.git', 'FETCH_HEAD'), { force: true });
   git(dir, 'reflog', 'expire', '--expire=now', '--all');
+  return commit;
+}
+
+// A project that keeps its own store gets it back from the base tree, in dd2 only.
+async function restoreStore(project, base, dir) {
+  for (const { path, content } of treeFiles(project.repo, baseCommit(project.repo, base), project.historyStrip ?? ['.dd'])) {
+    await mkdir(dirname(join(dir, path)), { recursive: true });
+    await writeFile(join(dir, path), content);
+  }
 }
 
 const teamCommit = (dir, project, message) => {
@@ -52,7 +65,7 @@ export async function prepareClone(project, task, condition) {
   const base = task.base ?? project.base;
   const dir = join(await mkdtemp(join(tmpdir(), 'dd-bench-')), project.id);
   try {
-    await fetchBase(project.repo, base, dir);
+    const baseCommitId = await fetchBase(project, base, dir);
     await project.link?.(dir, base);
     checkLinks(dir, project.links ?? []);
     await strip(dir, project.strip ?? []);
@@ -64,6 +77,7 @@ export async function prepareClone(project, task, condition) {
       warnings = found;
       await writeGuide(dir, project, memories, condition === 'docref');
     }
+    if (condition === 'dd2' && project.store === 'existing') await restoreStore(project, base, dir);
     if (condition === 'dd2') ({ warnings, index_memories: indexMemories, compile_warnings: compileWarnings } = await installStore(dir, project));
     else await rm(join(dir, '.dd'), { recursive: true, force: true });
     // The starting point is the project's own history. The stripped lines, the prepare step and the
@@ -74,7 +88,7 @@ export async function prepareClone(project, task, condition) {
       await task.setup(dir);
       teamCommit(dir, project, task.setupMessage ?? 'Update');
     }
-    return { dir, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, compile_warnings: compileWarnings, index_memories: indexMemories };
+    return { dir, base_commit: baseCommitId, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, compile_warnings: compileWarnings, index_memories: indexMemories };
   } catch (err) {
     await removeClone(dir, project);
     throw err;
