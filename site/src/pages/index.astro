@@ -7,10 +7,10 @@ import Features from '../components/landing/Features.astro';
 import Measured from '../components/landing/Measured.astro';
 import InstallFooter from '../components/landing/InstallFooter.astro';
 import { loadSummaries } from '../lib/summaries.js';
-import { pickFeatured } from '../lib/bench.js';
+import { averageSummaries } from '../lib/bench.js';
 import { SITE } from '../config.js';
 
-const summary = pickFeatured(loadSummaries(), SITE.featuredTrial);
+const summary = averageSummaries(loadSummaries(), SITE.featured);
 const jsonLd = {
   '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: SITE.name, description: SITE.description,
   applicationCategory: 'DeveloperApplication', operatingSystem: 'Windows, macOS, Linux', softwareVersion: pkg.version,
