@@ -95,3 +95,50 @@ test('a link that git does not ignore stops the clone', async t => {
   const p = { ...project(repo), links: ['deps'], link: async dir => { mkdirSync(join(dir, 'deps')); writeFileSync(join(dir, 'deps', 'x'), 'x'); } };
   await assert.rejects(prepareClone(p, task, 'none'), /link_not_ignored: deps/);
 });
+
+// A source whose history and base tree hold DD's store, as supermem's and Patriark's do.
+function storeSource(t) {
+  const repo = source(t);
+  mkdirSync(join(repo, '.dd', 'memories'), { recursive: true });
+  writeFileSync(join(repo, '.dd', 'memories', 'own.json'), '{"title":"the project\'s own memory"}\n');
+  git(repo, 'add', '-A');
+  git(repo, 'commit', '-q', '-m', 'store');
+  writeFileSync(join(repo, 'README.md'), '# Fixture, later\n');
+  git(repo, 'commit', '-q', '-am', 'later');
+  return repo;
+}
+
+test('no condition\'s clone history names .dd/', async t => {
+  const repo = storeSource(t);
+  for (const condition of ['none', 'doc', 'docref', 'dd2']) {
+    const { dir } = await prepareClone(project(repo), task, condition);
+    t.after(() => removeClone(dir, project(repo)));
+    // HEAD is the task's setup, HEAD~1 the team's "Update" (where dd2 adds its store), HEAD~2 the base.
+    assert.doesNotMatch(git(dir, 'log', '--name-only', '--format=', 'HEAD~2'), /\.dd\//, condition);
+    assert.doesNotMatch(git(dir, 'log', '-p', 'HEAD~2'), /own memory/, condition);
+    if (condition === 'dd2') assert.ok(existsSync(join(dir, '.dd', 'memories')));
+  }
+});
+
+test('every condition starts from the same base commit', async t => {
+  const repo = storeSource(t);
+  const bases = new Set();
+  for (const condition of ['none', 'doc', 'docref', 'dd2']) {
+    const { dir } = await prepareClone(project(repo), task, condition);
+    t.after(() => removeClone(dir, project(repo)));
+    bases.add(git(dir, 'rev-parse', 'HEAD~2').trim());
+  }
+  assert.equal(bases.size, 1);
+});
+
+test('a project that keeps its own store gets it back in dd2 only, from the base tree', async t => {
+  const repo = storeSource(t);
+  const existing = { ...project(repo), store: 'existing', memories: [] };
+  const { dir } = await prepareClone(existing, task, 'dd2');
+  t.after(() => removeClone(dir, existing));
+  assert.equal(readFileSync(join(dir, '.dd', 'memories', 'own.json'), 'utf8'), '{"title":"the project\'s own memory"}\n');
+  assert.doesNotMatch(git(dir, 'log', '--name-only', '--format=', 'HEAD~2'), /\.dd\//);
+  const { dir: none } = await prepareClone(existing, task, 'none');
+  t.after(() => removeClone(none, existing));
+  assert.ok(!existsSync(join(none, '.dd')));
+});

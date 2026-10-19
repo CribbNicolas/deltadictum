@@ -23,6 +23,26 @@ export const baseCommit = (repo, base) => {
   return execFileSync('git', ['-c', `safe.directory=${source}`, '-C', repo, 'rev-parse', `${base}^{commit}`]).toString().trim();
 };
 
+// The files under `paths` in a commit of the source, read with one cat-file process: a project that
+// keeps its own store gets it back in its dd2 clone from the base tree, not from history.
+export function treeFiles(repo, commit, paths) {
+  const source = resolve(repo).replaceAll('\\', '/');
+  const read = (args, input) => execFileSync('git', ['-c', `safe.directory=${source}`, '-C', repo, ...args], { input, maxBuffer: 256 * 1024 * 1024 });
+  const entries = read(['ls-tree', '-r', '-z', commit, '--', ...paths]).toString('utf8').split('\0').filter(Boolean)
+    .map(line => { const [meta, path] = line.split('\t'); const [mode, type, sha] = meta.split(' '); return { mode, type, sha, path }; })
+    .filter(entry => entry.type === 'blob' && entry.mode !== '120000');
+  if (!entries.length) return [];
+  const out = read(['cat-file', '--batch'], `${entries.map(entry => entry.sha).join('\n')}\n`);
+  let at = 0;
+  return entries.map(entry => {
+    const header = out.indexOf(0x0a, at);
+    const size = Number(out.toString('utf8', at, header).split(' ')[2]);
+    const content = out.subarray(header + 1, header + 1 + size);
+    at = header + 1 + size + 1;
+    return { path: entry.path, content };
+  });
+}
+
 export async function cleanHistory({ repo, base, strip = ['.dd'], cacheDir }) {
   const source = resolve(repo).replaceAll('\\', '/');
   const commit = baseCommit(repo, base);
