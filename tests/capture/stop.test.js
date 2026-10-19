@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appendFootprint, footprintPath } from '../../src/capture/footprint.js';
 import { stopRequest } from '../../src/capture/stop.js';
+import { run } from '../../src/capture/hooks.js';
 
 function session(t, entries) {
   const root = mkdtempSync(join(tmpdir(), 'dd-stop-'));
@@ -40,4 +41,14 @@ test('a stop that is already continuing, or without a session, says nothing', t 
   assert.equal(stopRequest(root, { session_id: 's1', stop_hook_active: true }), '');
   assert.equal(stopRequest(root, {}), '');
   assert.match(stopRequest(root, { session_id: 's1' }), /fixed a failure/);
+});
+
+// In the 2026-10 benchmark "Do not change any code" in a session's first prompt read as a correction: the
+// request that followed replaced Haiku's review with "nothing to save", 2 runs of 156.
+test('the first prompt of a session corrects nothing; a prompt after a turn can', async t => {
+  const root = session(t, []);
+  await run('observe-prompt', root, { session_id: 's1', prompt: 'Review it before it ships. Do not change any code.' });
+  assert.equal(await run('stop', root, { session_id: 's1' }), '');
+  await run('observe-prompt', root, { session_id: 's1', prompt: 'No, that is wrong: use the store in t.after instead.' });
+  assert.match(await run('stop', root, { session_id: 's1' }), /received a user correction/);
 });

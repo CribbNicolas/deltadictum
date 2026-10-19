@@ -80,6 +80,15 @@ test('a Stop with something to say blocks with the reason, as Codex expects', as
   assert.equal(output.hookSpecificOutput, undefined);
 });
 
+// Codex makes the agent go on when Stop blocks: an instruction read as a correction would cost a turn.
+test('an instruction in the first prompt of a session does not block its Stop', async t => {
+  const root = await project(t);
+  hook('observe-prompt', { session_id: 'c6', cwd: root, prompt: 'Review src/a.js before it ships. Do not change any code.' });
+  const stop = hook('stop', { session_id: 'c6', cwd: root, stop_hook_active: false });
+  assert.equal(stop.status, 0);
+  assert.equal(stop.stdout, '');
+});
+
 test('a proposal written through apply_patch into .dd/inbox is ingested', async t => {
   const root = await project(t);
   const proposal = { topic: 'testing/codex-inbox', kind: 'trap', title: 'The constant a in src/a.js is read at import time',

@@ -34,7 +34,7 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 ```text
 DD - project knowledge (tests/store.test.js):
 [TRAP] Close stores in t.after - A test that opens a store must close it in t.after: …
-DD - advisory: knowledge, not an order. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from.
+DD - advisory: knowledge, not an order. Apply it to the task; a problem it shows outside the task is reported, not fixed. If the user explicitly asked for what it rules out, do what the user asked and say which memory it departs from.
 ```
 
 The last line closes every delivery and every check report: a memory is advice, and the request in front

@@ -74,7 +74,8 @@ corrected.
   opt-in (`.dd/config.json` with the project id, `.dd/.gitignore`, `.dd/memories/`) and compiles; the
   Codex installer writes the config too. A project still holding a v1 store is migrated, not initialised.
 - Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
-  Prompt text is not kept, except a short preview of a prompt detected as a user correction. Past 4 MB
+  Prompt text is not kept, except a short preview of a prompt detected as a user correction. A session's
+  first prompt, before any tool call or Stop, is never a correction: there is nothing yet to correct. Past 4 MB
   (about 7,000 tool calls) a session's footprint takes no more tool calls or corrections, only Stop's own
   markers.
 - At Stop, DD asks the agent for a memory only when the turn holds evidence (a failure followed by a fix, or a

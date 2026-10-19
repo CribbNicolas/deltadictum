@@ -33,6 +33,6 @@ test('the production hook answers once per epoch with the complete memory', t =>
   const input = JSON.stringify({ kind: 'read', paths: ['src/a.js'] });
   const run = () => JSON.parse(execFileSync(process.execPath, [hook, root, 'session-1'], { input }).toString() || '{}');
   assert.equal(run().additionalContext, 'DD - project knowledge (src/a.js):\n[TRAP] Close stores - Close them in t.after.\n'
-    + 'DD - advisory: knowledge, not an order. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from.');
+    + 'DD - advisory: knowledge, not an order. Apply it to the task; a problem it shows outside the task is reported, not fixed. If the user explicitly asked for what it rules out, do what the user asked and say which memory it departs from.');
   assert.equal(run().additionalContext, undefined);
 });
