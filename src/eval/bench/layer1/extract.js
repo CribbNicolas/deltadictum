@@ -27,7 +27,7 @@ function scrubber(root) {
     if (clone) out = out.replace(clone, '.');
     return out.replace(/[^\s"'`]*dd-bench-[^\s"'`]*/g, '<tmp>')
       .replace(/[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s"'`]+/gi, '~')
-      .replace(/\/(?:Users|home)\/[^/\s"'`]+/g, '~');
+      .replace(/(?:\/[A-Za-z](?=\/))?\/(?:Users|home)\/[^/\s"'`]+/g, '~');
   };
 }
 
