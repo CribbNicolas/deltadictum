@@ -22,6 +22,8 @@ export async function run(command, root, payload) {
     let violations = '';
     // A check that throws never costs the turn its capture request.
     try { violations = turnViolations(root, payload); } catch { /* fail open */ }
+    // A check is knowledge too: the user may have asked for what it flags.
+    if (violations) violations = `${violations}\n${(await import('../engine/deliver.cjs')).default.ON_CONFLICT}`;
     return [violations, stopRequest(root, payload)].filter(Boolean).join('\n\n');
   }
   if (command === 'inbox') {

@@ -4,6 +4,15 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.10] - 2026-10-18
+
+- Delivery: every delivery and every check report ends with a line telling the agent the knowledge is
+  advice: apply it unless the user explicitly asked for what it rules out, and then do what the user asked
+  and say which memory it departs from. In the 2026-10 benchmark Haiku, with DD, refused an explicit request
+  a delivered memory contradicted in 3 runs of 3; with the line it did what was asked in 6 of 6 (two such
+  tasks) and still applied the memories where the request did not rule them out (6 of 6). The ledger's size
+  counts the knowledge, not the line; the line's length comes out of the delivery's budget.
+
 ## [0.9.9] - 2026-10-18
 
 - Corrections: Claude Code's own notifications are no longer recorded as user corrections. It hands a

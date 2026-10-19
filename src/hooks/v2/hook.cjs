@@ -45,15 +45,19 @@ function deliverFor(root, event, session, payload = {}) {
   const bodiesOf = () => (bodies === undefined ? (bodies = readBodies(root, index)) : bodies);
   // Checks speak first: a violation the call is about to introduce comes before
   // knowledge about its files, and both share the 10,000-character field.
-  const violations = checks.length ? require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf }).join('\n') : '';
+  // The line saying the user outranks what follows closes the field, so both share what is left of it.
+  const { LIMIT, ON_CONFLICT, validLimit } = require('../../engine/deliver.cjs');
+  const reserve = ON_CONFLICT.length + 1;
+  const violations = checks.length
+    ? require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf, budget: LIMIT - reserve }).join('\n') : '';
   const parts = [violations];
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
   if (fired.length && bodiesOf()) {
-    const { LIMIT, validLimit } = require('../../engine/deliver.cjs');
-    const cap = validLimit(index.limit) ? index.limit : LIMIT;
+    const cap = (validLimit(index.limit) ? index.limit : LIMIT) - reserve;
     parts.push(delivery(root, index, event, fired, ledger, bodiesOf(), violations ? cap - violations.length - 2 : cap));
   }
-  return parts.filter(Boolean).join('\n\n');
+  const text = parts.filter(Boolean).join('\n\n');
+  return text ? `${text}\n${ON_CONFLICT}` : '';
 }
 
 // The checks this tool call evaluates: command checks for a run, `when: edit`

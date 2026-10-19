@@ -48,6 +48,9 @@ corrected.
   arrives at its next event. Each delivery leaves a ledger line with its event, counts and size, never its
   content. Stale evidence and disputed memories are marked.
 - Delivered text is advisory project knowledge. It never outranks the host, the user or the current code.
+  Every delivery and every check report ends with a line saying so to the agent: apply it unless the user
+  explicitly asked for what it rules out, and then do what the user asked and say which memory it departs
+  from. The ledger's size counts the knowledge, not that line.
 
 ## Checks
 
