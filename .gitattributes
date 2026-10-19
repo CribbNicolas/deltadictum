@@ -4,3 +4,5 @@ src/eval/bench/projects/*/src/** -text
 src/eval/bench/projects/*/solutions/** -text
 src/eval/bench/projects/*/hidden/** -text
 src/eval/bench/projects/*/setups/** -text
+# Recorded run streams and diffs for layer 1 tests, read as recorded.
+tests/fixtures/bench/layer1/** -text
