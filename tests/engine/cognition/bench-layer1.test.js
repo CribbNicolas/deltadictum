@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { extractTraces, runEvents } from '../../../src/eval/bench/layer1/extract.js';
 import { MUTATIONS, mutateRun } from '../../../src/eval/bench/layer1/mutate.js';
+import { layer1Summary } from '../../../src/eval/bench/layer1/metrics.js';
+import { replay } from '../../../src/eval/v2bench/replay.js';
 
 const RUNS = fileURLToPath(new URL('../../fixtures/bench/layer1/', import.meta.url));
 const TASKS = [
@@ -100,4 +102,36 @@ test('reads-shuffled keeps every edit, write and run where it was, and the same 
 test('sibling-paths renames files and keeps their folders', () => {
   const out = mutateRun({ ...sample(), events: [ev('read', 'a/one.go'), ev('search', 'a'), ev('run', 'Makefile'), ev('write', 'top.md'), { kind: 'run', paths: ['.', 'x/y.test.js'] }] }, 'sibling-paths', 1);
   assert.deepEqual(out.events.map(e => e.paths), [['a/zz-sibling-one.go'], ['a'], ['Makefile'], ['zz-sibling-top.md'], ['.', 'x/zz-sibling-y.test.js']]);
+});
+
+const memory = (id, topic, triggers, over = {}) => ({ id, topic, status: 'active', title: topic, body: `Body ${topic}.`, triggers, ...over });
+const readsOf = path => [{ on: ['read', 'edit'], paths: [path] }];
+const summaryFixture = runs => ({ version: 2, project: 'p', runs, tasks: {
+  two: { kind: 'memory', situation: 'S1', memories: ['k/a', 'k/b'] },
+  checked: { kind: 'memory', situation: 'S2', memories: ['k/check'] },
+  ctl: { kind: 'control', situation: 'S3', memories: [] } } });
+const trace = (run_id, task, condition, events) => ({ run_id, model: 'm', task, condition, events, verdicts: {}, added: {} });
+
+test('a task with two key memories counts as delivered only when both arrive', () => {
+  const memories = [memory('A', 'k/a', readsOf('a.go')), memory('B', 'k/b', readsOf('b.go')), memory('N', 'noise', readsOf('n.go'))];
+  const runs = [
+    trace('m/both~none', 'two', 'dd2', [ev('read', 'a.go'), ev('read', 'b.go'), ev('edit', 'a.go')]),
+    trace('m/one~none', 'two', 'dd2', [ev('read', 'a.go'), ev('read', 'n.go'), ev('edit', 'a.go')]),
+    trace('m/late~none', 'two', 'dd2', [ev('read', 'a.go'), ev('edit', 'a.go'), ev('read', 'b.go')]),
+    trace('m/ctl~none', 'ctl', 'dd2', [ev('read', 'n.go')]),
+    trace('m/both~no-prompt', 'two', 'none', [ev('read', 'a.go')]),
+  ];
+  const fixture = summaryFixture(runs);
+  const summary = layer1Summary(fixture, replay(fixture, memories), memories);
+  assert.deepEqual(Object.keys(summary).sort(), ['no-prompt', 'none']);
+  assert.deepEqual(summary.none.dd2, { runs: 4, key_runs: 3, keys_delivered_pct: 67, keys_before_edit_pct: 33, keys_partial: 1, median_noise: 0, untriggered: [] });
+  assert.equal(summary['no-prompt'].none.keys_partial, 1);
+  assert.equal(summary['no-prompt'].none.keys_delivered_pct, 0);
+});
+
+test('a memory with a check and no trigger is listed, not counted as missed', () => {
+  const memories = [memory('C', 'k/check', [], { check: { when: 'turn', if_content: 'print\(' } }), memory('A', 'k/a', readsOf('a.go'))];
+  const fixture = summaryFixture([trace('m/c~none', 'checked', 'dd2', [ev('read', 'a.go'), ev('edit', 'a.go')])]);
+  const summary = layer1Summary(fixture, replay(fixture, memories), memories);
+  assert.deepEqual(summary.none.dd2, { runs: 1, key_runs: 0, keys_delivered_pct: null, keys_before_edit_pct: null, keys_partial: 0, median_noise: 1, untriggered: ['k/check'] });
 });
