@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +14,8 @@ async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-maintain-'));
   // The detached maintenance process keeps the project as its working directory and exits a moment
   // after it writes "finished": Windows refuses to remove the folder until then, so the removal retries.
-  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 60, retryDelay: 250 }));
+  // Asynchronously: rmSync gives up on the first refusal of the folder itself, whatever maxRetries says.
+  t.after(() => rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }));
   mkdirSync(join(root, '.git'));
   await createMemoryFiles(join(root, '.dd')).commit({ put: [] });
   return root;
