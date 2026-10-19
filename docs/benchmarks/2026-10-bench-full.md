@@ -54,6 +54,11 @@ key memories arrived and what else came with them.
   (`tests/bench/`). Mined and ported tasks have no naive overlay: the fix's own test decides them.
 - **The guide is the store.** The documentation conditions carry the same memories as DD, so they differ
   from `dd2` only in the channel.
+- **The store in git history.** In these runs a clone's history still held `.dd/` (24 of supermem's 451
+  commits touched it, 8 of Patriark's 47), so an agent without DD could have read the memories with
+  `git log -p`. None of the 595 git commands in the runs without DD showed one. Runs after this one start
+  from a history rewritten without the store, the same commits in all four conditions
+  (`src/eval/bench/history.js`), and `--check-only` fails a clone whose history names `.dd/`.
 - **Blind judge.** Claude Opus 5.5, no tools, an empty directory; it sees the task, the guidance, the
   requirements, the diff and the developer's report with DD's and the guide's names redacted, never the
   condition. All 624 runs were judged.
