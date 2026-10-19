@@ -1,6 +1,9 @@
+import { statSync } from 'node:fs';
 import { basename, isAbsolute, join } from 'node:path';
 import { appendFootprint, correctionEntry, footprintPath, toolEntry } from './footprint.js';
 import { stopRequest } from './stop.js';
+
+const hasFootprint = path => { try { return statSync(path).size > 0; } catch { return false; } };
 
 // The capture side of DD's hooks (spec section 7), loaded only for these commands.
 export async function run(command, root, payload) {
@@ -11,7 +14,9 @@ export async function run(command, root, payload) {
     return '';
   }
   if (command === 'observe-prompt') {
-    const entry = path ? correctionEntry(payload) : null;
+    // A correction is about something the agent did: before a session's first tool call or Stop there is
+    // nothing, and "Do not change any code" in a first prompt is an instruction. An empty footprint is that.
+    const entry = path && hasFootprint(path) ? correctionEntry(payload) : null;
     if (entry) appendFootprint(path, entry);
     return '';
   }
