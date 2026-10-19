@@ -23,7 +23,7 @@ const project = repo => ({ id: 'fx', repo, base: 'HEAD', store: 'bench', guideTa
   strip: [{ file: 'CLAUDE.md', line: 'Always jitter retries.' }] });
 const task = { id: 'fx-a', setup: async dir => writeFileSync(join(dir, 'setup.txt'), 'x') };
 
-for (const condition of ['dd2', 'docref', 'doc', 'none']) {
+for (const condition of ['dd2', 'docref', 'doc', 'none', 'docdd']) {
   test(`a ${condition} clone carries its channel only, the stripped rule nowhere, and a clean baseline`, async t => {
     const repo = source(t);
     const { dir, index_memories } = await prepareClone(project(repo), task, condition);
@@ -31,10 +31,11 @@ for (const condition of ['dd2', 'docref', 'doc', 'none']) {
     const claude = readFileSync(join(dir, 'CLAUDE.md'), 'utf8');
     assert.doesNotMatch(claude, /Always jitter retries/);
     assert.ok(existsSync(join(dir, 'setup.txt')));
-    assert.equal(existsSync(join(dir, '.dd')), condition === 'dd2');
-    assert.equal(existsSync(join(dir, 'docs', 'engineering-guide.md')), condition === 'doc' || condition === 'docref');
-    assert.equal(/engineering-guide/.test(claude), condition === 'docref');
-    assert.equal(index_memories, condition === 'dd2' ? 1 : null);
+    const store = ['dd2', 'docdd'].includes(condition);
+    assert.equal(existsSync(join(dir, '.dd')), store);
+    assert.equal(existsSync(join(dir, 'docs', 'engineering-guide.md')), ['doc', 'docref', 'docdd'].includes(condition));
+    assert.equal(/engineering-guide/.test(claude), ['docref', 'docdd'].includes(condition));
+    assert.equal(index_memories, store ? 1 : null);
     assert.equal(git(dir, 'status', '--porcelain').trim(), '');
   });
 }
@@ -64,7 +65,7 @@ test('a clone has no remote and no ref but its own branch, so the source reposit
   assert.throws(() => git(dir, 'cat-file', '-e', answer), undefined, 'the answer commit is in the clone');
 });
 
-for (const condition of ['dd2', 'docref', 'doc', 'none']) {
+for (const condition of ['dd2', 'docref', 'doc', 'none', 'docdd']) {
   test(`a task's setup is the last commit, by the project's team, in a ${condition} clone too`, async t => {
     const repo = source(t);
     const p = project(repo);
@@ -110,20 +111,20 @@ function storeSource(t) {
 
 test('no condition\'s clone history names .dd/', async t => {
   const repo = storeSource(t);
-  for (const condition of ['none', 'doc', 'docref', 'dd2']) {
+  for (const condition of ['none', 'doc', 'docref', 'dd2', 'docdd']) {
     const { dir } = await prepareClone(project(repo), task, condition);
     t.after(() => removeClone(dir, project(repo)));
     // HEAD is the task's setup, HEAD~1 the team's "Update" (where dd2 adds its store), HEAD~2 the base.
     assert.doesNotMatch(git(dir, 'log', '--name-only', '--format=', 'HEAD~2'), /\.dd\//, condition);
     assert.doesNotMatch(git(dir, 'log', '-p', 'HEAD~2'), /own memory/, condition);
-    if (condition === 'dd2') assert.ok(existsSync(join(dir, '.dd', 'memories')));
+    if (condition === 'dd2' || condition === 'docdd') assert.ok(existsSync(join(dir, '.dd', 'memories')));
   }
 });
 
 test('every condition starts from the same base commit', async t => {
   const repo = storeSource(t);
   const bases = new Set();
-  for (const condition of ['none', 'doc', 'docref', 'dd2']) {
+  for (const condition of ['none', 'doc', 'docref', 'dd2', 'docdd']) {
     const { dir } = await prepareClone(project(repo), task, condition);
     t.after(() => removeClone(dir, project(repo)));
     bases.add(git(dir, 'rev-parse', 'HEAD~2').trim());
@@ -131,13 +132,16 @@ test('every condition starts from the same base commit', async t => {
   assert.equal(bases.size, 1);
 });
 
-test('a project that keeps its own store gets it back in dd2 only, from the base tree', async t => {
+test('a project that keeps its own store gets it back in the DD conditions only, from the base tree', async t => {
   const repo = storeSource(t);
   const existing = { ...project(repo), store: 'existing', memories: [] };
   const { dir } = await prepareClone(existing, task, 'dd2');
   t.after(() => removeClone(dir, existing));
   assert.equal(readFileSync(join(dir, '.dd', 'memories', 'own.json'), 'utf8'), '{"title":"the project\'s own memory"}\n');
   assert.doesNotMatch(git(dir, 'log', '--name-only', '--format=', 'HEAD~2'), /\.dd\//);
+  const { dir: both } = await prepareClone(existing, task, 'docdd');
+  t.after(() => removeClone(both, existing));
+  assert.ok(existsSync(join(both, '.dd', 'memories', 'own.json')));
   const { dir: none } = await prepareClone(existing, task, 'none');
   t.after(() => removeClone(none, existing));
   assert.ok(!existsSync(join(none, '.dd')));

@@ -44,10 +44,10 @@ const rowsOf = out => JSON.parse(readFileSync(out, 'utf8')).rows;
 test('the runner runs each condition in a fresh clone and records the bench fields', async t => {
   const { root, registry } = fixture(t);
   const out = join(root, 'out', 'results.json');
-  runner([`--registry=${registry}`, '--model=fake', `--out=${out}`, '--repeat=1', '--conditions=dd2,docref,none']);
+  runner([`--registry=${registry}`, '--model=fake', `--out=${out}`, '--repeat=1', '--conditions=dd2,docref,none,docdd']);
   const results = JSON.parse(readFileSync(out, 'utf8'));
   assert.equal(results.taskset, 'bench');
-  assert.equal(results.rows.length, 3);
+  assert.equal(results.rows.length, 4);
   for (const row of results.rows) {
     assert.equal(row.passed, true, row.detail);
     assert.equal(row.project, 'fx');
@@ -61,6 +61,9 @@ test('the runner runs each condition in a fresh clone and records the bench fiel
   const dd2 = results.rows.find(r => r.condition === 'dd2');
   assert.equal(dd2.dd_ready, true);
   assert.equal(dd2.index_memories, 1);
+  const docdd = results.rows.find(r => r.condition === 'docdd');
+  assert.equal(docdd.dd_ready, true);
+  assert.equal(docdd.index_memories, 1);
   assert.equal(results.rows.find(r => r.condition === 'none').dd_ready, null);
   assert.match(readFileSync(join(root, 'out', 'runs', 'fx-answer-none-0.diff'), 'utf8'), /answer\.txt/);
 });
@@ -192,7 +195,7 @@ test('check-only fails when a clone\'s history names .dd/', async t => {
   const err = (() => { try { runner([`--registry=${kept.registry}`, '--check-only']); return null; } catch (e) { return e; } })();
   assert.ok(err, 'check-only exits non-zero');
   const rows = String(err.stdout).split('\n').filter(line => line.includes('"condition"')).map(line => JSON.parse(line));
-  assert.equal(rows.length, 4);
+  assert.equal(rows.length, 5);
   assert.ok(rows.every(row => row.history_clean === false));
   const clean = fixture(t, { store: true });
   const out = runner([`--registry=${clean.registry}`, '--check-only']);
