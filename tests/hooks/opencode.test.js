@@ -15,9 +15,14 @@ const memory = (id, title, triggers) => ({
   review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
 });
 
+// The adapter starts `observe` without waiting for it (a hook never holds the host up), and that child
+// writes the session's footprint into the project after the test is done: on a slow Windows runner Node
+// takes seconds to start, and a one-second cleanup failed with ENOTEMPTY (2026-10-18, the 0.9.9 publish).
+const CLEANUP = { recursive: true, force: true, maxRetries: 75, retryDelay: 200 };
+
 async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-opencode-'));
-  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 }));
+  t.after(() => rmSync(root, CLEANUP));
   mkdirSync(join(root, '.git'));
   mkdirSync(join(root, 'src'));
   writeFileSync(join(root, 'src', 'a.js'), 'export const a = 1;\n');
@@ -58,7 +63,7 @@ test('the system prompt is left alone, so the prompt cache holds', async t => {
 
 test('a tool call without a session or in a project without DD changes nothing', async t => {
   const bare = mkdtempSync(join(tmpdir(), 'dd-opencode-bare-'));
-  t.after(() => rmSync(bare, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 }));
+  t.after(() => rmSync(bare, CLEANUP));
   const hooks = await DeltaDictum({ directory: bare });
   assert.equal(await toolCall(hooks, 's1', 'read', { filePath: join(bare, 'a.js') }), 'tool result');
   const root = await project(t);
