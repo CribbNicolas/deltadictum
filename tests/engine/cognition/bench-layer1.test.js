@@ -130,7 +130,7 @@ test('a task with two key memories counts as delivered only when both arrive', (
 });
 
 test('a memory with a check and no trigger is listed, not counted as missed', () => {
-  const memories = [memory('C', 'k/check', [], { check: { when: 'turn', if_content: 'print\(' } }), memory('A', 'k/a', readsOf('a.go'))];
+  const memories = [memory('C', 'k/check', [], { check: { when: 'turn', if_content: 'print\\(' } }), memory('A', 'k/a', readsOf('a.go'))];
   const fixture = summaryFixture([trace('m/c~none', 'checked', 'dd2', [ev('read', 'a.go'), ev('edit', 'a.go')])]);
   const summary = layer1Summary(fixture, replay(fixture, memories), memories);
   assert.deepEqual(summary.none.dd2, { runs: 1, key_runs: 0, keys_delivered_pct: null, keys_before_edit_pct: null, keys_partial: 0, median_noise: 1, untriggered: ['k/check'] });
