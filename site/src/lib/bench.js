@@ -1,6 +1,5 @@
-// Benchmark summaries (docs/benchmarks/data/*.summary.json, schema 1) as tables.
-// The landing shows the change of each condition against the base; the Benchmarks
-// page shows the values, their 95% intervals and the changes.
+// Benchmark summaries (docs/benchmarks/data/*.summary.json, schema 1) as the landing's table:
+// the change of each condition against the base, over the average of the featured trials.
 const UNITS = new Set(['pct', 'tokens', 'usd']);
 const BETTER = new Set(['higher', 'lower']);
 
@@ -33,24 +32,42 @@ export function validateSummary(summary, name) {
   return summary;
 }
 
-export function tableFor(summary, { detail = false } = {}) {
+export function tableFor(summary) {
   const columns = summary.conditions.map(c => ({ ...c, base: c.id === summary.base }));
   const rows = summary.metrics.map(metric => {
     const base = metric.values[summary.base];
-    const cells = columns.map(column => {
-      const value = metric.values[column.id];
-      const change = column.base ? null : formatChange(value, base, metric.unit, metric.better);
-      if (!detail) return column.base ? { text: 'Base', value: formatValue(value, metric.unit), better: null } : change;
-      const ci = metric.ci95?.[column.id];
-      return { text: formatValue(value, metric.unit), ci: ci ? `${Math.round(ci[0])}–${Math.round(ci[1])}` : null,
-        change: change?.text ?? null, better: change?.better ?? null };
-    });
+    const cells = columns.map(column => (column.base
+      ? { text: 'Base', value: formatValue(base, metric.unit), better: null }
+      : formatChange(metric.values[column.id], base, metric.unit, metric.better)));
     return { id: metric.id, label: metric.label, cells };
   });
   return { columns, rows };
 }
 
-export function pickFeatured(summaries, id) {
-  if (!summaries.length) throw new Error('no benchmark summary in docs/benchmarks/data');
-  return summaries.find(s => s.id === id) ?? [...summaries].sort((a, b) => b.date.localeCompare(a.date))[0];
+// One summary from several trials of the same tasks: each value is the mean over the trials of the
+// mean over the conditions merged into it, every trial and every merged condition weighing the same.
+// Intervals do not average, so the result has none.
+export function averageSummaries(summaries, { title, note, trials, merge = {} }) {
+  const picked = trials.map(id => summaries.find(s => s.id === id) ?? fail(`no benchmark summary ${id}`));
+  const [first] = picked;
+  for (const other of picked.slice(1)) {
+    if (other.tasks !== first.tasks) fail(`${other.id}: ${other.tasks} tasks, ${first.id} has ${first.tasks}`);
+    if (other.runs_per_condition !== first.runs_per_condition) fail(`${other.id}: ${other.runs_per_condition} runs per condition, ${first.id} has ${first.runs_per_condition}`);
+  }
+  const into = Object.fromEntries(Object.entries(merge).flatMap(([id, { of }]) => of.map(member => [member, id])));
+  const conditions = [];
+  for (const condition of first.conditions) {
+    const id = into[condition.id] ?? condition.id;
+    if (!conditions.some(c => c.id === id)) conditions.push({ id, label: merge[id]?.label ?? condition.label });
+  }
+  const mean = list => list.reduce((a, b) => a + b, 0) / list.length;
+  const metrics = first.metrics.map(({ ci95, values, ...metric }) => ({ ...metric,
+    values: Object.fromEntries(conditions.map(({ id }) => [id, Number(mean(picked.map(trial => {
+      const found = trial.metrics.find(m => m.id === metric.id) ?? fail(`${trial.id} has no metric ${metric.id}`);
+      return mean((merge[id]?.of ?? [id]).map(member => found.values[member]));
+    })).toFixed(4))])) }));
+  return { schema: 1, id: trials.join('+'), date: picked.map(s => s.date).sort().at(-1), title, note, models: picked.map(s => s.model),
+    tasks: first.tasks, runs_per_condition: first.runs_per_condition, report: first.report, base: first.base, conditions, metrics };
 }
+
+function fail(message) { throw new Error(message); }

@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import { unified } from '@astrojs/markdown-remark';
 import { fileURLToPath } from 'node:url';
-import { SITE } from './src/config.js';
+import { OFF_SITE, SITE } from './src/config.js';
 import { remarkDocLinks } from './src/lib/links.js';
 import { remarkCallouts } from './src/lib/callouts.js';
 import { sitemapUrl } from './src/lib/routes.js';
@@ -20,9 +20,10 @@ export default defineConfig({
   base: SITE.base,
   // about.astro -> about.html, about/index.astro -> about/index.html: the URLs Jekyll published.
   build: { format: 'preserve' },
-  integrations: [sitemap({ serialize: item => ({ ...item, url: sitemapUrl(item.url, { base: SITE.base, sections }) }) })],
+  // Redirects from URLs the site no longer serves stay out of the sitemap.
+  integrations: [sitemap({ filter: page => !OFF_SITE.some(folder => new URL(page).pathname.slice(SITE.base.length).split('/')[0] === folder), serialize: item => ({ ...item, url: sitemapUrl(item.url, { base: SITE.base, sections }) }) })],
   markdown: {
-    processor: unified({ remarkPlugins: [remarkDocLinks({ docsRoot, repoRoot, base: SITE.base }), remarkCallouts] }),
+    processor: unified({ remarkPlugins: [remarkDocLinks({ docsRoot, repoRoot, base: SITE.base, offSite: OFF_SITE }), remarkCallouts] }),
     shikiConfig: { theme: 'github-dark-default' },
   },
   vite: { server: { fs: { allow: [repoRoot] } } },
