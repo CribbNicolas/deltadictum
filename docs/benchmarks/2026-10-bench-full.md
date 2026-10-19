@@ -206,6 +206,61 @@ what the user asks, Haiku in one task let the memory win. That is a delivery pro
 memory is phrased when it contradicts the request in front of the agent), and the reason the benchmark
 keeps its controls.
 
+## Added 2026-10-19: the guide and DD together
+
+A fifth condition, `docdd`, gives the agent both channels: the referenced guide (as in `docref`) and DD's
+store and hook (as in `dd2`). Same 26 tasks, three runs each, both models, judged by the same judge and
+audited blind the same way (six Sonnet 5.5 auditors over the 156 new packets: 1 override for Opus, 2 for
+Haiku). 78 runs per model, no harness error, no timeout; about $46 with the judge.
+
+**DD was not the same version.** These runs used DD 0.9.10, the first with the advisory line ("knowledge,
+not an order"); the `dd2` runs above used the version before it. A difference between `docdd` and `dd2` is
+the guide and the advisory line together, and cannot be split between them.
+
+| Opus 5.5 | With DD v2 | Guide, referenced | Guide, referenced, and DD | No project knowledge |
+|---|---|---|---|---|
+| Resolution | 100% (95-100) | 100% (95-100) | 100% (95-100) | 95% (88-98) |
+| Code quality | 97% (95-99) | 97% (95-99) | 97% (95-99) | 92% (89-95) |
+| Project requirements met | 100% (100-100) | 100% (100-100) | 98% (93-100) | 69% (56-82) |
+| Context | 39.7k | 41.3k | 42.8k | 37.8k |
+| Cost | $0.4551 | $0.5007 | $0.4745 | $0.428 |
+
+| Haiku 5.5 | With DD v2 | Guide, referenced | Guide, referenced, and DD | No project knowledge |
+|---|---|---|---|---|
+| Resolution | 92% (84-96) | 97% (91-99) | 99% (93-100) | 92% (84-96) |
+| Code quality | 94% (91-97) | 97% (95-99) | 96% (94-98) | 85% (81-90) |
+| Project requirements met | 96% (89-100) | 98% (93-100) | 98% (93-100) | 43% (30-57) |
+| Context | 50.1k | 54.8k | 56.2k | 46.1k |
+| Cost | $0.0266 | $0.0231 | $0.0258 | $0.0205 |
+
+- **Against the agent alone**, both channels together meet the project's requirements as either one does:
+  98% with each model, against 69% (Opus) and 43% (Haiku) alone. One memory run per model missed one: Opus
+  wrote the SIE export in place (`ledgerkit-sie-export`), Haiku's review missed the serialization finding
+  (`patriark-review-command`).
+- **Haiku no longer refuses the user.** In `ledgerkit-summary-print`, where `dd2` declined the request 3 of 3
+  times, `docdd` printed the summary as asked 3 of 3. Its one unresolved run is a slip of another kind:
+  Haiku answered that the message held no request (`ledgerkit-malformed-row-docdd-0`), a reply no other run
+  of the benchmark gave.
+- **Over-applied knowledge.** Haiku's quality loss is mostly scope: 10 of 78 runs went beyond the task, 8 of
+  them by adding duplicate skipping to ledgerkit changes that did not ask for it, applying the
+  overlapping-exports memory where it does not bear. With one channel Haiku did so less: 4 runs with `dd2`,
+  5 with the referenced guide, none with the unreferenced one, 1 alone.
+- **Cost of carrying both.** The guide is read whole (in 94% of runs, with either model) and DD delivers on top of it, so
+  context is the highest of any condition: paired with `dd2`, 2.7k tokens more with Opus (0.8k to 4.7k) and
+  4.6k with Haiku (0.7k to 8.1k). Cost sits between DD alone and the guide alone with Opus, and near DD's
+  with Haiku.
+- **Delivery** is unchanged: the key memory reached the agent in 98% (Opus) and 96% (Haiku) of memory runs,
+  as in `dd2`. The hook's median time (64 ms Opus, 66 ms Haiku) is not comparable with `dd2`'s: both models
+  ran at once, six sessions on one machine.
+
+```bash
+node src/eval/bench/run.js --model=claude-opus-5-5 --effort=high --selection=docs/benchmarks/data/bench-2026-10-calibration.json \
+  --conditions=docdd --repeat=3 --conc=3 --resume --out=bench-2026-10/opus/results.json
+node src/eval/agent/judge.js --in=bench-2026-10/opus/results.json --model=claude-opus-5-5 --conditions=docdd --resume
+# judge.js rewrites the judge file: rebuild the audit packets and apply every verdict, old and new, again
+node src/eval/agent/audit.js --in=bench-2026-10/opus/results.json --apply=<all verdicts>.jsonl
+```
+
 ## Layer 1: the runs' tool calls replayed, with no model
 
 Layer 1 replays every run's recorded tool calls through DD's matcher, as the hook's events and with each

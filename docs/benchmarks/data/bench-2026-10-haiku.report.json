@@ -5,7 +5,8 @@
     "dd2",
     "docref",
     "doc",
-    "none"
+    "none",
+    "docdd"
   ],
   "by_kind": {
     "memory": {
@@ -169,6 +170,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 45,
+          "resolution_pct": 98,
+          "resolution_ci95": [
+            88,
+            100
+          ],
+          "quality_pct": 95,
+          "quality_ci95": [
+            92,
+            98
+          ],
+          "specific_quality_pct": 98,
+          "specific_quality_ci95": [
+            93,
+            100
+          ],
+          "median_peak_context_tokens": 71629,
+          "median_minutes": 2.36,
+          "mean_cost_usd": 0.0336,
+          "total_cost_usd": 1.51,
+          "median_tool_calls": 28,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 96,
+          "key_at": {
+            "before_edit": 38,
+            "at_edit": 2,
+            "after_edit": 1,
+            "no_edit": 2
+          },
+          "applied_pct": 98,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 814,
+          "median_hook_ms": 66,
+          "median_node_ms": 54
         }
       },
       "above_best_pct": {
@@ -176,19 +217,22 @@
           "dd2": 23,
           "docref": 22,
           "doc": 20,
-          "none": 0
+          "none": 0,
+          "docdd": 35
         },
         "time": {
           "dd2": 54,
           "docref": 26,
           "doc": 23,
-          "none": 0
+          "none": 0,
+          "docdd": 52
         },
         "cost": {
           "dd2": 33,
           "docref": 6,
           "doc": 17,
-          "none": 0
+          "none": 0,
+          "docdd": 22
         }
       }
     },
@@ -353,6 +397,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 33,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            90,
+            100
+          ],
+          "quality_pct": 97,
+          "quality_ci95": [
+            95,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 47019,
+          "median_minutes": 1.31,
+          "mean_cost_usd": 0.0152,
+          "total_cost_usd": 0.5,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 85,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 377,
+          "median_hook_ms": 63,
+          "median_node_ms": 52
         }
       },
       "above_best_pct": {
@@ -360,19 +444,22 @@
           "dd2": 18,
           "docref": 17,
           "doc": 5,
-          "none": 0
+          "none": 0,
+          "docdd": 24
         },
         "time": {
           "dd2": 49,
           "docref": 43,
           "doc": 38,
-          "none": 0
+          "none": 0,
+          "docdd": 60
         },
         "cost": {
           "dd2": 18,
           "docref": 36,
           "doc": 9,
-          "none": 0
+          "none": 0,
+          "docdd": 39
         }
       }
     },
@@ -537,6 +624,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 78,
+          "resolution_pct": 99,
+          "resolution_ci95": [
+            93,
+            100
+          ],
+          "quality_pct": 96,
+          "quality_ci95": [
+            94,
+            98
+          ],
+          "specific_quality_pct": 98,
+          "specific_quality_ci95": [
+            94,
+            100
+          ],
+          "median_peak_context_tokens": 56190,
+          "median_minutes": 1.59,
+          "mean_cost_usd": 0.0258,
+          "total_cost_usd": 2.01,
+          "median_tool_calls": 19,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 94,
+          "keys_delivered_pct": 96,
+          "key_at": {
+            "before_edit": 44,
+            "at_edit": 2,
+            "after_edit": 1,
+            "no_edit": 2
+          },
+          "applied_pct": 98,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 630,
+          "median_hook_ms": 63,
+          "median_node_ms": 52
         }
       },
       "above_best_pct": {
@@ -544,19 +671,22 @@
           "dd2": 9,
           "docref": 19,
           "doc": 14,
-          "none": 0
+          "none": 0,
+          "docdd": 22
         },
         "time": {
           "dd2": 19,
           "docref": 18,
           "doc": 12,
-          "none": 0
+          "none": 0,
+          "docdd": 23
         },
         "cost": {
           "dd2": 30,
           "docref": 13,
           "doc": 16,
-          "none": 0
+          "none": 0,
+          "docdd": 26
         }
       }
     }
@@ -723,6 +853,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 33,
+          "resolution_pct": 97,
+          "resolution_ci95": [
+            85,
+            99
+          ],
+          "quality_pct": 92,
+          "quality_ci95": [
+            88,
+            96
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 58871,
+          "median_minutes": 1.64,
+          "mean_cost_usd": 0.0287,
+          "total_cost_usd": 0.95,
+          "median_tool_calls": 22,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 96,
+          "key_at": {
+            "before_edit": 23,
+            "at_edit": 1,
+            "after_edit": 1,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 638,
+          "median_hook_ms": 66,
+          "median_node_ms": 54
         }
       },
       "above_best_pct": {
@@ -730,19 +900,22 @@
           "dd2": 11,
           "docref": 7,
           "doc": 15,
-          "none": 0
+          "none": 0,
+          "docdd": 29
         },
         "time": {
           "dd2": 14,
           "docref": 5,
           "doc": 14,
-          "none": 0
+          "none": 0,
+          "docdd": 39
         },
         "cost": {
           "dd2": 27,
           "docref": 27,
           "doc": 19,
-          "none": 0
+          "none": 0,
+          "docdd": 54
         }
       }
     },
@@ -907,6 +1080,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 9,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            70,
+            100
+          ],
+          "quality_pct": 94,
+          "quality_ci95": [
+            85,
+            100
+          ],
+          "specific_quality_pct": 67,
+          "specific_quality_ci95": [
+            1,
+            100
+          ],
+          "median_peak_context_tokens": 75529,
+          "median_minutes": 1.63,
+          "mean_cost_usd": 0.0334,
+          "total_cost_usd": 0.3,
+          "median_tool_calls": 19,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 67,
+          "key_at": {
+            "before_edit": 1,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 50,
+          "withheld_ok_pct": null,
+          "median_noise": 13,
+          "median_injected_tokens": 3998,
+          "median_hook_ms": 63,
+          "median_node_ms": 51
         }
       },
       "above_best_pct": {
@@ -914,19 +1127,22 @@
           "dd2": 16,
           "docref": 24,
           "doc": 0,
-          "none": 6
+          "none": 6,
+          "docdd": 29
         },
         "time": {
           "dd2": 19,
           "docref": 7,
           "doc": 6,
-          "none": 0
+          "none": 0,
+          "docdd": 26
         },
         "cost": {
           "dd2": 32,
           "docref": 63,
           "doc": 7,
-          "none": 0
+          "none": 0,
+          "docdd": 63
         }
       }
     },
@@ -1091,6 +1307,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 15,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            80,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 50553,
+          "median_minutes": 2.65,
+          "mean_cost_usd": 0.0235,
+          "total_cost_usd": 0.35,
+          "median_tool_calls": 22,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 67,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 534,
+          "median_hook_ms": 60,
+          "median_node_ms": 51
         }
       },
       "above_best_pct": {
@@ -1098,19 +1354,22 @@
           "dd2": 1,
           "docref": 15,
           "doc": 6,
-          "none": 0
+          "none": 0,
+          "docdd": 6
         },
         "time": {
           "dd2": 17,
           "docref": 13,
           "doc": 8,
-          "none": 0
+          "none": 0,
+          "docdd": 61
         },
         "cost": {
           "dd2": 97,
           "docref": 0,
           "doc": 63,
-          "none": 58
+          "none": 58,
+          "docdd": 8
         }
       }
     },
@@ -1275,6 +1534,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 21,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            85,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 53249,
+          "median_minutes": 1.34,
+          "mean_cost_usd": 0.0196,
+          "total_cost_usd": 0.41,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 14,
+            "at_edit": 1,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 361,
+          "median_hook_ms": 63,
+          "median_node_ms": 52
         }
       },
       "above_best_pct": {
@@ -1282,19 +1581,22 @@
           "dd2": 29,
           "docref": 41,
           "doc": 51,
-          "none": 0
+          "none": 0,
+          "docdd": 40
         },
         "time": {
           "dd2": 39,
           "docref": 32,
           "doc": 44,
-          "none": 0
+          "none": 0,
+          "docdd": 25
         },
         "cost": {
           "dd2": 43,
           "docref": 38,
           "doc": 36,
-          "none": 0
+          "none": 0,
+          "docdd": 44
         }
       }
     }
@@ -1461,6 +1763,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 57397,
+          "median_minutes": 1.53,
+          "mean_cost_usd": 0.0238,
+          "total_cost_usd": 0.07,
+          "median_tool_calls": 26,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 604,
+          "median_hook_ms": 66,
+          "median_node_ms": 54
         }
       },
       "above_best_pct": {
@@ -1468,19 +1810,22 @@
           "dd2": 13,
           "docref": 8,
           "doc": 8,
-          "none": 0
+          "none": 0,
+          "docdd": 28
         },
         "time": {
           "dd2": 31,
           "docref": 0,
           "doc": 14,
-          "none": 7
+          "none": 7,
+          "docdd": 55
         },
         "cost": {
           "dd2": 15,
           "docref": 0,
           "doc": 11,
-          "none": 3
+          "none": 3,
+          "docdd": 37
         }
       }
     },
@@ -1645,6 +1990,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 92,
+          "quality_ci95": [
+            81,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 49798,
+          "median_minutes": 1.27,
+          "mean_cost_usd": 0.0201,
+          "total_cost_usd": 0.12,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 565,
+          "median_hook_ms": 59,
+          "median_node_ms": 51
         }
       },
       "above_best_pct": {
@@ -1652,19 +2037,22 @@
           "dd2": 31,
           "docref": 29,
           "doc": 1,
-          "none": 0
+          "none": 0,
+          "docdd": 42
         },
         "time": {
           "dd2": 91,
           "docref": 55,
           "doc": 6,
-          "none": 0
+          "none": 0,
+          "docdd": 98
         },
         "cost": {
           "dd2": 72,
           "docref": 75,
           "doc": 20,
-          "none": 0
+          "none": 0,
+          "docdd": 84
         }
       }
     },
@@ -1817,6 +2205,43 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 27,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            88,
+            100
+          ],
+          "quality_pct": 99,
+          "quality_ci95": [
+            96,
+            100
+          ],
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 46481,
+          "median_minutes": 1.31,
+          "mean_cost_usd": 0.0141,
+          "total_cost_usd": 0.38,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 81,
+          "keys_delivered_pct": null,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": null,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 368,
+          "median_hook_ms": 63,
+          "median_node_ms": 52
         }
       },
       "above_best_pct": {
@@ -1824,19 +2249,22 @@
           "dd2": 10,
           "docref": 12,
           "doc": 4,
-          "none": 0
+          "none": 0,
+          "docdd": 18
         },
         "time": {
           "dd2": 7,
           "docref": 9,
           "doc": 8,
-          "none": 0
+          "none": 0,
+          "docdd": 20
         },
         "cost": {
           "dd2": 6,
           "docref": 27,
           "doc": 7,
-          "none": 0
+          "none": 0,
+          "docdd": 29
         }
       }
     },
@@ -2001,6 +2429,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 57183,
+          "median_minutes": 1.57,
+          "mean_cost_usd": 0.0343,
+          "total_cost_usd": 0.21,
+          "median_tool_calls": 14,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 5,
+            "at_edit": 1,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 977,
+          "median_hook_ms": 69,
+          "median_node_ms": 57
         }
       },
       "above_best_pct": {
@@ -2008,19 +2476,22 @@
           "dd2": 0,
           "docref": 5,
           "doc": 8,
-          "none": 14
+          "none": 14,
+          "docdd": 4
         },
         "time": {
           "dd2": 18,
           "docref": 1,
-          "doc": 0,
-          "none": 8
+          "doc": 1,
+          "none": 9,
+          "docdd": 0
         },
         "cost": {
           "dd2": 0,
           "docref": 15,
           "doc": 5,
-          "none": 8
+          "none": 8,
+          "docdd": 21
         }
       }
     },
@@ -2185,6 +2656,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 88,
+          "quality_ci95": [
+            77,
+            98
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 67086,
+          "median_minutes": 2.4,
+          "mean_cost_usd": 0.0423,
+          "total_cost_usd": 0.25,
+          "median_tool_calls": 28,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 0,
+          "median_injected_tokens": 192,
+          "median_hook_ms": 62,
+          "median_node_ms": 49
         }
       },
       "above_best_pct": {
@@ -2192,19 +2703,22 @@
           "dd2": 32,
           "docref": 36,
           "doc": 34,
-          "none": 0
+          "none": 0,
+          "docdd": 39
         },
         "time": {
           "dd2": 47,
           "docref": 44,
           "doc": 51,
-          "none": 0
+          "none": 0,
+          "docdd": 71
         },
         "cost": {
           "dd2": 40,
           "docref": 38,
           "doc": 41,
-          "none": 0
+          "none": 0,
+          "docdd": 89
         }
       }
     },
@@ -2369,6 +2883,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 53008,
+          "median_minutes": 1.66,
+          "mean_cost_usd": 0.0271,
+          "total_cost_usd": 0.16,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 361,
+          "median_hook_ms": 63,
+          "median_node_ms": 55
         }
       },
       "above_best_pct": {
@@ -2376,19 +2930,22 @@
           "dd2": 64,
           "docref": 41,
           "doc": 54,
-          "none": 0
+          "none": 0,
+          "docdd": 38
         },
         "time": {
           "dd2": 120,
           "docref": 48,
           "doc": 44,
-          "none": 0
+          "none": 0,
+          "docdd": 30
         },
         "cost": {
           "dd2": 24,
           "docref": 0,
           "doc": 16,
-          "none": 13
+          "none": 13,
+          "docdd": 11
         }
       }
     },
@@ -2553,6 +3110,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 96,
+          "quality_ci95": [
+            88,
+            100
+          ],
+          "specific_quality_pct": 83,
+          "specific_quality_ci95": [
+            51,
+            100
+          ],
+          "median_peak_context_tokens": 60136,
+          "median_minutes": 1.97,
+          "mean_cost_usd": 0.0412,
+          "total_cost_usd": 0.25,
+          "median_tool_calls": 27,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 83,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 2
+          },
+          "applied_pct": 80,
+          "withheld_ok_pct": null,
+          "median_noise": 6,
+          "median_injected_tokens": 1351,
+          "median_hook_ms": 63,
+          "median_node_ms": 51
         }
       },
       "above_best_pct": {
@@ -2560,19 +3157,22 @@
           "dd2": 18,
           "docref": 0,
           "doc": 9,
-          "none": 16
+          "none": 16,
+          "docdd": 25
         },
         "time": {
           "dd2": 30,
           "docref": 9,
           "doc": 0,
-          "none": 27
+          "none": 27,
+          "docdd": 42
         },
         "cost": {
           "dd2": 23,
           "docref": 37,
           "doc": 1,
-          "none": 0
+          "none": 0,
+          "docdd": 48
         }
       }
     },
@@ -2737,6 +3337,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 77367,
+          "median_minutes": 2.93,
+          "mean_cost_usd": 0.0439,
+          "total_cost_usd": 0.13,
+          "median_tool_calls": 33,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 5,
+          "median_injected_tokens": 974,
+          "median_hook_ms": 70,
+          "median_node_ms": 54
         }
       },
       "above_best_pct": {
@@ -2744,19 +3384,22 @@
           "dd2": 16,
           "docref": 25,
           "doc": 22,
-          "none": 0
+          "none": 0,
+          "docdd": 35
         },
         "time": {
           "dd2": 36,
           "docref": 46,
           "doc": 41,
-          "none": 0
+          "none": 0,
+          "docdd": 63
         },
         "cost": {
           "dd2": 43,
           "docref": 47,
           "doc": 47,
-          "none": 0
+          "none": 0,
+          "docdd": 74
         }
       }
     },
@@ -2921,6 +3564,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 71629,
+          "median_minutes": 2.68,
+          "mean_cost_usd": 0.0292,
+          "total_cost_usd": 0.17,
+          "median_tool_calls": 31,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 455,
+          "median_hook_ms": 58,
+          "median_node_ms": 48
         }
       },
       "above_best_pct": {
@@ -2928,19 +3611,22 @@
           "dd2": 61,
           "docref": 9,
           "doc": 38,
-          "none": 0
+          "none": 0,
+          "docdd": 55
         },
         "time": {
           "dd2": 179,
           "docref": 0,
           "doc": 72,
-          "none": 29
+          "none": 29,
+          "docdd": 137
         },
         "cost": {
           "dd2": 230,
           "docref": 0,
           "doc": 154,
-          "none": 110
+          "none": 110,
+          "docdd": 21
         }
       }
     },
@@ -3105,6 +3791,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 74674,
+          "median_minutes": 2.25,
+          "mean_cost_usd": 0.0335,
+          "total_cost_usd": 0.1,
+          "median_tool_calls": 37,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 716,
+          "median_hook_ms": 74,
+          "median_node_ms": 50
         }
       },
       "above_best_pct": {
@@ -3112,19 +3838,22 @@
           "dd2": 20,
           "docref": 11,
           "doc": 9,
-          "none": 0
+          "none": 0,
+          "docdd": 26
         },
         "time": {
           "dd2": 45,
           "docref": 0,
           "doc": 2,
-          "none": 13
+          "none": 13,
+          "docdd": 36
         },
         "cost": {
           "dd2": 50,
           "docref": 24,
           "doc": 24,
-          "none": 0
+          "none": 0,
+          "docdd": 54
         }
       }
     },
@@ -3289,6 +4018,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 75,
+          "quality_ci95": [
+            75,
+            75
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 77446,
+          "median_minutes": 2.63,
+          "mean_cost_usd": 0.0386,
+          "total_cost_usd": 0.12,
+          "median_tool_calls": 29,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 6,
+          "median_injected_tokens": 956,
+          "median_hook_ms": 76,
+          "median_node_ms": 66
         }
       },
       "above_best_pct": {
@@ -3296,19 +4065,22 @@
           "dd2": 49,
           "docref": 47,
           "doc": 35,
-          "none": 0
+          "none": 0,
+          "docdd": 58
         },
         "time": {
           "dd2": 105,
           "docref": 116,
           "doc": 50,
-          "none": 0
+          "none": 0,
+          "docdd": 107
         },
         "cost": {
           "dd2": 96,
           "docref": 121,
           "doc": 51,
-          "none": 0
+          "none": 0,
+          "docdd": 99
         }
       }
     },
@@ -3473,6 +4245,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 67,
+          "resolution_ci95": [
+            21,
+            94
+          ],
+          "quality_pct": 80,
+          "quality_ci95": [
+            80,
+            80
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 56190,
+          "median_minutes": 1.53,
+          "mean_cost_usd": 0.0165,
+          "total_cost_usd": 0.05,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 67,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 1,
+            "after_edit": 1,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 638,
+          "median_hook_ms": 66,
+          "median_node_ms": 60
         }
       },
       "above_best_pct": {
@@ -3480,19 +4292,22 @@
           "dd2": 16,
           "docref": 13,
           "doc": 22,
-          "none": 0
+          "none": 0,
+          "docdd": 47
         },
         "time": {
           "dd2": 72,
           "docref": 3,
           "doc": 12,
-          "none": 0
+          "none": 0,
+          "docdd": 135
         },
         "cost": {
           "dd2": 54,
           "docref": 23,
           "doc": 25,
-          "none": 0
+          "none": 0,
+          "docdd": 59
         }
       }
     }
@@ -3659,6 +4474,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 18,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            82,
+            100
+          ],
+          "quality_pct": 97,
+          "quality_ci95": [
+            92,
+            100
+          ],
+          "specific_quality_pct": 67,
+          "specific_quality_ci95": [
+            1,
+            100
+          ],
+          "median_peak_context_tokens": 53054,
+          "median_minutes": 1.59,
+          "mean_cost_usd": 0.0243,
+          "total_cost_usd": 0.44,
+          "median_tool_calls": 19,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 72,
+          "keys_delivered_pct": 67,
+          "key_at": {
+            "before_edit": 1,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 50,
+          "withheld_ok_pct": null,
+          "median_noise": 5,
+          "median_injected_tokens": 997,
+          "median_hook_ms": 63,
+          "median_node_ms": 51
         }
       },
       "above_best_pct": {
@@ -3666,19 +4521,22 @@
           "dd2": 0,
           "docref": 18,
           "doc": 1,
-          "none": 0
+          "none": 0,
+          "docdd": 13
         },
         "time": {
           "dd2": 5,
           "docref": 16,
           "doc": 0,
-          "none": 1
+          "none": 1,
+          "docdd": 16
         },
         "cost": {
           "dd2": 20,
           "docref": 42,
           "doc": 5,
-          "none": 0
+          "none": 0,
+          "docdd": 40
         }
       }
     },
@@ -3843,6 +4701,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 54,
+          "resolution_pct": 98,
+          "resolution_ci95": [
+            90,
+            100
+          ],
+          "quality_pct": 95,
+          "quality_ci95": [
+            93,
+            98
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 54971,
+          "median_minutes": 1.53,
+          "mean_cost_usd": 0.0252,
+          "total_cost_usd": 1.36,
+          "median_tool_calls": 17,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 98,
+          "key_at": {
+            "before_edit": 37,
+            "at_edit": 2,
+            "after_edit": 1,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 610,
+          "median_hook_ms": 65,
+          "median_node_ms": 53
         }
       },
       "above_best_pct": {
@@ -3850,19 +4748,22 @@
           "dd2": 13,
           "docref": 12,
           "doc": 21,
-          "none": 0
+          "none": 0,
+          "docdd": 26
         },
         "time": {
           "dd2": 25,
           "docref": 16,
           "doc": 30,
-          "none": 0
+          "none": 0,
+          "docdd": 43
         },
         "cost": {
           "dd2": 33,
           "docref": 31,
           "doc": 25,
-          "none": 0
+          "none": 0,
+          "docdd": 52
         }
       }
     },
@@ -4027,6 +4928,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 74787,
+          "median_minutes": 4.17,
+          "mean_cost_usd": 0.0358,
+          "total_cost_usd": 0.21,
+          "median_tool_calls": 32,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 572,
+          "median_hook_ms": 60,
+          "median_node_ms": 51
         }
       },
       "above_best_pct": {
@@ -4034,19 +4975,22 @@
           "dd2": 7,
           "docref": 0,
           "doc": 23,
-          "none": 4
+          "none": 4,
+          "docdd": 7
         },
         "time": {
           "dd2": 68,
           "docref": 0,
           "doc": 54,
-          "none": 29
+          "none": 29,
+          "docdd": 54
         },
         "cost": {
           "dd2": 181,
           "docref": 0,
           "doc": 120,
-          "none": 113
+          "none": 113,
+          "docdd": 19
         }
       }
     }
@@ -4072,6 +5016,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
       }
     },
     "ledgerkit-import-dir": {
@@ -4094,6 +5043,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 33
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-ledger-package": {
@@ -4116,6 +5070,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 33
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-malformed-row": {
@@ -4138,6 +5097,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 50
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 2,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-percent": {
@@ -4157,6 +5121,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4182,6 +5151,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-review-fix-entries": {
@@ -4201,6 +5175,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4226,6 +5205,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-summary-print": {
@@ -4245,6 +5229,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4270,6 +5259,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-vat-summary": {
@@ -4289,6 +5283,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4314,6 +5313,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
       }
     },
     "patriark-review-command": {
@@ -4336,6 +5340,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 67
       }
     },
     "patriark-short-hash": {
@@ -4355,6 +5364,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4380,6 +5394,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
       }
     },
     "supermem-recall-json": {
@@ -4399,6 +5418,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4424,6 +5448,11 @@
         "runs": 3,
         "resolved": 0,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "supermem-symbols-not-prompts": {
@@ -4446,6 +5475,11 @@
         "runs": 3,
         "resolved": 0,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "supermem-ui-kind-filter": {
@@ -4465,6 +5499,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4490,6 +5529,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-dedup-package": {
@@ -4512,6 +5556,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-healthz": {
@@ -4531,6 +5580,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4556,6 +5610,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-stdout-debug": {
@@ -4575,6 +5634,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4600,6 +5664,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 33
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-version-flag": {
@@ -4619,6 +5688,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4650,6 +5724,14 @@
           0.3,
           0.7222222222222222
         ]
+      },
+      "docdd": {
+        "n": 15,
+        "mean": -0.022222222222222223,
+        "ci95": [
+          -0.13333333333333333,
+          0.06666666666666667
+        ]
       }
     },
     "resolution": {
@@ -4675,6 +5757,14 @@
         "ci95": [
           -0.10256410256410257,
           0.11538461538461539
+        ]
+      },
+      "docdd": {
+        "n": 26,
+        "mean": -0.06410256410256411,
+        "ci95": [
+          -0.16666666666666669,
+          0.012820512820512822
         ]
       }
     },
@@ -4702,6 +5792,14 @@
           0.002766924999999999,
           0.010472837564102564
         ]
+      },
+      "docdd": {
+        "n": 26,
+        "mean": 0.0007964421794871801,
+        "ci95": [
+          -0.004849335256410256,
+          0.009472763076923081
+        ]
       }
     },
     "peak_context_tokens": {
@@ -4728,8 +5826,16 @@
           4152.435897435897,
           10256.038461538461
         ]
+      },
+      "docdd": {
+        "n": 26,
+        "mean": -4604.717948717949,
+        "ci95": [
+          -8114.666666666666,
+          -705.153846153845
+        ]
       }
     }
   },
-  "table": "| | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge |\n|---|---|---|---|---|\n| Resolution | 92% (84-96) | 97% (91-99) | 100% (95-100) | 92% (84-96) |\n| Code quality | 94% (91-97) | 97% (95-99) | 97% (95-99) | 85% (81-90) |\n| Project requirements met | 96% (89-100) | 98% (93-100) | 100% (100-100) | 43% (30-57) |\n| Context (0 = least) | +9% (50.1k) | +19% (54.8k) | +14% (52.6k) | +0% (46.1k) |\n| Time (0 = fastest) | +19% (1.54 min) | +18% (1.52 min) | +12% (1.44 min) | +0% (1.29 min) |\n| Cost (0 = cheapest) | +30% ($0.0266) | +13% ($0.0231) | +16% ($0.0237) | +0% ($0.0205) |"
+  "table": "| | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge | Guide, referenced, and DD v2 |\n|---|---|---|---|---|---|\n| Resolution | 92% (84-96) | 97% (91-99) | 100% (95-100) | 92% (84-96) | 99% (93-100) |\n| Code quality | 94% (91-97) | 97% (95-99) | 97% (95-99) | 85% (81-90) | 96% (94-98) |\n| Project requirements met | 96% (89-100) | 98% (93-100) | 100% (100-100) | 43% (30-57) | 98% (93-100) |\n| Context (0 = least) | +9% (50.1k) | +19% (54.8k) | +14% (52.6k) | +0% (46.1k) | +22% (56.2k) |\n| Time (0 = fastest) | +19% (1.54 min) | +18% (1.52 min) | +12% (1.44 min) | +0% (1.29 min) | +23% (1.59 min) |\n| Cost (0 = cheapest) | +30% ($0.0266) | +13% ($0.0231) | +16% ($0.0237) | +0% ($0.0205) | +26% ($0.0258) |"
 }

@@ -7243,11 +7243,1817 @@
         "notes": "Audit: agrees with the judge.",
         "overrides": []
       }
+    },
+    {
+      "run_id": "ledgerkit-malformed-row-docdd-0",
+      "task": "ledgerkit-malformed-row",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": false,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff is empty: the developer thought no task had been given, so no reporting of malformed rows was added and no test exercises it. With nothing changed, there are no unrelated edits and no convention violations.",
+      "cost_usd": 0.0322738,
+      "error": null,
+      "judge_requirements": {
+        "tested": false,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-find-entries-docdd-0",
+      "task": "ledgerkit-find-entries",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The four new tests would fail without `find`. They cover case-insensitive matching, Ø/ø and ß casefolding, ledger order and the no-match case, and the assertions check out (\"E\" does appear in all three descriptions). The diff touches only the new method and its tests, and the method matches the style of the neighbouring `get`; the bare `list` return annotation is a minor looseness, not a convention break.",
+      "cost_usd": 0.0426458,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-recategorize-docdd-0",
+      "task": "ledgerkit-recategorize",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Three new CLI tests cover success, the closed-period refusal and an unknown id, and all would fail without the new subcommand. The handler, parser entry and README usage line match the existing patterns (log.error with exit 1, set_defaults(run=...)) and add nothing unrelated.",
+      "cost_usd": 0.0336544,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-dedup-evict-docdd-0",
+      "task": "tollgate-dedup-evict",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new tests cover window-based eviction, steady-state size, and the soft limit that keeps younger ids and warns once; each would fail against the old unbounded map, and the main.go edit only wires the logger the warning needs. The change follows the 72-hour rule over the size bound, and its naming, doc comments and logx use match the surrounding code.",
+      "cost_usd": 0.0481184,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-import-dir-docdd-0",
+      "task": "ledgerkit-import-dir",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests cover folder ordering by latest booking date, skipping the one-day overlap, re-import idempotence, identical same-day rows, the all-or-nothing failure and the CLI argument group; each would fail without the change. The edits to `import_file`, `ids.entry_id` and the log keys follow from the duplicate-skipping rule, and the code matches the surrounding style.",
+      "cost_usd": 0.0720784,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-usd-import-docdd-0",
+      "task": "ledgerkit-usd-import",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The conversion at `Valutadato` and the new original fields are covered by tests that would fail without the change. The change is not scoped: it also adds duplicate skipping on re-import, an occurrence-based id scheme and a new three-value return and log field for `import_file`, none of which the task asked for.",
+      "cost_usd": 0.0656944,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-healthz-docdd-0",
+      "task": "tollgate-healthz",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff adds only the `/healthz` route in `newMux` and a test that would fail without it. The code follows Go idiom and the surrounding style; ignoring the errors from `io.WriteString` and `ReadFrom` is minor and common for this kind of code.",
+      "cost_usd": 0.0217824,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-replay-to-docdd-0",
+      "task": "tollgate-replay-to",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Five new tests in `main_test.go` cover the new `--to` path: the signed body reaching the target with the partner untouched, the missing-secret failure, a non-2xx response and bad usage. Each would fail without the change. The edits stay within the task (the new client file, flag wiring and a one-line README entry), and the code follows existing patterns, including the `relay.NewHTTPClient()` rule for idle connections.",
+      "cost_usd": 0.054270399999999996,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-version-flag-docdd-0",
+      "task": "tollgate-version-flag",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Two tests drive `run` with `--version` and check both the default and an overridden version, so they would fail without the change; the README line and usage string document the new flag and stay in scope. Printing to stdout departs from the guide's literal \"stdout carries only replay output\" wording, but it is flagged and justified because `--version` is a separate invocation and stderr is the `level=` log stream, and the rest matches the surrounding code's style.",
+      "cost_usd": 0.0314944,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied: the version line on stdout was explicitly requested.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-living-characters-docdd-0",
+      "task": "patriark-living-characters",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": false,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The test checks that dead characters are left out, but 'nerea' is added after 'mara', which is already id order, so the test would still pass if the `OrderBy` were removed. The report says the character was added 'out of id order', which is not the case. The diff stays in scope and matches the neighbouring `PlayerCharacter` style (expression body, `\"dead\"` check, ordinal comparer, English doc comment). The repository wasn't available locally, so I judged from the diff alone.",
+      "cost_usd": 0.03589440000000001,
+      "error": null,
+      "judge_requirements": {
+        "tested": false,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-symbols-not-prompts-docdd-0",
+      "task": "supermem-symbols-not-prompts",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test fails without the fix, because the prompt naming `retryFetch` used to match. The diff touches only the matcher and its test, and `SYMBOL_KINDS` mirrors the existing `KEYWORD_KINDS` pattern and comment style. A `src/engine/clause.cjs` copy, if one exists, was not updated; that would be a completeness issue rather than one of these three requirements.",
+      "cost_usd": 0.0321304,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-stdout-debug-docdd-0",
+      "task": "tollgate-stdout-debug",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests check one redacted line per attempt, nothing printed unless TOLLGATE_DEBUG is exactly 1, and non-object bodies withheld; they would fail without the change. Using fmt.Println to stdout breaks the logx/stderr rule, but the user explicitly asked for it and the developer flagged the conflict. The added redaction is a related safeguard that was disclosed, not an unrelated edit.",
+      "cost_usd": 0.0418104,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied: fmt.Println to stdout was explicitly requested, so it is not a conventions failure.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-run-is-not-edit-docdd-0",
+      "task": "supermem-run-is-not-edit",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new tests use a real git repo where the flagged file shows up in `git diff`, so the two regression tests fail against the old `gitChanged` code; a third test confirms a file changed by a command is still judged. The edit is limited to `turn.js`, its tests and a one-line clarification of the matching guide entry, and it follows the file's style: a terse explanatory comment, best-effort try/catch and English throughout.",
+      "cost_usd": 0.0509424,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-review-fix-entries-docdd-0",
+      "task": "ledgerkit-review-fix-entries",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The task was a review-only request ('Do not change any code'), and the diff is empty, so there is no new behaviour needing a test, no out-of-scope edit, and no code to break conventions. The report correctly ranks the closed-period violation first and probed on scratch copies outside the repo.",
+      "cost_usd": 0.0221224,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-short-hash-docdd-0",
+      "task": "patriark-short-hash",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new xUnit test checks `ShortHash` against the lower-cased prefix of `StateHash` and the `^[0-9a-f]{12}$` format, and it would fail without the method. The diff touches only that method and its test, and matches the surrounding expression-bodied static style; the single XML doc comment is a minor departure from the uncommented neighbours.",
+      "cost_usd": 0.0280984,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-sie-export-docdd-0",
+      "task": "ledgerkit-sie-export",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The change adds test_sie.py, CLI tests for success and refusal, and a storage test for the new encoding parameter, all of which would fail without the change. The storage.atomic_write encoding parameter and the README lines are needed for the SIE export, and the file is written through atomic_write with log and mask_iban handling in English, as the surrounding code does.",
+      "cost_usd": 0.0755744,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-vat-summary-docdd-0",
+      "task": "ledgerkit-vat-summary",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests cover the summary against the golden report, per-entry half-to-even rounding (6, not 8 or 9) with period filtering, and the exact CLI output; all would fail without the change. The helper extraction in report.py is the minimum needed for the report and summary to share per-line VAT, the README line documents the new command, and naming, docstrings and output style match the surrounding code.",
+      "cost_usd": 0.0502744,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-recall-json-docdd-0",
+      "task": "supermem-recall-json",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff adds `--json` in `src/maintenance/recall.js` and `src/cli.js`, with a module test for the field shape and the empty `[]` case, plus a CLI test; both would fail without the change. The edits are limited to the feature and match the file's existing style: options destructuring, an English spec-style comment and dense one-line returns.",
+      "cost_usd": 0.0346904,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-dedup-package-docdd-0",
+      "task": "tollgate-dedup-package",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new internal/dedup tests cover the 72-hour window, keeping young ids at the bound with a warning, and eviction, so they would fail without the new package; the README and engineering-guide pointer updates follow from the move. The old intake/dedup.go and dedup_test.go are still in the tree (the developer flagged it), which leaves the move unfinished but adds nothing outside the task.",
+      "cost_usd": 0.07357440000000001,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-review-command-docdd-0",
+      "task": "patriark-review-command",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The task was a review with no code changes, and the diff is empty, so there is no new behaviour to test, no out-of-scope edit and no convention to break. The report correctly flags the missing [JsonSerializable(typeof(RenameCharacter))] on GameJsonContext as the most serious problem, which matches the project guidance.",
+      "cost_usd": 0.0285904,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-summary-print-docdd-0",
+      "task": "ledgerkit-summary-print",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The one-line print in `_import` does what the user explicitly asked, and the updated test would fail without it. The departure from the stdout rule was requested and disclosed, and it doesn't affect the upload tool, which reads only `ledgerkit report` output.",
+      "cost_usd": 0.0251224,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied: print() to stdout was explicitly requested.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-ui-kind-filter-docdd-0",
+      "task": "supermem-ui-kind-filter",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new server test checks that kind=decision and kind=trap each return only their memories (the helper's default kind is trap), and that `bogus` and an empty kind return 400 with `unknown_kind`; it would fail without the change. The edits stay within the route, `listMemories` and that test, and follow the existing `queue` validation pattern with `KINDS` imported from `src/memory/schema.js`.",
+      "cost_usd": 0.043842400000000004,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-malformed-row-docdd-1",
+      "task": "ledgerkit-malformed-row",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The malformed-row warning goes to stderr with a masked account, and a test covers it that would fail without the change. The diff also adds unrequested duplicate-import handling and occurrence-based ids in `ids.py`, which is outside the task's scope.",
+      "cost_usd": 0.043030399999999996,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-store-attempts-docdd-0",
+      "task": "tollgate-store-attempts",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Relay, worker, store round-trip, v3 migration fixture and the `replay --list` wire output are all covered by tests that would fail without the change. The edits stay on task and follow the store procedure (FormatVersion bump, a migrate step, a fixture and its test); the leftover binaries are gitignored and not part of the diff.",
+      "cost_usd": 0.0700224,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-dedup-evict-docdd-1",
+      "task": "tollgate-dedup-evict",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests cover window eviction, re-seen ids, the bound keeping young ids with a single warning, and steady-state size; they would fail without the change. The main.go edit only wires the logger the warning needs. One risk: NewDedup leaves Log nil, so a caller that doesn't set it would panic at the bound unless logx tolerates a nil receiver.",
+      "cost_usd": 0.0534104,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-ledger-package-docdd-0",
+      "task": "ledgerkit-ledger-package",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The amend tests in test_cli.py (open and closed period, duplicate, unknown id, empty description) and the first_open and correction_id tests would fail without the change. Rewriting report.py to use the new query.in_period is a refactor the task did not ask for, and the superseded ledgerkit/ledger.py and tests/test_ledger.py are left in place, so two tests are duplicated.",
+      "cost_usd": 0.1113304,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-recategorize-docdd-1",
+      "task": "ledgerkit-recategorize",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New CLI tests cover the open-period in-place change, the closed-period reversal-plus-rebook corrections, repeat recategorization, the no-op case and an unknown id, and `first_open` and `correction_id` have unit tests. The `ids._hash` extraction, `periods.first_open` and the README usage line all directly serve the feature, and the code matches the surrounding style.",
+      "cost_usd": 0.0596584,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-review-fix-entries-docdd-1",
+      "task": "ledgerkit-review-fix-entries",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The task was a review with no code changes, and the diff is empty, so there is no new behaviour to test and no scope or convention violations. The scratch driver sits outside the repo. The report correctly ranks the closed-period violation first.",
+      "cost_usd": 0.0242824,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-living-characters-docdd-1",
+      "task": "patriark-living-characters",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff adds only the method and a new test file. The two tests would fail without the method, and they cover excluding the dead, ordinal ordering and the all-dead case. The method follows `PlayerCharacter`'s expression-bodied style, its \"dead\" check and its English doc comment, and uses ordinal ordering as the report says `GearRules.EnsureOutfits` does.",
+      "cost_usd": 0.025254400000000003,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-store-attempts-docdd-1",
+      "task": "tollgate-store-attempts",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The change follows the store procedure: it bumps FormatVersion to 4, adds a v3→v4 migration step and the v3.jsonl fixture with a migration test. Relay, store and --list tests assert attempt counts that would fail without the change. The edits stay on task and match surrounding idioms; the README line and the table-driven ErrFormat test go directly with the new field and the bump.",
+      "cost_usd": 0.0695104,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-dedup-package-docdd-1",
+      "task": "tollgate-dedup-package",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new tests in internal/dedup/dedup_test.go cover the 72-hour window, re-recording after expiry, evicting only expired ids, keeping young ids with a single warning, and staying under 100,000 ids at normal load; they would fail without the new package. The edits stay within the move and follow the house style; the old intake/dedup files are still there only because the developer's rm was refused, which leaves the move incomplete but adds nothing out of scope.",
+      "cost_usd": 0.0737624,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-ledger-package-docdd-1",
+      "task": "ledgerkit-ledger-package",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "`AmendTest` covers the open and closed paths, the repeat, unknown-id and empty-description cases, and `first_open` has its own tests; all would fail without the change. The diff adds the `scratch-e2e/` debugging leftovers (`ledger.jsonl`, `periods.json`) and rewrites the guide's \"Why\" rationale, neither of which the task needs.",
+      "cost_usd": 0.0963824,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-version-flag-docdd-1",
+      "task": "tollgate-version-flag",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test would fail without the `--version` case, and the README bullet is in-scope documentation. But writing to stdout breaks the repository's explicit, hook-enforced rule that stdout carries only replay output; the developer noted the flag and overrode it rather than using stderr.",
+      "cost_usd": 0.0320984,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": false
+      },
+      "audit": {
+        "notes": "Audit: overrode conventions false->true: the user explicitly asked for --version output and the judge's only conventions reason is writing to stdout. Owner ruling R1 applied.",
+        "overrides": [
+          {
+            "id": "conventions",
+            "judge": false,
+            "audit": true
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "ledgerkit-find-entries-docdd-1",
+      "task": "ledgerkit-find-entries",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "`test_find` exercises case-insensitive matching, ledger order and the no-match case, and it would fail without the method. The diff touches only the new method and its test. The Norwegian strings are merchant-name test data rather than prose, and the bare `list` return annotation is a minor style point next to `Optional[Entry]` in `get`.",
+      "cost_usd": 0.025998399999999998,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-stdout-debug-docdd-1",
+      "task": "tollgate-stdout-debug",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests capture stdout and would fail without the debug path, and the diff touches only the relay and its tests. Printing to stdout breaks the logx/stderr rule, but the user explicitly asked for stdout and the developer flagged it; the added redaction is a disclosed safety choice, not unrelated work.",
+      "cost_usd": 0.0487824,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-usd-import-docdd-1",
+      "task": "ledgerkit-usd-import",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The USD conversion at the value date is covered by a test that would fail without it, and the code follows the surrounding style. The change also adds overlap skipping, duplicate counting, occurrence-numbered ids and a new return shape for `import_file`, none of which the USD task asked for.",
+      "cost_usd": 0.0533424,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-review-command-docdd-1",
+      "task": "patriark-review-command",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "This was a review-only task and the diff is empty, as asked, so there was no new behaviour that needed a test and no unrelated edits. The leftover probe under the git-ignored tmp/ folder is disclosed and is not part of the change; the review itself is accurate and correctly flags the missing GameJsonContext registration as the most serious problem.",
+      "cost_usd": 0.0318344,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-short-hash-docdd-1",
+      "task": "patriark-short-hash",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The one-line expression-bodied instance method matches the neighbouring `StateHash` style, and the new xUnit test exercises it; the test would fail to compile without the method, and its assertions check length, case and prefix. No unrelated edits are present, and the test reuses existing fixtures (`MapSessionTests.MemoryStore`, `Root`) rather than adding new scaffolding.",
+      "cost_usd": 0.0249504,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-run-is-not-edit-docdd-1",
+      "task": "supermem-run-is-not-edit",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The regression test sets up a real repo with an unstaged change, so old `git diff` code would list the file and fail the first assertion; the fix is mtime-based against the previous Stop marker, per the guidance. The edits are confined to `turn.js` and its test, and they follow the existing compact style and English comments.",
+      "cost_usd": 0.0403464,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-import-dir-docdd-1",
+      "task": "ledgerkit-import-dir",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests cover the overlap skip, oldest-first ordering, all-or-nothing reads, the empty folder and argument exclusivity. The `occurrence` change to ids and the single-file duplicate skip are needed to apply the Nordbank overlap rule without dropping real repeat payments, and the code matches the existing docstring, logging and English conventions.",
+      "cost_usd": 0.0680224,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-percent-docdd-1",
+      "task": "ledgerkit-percent",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "`percent()` is covered by tests for accepted and rejected inputs that would fail without it, and the change touches only `money.py` and its tests. One risk: the tests use `Decimal` but the diff adds no import, so this relies on `tests/test_money.py` already importing it, consistent with the reported 34 passing tests.",
+      "cost_usd": 0.0286664,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-healthz-docdd-1",
+      "task": "tollgate-healthz",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "TestHealthzAnswersOK runs newMux in an httptest server and checks status 200 and body `ok`, so it would fail without the new route. The diff only touches the route and its test, and the method-qualified pattern and inline HandleFunc match idiomatic Go 1.22 and the surrounding code.",
+      "cost_usd": 0.0225304,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-summary-print-docdd-1",
+      "task": "ledgerkit-summary-print",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The new stdout summary line is asserted in the updated import test, which would fail without the change. The diff also adds duplicate skipping across overlapping exports and changes how `entry_id` builds ids (the occurrence argument), which goes well beyond printing a summary. The `print()` was explicitly requested and runs in `import`, not in `report` (the only output the upload tool reads), and the rest follows local style.",
+      "cost_usd": 0.0439064,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied to the print() on stdout (conventions true).",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-ui-kind-filter-docdd-1",
+      "task": "supermem-ui-kind-filter",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The kind filter and the `unknown_kind` refusal are added in the same way as the existing queue check, with view-level and server-level tests that would fail without the change. The diff touches only the two files and their tests, and it matches the surrounding naming, error handling and test style.",
+      "cost_usd": 0.0350424,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-replay-to-docdd-1",
+      "task": "tollgate-replay-to",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The two new tests drive `run` with `--to`; without the flag they exit 2, so both would fail. They check the body, the signature, that the partner is untouched, and the failure exit. `sendTo` reuses `relay.Relay` with `relay.NewHTTPClient()`, following the idle-connection rule, and the README line is a proportionate doc update.",
+      "cost_usd": 0.0443904,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-sie-export-docdd-1",
+      "task": "ledgerkit-sie-export",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new module and CLI command are covered by tests in test_sie.py, test_cli.py and test_storage.py that would fail without them; the `encoding` parameter added to `storage.atomic_write` is needed to write CP437 through the required atomic path, so it is in scope. The code matches the surrounding style: it writes through atomic_write, logs through log.mask_iban, keeps stdout empty, raises ValueError for refused entries, and is written in English.",
+      "cost_usd": 0.0789784,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-vat-summary-docdd-1",
+      "task": "ledgerkit-vat-summary",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "A new report test uses entries where rounding each line half to even gives -4 VAT while rounding the net once would not, and a CLI test pins the exact stdout. The `_line_vat` extraction and the README line serve the new feature, and the code follows report.py's naming, docstring and formatting style.",
+      "cost_usd": 0.049686400000000006,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-version-flag-docdd-2",
+      "task": "tollgate-version-flag",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The test drives `run` with `--version` and checks both the `dev` default and an overridden value, so it would fail without the change. The usage string and one-line README entry are natural parts of adding a flag, and printing to stdout fits the stated reason for keeping stdout to `replay` output, since a standalone `--version` call does not touch log lines or the `replay --list` pipe.",
+      "cost_usd": 0.0264584,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-keyword-ies-plural-docdd-1",
+      "task": "supermem-keyword-ies-plural",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test exercises memory/memories, query/queries and policy/policies in both directions, plus the key/keies and memorie exclusions, and would fail without `iesPlural`. The diff touches only `sameWord` and one test, using the file's existing arrow-function and English comment style.",
+      "cost_usd": 0.0267304,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-dedup-package-docdd-2",
+      "task": "tollgate-dedup-package",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new `internal/dedup` tests cover the 72-hour window, keeping young ids with a warning, and the bounded size under normal load, and they would fail without the new package. The diff touches only what the move needs and follows the repo's comment, logging and naming style, but the move is not finished: the old `internal/intake/dedup.go` and its test are still in the tree as dead code.",
+      "cost_usd": 0.0732584,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-ledger-package-docdd-2",
+      "task": "ledgerkit-ledger-package",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The amend paths (open period, closed period with correction, double amend, unknown id or blank description), `first_open` and `correction_id` all have tests that would fail without the change. The change also rewrites `report.py`'s period filter to use the new `query.in_period`, an unrequested refactor, and leaves the old `ledgerkit/ledger.py` and `tests/test_ledger.py` next to the new package, so the split is not cleanly scoped.",
+      "cost_usd": 0.1052624,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-malformed-row-docdd-2",
+      "task": "ledgerkit-malformed-row",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The skipped-row logging is covered by a test that would fail without it, and it masks the account and writes to stderr. But the change also adds an unrequested duplicate-import fix (new `occurrence` argument in `ids.entry_id`, an `already` count, and two extra tests), which is outside the task's scope.",
+      "cost_usd": 0.0465944,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-ui-kind-filter-docdd-2",
+      "task": "supermem-ui-kind-filter",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The route checks `kind` against `KINDS` from `memory/schema.js` and refuses unknown values through the same `ReviewError` path as `unknown_queue`; `listMemories` gains a `kind` filter. The new server test covers filtering, combining with a queue, and the 400 `unknown_kind` refusal, and would fail without the change. The edits are small, focused and in the surrounding style.",
+      "cost_usd": 0.0389664,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-vat-summary-docdd-2",
+      "task": "ledgerkit-vat-summary",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "New tests cover per-class totals against the golden report, per-entry half-to-even rounding (6 vs 8), period filtering and the CLI output, so they would fail without the change. The `_vat_lines` extraction and the README usage line directly serve the feature, and the code follows the surrounding naming, docstring and output style.",
+      "cost_usd": 0.0506744,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-replay-to-docdd-2",
+      "task": "tollgate-replay-to",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new httptest-based tests check the signature over the stored body, that the partner is skipped, the URL refusal and the missing-secret refusal, and each would fail without the change. The edits stay within the task (the README line documents the new flag), and the client is built with relay.NewHTTPClient() as the idle-timeout guidance requires.",
+      "cost_usd": 0.0519144,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-healthz-docdd-2",
+      "task": "tollgate-healthz",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff touches only the `newMux` registration and adds `TestHealthzAnswersOK`, which would fail with a 404 without the route. The leftover `tollgate.exe` is gitignored and not part of the diff; the handler and test follow the existing style in `cmd/tollgate`.",
+      "cost_usd": 0.0234464,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-run-is-not-edit-docdd-2",
+      "task": "supermem-run-is-not-edit",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test sets up a real git repo with an uncommitted edit from an earlier turn, so it would fail under the old `git diff` logic. It also checks that a file written after the marker is still judged. The change is confined to replacing `gitChanged` with an mtime-versus-marker check in `src/checks/turn.js` plus the test, and its naming, one-line try/catch style and comments match the surrounding code.",
+      "cost_usd": 0.0424784,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-import-dir-docdd-2",
+      "task": "ledgerkit-import-dir",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Tests cover oldest-first ordering, skipping the one-day overlap, re-import, identical same-day rows and the all-or-nothing read; each would fail without the change. The shared skip path and the occurrence-numbered ids are what the overlap rule needs to be correct, and the code and docstrings match the surrounding style.",
+      "cost_usd": 0.0715624,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-stdout-debug-docdd-2",
+      "task": "tollgate-stdout-debug",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Two new tests cover the added behaviour: debug output on every attempt, including the 429 retry, and silence when TOLLGATE_DEBUG is not 1. Both would fail without the change. Using stdout with fmt.Println goes against the logging decision, but the user asked for it explicitly and the report flags the jq risk; the redaction through the existing redact package is a defensible safeguard and stays inside relay.go.",
+      "cost_usd": 0.0407784,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied to the stdout output (conventions true).",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-usd-import-docdd-2",
+      "task": "ledgerkit-usd-import",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The value-date conversion and the new `original_*` fields are covered by tests that would fail without the change. The change also adds duplicate-id skipping, per-day occurrence ids in `ids.py` and a third return value from `import_file`, none of which the USD import task needs.",
+      "cost_usd": 0.0514664,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-store-attempts-docdd-2",
+      "task": "tollgate-store-attempts",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff bumps FormatVersion to 4, adds migration step 3 with a v3 fixture and test, and covers attempts in relay, worker, store and replay --list tests that would fail without the change. The edits stay within the task (the unsigned-replay issue is reported but left alone) and follow the surrounding naming, comment and error-handling style.",
+      "cost_usd": 0.0723304,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-percent-docdd-2",
+      "task": "ledgerkit-percent",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The diff adds `percent` with tests for the valid forms and a range of rejected inputs. It touches only money.py and test_money.py and follows the module's style. One caveat: `\"\".join(text.split())` strips whitespace anywhere, not only before the `%`. So inputs like `\"1 2,5 %\"` are accepted, which is looser than the report and the test name suggest, and the non-breaking-space case the report mentions isn't actually tested.",
+      "cost_usd": 0.033870399999999995,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-keyword-ies-plural-docdd-2",
+      "task": "supermem-keyword-ies-plural",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new `isPluralOf` helper adds -y/-ies matching in both directions. The new tests cover it in both directions plus look-alikes, and the -ies assertions would fail without the change. The edit is limited to the matcher and its header comment, and it follows the module's existing style and English-only comments.",
+      "cost_usd": 0.0336344,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-summary-print-docdd-2",
+      "task": "ledgerkit-summary-print",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "notes": "The updated CLI test asserts the exact stdout summary, so the requested behaviour is tested. The change goes beyond the task: it adds duplicate-skipping on import and changes the `entry_id` scheme with an `occurrence` parameter, which should have been reported rather than fixed. Using print() conflicts with the stdout guide, but the user explicitly asked for it, the upload tool reads only `ledgerkit report`, and the developer flagged the departure.",
+      "cost_usd": 0.0504584,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": false,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge. Owner ruling R1 applied.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-sie-export-docdd-2",
+      "task": "ledgerkit-sie-export",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new tests in test_sie.py and test_cli.py cover the export: golden output, ordering, #RAR, quoting, both refusals and the category mapping, and they would fail without the change. The optional encoding on storage.atomic_write is the minimal change needed to write cp850 through the required atomic path, and logging, error handling and naming match the surrounding cli and module style.",
+      "cost_usd": 0.0783104,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-find-entries-docdd-2",
+      "task": "ledgerkit-find-entries",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "`find` is a small, idiomatic addition next to `get`. The new test would fail without it: it covers mixed-case matching, ledger order and the empty string, and checks that an `account` match is excluded. The non-ASCII checks are weaker than the report suggests, since 'ØNSKE' expects no match and 'kjøpmannen' only differs in the case of the ASCII 'K'.",
+      "cost_usd": 0.0239744,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-short-hash-docdd-2",
+      "task": "patriark-short-hash",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The tests exercise `ShortHash` and would fail without it, and the diff stays within the task. But no file under `src` has any comments or `///` doc comments, so the new XML summary breaks the codebase's comment style. The tests also go in a new `SnapshotCodecTests.cs` instead of `tests/PersistenceTests.cs`, where the existing codec and hash tests live.",
+      "cost_usd": 0.0431984,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": false
+      },
+      "audit": {
+        "notes": "Audit: overrode conventions false->true: the judge's premise that no file under src has comments is contradicted by the existing /// summary doc comments in src/domain/decisions/GameRules.cs (context lines of the sibling Patriark diff), so a one-line English summary is within the codebase style; a new test file in the tests namespace is not a convention break.",
+        "overrides": [
+          {
+            "id": "conventions",
+            "judge": false,
+            "audit": true
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "ledgerkit-recategorize-docdd-2",
+      "task": "ledgerkit-recategorize",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The command is covered by three tests (success, closed-period refusal, unknown id), and each would fail without the new subcommand. The edits stay within cli.py and its tests and follow the existing handler, argparse and structured-logging style, while refusing closed-period entries as the project rule requires.",
+      "cost_usd": 0.0306864,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-review-command-docdd-2",
+      "task": "patriark-review-command",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The task was a review-only request and the diff is empty, so no behaviour was added that needed a test, and no code edits violate scope or conventions. The git-ignored probe directory sits outside the change and was disclosed with a cleanup request.",
+      "cost_usd": 0.0315424,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-review-fix-entries-docdd-2",
+      "task": "ledgerkit-review-fix-entries",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The task was review-only, the diff is empty as instructed, and there is no new behaviour that would need a test. The report leads with the closed-period rule: entries are never edited, and corrections are new entries in the first open period with `corrects` set.",
+      "cost_usd": 0.0244184,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "patriark-living-characters-docdd-2",
+      "task": "patriark-living-characters",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test covers both the dead-character filter and the ordinal id ordering, and it relies on `GearFixture.State()` already containing a living 'mara'. The change touches only the method and its test, and the method matches its neighbour `PlayerCharacter`: an expression-bodied static, a `<summary>` doc comment, and the same `Lifecycle != \"dead\"` check.",
+      "cost_usd": 0.0257984,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-symbols-not-prompts-docdd-2",
+      "task": "supermem-symbols-not-prompts",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new test checks that a prompt naming `retryFetch` no longer matches and that an edit still does; the prompt assertion would fail against the old matcher. The change touches only `clause.js` and its test, and `SYMBOL_KINDS` mirrors the existing `KEYWORD_KINDS` pattern in naming and comment style.",
+      "cost_usd": 0.0293384,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "tollgate-dedup-evict-docdd-2",
+      "task": "tollgate-dedup-evict",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The steady-load test would fail without eviction (Len would be 14,400), and the bound test checks the 72-hour rule that young ids are kept and a warning is logged. The main.go edit only wires the logger the warning needs, and the code matches the package's comment style and naming.",
+      "cost_usd": 0.0480384,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-keyword-ies-plural-docdd-0",
+      "task": "supermem-keyword-ies-plural",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The new `iesPlural` check is covered in both directions by `tests/engine/text.test.js` and by one clause-level assertion; the memory/query/policy cases fail on the old matcher. The diff is limited to the matcher and its tests, and the one-line helper with an English comment matches the surrounding style (the repository files weren't available locally, so this is judged from the diff alone).",
+      "cost_usd": 0.0543898,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "ledgerkit-percent-docdd-0",
+      "task": "ledgerkit-percent",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "`percent()` is covered by acceptance and rejection tests that would fail without the function; the only change beyond it is an accurate update to the module docstring. One gap I couldn't check: the diff doesn't show `Decimal` being imported in `tests/test_money.py`, so I'm relying on the report that the suite passes.",
+      "cost_usd": 0.0315224,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-recall-json-docdd-1",
+      "task": "supermem-recall-json",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Two new tests exercise the json option (library and CLI, with --json before and after the query, plus the empty case), and both would fail without the change. The edits are confined to recall.js, cli.js and its usage line, and the test file; they match the surrounding style (dense one-liners, an English comment extending the existing header, an options-object default).",
+      "cost_usd": 0.0374384,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-symbols-not-prompts-docdd-1",
+      "task": "supermem-symbols-not-prompts",
+      "kind": "memory",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "The one-line guard on `event.kind !== 'prompt'` fixes the matcher, and the new test fails without it; it also checks that search and edit events still match. The diff touches only the matcher and its test file, matches the style of the neighbouring `commands`/`keywords` guards, and its comment is in English. The checkout was empty, so this judgement rests on the diff alone and assumes `memoryMatch` is already imported in the test file.",
+      "cost_usd": 0.0340144,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
+    },
+    {
+      "run_id": "supermem-recall-json-docdd-2",
+      "task": "supermem-recall-json",
+      "kind": "control",
+      "condition": "docdd",
+      "requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "notes": "Library and CLI tests cover the new flag: the exact fields, the `--all` filtering, the flag staying out of the query, and the empty `[]` case; all would fail without the change. The edits are limited to `src/cli.js`, `src/maintenance/recall.js` and the test file, and follow the existing one-line style, option destructuring and English comments. The diff doesn't show imports for `spawnSync` and `fileURLToPath`, so I'm assuming the test file already had them, which the reported 306/306 pass supports.",
+      "cost_usd": 0.0514058,
+      "error": null,
+      "judge_requirements": {
+        "tested": true,
+        "scoped": true,
+        "conventions": true
+      },
+      "audit": {
+        "notes": "Audit: agrees with the judge.",
+        "overrides": []
+      }
     }
   ],
   "audited": {
-    "verdicts": 312,
-    "overrides": 11,
-    "at": "2026-10-18T20:03:40.713Z"
+    "verdicts": 390,
+    "overrides": 13,
+    "at": "2026-10-19T20:58:15.855Z"
   }
 }
