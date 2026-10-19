@@ -22,7 +22,7 @@ import { limitWait, taskReport, usageLimited } from '../agent/metrics.js';
 import { allowedTools } from '../agent/permissions.js';
 import { run } from '../agent/proc.js';
 import { prepareClone, removeClone } from './clone.js';
-import { CONDITIONS as ALL_CONDITIONS } from './situations.js';
+import { CONDITIONS as ALL_CONDITIONS, WITH_DD } from './situations.js';
 import { assertSubscription } from './billing.js';
 import { schedule } from './stats.js';
 import { flakyFor, runCommand, suiteOutcome, suiteReverdict } from './suite.js';
@@ -125,7 +125,7 @@ Run every command in the foreground and wait for it to finish before your final 
     '--no-session-persistence', '--setting-sources', 'project', '--strict-mcp-config', '--allowedTools', ...allowedTools(project.programs)];
   if (EFFORT) argv.push('--effort', EFFORT);
   let ddReady = null, latency = {};
-  if (condition === 'dd2') {
+  if (WITH_DD.includes(condition)) {
     ddReady = existsSync(join(dir, '.dd', 'local', 'v2', 'index.json'));
     if (ddReady) latency = await hookLatency(dir, env, project).catch(() => ({}));
     const settings = join(dir, '..', 'dd-settings.json');
