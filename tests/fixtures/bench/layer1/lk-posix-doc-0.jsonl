@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","cwd":"/home/dev/tmp/dd-bench-xyz789/ledgerkit","session_id":"s3"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"/home/dev/tmp/dd-bench-xyz789/ledgerkit/ledgerkit/report.py"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t2","name":"Write","input":{"file_path":"/home/dev/tmp/dd-bench-xyz789/ledgerkit/ledgerkit/summary.py","content":"print('total')\n"}}]}}
