@@ -235,12 +235,15 @@ if ('check-only' in args) {
       } finally { await removeClone(clean, project); }
     }
     for (const condition of CONDITIONS) {
-      const { dir, index_memories: indexMemories, store_warnings: warnings } = await prepareClone(project, task, condition);
+      const { dir, base_commit: baseCommit, index_memories: indexMemories, store_warnings: warnings } = await prepareClone(project, task, condition);
       try {
         const guide = await readFile(join(dir, 'docs', 'engineering-guide.md'), 'utf8').catch(() => null);
         const target = await readFile(join(dir, project.guideTarget), 'utf8').catch(() => '');
+        // No commit up to the base may name DD's store: an agent would read it with git log -p.
+        const historyClean = !/^\.dd\//m.test(gitOut(dir, 'log', '--name-only', '--format=', baseCommit));
+        if (!historyClean) passing += 1;
         console.log(JSON.stringify({ project: project.id, condition, dd_dir: existsSync(join(dir, '.dd')), guide_sections: guide ? (guide.match(/^### /gm) ?? []).length : null,
-          target_names_guide: /engineering-guide/.test(target), index_memories: indexMemories, store_warnings: warnings }));
+          target_names_guide: /engineering-guide/.test(target), index_memories: indexMemories, store_warnings: warnings, history_clean: historyClean }));
       } finally { await removeClone(dir, project); }
     }
   }

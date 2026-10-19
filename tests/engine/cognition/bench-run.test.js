@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,11 +10,16 @@ const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const git = (dir, ...args) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', ...args]).toString();
 
 // suite: the fixture suite's node arguments; extra: more task literals, built from `task`.
-function fixture(t, { suite = "['-e', '']", extra = '' } = {}) {
+// store: the repository's history holds a .dd/ store; project: more fields of the project literal.
+function fixture(t, { suite = "['-e', '']", extra = '', store = false, project = '' } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'dd-bench-run-'));
   const repo = join(root, 'repo');
   execFileSync('git', ['init', '-q', repo]);
   writeFileSync(join(repo, 'README.md'), '# Fixture\n');
+  if (store) {
+    mkdirSync(join(repo, '.dd', 'memories'), { recursive: true });
+    writeFileSync(join(repo, '.dd', 'memories', 'own.json'), '{}\n');
+  }
   git(repo, 'add', '-A');
   git(repo, 'commit', '-q', '-m', 'init');
   const registry = join(root, 'registry.mjs');
@@ -27,7 +32,7 @@ const task = { id: 'fx-answer', project: 'fx', situation: 'S4', origin: 'invente
   async check(dir) { const text = await readFile(join(dir, 'answer.txt'), 'utf8').catch(() => ''); const ok = text.trim() === 'done'; return { passed: ok, detail: 'answer ' + ok, requirements: { answered: ok } }; } };
 export const PROJECTS = [{ id: 'fx', language: 'Text', repo: ${JSON.stringify(repo)}, base: 'HEAD', invented: true, guideTarget: 'CLAUDE.md', store: 'bench',
   memories: [memory], suite: { command: process.execPath, args: ${suite}, timeoutMs: 30000 }, lint: null, programs: [], strip: [], links: [],
-  probeFile: 'README.md', tasks: [task${extra ? `, ${extra}` : ''}] }];
+  probeFile: 'README.md', ${project}tasks: [task${extra ? `, ${extra}` : ''}] }];
 `);
   t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
   return { root, registry };
@@ -180,4 +185,16 @@ test('check-only runs the untouched suite at every base a task starts from', asy
     .replace('tasks: [task]', `tasks: [task, { ...task, id: 'fx-old', base: ${JSON.stringify(broken)} }]`);
   writeFileSync(probe.registry, registry);
   assert.throws(() => runner([`--registry=${probe.registry}`, '--check-only']));
+});
+
+test('check-only fails when a clone\'s history names .dd/', async t => {
+  const kept = fixture(t, { store: true, project: 'historyStrip: [], ' });
+  const err = (() => { try { runner([`--registry=${kept.registry}`, '--check-only']); return null; } catch (e) { return e; } })();
+  assert.ok(err, 'check-only exits non-zero');
+  const rows = String(err.stdout).split('\n').filter(line => line.includes('"condition"')).map(line => JSON.parse(line));
+  assert.equal(rows.length, 4);
+  assert.ok(rows.every(row => row.history_clean === false));
+  const clean = fixture(t, { store: true });
+  const out = runner([`--registry=${clean.registry}`, '--check-only']);
+  assert.ok(out.split('\n').filter(line => line.includes('"condition"')).map(line => JSON.parse(line)).every(row => row.history_clean === true));
 });
