@@ -19,6 +19,14 @@ export const benchMemoryId = (projectId, topic) => {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 };
 
+const benchMemory = (project, d, evidence) => ({ schema_version: 8, id: benchMemoryId(project.id, d.topic), project_id: project.id, topic: d.topic, kind: d.kind,
+  status: d.status ?? 'active', title: d.title, body: d.body, not_derivable: d.not_derivable, triggers: d.triggers, ...(d.check ? { check: d.check } : {}), evidence,
+  origin: 'user_explicit', replaces: d.replaces ? benchMemoryId(project.id, d.replaces) : null, revisit_when: [],
+  review: { migrated: false, issues: [], accepted: { by: 'person', at: CREATED } }, created: CREATED, updated: CREATED });
+
+// The memories a project's store gets, with no clone to hash evidence in (layer 1 replays).
+export const benchMemories = project => (project.store === 'existing' ? project.memories : project.memories.map(d => benchMemory(project, d, [])));
+
 export async function materializeMemories(root, project) {
   if (project.store === 'existing') return { memories: project.memories, warnings: [] };
   const memories = [], warnings = [];
@@ -29,10 +37,7 @@ export async function materializeMemories(root, project) {
       if (!existsSync(path)) { warnings.push(`${d.topic}: evidence ${entry.path} not found`); continue; }
       evidence.push({ type: 'file', path: entry.path, sha256: createHash('sha256').update(await readFile(path)).digest('hex'), summary: entry.summary });
     }
-    memories.push({ schema_version: 8, id: benchMemoryId(project.id, d.topic), project_id: project.id, topic: d.topic, kind: d.kind,
-      status: d.status ?? 'active', title: d.title, body: d.body, not_derivable: d.not_derivable, triggers: d.triggers, ...(d.check ? { check: d.check } : {}), evidence,
-      origin: 'user_explicit', replaces: d.replaces ? benchMemoryId(project.id, d.replaces) : null, revisit_when: [],
-      review: { migrated: false, issues: [], accepted: { by: 'person', at: CREATED } }, created: CREATED, updated: CREATED });
+    memories.push(benchMemory(project, d, evidence));
   }
   return { memories, warnings };
 }
