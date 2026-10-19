@@ -1,0 +1,59 @@
+{
+  "schema_version": 8,
+  "id": "6d6e87cd-1f30-46b3-9573-44ceeb5c343c",
+  "project_id": "supermem",
+  "topic": "testing/nested-node-test-context",
+  "kind": "trap",
+  "status": "active",
+  "title": "A node --test started from inside node --test skips its files",
+  "body": "When code running under the node test runner spawns another `node --test` (an eval check, a proof in tests/bench), the child inherits NODE_TEST_CONTEXT from the parent and prints 'node:test run() is being called recursively within a test file. skipping running files.' It runs nothing and reports no failure, so every check that parses its output reads as failed. Remove NODE_TEST_CONTEXT from the child's environment (`const { NODE_TEST_CONTEXT, ...env } = process.env`), as src/eval/bench/projects/supermem/mined.js does.",
+  "not_derivable": "The same check works when run from a plain script (the bench runner) and fails only inside node --test, with a warning on stderr rather than an error.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/eval/**",
+        "tests/bench/**"
+      ],
+      "symbols": [
+        "execFile",
+        "spawn"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "node --test",
+        "NODE_TEST_CONTEXT",
+        "nested test"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/eval/bench/projects/supermem/mined.js",
+      "sha256": "e60180e6e64a42bac4851ccb4189ed0a3f68e52a072ef08f357bcf5db4183082",
+      "summary": "Cited when this memory was saved."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "dd",
+      "at": "2026-10-16T16:17:37.825Z"
+    }
+  },
+  "created": "2026-10-16T16:17:37.825Z",
+  "updated": "2026-10-16T16:17:38.075Z"
+}
