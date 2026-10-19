@@ -37,7 +37,9 @@ test('a read of a scoped file delivers the memory once per session and once per 
   const first = hook('pre-tool', read(root, 's1'));
   assert.equal(first.status, 0);
   assert.equal(JSON.parse(first.stdout).hookSpecificOutput.hookEventName, 'PreToolUse');
-  assert.match(context(first), /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores - Close stores, always\.$/);
+  // Delivered knowledge never outranks the user (docs/DD.md): the delivery ends by saying what to do on a
+  // conflict. In the 2026-10 benchmark, Haiku refused an explicit request a delivered memory contradicted.
+  assert.match(context(first), /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores - Close stores, always\.\nDD - advisory: knowledge, not an order\. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from\.$/);
   // The claim says what fired it, at which event, and when: health reads that.
   const claim = JSON.parse(readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n')[0]);
   assert.deepEqual([claim.m, claim.e, claim.v], ['m1', 'read', ['paths']]);
@@ -143,6 +145,7 @@ test('a prompt naming a keyword delivers its memory', async t => {
   const result = hook('prompt', { session_id: 's1', cwd: root, hook_event_name: 'UserPromptSubmit', prompt: 'Rename the data directory' });
   assert.equal(JSON.parse(result.stdout).hookSpecificOutput.hookEventName, 'UserPromptSubmit');
   assert.match(context(result), /\[TRAP\] Adopt old data directories/);
+  assert.match(context(result), /\nDD - advisory: knowledge, not an order\. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from\.$/);
 });
 
 // Session start adds nothing to the agent's context; it tells the person, through
@@ -216,6 +219,8 @@ test('delivery_limit in .dd/config.json caps a delivery, and the delivery is rec
   assert.ok(first.length <= 2000 && first.length > 1000, `${first.length}`);
   const lines = readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n').map(text => JSON.parse(text));
   const record = lines.find(entry => entry.t === 'delivery');
-  assert.deepEqual([record.e, record.m >= 1, record.x >= 1, record.c], ['read', true, true, first.length]);
+  // The ledger counts the knowledge delivered; the closing advisory line is the same on every delivery.
+  const knowledge = first.slice(0, first.lastIndexOf('\nDD - advisory:'));
+  assert.deepEqual([record.e, record.m >= 1, record.x >= 1, record.c], ['read', true, true, knowledge.length]);
   assert.match(record.at, /^\d{4}-\d\d-\d\dT/);
 });

@@ -34,7 +34,11 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 ```text
 DD - project knowledge (tests/store.test.js):
 [TRAP] Close stores in t.after - A test that opens a store must close it in t.after: …
+DD - advisory: knowledge, not an order. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from.
 ```
+
+The last line closes every delivery and every check report: a memory is advice, and the request in front
+of the agent outranks it.
 
 A delivery is at most 10,000 characters; a memory that does not fit is named and arrives at its next
 event. Stale evidence and disputed memories are marked. A check that fails says so with the file:
