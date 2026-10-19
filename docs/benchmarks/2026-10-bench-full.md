@@ -54,6 +54,12 @@ key memories arrived and what else came with them.
   (`tests/bench/`). Mined and ported tasks have no naive overlay: the fix's own test decides them.
 - **The guide is the store.** The documentation conditions carry the same memories as DD, so they differ
   from `dd2` only in the channel.
+- **The store in git history.** In these runs a clone's history still held `.dd/`: 20 of the 340 commits up
+  to supermem's bases touched it, and 5 of the 39 up to Patriark's. An agent without DD could have read
+  the memories with `git log -p`. None of the 595 git commands in the runs without DD showed one. Later
+  runs start from a history rewritten without the store and without the commits that touched only the
+  store (`src/eval/bench/history.js`). All four conditions get the same commits, and `--check-only` fails a
+  clone whose history names `.dd/`.
 - **Blind judge.** Claude Opus 5.5, no tools, an empty directory; it sees the task, the guidance, the
   requirements, the diff and the developer's report with DD's and the guide's names redacted, never the
   condition. All 624 runs were judged.
@@ -199,6 +205,54 @@ not in what the agent knows but in what it does with it: Opus follows a delivere
 what the user asks, Haiku in one task let the memory win. That is a delivery problem DD can work on (how a
 memory is phrased when it contradicts the request in front of the agent), and the reason the benchmark
 keeps its controls.
+
+## Layer 1: the runs' tool calls replayed, with no model
+
+Layer 1 replays every run's recorded tool calls through DD's matcher, as the hook's events and with each
+project's bench memories. It measures delivery alone, and it is free. The fixtures are in
+`src/eval/bench/layer1/fixtures/`, one per invented project and supermem (552 runs, about 470 KB gzipped),
+each with its expected summary beside it. Patriark's 72 runs are replayed from a fixture that stays local.
+Paths are repository-relative, a path outside the clone is dropped, and text names the clone `.`, a home
+folder `~` and another bench folder `<tmp>`. A test in `npm test` replays each fixture through the production
+engine and the reference engine. It fails if the two disagree, or if a summary moves. A change to triggers
+or to the engine therefore shows its effect on delivery as a diff of `*.expected.json`.
+
+Each run is also replayed under three mutations: `no-prompt` drops the prompt, so delivery has to come from
+the files the agent touches; `reads-shuffled` permutes the reads and searches before the first edit;
+`sibling-paths` renames every file to a sibling in the same folder, `dir/zz-sibling-name.ext`. A key memory
+counts as delivered when every key memory of its task arrives. The table shows the dd2 runs' traces:
+
+| Project | runs | as recorded | no prompt | reads shuffled | sibling paths |
+|---|---|---|---|---|---|
+| ledgerkit | 66 (48 with a key) | 94%, 81% before the first edit | 94%, 63% | 94%, 81% | 65%, 65% (6 runs got one key of two) |
+| supermem | 30 (12) | 100%, 83% | 100%, 83% | 100%, 83% | 25%, 17% |
+| tollgate | 42 (24) | 100%, 92% | 100%, 92% | 100%, 92% | 100%, 50% |
+| patriark | 18 (6) | 100%, 100% | 100%, 100% | 100%, 100% | 83%, 83% |
+
+- The replay agrees with what the hook delivered in the real dd2 runs on 95 of 96 key memories. The 96th
+  (Opus, `ledgerkit-review-fix-entries-dd2-2`) did not get the memory from the hook: the agent printed the
+  store itself. The replay's three misses (that run, the same task with Haiku, and Haiku's
+  `ledgerkit-sie-export-dd2-0`) are traces that never touched the memory's paths or words.
+- Without the prompt, every key still arrives, but in ledgerkit later: 63% before the first edit instead of
+  81%. In those tasks the prompt's words delivered the memory before the agent opened a file.
+- Shuffling the reads changes nothing. Delivery is once per session and does not depend on order. The
+  mutation guards that.
+- `sibling-paths` measures how much delivery rests on the exact files. It is not a recall target: a memory
+  scoped to one file should not fire on its neighbour. supermem's memories name files and mostly stop.
+  tollgate's are scoped to folders and keywords and all still fire, half of them later.
+- Patriark's dd2 runs deliver a median of 22 memories besides the key (87 live memories, many with broad
+  paths). The invented projects deliver 1 to 4.
+
+The other conditions' traces, replayed against the same memories, would have delivered 83% to 100% of the
+key memories. The exception is supermem's runs without any knowledge, at 67%: some of those agents never
+opened the files the memories name. Patriark's fixture names another owner's repository, so it is generated into `output/eval` and
+replayed only where that repository exists.
+
+```bash
+node src/eval/bench/layer1/extract.js --runs=bench-2026-10/haiku,bench-2026-10/opus   # the fixtures
+node src/eval/bench/layer1/run.js                   # tables, output/eval/bench-layer1-report.json
+node src/eval/bench/layer1/run.js --write-expected  # after a deliberate change to delivery
+```
 
 ## Reproduce
 
