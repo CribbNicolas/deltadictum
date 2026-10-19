@@ -54,11 +54,12 @@ key memories arrived and what else came with them.
   (`tests/bench/`). Mined and ported tasks have no naive overlay: the fix's own test decides them.
 - **The guide is the store.** The documentation conditions carry the same memories as DD, so they differ
   from `dd2` only in the channel.
-- **The store in git history.** In these runs a clone's history still held `.dd/` (24 of supermem's 451
-  commits touched it, 8 of Patriark's 47), so an agent without DD could have read the memories with
-  `git log -p`. None of the 595 git commands in the runs without DD showed one. Runs after this one start
-  from a history rewritten without the store, the same commits in all four conditions
-  (`src/eval/bench/history.js`), and `--check-only` fails a clone whose history names `.dd/`.
+- **The store in git history.** In these runs a clone's history still held `.dd/`: 20 of the 340 commits up
+  to supermem's bases touched it, and 5 of the 39 up to Patriark's. An agent without DD could have read
+  the memories with `git log -p`. None of the 595 git commands in the runs without DD showed one. Later
+  runs start from a history rewritten without the store and without the commits that touched only the
+  store (`src/eval/bench/history.js`). All four conditions get the same commits, and `--check-only` fails a
+  clone whose history names `.dd/`.
 - **Blind judge.** Claude Opus 5.5, no tools, an empty directory; it sees the task, the guidance, the
   requirements, the diff and the developer's report with DD's and the guide's names redacted, never the
   condition. All 624 runs were judged.
@@ -209,9 +210,10 @@ keeps its controls.
 
 Layer 1 replays every run's recorded tool calls through DD's matcher, as the hook's events and with each
 project's bench memories. It measures delivery alone, and it is free. The fixtures are in
-`src/eval/bench/layer1/fixtures/`, one per project (624 runs, about 470 KB gzipped), each with its expected
-summary beside it. Paths are repository-relative, a path outside the clone is dropped, and text names the
-clone `.`, so no fixture names a machine. A test in `npm test` replays each fixture through the production
+`src/eval/bench/layer1/fixtures/`, one per invented project and supermem (552 runs, about 470 KB gzipped),
+each with its expected summary beside it. Patriark's 72 runs are replayed from a fixture that stays local.
+Paths are repository-relative, a path outside the clone is dropped, and text names the clone `.`, a home
+folder `~` and another bench folder `<tmp>`. A test in `npm test` replays each fixture through the production
 engine and the reference engine. It fails if the two disagree, or if a summary moves. A change to triggers
 or to the engine therefore shows its effect on delivery as a diff of `*.expected.json`.
 

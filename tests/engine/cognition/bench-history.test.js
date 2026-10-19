@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { performance } from 'node:perf_hooks';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cleanHistory } from '../../../src/eval/bench/history.js';
@@ -77,4 +79,40 @@ test('no ref but the branch survives', async t => {
   assert.deepEqual(git(out.repo, 'for-each-ref', '--format=%(refname)').trim().split('\n'), ['refs/heads/main']);
   // The original commits are gone from the object store too, not only unreferenced.
   assert.throws(() => git(out.repo, 'cat-file', '-e', `${git(repo, 'rev-parse', 'main').trim()}^{commit}`));
+});
+
+test('a build leaves the event loop free for the other workers', async t => {
+  const { repo, cacheDir } = fixture(t);
+  let last = performance.now(), longest = 0;
+  const timer = setInterval(() => { const now = performance.now(); longest = Math.max(longest, now - last); last = now; }, 5);
+  const started = performance.now();
+  await cleanHistory({ repo, base: 'main', cacheDir });
+  const took = performance.now() - started;
+  clearInterval(timer);
+  assert.ok(longest < Math.max(400, took / 3), `the loop stalled ${Math.round(longest)} ms of a ${Math.round(took)} ms build`);
+});
+
+test('a commit that touched only the stripped paths is gone, with its message', async t => {
+  const { repo, cacheDir } = fixture(t);
+  writeFileSync(join(repo, '.dd', 'memories', 'x.json'), '{"title":"third revision"}\n');
+  git(repo, 'commit', '-q', '-am', 'store: the retry window is 72 hours');
+  const out = await cleanHistory({ repo, base: 'main', cacheDir });
+  assert.equal(git(out.repo, 'rev-list', '--count', out.commit).trim(), '3');
+  assert.doesNotMatch(git(out.repo, 'log', '--format=%B', out.commit), /retry window/);
+});
+
+test('a test process caches histories in its own folder, removed when it exits', t => {
+  const helper = join(process.cwd(), 'tests', 'helpers', 'isolate-data.js');
+  const script = "const d = process.env.DD_BENCH_HISTORY; require('node:fs').mkdirSync(require('node:path').join(d, 'x.git'), { recursive: true }); console.log(d);";
+  const env = { ...process.env };
+  delete env.DD_BENCH_HISTORY;
+  const dir = execFileSync(process.execPath, ['--import', pathToFileURL(helper).href, '-e', script], { env }).toString().trim();
+  assert.ok(dir.startsWith(tmpdir()), dir);
+  assert.ok(!existsSync(dir), `${dir} is removed`);
+  // A process that inherits the folder leaves it to its parent.
+  const inherited = mkdtempSync(join(tmpdir(), 'dd-inherited-'));
+  t.after?.(() => rmSync(inherited, { recursive: true, force: true }));
+  execFileSync(process.execPath, ['--import', pathToFileURL(helper).href, '-e', script], { env: { ...env, DD_BENCH_HISTORY: inherited } });
+  assert.ok(existsSync(join(inherited, 'x.git')));
+  rmSync(inherited, { recursive: true, force: true });
 });
