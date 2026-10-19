@@ -1,0 +1,15 @@
+---
+// A URL the site once served whose page is gone: it sends the reader on, and search engines with it.
+const { to } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0; url=${to}`} />
+    <link rel="canonical" href={to} />
+    <title>Moved</title>
+  </head>
+  <body><p>This page moved: <a href={to}>{to}</a></p></body>
+</html>

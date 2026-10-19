@@ -24,6 +24,12 @@ test('links between pages become site URLs and keep their anchors', () => {
   assert.equal(at('benchmarks/index.md', '../guide/how-it-works.md#how-it-is-measured'), '/deltadictum/guide/how-it-works.html#how-it-is-measured');
 });
 
+test('links to Markdown the site does not publish go to GitHub', () => {
+  const off = (file, href) => rewriteHref(href, { file: resolve(docsRoot, file), docsRoot, repoRoot, base: '/deltadictum/', offSite: ['benchmarks'] });
+  assert.equal(off('guide/how-it-works.md', '../benchmarks/2026-10-bench-full.md#caveats'), 'https://github.com/CribbNicolas/deltadictum/blob/main/docs/benchmarks/2026-10-bench-full.md#caveats');
+  assert.equal(off('guide/how-it-works.md', '../DD.md'), '/deltadictum/DD.html');
+});
+
 test('links to files that are not pages go to GitHub', () => {
   assert.equal(at('benchmarks/index.md', 'data/'), 'https://github.com/CribbNicolas/deltadictum/tree/main/docs/benchmarks/data');
   assert.equal(at('guide/storage.md', '../../src/memory/store.js'), 'https://github.com/CribbNicolas/deltadictum/blob/main/src/memory/store.js');
