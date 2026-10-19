@@ -17,7 +17,6 @@ const { docs = false } = Astro.props;
     <div class="links">
       {!docs && <a href={href('getting-started.html')}>Docs</a>}
       {!docs && <a class="optional" href={href('guide/how-it-works.html')}>How it works</a>}
-      <a class={docs ? undefined : 'optional'} href={href('benchmarks/')}>Benchmarks</a>
       <a href={SITE.repo}>GitHub</a>
       {docs ? <a href={SITE.npm}>npm</a> : <a class="cta" href={href('getting-started.html')}>Get started</a>}
     </div>

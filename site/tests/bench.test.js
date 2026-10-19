@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatChange, formatValue, pickFeatured, tableFor, validateSummary } from '../src/lib/bench.js';
+import { averageSummaries, formatChange, formatValue, tableFor, validateSummary } from '../src/lib/bench.js';
 
 const SUMMARY = {
   schema: 1, id: 't1', date: '2026-10-14', title: 'Trial', model: 'm', tasks: 10, runs_per_condition: 1, judge: 'j', report: 'benchmarks/t1.md', caveat: 'Small.',
@@ -47,13 +47,6 @@ test('the base cell shows the base value beside the word Base', () => {
   assert.equal(table.rows[0].cells[1].value, undefined);
 });
 
-test('the detail table carries values, intervals and changes', () => {
-  const row = tableFor(SUMMARY, { detail: true }).rows[0];
-  assert.deepEqual(row.cells.map(c => c.text), ['70%', '72%', '77%']);
-  assert.deepEqual(row.cells.map(c => c.ci), ['60–80', '62–81', '68–85']);
-  assert.deepEqual(row.cells.map(c => c.change ?? null), [null, '+3%', '+10%']);
-});
-
 test('an invalid summary fails, naming the file', () => {
   assert.equal(validateSummary(SUMMARY, 'a.json'), SUMMARY);
   assert.throws(() => validateSummary({ ...SUMMARY, schema: 2 }, 'a.json'), /a\.json: unknown schema 2/);
@@ -66,9 +59,32 @@ test('an invalid summary fails, naming the file', () => {
   assert.throws(() => validateSummary(bad, 'a.json'), /a\.json: quality has unit ms/);
 });
 
-test('the featured trial is the configured one, else the newest', () => {
-  const older = { ...SUMMARY, id: 'old', date: '2026-01-01' };
-  assert.equal(pickFeatured([older, SUMMARY], 'old').id, 'old');
-  assert.equal(pickFeatured([older, SUMMARY], 'missing').id, 't1');
-  assert.throws(() => pickFeatured([], 'x'), /no benchmark summary/);
+const MODEL = (id, model, values) => ({
+  ...SUMMARY, id, model, date: '2026-10-18',
+  conditions: [{ id: 'none', label: 'Agent alone' }, { id: 'docref', label: 'Guide' }, { id: 'doc', label: 'Guide, not referenced' }, { id: 'dd2', label: 'With DD' }],
+  metrics: [
+    { id: 'quality', label: 'Code quality', unit: 'pct', better: 'higher', values: values.quality, ci95: { none: [1, 2], docref: [1, 2], doc: [1, 2], dd2: [1, 2] } },
+    { id: 'cost', label: 'Cost per task', unit: 'usd', better: 'lower', values: values.cost },
+  ],
+});
+const OPUS = MODEL('a', 'opus', { quality: { none: 92, docref: 97, doc: 98, dd2: 97 }, cost: { none: 0.4, docref: 0.5, doc: 0.46, dd2: 0.44 } });
+const HAIKU = MODEL('b', 'haiku', { quality: { none: 85, docref: 97, doc: 97, dd2: 94 }, cost: { none: 0.02, docref: 0.02, doc: 0.02, dd2: 0.04 } });
+const FEATURED = { title: 'Both models', note: 'Averaged.', trials: ['a', 'b'], merge: { doc: { label: 'With documentation', of: ['docref', 'doc'] } } };
+
+test('the landing summary averages the trials, and the merged conditions within each', () => {
+  const summary = averageSummaries([OPUS, HAIKU], FEATURED);
+  assert.deepEqual(summary.conditions, [{ id: 'none', label: 'Agent alone' }, { id: 'doc', label: 'With documentation' }, { id: 'dd2', label: 'With DD' }]);
+  assert.deepEqual(summary.metrics[0].values, { none: 88.5, doc: 97.25, dd2: 95.5 });
+  assert.deepEqual(summary.metrics[1].values, { none: 0.21, doc: 0.25, dd2: 0.24 });
+  assert.deepEqual([summary.title, summary.tasks, summary.runs_per_condition, summary.base, summary.models, summary.note], ['Both models', 10, 1, 'none', ['opus', 'haiku'], 'Averaged.']);
+  // An interval does not average: the landing shows none.
+  assert.equal(summary.metrics[0].ci95, undefined);
+  assert.equal(validateSummary(summary, 'averaged'), summary);
+});
+
+test('the landing summary refuses trials it cannot average', () => {
+  assert.throws(() => averageSummaries([OPUS], { ...FEATURED, trials: ['a', 'c'] }), /no benchmark summary c/);
+  assert.throws(() => averageSummaries([OPUS, { ...HAIKU, tasks: 9 }], FEATURED), /b: 9 tasks, a has 10/);
+  assert.throws(() => averageSummaries([OPUS, { ...HAIKU, runs_per_condition: 2 }], FEATURED), /b: 2 runs per condition, a has 1/);
+  assert.throws(() => averageSummaries([OPUS, { ...HAIKU, metrics: HAIKU.metrics.slice(0, 1) }], FEATURED), /b has no metric cost/);
 });

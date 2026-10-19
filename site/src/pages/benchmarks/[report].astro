@@ -1,0 +1,14 @@
+---
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import Redirect from '../../components/Redirect.astro';
+import { SITE } from '../../config.js';
+
+// The trial reports the site published before benchmarks left it: each now opens on GitHub.
+export function getStaticPaths() {
+  const dir = fileURLToPath(new URL('../../../../docs/benchmarks', import.meta.url));
+  return readdirSync(dir).filter(name => name.endsWith('.md') && name !== 'index.md')
+    .map(name => ({ params: { report: name.replace(/\.md$/, '') }, props: { to: `${SITE.repo}/blob/main/docs/benchmarks/${name}` } }));
+}
+---
+<Redirect to={Astro.props.to} />
