@@ -38,6 +38,7 @@ async function fetchBase(project, base, dir) {
   git(dir, 'checkout', '-q', '-B', 'main', commit);
   await rm(join(dir, '.git', 'FETCH_HEAD'), { force: true });
   git(dir, 'reflog', 'expire', '--expire=now', '--all');
+  return commit;
 }
 
 // A project that keeps its own store gets it back from the base tree, in dd2 only.
@@ -64,7 +65,7 @@ export async function prepareClone(project, task, condition) {
   const base = task.base ?? project.base;
   const dir = join(await mkdtemp(join(tmpdir(), 'dd-bench-')), project.id);
   try {
-    await fetchBase(project, base, dir);
+    const baseCommitId = await fetchBase(project, base, dir);
     await project.link?.(dir, base);
     checkLinks(dir, project.links ?? []);
     await strip(dir, project.strip ?? []);
@@ -87,7 +88,7 @@ export async function prepareClone(project, task, condition) {
       await task.setup(dir);
       teamCommit(dir, project, task.setupMessage ?? 'Update');
     }
-    return { dir, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, compile_warnings: compileWarnings, index_memories: indexMemories };
+    return { dir, base_commit: baseCommitId, baseline: git(dir, 'rev-parse', 'HEAD').trim(), store_warnings: warnings, compile_warnings: compileWarnings, index_memories: indexMemories };
   } catch (err) {
     await removeClone(dir, project);
     throw err;
