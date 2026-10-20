@@ -1,11 +1,12 @@
 {
-  "input": "C:\\dev\\supermem\\output\\eval\\bench-2026-10-fix\\opus-combined\\results.json",
+  "input": "C:\\dev\\supermem\\output\\eval\\bench-2026-10-fix\\opus-all\\results.json",
   "model": "claude-opus-5-5",
   "conditions": [
     "dd2",
     "docref",
     "doc",
-    "none"
+    "none",
+    "docdd"
   ],
   "by_kind": {
     "memory": {
@@ -169,6 +170,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 45,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            92,
+            100
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            96,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 48777,
+          "median_minutes": 1.58,
+          "mean_cost_usd": 0.5488,
+          "total_cost_usd": 24.7,
+          "median_tool_calls": 20,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 41,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 4,
+          "median_injected_tokens": 875,
+          "median_hook_ms": 56,
+          "median_node_ms": 45
         }
       },
       "above_best_pct": {
@@ -176,19 +217,22 @@
           "dd2": 7,
           "docref": 9,
           "doc": 11,
-          "none": 0
+          "none": 0,
+          "docdd": 17
         },
         "time": {
           "dd2": 0,
           "docref": 6,
           "doc": 7,
-          "none": 5
+          "none": 5,
+          "docdd": 2
         },
         "cost": {
           "dd2": 0,
           "docref": 12,
           "doc": 12,
-          "none": 2
+          "none": 2,
+          "docdd": 3
         }
       }
     },
@@ -353,6 +397,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 33,
+          "resolution_pct": 97,
+          "resolution_ci95": [
+            85,
+            99
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            95,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 36796,
+          "median_minutes": 1.14,
+          "mean_cost_usd": 0.3794,
+          "total_cost_usd": 12.52,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 88,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 328,
+          "median_hook_ms": 56,
+          "median_node_ms": 46
         }
       },
       "above_best_pct": {
@@ -360,19 +444,22 @@
           "dd2": 10,
           "docref": 15,
           "doc": 10,
-          "none": 0
+          "none": 0,
+          "docdd": 17
         },
         "time": {
           "dd2": 0,
           "docref": 19,
           "doc": 36,
-          "none": 7
+          "none": 7,
+          "docdd": 19
         },
         "cost": {
           "dd2": 11,
           "docref": 37,
           "doc": 12,
-          "none": 0
+          "none": 0,
+          "docdd": 39
         }
       }
     },
@@ -537,6 +624,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 78,
+          "resolution_pct": 99,
+          "resolution_ci95": [
+            93,
+            100
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            97,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 42255,
+          "median_minutes": 1.38,
+          "mean_cost_usd": 0.4772,
+          "total_cost_usd": 37.22,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 95,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 47,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 740,
+          "median_hook_ms": 56,
+          "median_node_ms": 45
         }
       },
       "above_best_pct": {
@@ -544,19 +671,22 @@
           "dd2": 5,
           "docref": 9,
           "doc": 7,
-          "none": 0
+          "none": 0,
+          "docdd": 12
         },
         "time": {
           "dd2": 0,
           "docref": 2,
           "doc": 6,
-          "none": 2
+          "none": 2,
+          "docdd": 4
         },
         "cost": {
           "dd2": 1,
           "docref": 17,
           "doc": 11,
-          "none": 0
+          "none": 0,
+          "docdd": 11
         }
       }
     }
@@ -723,6 +853,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 33,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            90,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 40007,
+          "median_minutes": 1.08,
+          "mean_cost_usd": 0.397,
+          "total_cost_usd": 13.1,
+          "median_tool_calls": 12,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 24,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 4,
+          "median_injected_tokens": 780,
+          "median_hook_ms": 58,
+          "median_node_ms": 46
         }
       },
       "above_best_pct": {
@@ -730,19 +900,22 @@
           "dd2": 1,
           "docref": 5,
           "doc": 8,
-          "none": 0
+          "none": 0,
+          "docdd": 8
         },
         "time": {
           "dd2": 20,
           "docref": 0,
           "doc": 21,
-          "none": 20
+          "none": 20,
+          "docdd": 20
         },
         "cost": {
           "dd2": 2,
           "docref": 9,
           "doc": 4,
-          "none": 0
+          "none": 0,
+          "docdd": 5
         }
       }
     },
@@ -907,6 +1080,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 9,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            70,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 78974,
+          "median_minutes": 1.98,
+          "mean_cost_usd": 0.8368,
+          "total_cost_usd": 7.53,
+          "median_tool_calls": 23,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 2,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 20,
+          "median_injected_tokens": 5647,
+          "median_hook_ms": 56,
+          "median_node_ms": 45
         }
       },
       "above_best_pct": {
@@ -914,19 +1127,22 @@
           "dd2": 5,
           "docref": 40,
           "doc": 1,
-          "none": 0
+          "none": 0,
+          "docdd": 34
         },
         "time": {
           "dd2": 2,
           "docref": 1,
           "doc": 0,
-          "none": 3
+          "none": 3,
+          "docdd": 4
         },
         "cost": {
           "dd2": 2,
           "docref": 67,
           "doc": 10,
-          "none": 0
+          "none": 0,
+          "docdd": 50
         }
       }
     },
@@ -1091,6 +1307,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 15,
+          "resolution_pct": 93,
+          "resolution_ci95": [
+            70,
+            99
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            93,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 39106,
+          "median_minutes": 2.09,
+          "mean_cost_usd": 0.5004,
+          "total_cost_usd": 7.51,
+          "median_tool_calls": 18,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 73,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 328,
+          "median_hook_ms": 52,
+          "median_node_ms": 44
         }
       },
       "above_best_pct": {
@@ -1098,19 +1354,22 @@
           "dd2": 1,
           "docref": 6,
           "doc": 10,
-          "none": 0
+          "none": 0,
+          "docdd": 3
         },
         "time": {
           "dd2": 0,
           "docref": 44,
           "doc": 34,
-          "none": 7
+          "none": 7,
+          "docdd": 24
         },
         "cost": {
-          "dd2": 2,
-          "docref": 0,
-          "doc": 25,
-          "none": 13
+          "dd2": 7,
+          "docref": 6,
+          "doc": 32,
+          "none": 20,
+          "docdd": 0
         }
       }
     },
@@ -1275,6 +1534,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 21,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            85,
+            100
+          ],
+          "quality_pct": 95,
+          "quality_ci95": [
+            90,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 40650,
+          "median_minutes": 1.33,
+          "mean_cost_usd": 0.4324,
+          "total_cost_usd": 9.08,
+          "median_tool_calls": 20,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 15,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 417,
+          "median_hook_ms": 57,
+          "median_node_ms": 52
         }
       },
       "above_best_pct": {
@@ -1282,19 +1581,22 @@
           "dd2": 5,
           "docref": 14,
           "doc": 22,
-          "none": 0
+          "none": 0,
+          "docdd": 18
         },
         "time": {
           "dd2": 6,
           "docref": 5,
           "doc": 12,
-          "none": 0
+          "none": 0,
+          "docdd": 10
         },
         "cost": {
           "dd2": 15,
           "docref": 32,
           "doc": 25,
-          "none": 0
+          "none": 0,
+          "docdd": 33
         }
       }
     }
@@ -1461,6 +1763,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 40007,
+          "median_minutes": 0.94,
+          "mean_cost_usd": 0.3641,
+          "total_cost_usd": 1.09,
+          "median_tool_calls": 12,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 4,
+          "median_injected_tokens": 740,
+          "median_hook_ms": 53,
+          "median_node_ms": 42
         }
       },
       "above_best_pct": {
@@ -1468,19 +1810,22 @@
           "dd2": 0,
           "docref": 3,
           "doc": 7,
-          "none": 5
+          "none": 5,
+          "docdd": 6
         },
         "time": {
           "dd2": 56,
           "docref": 0,
           "doc": 49,
-          "none": 113
+          "none": 113,
+          "docdd": 21
         },
         "cost": {
           "dd2": 8,
           "docref": 0,
           "doc": 21,
-          "none": 15
+          "none": 15,
+          "docdd": 5
         }
       }
     },
@@ -1645,6 +1990,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 36818,
+          "median_minutes": 0.67,
+          "mean_cost_usd": 0.3218,
+          "total_cost_usd": 1.93,
+          "median_tool_calls": 10,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 607,
+          "median_hook_ms": 58,
+          "median_node_ms": 46
         }
       },
       "above_best_pct": {
@@ -1652,19 +2037,22 @@
           "dd2": 19,
           "docref": 35,
           "doc": 26,
-          "none": 0
+          "none": 0,
+          "docdd": 37
         },
         "time": {
           "dd2": 32,
           "docref": 43,
           "doc": 56,
-          "none": 0
+          "none": 0,
+          "docdd": 6
         },
         "cost": {
           "dd2": 34,
           "docref": 49,
           "doc": 36,
-          "none": 0
+          "none": 0,
+          "docdd": 57
         }
       }
     },
@@ -1817,6 +2205,43 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 27,
+          "resolution_pct": 96,
+          "resolution_ci95": [
+            82,
+            99
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            94,
+            100
+          ],
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 36401,
+          "median_minutes": 1.36,
+          "mean_cost_usd": 0.3922,
+          "total_cost_usd": 10.59,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 85,
+          "keys_delivered_pct": null,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": null,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 311,
+          "median_hook_ms": 54,
+          "median_node_ms": 45
         }
       },
       "above_best_pct": {
@@ -1824,19 +2249,22 @@
           "dd2": 2,
           "docref": 5,
           "doc": 7,
-          "none": 0
+          "none": 0,
+          "docdd": 7
         },
         "time": {
           "dd2": 0,
           "docref": 11,
           "doc": 23,
-          "none": 8
+          "none": 8,
+          "docdd": 21
         },
         "cost": {
           "dd2": 7,
           "docref": 35,
           "doc": 9,
-          "none": 0
+          "none": 0,
+          "docdd": 36
         }
       }
     },
@@ -2001,6 +2429,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 88,
+          "quality_ci95": [
+            77,
+            98
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 50509,
+          "median_minutes": 1.81,
+          "mean_cost_usd": 0.6086,
+          "total_cost_usd": 3.65,
+          "median_tool_calls": 24,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 4,
+          "median_injected_tokens": 1082,
+          "median_hook_ms": 57,
+          "median_node_ms": 45
         }
       },
       "above_best_pct": {
@@ -2008,19 +2476,22 @@
           "dd2": 20,
           "docref": 6,
           "doc": 6,
-          "none": 0
+          "none": 0,
+          "docdd": 18
         },
         "time": {
           "dd2": 46,
           "docref": 0,
           "doc": 27,
-          "none": 19
+          "none": 19,
+          "docdd": 37
         },
         "cost": {
           "dd2": 15,
           "docref": 0,
           "doc": 5,
-          "none": 16
+          "none": 16,
+          "docdd": 13
         }
       }
     },
@@ -2185,6 +2656,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 48777,
+          "median_minutes": 1.98,
+          "mean_cost_usd": 0.6168,
+          "total_cost_usd": 3.7,
+          "median_tool_calls": 25,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 417,
+          "median_hook_ms": 51,
+          "median_node_ms": 42
         }
       },
       "above_best_pct": {
@@ -2192,19 +2703,22 @@
           "dd2": 10,
           "docref": 22,
           "doc": 15,
-          "none": 0
+          "none": 0,
+          "docdd": 15
         },
         "time": {
           "dd2": 0,
           "docref": 31,
           "doc": 11,
-          "none": 4
+          "none": 4,
+          "docdd": 15
         },
         "cost": {
           "dd2": 14,
           "docref": 42,
           "doc": 34,
-          "none": 0
+          "none": 0,
+          "docdd": 25
         }
       }
     },
@@ -2369,6 +2883,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 42929,
+          "median_minutes": 1.55,
+          "mean_cost_usd": 0.6136,
+          "total_cost_usd": 3.68,
+          "median_tool_calls": 20,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 594,
+          "median_hook_ms": 56,
+          "median_node_ms": 45
         }
       },
       "above_best_pct": {
@@ -2376,19 +2930,22 @@
           "dd2": 16,
           "docref": 2,
           "doc": 3,
-          "none": 0
+          "none": 0,
+          "docdd": 4
         },
         "time": {
           "dd2": 0,
           "docref": 2,
           "doc": 3,
-          "none": 6
+          "none": 6,
+          "docdd": 16
         },
         "cost": {
           "dd2": 0,
           "docref": 8,
           "doc": 36,
-          "none": 20
+          "none": 20,
+          "docdd": 5
         }
       }
     },
@@ -2553,6 +3110,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 42255,
+          "median_minutes": 1.49,
+          "mean_cost_usd": 0.6682,
+          "total_cost_usd": 4.01,
+          "median_tool_calls": 13,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 5,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 5,
+          "median_injected_tokens": 873,
+          "median_hook_ms": 52,
+          "median_node_ms": 41
         }
       },
       "above_best_pct": {
@@ -2560,19 +3157,22 @@
           "dd2": 22,
           "docref": 5,
           "doc": 0,
-          "none": 11
+          "none": 11,
+          "docdd": 4
         },
         "time": {
           "dd2": 41,
           "docref": 6,
           "doc": 0,
-          "none": 57
+          "none": 57,
+          "docdd": 15
         },
         "cost": {
           "dd2": 0,
           "docref": 45,
           "doc": 16,
-          "none": 10
+          "none": 10,
+          "docdd": 20
         }
       }
     },
@@ -2737,6 +3337,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 45628,
+          "median_minutes": 1.29,
+          "mean_cost_usd": 0.4623,
+          "total_cost_usd": 1.39,
+          "median_tool_calls": 12,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 5,
+          "median_injected_tokens": 901,
+          "median_hook_ms": 60,
+          "median_node_ms": 48
         }
       },
       "above_best_pct": {
@@ -2744,19 +3384,22 @@
           "dd2": 8,
           "docref": 23,
           "doc": 23,
-          "none": 0
+          "none": 0,
+          "docdd": 24
         },
         "time": {
-          "dd2": 4,
-          "docref": 21,
-          "doc": 8,
-          "none": 0
+          "dd2": 9,
+          "docref": 28,
+          "doc": 14,
+          "none": 5,
+          "docdd": 0
         },
         "cost": {
           "dd2": 9,
           "docref": 33,
           "doc": 23,
-          "none": 0
+          "none": 0,
+          "docdd": 16
         }
       }
     },
@@ -2921,6 +3564,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 40978,
+          "median_minutes": 0.75,
+          "mean_cost_usd": 0.4935,
+          "total_cost_usd": 2.96,
+          "median_tool_calls": 17,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 402,
+          "median_hook_ms": 52,
+          "median_node_ms": 41
         }
       },
       "above_best_pct": {
@@ -2928,19 +3611,22 @@
           "dd2": 1,
           "docref": 14,
           "doc": 0,
-          "none": 2
+          "none": 2,
+          "docdd": 11
         },
         "time": {
-          "dd2": 16,
-          "docref": 53,
-          "doc": 0,
-          "none": 33
+          "dd2": 36,
+          "docref": 80,
+          "doc": 17,
+          "none": 56,
+          "docdd": 0
         },
         "cost": {
-          "dd2": 7,
-          "docref": 0,
-          "doc": 22,
-          "none": 16
+          "dd2": 22,
+          "docref": 14,
+          "doc": 39,
+          "none": 32,
+          "docdd": 0
         }
       }
     },
@@ -3105,6 +3791,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 54917,
+          "median_minutes": 1.96,
+          "mean_cost_usd": 0.6651,
+          "total_cost_usd": 2,
+          "median_tool_calls": 36,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 4,
+          "median_injected_tokens": 964,
+          "median_hook_ms": 49,
+          "median_node_ms": 44
         }
       },
       "above_best_pct": {
@@ -3112,19 +3838,22 @@
           "dd2": 11,
           "docref": 25,
           "doc": 16,
-          "none": 0
+          "none": 0,
+          "docdd": 21
         },
         "time": {
           "dd2": 3,
           "docref": 5,
           "doc": 6,
-          "none": 0
+          "none": 0,
+          "docdd": 2
         },
         "cost": {
           "dd2": 26,
           "docref": 45,
           "doc": 22,
-          "none": 0
+          "none": 0,
+          "docdd": 30
         }
       }
     },
@@ -3289,6 +4018,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 45980,
+          "median_minutes": 1.34,
+          "mean_cost_usd": 0.4604,
+          "total_cost_usd": 1.38,
+          "median_tool_calls": 15,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 8,
+          "median_injected_tokens": 1242,
+          "median_hook_ms": 58,
+          "median_node_ms": 52
         }
       },
       "above_best_pct": {
@@ -3296,19 +4065,22 @@
           "dd2": 3,
           "docref": 12,
           "doc": 5,
-          "none": 0
+          "none": 0,
+          "docdd": 10
         },
         "time": {
           "dd2": 8,
           "docref": 22,
           "doc": 54,
-          "none": 0
+          "none": 0,
+          "docdd": 24
         },
         "cost": {
           "dd2": 0,
           "docref": 19,
           "doc": 10,
-          "none": 0
+          "none": 0,
+          "docdd": 13
         }
       }
     },
@@ -3473,6 +4245,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 38448,
+          "median_minutes": 0.8,
+          "mean_cost_usd": 0.2791,
+          "total_cost_usd": 0.84,
+          "median_tool_calls": 6,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 780,
+          "median_hook_ms": 90,
+          "median_node_ms": 77
         }
       },
       "above_best_pct": {
@@ -3480,19 +4292,22 @@
           "dd2": 4,
           "docref": 15,
           "doc": 9,
-          "none": 0
+          "none": 0,
+          "docdd": 21
         },
         "time": {
           "dd2": 24,
           "docref": 64,
           "doc": 0,
-          "none": 14
+          "none": 14,
+          "docdd": 60
         },
         "cost": {
           "dd2": 10,
           "docref": 32,
           "doc": 7,
-          "none": 0
+          "none": 0,
+          "docdd": 26
         }
       }
     }
@@ -3659,6 +4474,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 18,
+          "resolution_pct": 94,
+          "resolution_ci95": [
+            74,
+            99
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            95,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 43511,
+          "median_minutes": 1.78,
+          "mean_cost_usd": 0.5875,
+          "total_cost_usd": 10.57,
+          "median_tool_calls": 17,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 78,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 2,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 1
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 328,
+          "median_hook_ms": 53,
+          "median_node_ms": 44
         }
       },
       "above_best_pct": {
@@ -3666,19 +4521,22 @@
           "dd2": 15,
           "docref": 9,
           "doc": 3,
-          "none": 0
+          "none": 0,
+          "docdd": 15
         },
         "time": {
           "dd2": 0,
           "docref": 7,
           "doc": 11,
-          "none": 4
+          "none": 4,
+          "docdd": 9
         },
         "cost": {
           "dd2": 3,
           "docref": 44,
           "doc": 9,
-          "none": 0
+          "none": 0,
+          "docdd": 34
         }
       }
     },
@@ -3843,6 +4701,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 54,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            93,
+            100
+          ],
+          "quality_pct": 98,
+          "quality_ci95": [
+            96,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 40145,
+          "median_minutes": 1.11,
+          "mean_cost_usd": 0.4108,
+          "total_cost_usd": 22.18,
+          "median_tool_calls": 13,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 39,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 745,
+          "median_hook_ms": 57,
+          "median_node_ms": 46
         }
       },
       "above_best_pct": {
@@ -3850,19 +4748,22 @@
           "dd2": 1,
           "docref": 6,
           "doc": 8,
-          "none": 0
+          "none": 0,
+          "docdd": 9
         },
         "time": {
-          "dd2": 3,
-          "docref": 4,
-          "doc": 12,
-          "none": 0
+          "dd2": 5,
+          "docref": 6,
+          "doc": 15,
+          "none": 3,
+          "docdd": 0
         },
         "cost": {
           "dd2": 7,
           "docref": 17,
           "doc": 11,
-          "none": 0
+          "none": 0,
+          "docdd": 15
         }
       }
     },
@@ -4027,6 +4928,46 @@
           "median_injected_tokens": 0,
           "median_hook_ms": null,
           "median_node_ms": null
+        },
+        "docdd": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 59532,
+          "median_minutes": 3.63,
+          "mean_cost_usd": 0.7439,
+          "total_cost_usd": 4.46,
+          "median_tool_calls": 27,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 100,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 402,
+          "median_hook_ms": 52,
+          "median_node_ms": 44
         }
       },
       "above_best_pct": {
@@ -4034,19 +4975,22 @@
           "dd2": 3,
           "docref": 10,
           "doc": 29,
-          "none": 0
+          "none": 0,
+          "docdd": 4
         },
         "time": {
-          "dd2": 23,
-          "docref": 0,
-          "doc": 31,
-          "none": 31
+          "dd2": 24,
+          "docref": 1,
+          "doc": 33,
+          "none": 33,
+          "docdd": 0
         },
         "cost": {
-          "dd2": 2,
-          "docref": 0,
-          "doc": 40,
-          "none": 24
+          "dd2": 13,
+          "docref": 10,
+          "doc": 54,
+          "none": 37,
+          "docdd": 0
         }
       }
     }
@@ -4072,6 +5016,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
       }
     },
     "ledgerkit-import-dir": {
@@ -4094,6 +5043,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 33
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-ledger-package": {
@@ -4113,6 +5067,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4138,6 +5097,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-percent": {
@@ -4157,6 +5121,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4182,6 +5151,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-review-fix-entries": {
@@ -4201,6 +5175,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4226,6 +5205,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-summary-print": {
@@ -4245,6 +5229,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4270,6 +5259,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 67
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "ledgerkit-vat-summary": {
@@ -4289,6 +5283,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4314,6 +5313,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
       }
     },
     "patriark-review-command": {
@@ -4333,6 +5337,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4358,6 +5367,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
       }
     },
     "supermem-keyword-ies-plural": {
@@ -4380,6 +5394,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 2,
+        "specific_quality_pct": null
       }
     },
     "supermem-recall-json": {
@@ -4399,6 +5418,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4424,6 +5448,11 @@
         "runs": 3,
         "resolved": 0,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "supermem-symbols-not-prompts": {
@@ -4446,6 +5475,11 @@
         "runs": 3,
         "resolved": 2,
         "specific_quality_pct": 67
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "supermem-ui-kind-filter": {
@@ -4465,6 +5499,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4490,6 +5529,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 33
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-dedup-package": {
@@ -4512,6 +5556,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 0
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-healthz": {
@@ -4531,6 +5580,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4556,6 +5610,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-stdout-debug": {
@@ -4575,6 +5634,11 @@
         "specific_quality_pct": 100
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 100
@@ -4600,6 +5664,11 @@
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": 33
+      },
+      "docdd": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
       }
     },
     "tollgate-version-flag": {
@@ -4619,6 +5688,11 @@
         "specific_quality_pct": null
       },
       "none": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      },
+      "docdd": {
         "runs": 3,
         "resolved": 3,
         "specific_quality_pct": null
@@ -4650,6 +5724,14 @@
           0.13333333333333333,
           0.5111111111111112
         ]
+      },
+      "docdd": {
+        "n": 15,
+        "mean": 0,
+        "ci95": [
+          0,
+          0
+        ]
       }
     },
     "resolution": {
@@ -4675,6 +5757,14 @@
         "ci95": [
           0,
           0.15384615384615385
+        ]
+      },
+      "docdd": {
+        "n": 26,
+        "mean": 0.012820512820512822,
+        "ci95": [
+          0,
+          0.038461538461538464
         ]
       }
     },
@@ -4702,6 +5792,14 @@
           -0.02914756410256414,
           0.036744561538461534
         ]
+      },
+      "docdd": {
+        "n": 26,
+        "mean": -0.04279277692307691,
+        "ci95": [
+          -0.0841493820512821,
+          -0.0029903000000000056
+        ]
       }
     },
     "peak_context_tokens": {
@@ -4728,8 +5826,16 @@
           157.30769230769272,
           3051.8461538461543
         ]
+      },
+      "docdd": {
+        "n": 26,
+        "mean": -4448.948717948718,
+        "ci95": [
+          -7200.7692307692305,
+          -2053.923076923077
+        ]
       }
     }
   },
-  "table": "| | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge |\n|---|---|---|---|---|\n| Resolution | 100% (95-100) | 100% (95-100) | 99% (93-100) | 95% (88-98) |\n| Code quality | 98% (96-99) | 97% (95-99) | 98% (95-100) | 92% (89-95) |\n| Project requirements met | 100% (100-100) | 100% (100-100) | 98% (93-100) | 69% (56-82) |\n| Context (0 = least) | +5% (39.8k) | +9% (41.3k) | +7% (40.4k) | +0% (37.8k) |\n| Time (0 = fastest) | +0% (1.33 min) | +2% (1.35 min) | +6% (1.41 min) | +2% (1.36 min) |\n| Cost (0 = cheapest) | +1% ($0.4344) | +17% ($0.5007) | +11% ($0.4742) | +0% ($0.428) |"
+  "table": "| | With DD v2 | Guide, referenced | Guide, not referenced | No project knowledge | Guide, referenced, and DD v2 |\n|---|---|---|---|---|---|\n| Resolution | 100% (95-100) | 100% (95-100) | 99% (93-100) | 95% (88-98) | 99% (93-100) |\n| Code quality | 98% (96-99) | 97% (95-99) | 98% (95-100) | 92% (89-95) | 98% (97-100) |\n| Project requirements met | 100% (100-100) | 100% (100-100) | 98% (93-100) | 69% (56-82) | 100% (100-100) |\n| Context (0 = least) | +5% (39.8k) | +9% (41.3k) | +7% (40.4k) | +0% (37.8k) | +12% (42.3k) |\n| Time (0 = fastest) | +0% (1.33 min) | +2% (1.35 min) | +6% (1.41 min) | +2% (1.36 min) | +4% (1.38 min) |\n| Cost (0 = cheapest) | +1% ($0.4344) | +17% ($0.5007) | +11% ($0.4742) | +0% ($0.428) | +11% ($0.4772) |"
 }

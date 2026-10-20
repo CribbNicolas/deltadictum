@@ -362,6 +362,49 @@ new runs carry both versions' changes: 0.9.10's advisory line and 0.9.11's two f
 `data/bench-2026-10-fix-{haiku,opus}.{report,judge}.json` and their audit verdicts; each report pairs the
 new `dd2` with the earlier runs of the other conditions. The site's summaries now read these reports.
 
+## Added 2026-10-20: the guide and DD together, on 0.9.11
+
+`docdd` ran again from the 0.9.11 code, so that it and `dd2` carry the same DD: the same 26 tasks, three
+runs each with both models, judged and blind-audited the same way (six Sonnet 5.5 auditors over the 156
+packets, no override in either model). No harness error and no timeout. One Haiku run
+(`supermem-symbols-not-prompts-docdd-2`) held the harness for about an hour after the agent was done: a
+`src/cli.js resident` process started inside the task's clone kept running, and the run returned once it
+was stopped by hand. Its row is the agent's run as recorded and is kept.
+
+| Claude Opus 5.5 | With DD 0.9.11 | Guide, referenced, and DD 0.9.11 | Same, DD 0.9.10 | Guide, referenced | No project knowledge |
+|---|---|---|---|---|---|
+| Resolution | 100% (95-100) | 99% (93-100) | 100% (95-100) | 100% (95-100) | 95% (88-98) |
+| Code quality | 98% (96-99) | 98% (97-100) | 97% (95-99) | 97% (95-99) | 92% (89-95) |
+| Project requirements met | 100% (100-100) | 100% (100-100) | 98% (93-100) | 100% (100-100) | 69% (56-82) |
+| Context | 39.8k | 42.3k | 42.8k | 41.3k | 37.8k |
+| Cost | $0.4344 | $0.4772 | $0.4745 | $0.5007 | $0.428 |
+
+| Claude Haiku 5.5 | With DD 0.9.11 | Guide, referenced, and DD 0.9.11 | Same, DD 0.9.10 | Guide, referenced | No project knowledge |
+|---|---|---|---|---|---|
+| Resolution | 99% (93-100) | 97% (91-99) | 99% (93-100) | 97% (91-99) | 92% (84-96) |
+| Code quality | 97% (95-99) | 97% (95-99) | 96% (94-98) | 97% (95-99) | 85% (81-90) |
+| Project requirements met | 98% (93-100) | 98% (93-100) | 98% (93-100) | 98% (93-100) | 43% (30-57) |
+| Context | 48.5k | 58.8k | 56.2k | 54.8k | 46.1k |
+| Cost | $0.0236 | $0.0256 | $0.0258 | $0.0231 | $0.0205 |
+
+- **The guide adds nothing DD does not already give.** Paired by task against `dd2`, with both on 0.9.11,
+  the project's requirements are level (a paired difference of 0 with each model), resolution is one run
+  lower with each (−1.3 points: Opus −3.8 to 0, Haiku −6.4 to 2.6), and quality rounds to the same value. The one unresolved Opus run broke an existing
+  test (`supermem-keyword-ies-plural-docdd-1`); Haiku's two are a wrong SIE export and a wrong
+  implementation of `supermem-symbols-not-prompts`.
+- **It costs context.** The guide is read whole and DD delivers on top of it: paired with `dd2`, 4.4k tokens
+  more with Opus (2.1k to 7.2k) and 5.6k with Haiku (3.1k to 7.9k), the most of any condition. With Opus
+  that is $0.043 more per task ($0.003 to $0.084); with Haiku the cost difference does not clear zero.
+- **0.9.11's advisory line holds with the guide too.** Haiku runs that added duplicate skipping to
+  ledgerkit changes that did not ask for it fell from 8 (0.9.10) to 2, both in `ledgerkit-usd-import`, as
+  with `dd2`. Checks failed for scope fell from 10 runs to 8; the rest are scratch files committed and
+  refactors beyond the task. No run of either model took the false correction turn.
+
+Data: `data/bench-2026-10-fix-{haiku,opus}.report.json` now carry five conditions, the 0.9.11 `dd2` and
+`docdd` beside the earlier runs of the other three; `.judge.json` holds the judge's and the audit's
+verdicts for the 0.9.11 runs, and `-docdd.audit-verdicts.jsonl` the new audit. The site's landing reads
+the new condition as "With documentation + DD".
+
 ## Reproduce
 
 ```bash
