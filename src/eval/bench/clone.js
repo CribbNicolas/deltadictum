@@ -1,5 +1,5 @@
 // A fresh clone per run, ready for its condition. Each condition gets the
-// project's knowledge through one channel only; a rule the project's own
+// project's knowledge through one channel only (docdd through both); a rule the project's own
 // CLAUDE.md or AGENTS.md states is removed in all four (validity rule 3), and
 // the agent's change is everything after the baseline commit.
 import { execFileSync } from 'node:child_process';
@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { baseCommit, cleanHistory, treeFiles, uploadPackFor } from './history.js';
+import { GUIDE, WITH_DD } from './situations.js';
 import { installStore, materializeMemories, writeGuide } from './store.js';
 
 const git = (dir, ...args) => execFileSync('git', ['-C', dir, ...args], { maxBuffer: 64 * 1024 * 1024 }).toString();
@@ -72,13 +73,13 @@ export async function prepareClone(project, task, condition) {
     // What a project needs removed or changed in every condition (a committed plugin setting, say).
     await project.prepare?.(dir);
     let warnings = [], indexMemories = null, compileWarnings = [];
-    if (condition === 'doc' || condition === 'docref') {
+    if (GUIDE[condition]) {
       const { memories, warnings: found } = await materializeMemories(dir, project);
       warnings = found;
-      await writeGuide(dir, project, memories, condition === 'docref');
+      await writeGuide(dir, project, memories, GUIDE[condition] === 'referenced');
     }
-    if (condition === 'dd2' && project.store === 'existing') await restoreStore(project, base, dir);
-    if (condition === 'dd2') ({ warnings, index_memories: indexMemories, compile_warnings: compileWarnings } = await installStore(dir, project));
+    if (WITH_DD.includes(condition) && project.store === 'existing') await restoreStore(project, base, dir);
+    if (WITH_DD.includes(condition)) ({ warnings, index_memories: indexMemories, compile_warnings: compileWarnings } = await installStore(dir, project));
     else await rm(join(dir, '.dd'), { recursive: true, force: true });
     // The starting point is the project's own history. The stripped lines, the prepare step and the
     // condition's files are one commit by its team; a task's setup (the teammate's change a prompt calls

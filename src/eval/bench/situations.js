@@ -27,4 +27,8 @@ export const SITUATIONS = {
 
 export const ORIGINS = ['mined', 'authored', 'invented'];
 
-export const CONDITIONS = ['dd2', 'docref', 'doc', 'none'];
+// docdd, added after the full benchmark, carries both channels: the referenced guide and DD.
+export const CONDITIONS = ['dd2', 'docref', 'doc', 'none', 'docdd'];
+// The conditions that run with DD's store and hook, and the guide each documentation condition writes.
+export const WITH_DD = ['dd2', 'docdd'];
+export const GUIDE = { doc: 'unreferenced', docref: 'referenced', docdd: 'referenced' };
