@@ -20,17 +20,26 @@ test('values read in their unit', () => {
   assert.equal(formatValue(0.09, 'usd'), '$0.090');
 });
 
-test('a change is relative to the base, signed and whole, and knows whether it is better', () => {
-  assert.deepEqual(formatChange(77, 70, 'pct', 'higher'), { text: '+10%', better: true });
-  assert.deepEqual(formatChange(27200, 27200, 'tokens', 'lower'), { text: '+0%', better: null });
-  assert.deepEqual(formatChange(0.08, 0.09, 'usd', 'lower'), { text: '-11%', better: true });
-  assert.deepEqual(formatChange(31000, 27200, 'tokens', 'lower'), { text: '+14%', better: false });
-  assert.deepEqual(formatChange(70.2, 70, 'pct', 'higher'), { text: '+0%', better: null });
+// The change is read off the values as the table shows them, so the two always agree: a percentage changes
+// by points (56% to 99% is +43 pts, not +77%), context and cost by their share of the base.
+test('a percentage changes by points between the values shown', () => {
+  assert.deepEqual(formatChange(99, 56, 'pct', 'higher'), { text: '+43 pts', better: true });
+  assert.deepEqual(formatChange(99.5, 93.6, 'pct', 'higher'), { text: '+6 pts', better: true });
+  assert.deepEqual(formatChange(99.0, 93.6, 'pct', 'higher'), { text: '+5 pts', better: true });
+  assert.deepEqual(formatChange(70.2, 70, 'pct', 'higher'), { text: '+0 pts', better: null });
+  assert.deepEqual(formatChange(10, 0, 'pct', 'lower'), { text: '+10 pts', better: false });
 });
 
-test('a base of zero shows the value itself', () => {
-  assert.deepEqual(formatChange(10, 0, 'pct', 'lower'), { text: '10%', better: false });
-  assert.deepEqual(formatChange(0, 0, 'pct', 'lower'), { text: '0%', better: null });
+test('context and cost change by their share of the base, between the values shown', () => {
+  assert.deepEqual(formatChange(47300, 42000, 'tokens', 'lower'), { text: '+13%', better: false });
+  assert.deepEqual(formatChange(27200, 27240, 'tokens', 'lower'), { text: '+0%', better: null });
+  assert.deepEqual(formatChange(0.08, 0.09, 'usd', 'lower'), { text: '-11%', better: true });
+  assert.deepEqual(formatChange(0.2294, 0.2236, 'usd', 'lower'), { text: '+2%', better: false });
+});
+
+test('context or cost over a base of zero shows the value itself', () => {
+  assert.deepEqual(formatChange(0.01, 0, 'usd', 'lower'), { text: '$0.010', better: false });
+  assert.deepEqual(formatChange(0, 0, 'usd', 'lower'), { text: '$0.000', better: null });
 });
 
 const HIGHLIGHT = { reference: 'docref', contenders: ['docdd'] };
@@ -38,7 +47,7 @@ const HIGHLIGHT = { reference: 'docref', contenders: ['docdd'] };
 test('the landing table shows every value, with its change against the base beside it', () => {
   const table = tableFor(SUMMARY, HIGHLIGHT);
   assert.deepEqual(table.columns.map(c => [c.label, c.base]), [['Agent alone', true], ['With documentation', false], ['With documentation + DD', false]]);
-  assert.deepEqual(table.rows[0].cells.map(c => [c.text, c.change]), [['70%', null], ['72%', '+3%'], ['77%', '+10%']]);
+  assert.deepEqual(table.rows[0].cells.map(c => [c.text, c.change]), [['70%', null], ['72%', '+2 pts'], ['77%', '+7 pts']]);
   assert.deepEqual(table.rows[1].cells.map(c => [c.text, c.change]), [['27.2k tokens', null], ['31.0k tokens', '+14%'], ['27.2k tokens', '+0%']]);
 });
 

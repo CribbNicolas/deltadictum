@@ -9,11 +9,15 @@ export function formatValue(value, unit) {
   return `$${value.toFixed(3)}`;
 }
 
+// The change is read off the values as shown, so cell and change always agree: a percentage changes by
+// points (56% to 99% is +43 pts, never +77%), context and cost by their share of the base.
 export function formatChange(value, base, unit, better) {
-  if (base === 0) return { text: formatValue(value, unit), better: value === 0 ? null : (better === 'higher') === (value > 0) };
-  const pct = Math.round(((value - base) / base) * 100) || 0;
-  if (pct === 0) return { text: '+0%', better: null };
-  return { text: `${pct > 0 ? '+' : '-'}${Math.abs(pct)}%`, better: (better === 'higher') === (pct > 0) };
+  const now = shown(value, unit), was = shown(base, unit);
+  const judged = delta => (delta === 0 ? null : (better === 'higher') === (delta > 0));
+  if (unit === 'pct') return { text: `${now - was < 0 ? '-' : '+'}${Math.abs(now - was)} pts`, better: judged(now - was) };
+  if (was === 0) return { text: formatValue(value, unit), better: judged(now) };
+  const pct = Math.round(((now - was) / was) * 100) || 0;
+  return { text: `${pct < 0 ? '-' : '+'}${Math.abs(pct)}%`, better: judged(pct) };
 }
 
 export function validateSummary(summary, name) {
