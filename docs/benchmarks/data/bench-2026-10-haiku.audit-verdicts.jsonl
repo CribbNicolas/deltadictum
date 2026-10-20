@@ -310,3 +310,81 @@
 {"n":"fb683173","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
 {"n":"fcd818f5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
 {"n":"fd683499","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"05fa2a13","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"07fa2d39","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"11b0f190","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"13b0f4b6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"191ca683","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"1a6de6b2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied."}
+{"n":"324497a4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"38efe9b8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"416cb507","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5edcc374","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"60f72c52","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied."}
+{"n":"622e535f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"68d3dd24","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6ad3e04a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6e7b55e3","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied."}
+{"n":"8387dff4","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8cc8993c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9b8b895c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9f3d2f93","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied."}
+{"n":"a22474fc","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a9b603fc","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b3fed938","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d354542c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"eec175d8","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f0c178fe","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f36d35a8","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"06fa2ba6","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"083ad1df","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"12b0f323","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"14376332","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"196de51f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied to the stdout output (conventions true)."}
+{"n":"1b1ca9a9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"34449aca","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"3aefecde","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"426cb69a","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5fdcc507","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"61dcc82d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"632e54f2","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6986cb8b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6b86ceb1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6f7b5776","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions false->true: the user explicitly asked for --version output and the judge's only conventions reason is writing to stdout. Owner ruling R1 applied."}
+{"n":"8487e187","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8ec89c62","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9d8b8c82","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a03d3126","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied to the print() on stdout (conventions true)."}
+{"n":"a4247822","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"aab6058f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"b5fedc5e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d45455bf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"efc1776b","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f0de1257","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f46d373b","requirements":{"tested":false,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"073ad04c","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"093ad372","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"1337619f","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"153764c5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"1a1ca816","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"1b6de845","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied: fmt.Println to stdout was explicitly requested, so it is not a conventions failure."}
+{"n":"35449c5d","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"3befee71","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"436cb82d","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"5ff72abf","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"61f72de5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"642e5685","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6a86cd1e","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"6bd3e1dd","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"707b5909","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied: the version line on stdout was explicitly requested."}
+{"n":"8587e31a","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"8fc89df5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"9e8b8e15","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"a13d32b9","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge. Owner ruling R1 applied: print() to stdout was explicitly requested."}
+{"n":"a52479b5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"acb608b5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: overrode conventions false->true: the judge's premise that no file under src has comments is contradicted by the existing /// summary doc comments in src/domain/decisions/GameRules.cs (context lines of the sibling Patriark diff), so a one-line English summary is within the codebase style; a new test file in the tests namespace is not a convention break."}
+{"n":"b6feddf1","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"d65458e5","requirements":{"tested":true,"scoped":true,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"efde10c4","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f2de157d","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}
+{"n":"f66d3a61","requirements":{"tested":true,"scoped":false,"conventions":true},"notes":"Audit: agrees with the judge."}

@@ -13,7 +13,8 @@ const project = (over = {}) => ({ id: 'tg', language: 'Go', repo: '/x/tg', base:
 test('the situations, origins and conditions are the spec\'s', () => {
   assert.deepEqual(Object.keys(SITUATIONS), Array.from({ length: 20 }, (_, i) => `S${i + 1}`));
   assert.deepEqual(ORIGINS, ['mined', 'authored', 'invented']);
-  assert.deepEqual(CONDITIONS, ['dd2', 'docref', 'doc', 'none']);
+  // The spec's four, and docdd (the referenced guide and DD together) added after the full benchmark.
+  assert.deepEqual(CONDITIONS, ['dd2', 'docref', 'doc', 'none', 'docdd']);
 });
 
 test('a well-formed project and task have no problems', () => {

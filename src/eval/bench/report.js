@@ -15,7 +15,7 @@ import { bootstrapMean, pairedDiffs } from './stats.js';
 
 const GENERAL = new Set(GENERAL_REQUIREMENTS.map(r => r.id));
 const TIMING = ['before_edit', 'at_edit', 'after_edit', 'no_edit'];
-const LABELS = { dd2: 'With DD v2', docref: 'Guide, referenced', doc: 'Guide, not referenced', none: 'No project knowledge' };
+const LABELS = { dd2: 'With DD v2', docref: 'Guide, referenced', doc: 'Guide, not referenced', none: 'No project knowledge', docdd: 'Guide, referenced, and DD v2' };
 
 // requireJudge: a judge ran over these results, so a run it did not decide is left out of quality.
 export function enrichRow(row, task, stream, judgedRequirements, titleOf, { requireJudge = false, titles = [] } = {}) {
@@ -131,7 +131,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const titles = projects.find(p => p.id === row.project)?.memories.map(m => m.title) ?? [];
     rows.push(enrichRow(row, task, stream, judged.get(row.run_id) ?? null, titleOf, { requireJudge: Boolean(judge), titles }));
   }
-  const report = { input: IN, ...buildReport(rows, ['dd2', 'docref', 'doc', 'none'], results.model) };
+  const report = { input: IN, ...buildReport(rows, ['dd2', 'docref', 'doc', 'none', 'docdd'], results.model) };
   await writeFile(IN.replace(/\.json$/, '') + '.report.json', JSON.stringify(report, null, 2));
   console.log(report.table);
 }
