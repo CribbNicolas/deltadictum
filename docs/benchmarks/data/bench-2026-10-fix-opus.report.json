@@ -1,0 +1,1023 @@
+{
+  "input": "C:\\dev\\supermem\\output\\eval\\bench-2026-10-fix\\opus\\results.json",
+  "model": "claude-opus-5-5",
+  "conditions": [
+    "dd2"
+  ],
+  "by_kind": {
+    "memory": {
+      "conditions": {
+        "dd2": {
+          "runs": 21,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            85,
+            100
+          ],
+          "quality_pct": 95,
+          "quality_ci95": [
+            91,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 43143,
+          "median_minutes": 1.35,
+          "mean_cost_usd": 0.4763,
+          "total_cost_usd": 10,
+          "median_tool_calls": 18,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 15,
+            "at_edit": 4,
+            "after_edit": 0,
+            "no_edit": 2
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 6,
+          "median_injected_tokens": 1137,
+          "median_hook_ms": 64,
+          "median_node_ms": 48
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "control": {
+      "conditions": {
+        "dd2": {
+          "runs": 9,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            70,
+            100
+          ],
+          "quality_pct": 92,
+          "quality_ci95": [
+            84,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 34548,
+          "median_minutes": 1.23,
+          "mean_cost_usd": 0.2816,
+          "total_cost_usd": 2.53,
+          "median_tool_calls": 13,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 607,
+          "median_hook_ms": 68,
+          "median_node_ms": 54
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "all": {
+      "conditions": {
+        "dd2": {
+          "runs": 30,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            89,
+            100
+          ],
+          "quality_pct": 94,
+          "quality_ci95": [
+            90,
+            98
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 39847,
+          "median_minutes": 1.31,
+          "mean_cost_usd": 0.4178,
+          "total_cost_usd": 12.54,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 21,
+            "at_edit": 4,
+            "after_edit": 0,
+            "no_edit": 2
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 836,
+          "median_hook_ms": 64,
+          "median_node_ms": 50
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    }
+  },
+  "by_project": {
+    "ledgerkit": {
+      "conditions": {
+        "dd2": {
+          "runs": 18,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            82,
+            100
+          ],
+          "quality_pct": 99,
+          "quality_ci95": [
+            96,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 39847,
+          "median_minutes": 1.18,
+          "mean_cost_usd": 0.4178,
+          "total_cost_usd": 7.52,
+          "median_tool_calls": 14,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 15,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 5,
+          "median_injected_tokens": 1012,
+          "median_hook_ms": 65,
+          "median_node_ms": 48
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "patriark": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 69403,
+          "median_minutes": 2.17,
+          "mean_cost_usd": 0.6466,
+          "total_cost_usd": 1.94,
+          "median_tool_calls": 18,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 1,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 2
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 20,
+          "median_injected_tokens": 5987,
+          "median_hook_ms": 72,
+          "median_node_ms": 58
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "supermem": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 35161,
+          "median_minutes": 1.58,
+          "mean_cost_usd": 0.2939,
+          "total_cost_usd": 0.88,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": null,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": null,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 311,
+          "median_hook_ms": 61,
+          "median_node_ms": 50
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "tollgate": {
+      "conditions": {
+        "dd2": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 75,
+          "quality_ci95": [
+            75,
+            75
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 32074,
+          "median_minutes": 1.18,
+          "mean_cost_usd": 0.3655,
+          "total_cost_usd": 2.19,
+          "median_tool_calls": 14,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 5,
+            "at_edit": 1,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 686,
+          "median_hook_ms": 55,
+          "median_node_ms": 47
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    }
+  },
+  "by_situation": {
+    "S10": {
+      "conditions": {
+        "dd2": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 88,
+          "quality_ci95": [
+            77,
+            98
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 32074,
+          "median_minutes": 0.83,
+          "mean_cost_usd": 0.2754,
+          "total_cost_usd": 1.65,
+          "median_tool_calls": 13,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 6,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 627,
+          "median_hook_ms": 68,
+          "median_node_ms": 54
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S11": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": null,
+          "specific_quality_ci95": null,
+          "median_peak_context_tokens": 35161,
+          "median_minutes": 1.58,
+          "mean_cost_usd": 0.2939,
+          "total_cost_usd": 0.88,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": null,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": null,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 311,
+          "median_hook_ms": 61,
+          "median_node_ms": 50
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S13": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 75,
+          "quality_ci95": [
+            75,
+            75
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 40924,
+          "median_minutes": 1.31,
+          "mean_cost_usd": 0.4781,
+          "total_cost_usd": 1.43,
+          "median_tool_calls": 22,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 2,
+            "at_edit": 1,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 686,
+          "median_hook_ms": 53,
+          "median_node_ms": 44
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S14": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 50233,
+          "median_minutes": 2.18,
+          "mean_cost_usd": 0.6559,
+          "total_cost_usd": 1.97,
+          "median_tool_calls": 32,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 7,
+          "median_injected_tokens": 1305,
+          "median_hook_ms": 62,
+          "median_node_ms": 53
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S18": {
+      "conditions": {
+        "dd2": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 49154,
+          "median_minutes": 1.83,
+          "mean_cost_usd": 0.5569,
+          "total_cost_usd": 3.34,
+          "median_tool_calls": 18,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 4,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 2
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 9,
+          "median_injected_tokens": 1793,
+          "median_hook_ms": 70,
+          "median_node_ms": 48
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S2": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 92,
+          "quality_ci95": [
+            75,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 39847,
+          "median_minutes": 1.41,
+          "mean_cost_usd": 0.4347,
+          "total_cost_usd": 1.3,
+          "median_tool_calls": 18,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 5,
+          "median_injected_tokens": 1012,
+          "median_hook_ms": 55,
+          "median_node_ms": 48
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S6": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 42893,
+          "median_minutes": 1.17,
+          "mean_cost_usd": 0.4079,
+          "total_cost_usd": 1.22,
+          "median_tool_calls": 14,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 3,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 8,
+          "median_injected_tokens": 1215,
+          "median_hook_ms": 61,
+          "median_node_ms": 51
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "S8": {
+      "conditions": {
+        "dd2": {
+          "runs": 3,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            44,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 33178,
+          "median_minutes": 0.62,
+          "mean_cost_usd": 0.2435,
+          "total_cost_usd": 0.73,
+          "median_tool_calls": 8,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 0,
+            "at_edit": 3,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 2,
+          "median_injected_tokens": 563,
+          "median_hook_ms": 69,
+          "median_node_ms": 55
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    }
+  },
+  "by_origin": {
+    "authored": {
+      "conditions": {
+        "dd2": {
+          "runs": 6,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            61,
+            100
+          ],
+          "quality_pct": 100,
+          "quality_ci95": [
+            100,
+            100
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 36508,
+          "median_minutes": 1.63,
+          "mean_cost_usd": 0.4703,
+          "total_cost_usd": 2.82,
+          "median_tool_calls": 16,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 1,
+            "at_edit": 0,
+            "after_edit": 0,
+            "no_edit": 2
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 1,
+          "median_injected_tokens": 311,
+          "median_hook_ms": 61,
+          "median_node_ms": 50
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    },
+    "invented": {
+      "conditions": {
+        "dd2": {
+          "runs": 24,
+          "resolution_pct": 100,
+          "resolution_ci95": [
+            86,
+            100
+          ],
+          "quality_pct": 93,
+          "quality_ci95": [
+            88,
+            97
+          ],
+          "specific_quality_pct": 100,
+          "specific_quality_ci95": [
+            100,
+            100
+          ],
+          "median_peak_context_tokens": 39847,
+          "median_minutes": 1.18,
+          "mean_cost_usd": 0.4047,
+          "total_cost_usd": 9.71,
+          "median_tool_calls": 14,
+          "unjudged": 0,
+          "timeouts": 0,
+          "errors": 0,
+          "guide_read_pct": 0,
+          "keys_delivered_pct": 100,
+          "key_at": {
+            "before_edit": 20,
+            "at_edit": 4,
+            "after_edit": 0,
+            "no_edit": 0
+          },
+          "applied_pct": 100,
+          "withheld_ok_pct": null,
+          "median_noise": 3,
+          "median_injected_tokens": 836,
+          "median_hook_ms": 64,
+          "median_node_ms": 48
+        }
+      },
+      "above_best_pct": {
+        "context": {
+          "dd2": 0
+        },
+        "time": {
+          "dd2": 0
+        },
+        "cost": {
+          "dd2": 0
+        }
+      }
+    }
+  },
+  "by_task": {
+    "ledgerkit-import-dir": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "ledgerkit-ledger-package": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "ledgerkit-malformed-row": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "ledgerkit-review-fix-entries": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "ledgerkit-summary-print": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "ledgerkit-usd-import": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "patriark-review-command": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "supermem-recall-json": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": null
+      }
+    },
+    "tollgate-replay-to": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    },
+    "tollgate-stdout-debug": {
+      "dd2": {
+        "runs": 3,
+        "resolved": 3,
+        "specific_quality_pct": 100
+      }
+    }
+  },
+  "paired": {
+    "requirements": {},
+    "resolution": {},
+    "cost_usd": {},
+    "peak_context_tokens": {}
+  },
+  "table": "| | With DD v2 |\n|---|---|\n| Resolution | 100% (89-100) |\n| Code quality | 94% (90-98) |\n| Project requirements met | 100% (100-100) |\n| Context (0 = least) | +0% (39.8k) |\n| Time (0 = fastest) | +0% (1.31 min) |\n| Cost (0 = cheapest) | +0% ($0.4178) |"
+}

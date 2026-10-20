@@ -309,6 +309,58 @@ node src/eval/bench/layer1/run.js                   # tables, output/eval/bench-
 node src/eval/bench/layer1/run.js --write-expected  # after a deliberate change to delivery
 ```
 
+## Added 2026-10-20: DD 0.9.11, the delivery fixes
+
+Every Haiku run with DD that failed or lost a check was read, and two causes were DD's own:
+
+- **A first prompt read as a correction.** "Do not change any code" in a review task matched the correction
+  patterns, so at Stop DD asked the agent to save a correction that never happened. 12 or 13 runs in 78 took
+  that extra turn with each model; in two of Haiku's the reply ("nothing to save") replaced the review, and
+  the run lost its answer. Since 0.9.11 a prompt is read as a correction only once the session has done
+  something to correct.
+- **A rule the code breaks read as work.** The ledgerkit memory on overlapping exports says an import must
+  skip ids already in the ledger, and the code does not. Haiku added duplicate skipping inside unrelated
+  tasks. The advisory line that closes every delivery now says that a problem the knowledge shows outside
+  the task is reported, not fixed.
+
+`dd2` ran again from the 0.9.11 code: Haiku on the 26 tasks, Opus on the 10 tasks those causes touch,
+three runs each, judged and blind-audited the same way (no audit override in either model). Haiku's other
+conditions are the runs above, unchanged.
+
+| Claude Haiku 5.5 | With DD 0.9.11 | With DD, earlier | Guide, referenced | Guide, not referenced | No project knowledge |
+|---|---|---|---|---|---|
+| Resolution | 99% (93-100) | 92% (84-96) | 97% (91-99) | 100% (95-100) | 92% (84-96) |
+| Code quality | 97% (95-99) | 94% (91-97) | 97% (95-99) | 97% (95-99) | 85% (81-90) |
+| Project requirements met | 98% (93-100) | 96% (89-100) | 98% (93-100) | 100% (100-100) | 43% (30-57) |
+| Context | 48.5k | 50.1k | 54.8k | 52.6k | 46.1k |
+| Cost | $0.0236 | $0.0266 | $0.0231 | $0.0237 | $0.0205 |
+
+Paired by task against the earlier `dd2`, Haiku resolves 6.4 points more (0.0 to 15.4), scores 3.5 points
+more on quality (−0.3 to 8.4) and costs $0.0030 less per task (−$0.0050 to −$0.0012). Only the cost
+difference clears zero; the resolution difference rests mostly on one task, the refusal of
+`ledgerkit-summary-print` (0.9.10's advisory line), now done as asked 3 runs of 3. Checks failed for scope
+fell from 11 to 5. Runs that added duplicate skipping fell from 5 to 2, both in `ledgerkit-usd-import`, so
+the advisory line reduces that reading without ending it; the other three committed scratch files or
+refactored beyond the task. The one unresolved run is a wrong implementation of
+`supermem-run-is-not-edit`, which delivery cannot fix.
+
+| Claude Opus 5.5, 10 tasks | With DD 0.9.11 | With DD, earlier, same tasks |
+|---|---|---|
+| Resolution | 30/30 | 30/30 |
+| Code quality | 94% | 95% |
+| Project requirements met | 100% | 100% |
+| Context | 39.8k | 40.9k |
+| Cost | $0.418 | $0.458 |
+
+Opus kept its answers through the extra turn, so the correction fix shows in cost: 9% less on these tasks,
+with quality and requirements unchanged (7 failed checks against 6, none from the change). No run of either model
+took the false correction turn.
+
+The new runs differ from the earlier ones in DD's version only. The earlier `dd2` ran before 0.9.10, so the
+new runs carry both versions' changes: 0.9.10's advisory line and 0.9.11's two fixes. Data:
+`data/bench-2026-10-fix-{haiku,opus}.{report,judge}.json` and their audit verdicts; Haiku's report pairs the
+new `dd2` with the earlier runs of the other conditions.
+
 ## Reproduce
 
 ```bash
