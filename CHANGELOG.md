@@ -4,6 +4,12 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.12] - 2026-10-20
+
+- The package no longer ships `docs/architecture`: development notes, benchmark write-ups and benchmark
+  data left the repository and its history. The plugin's limits are stated in `CLAUDE.md` and
+  `docs/DD.md`; the site keeps the old architecture and benchmark URLs as redirects.
+
 ## [0.9.11] - 2026-10-20
 
 - Corrections: a session's first prompt is no longer recorded as a user correction; a prompt counts only
@@ -17,7 +23,6 @@ when it reaches `main`, and CI refuses a version bump without a section here.
 - With both, Haiku with DD resolved 99% of the benchmark's 26 tasks (92% before), scored 97% on quality
   (94%) and met 98% of the project requirements (96%), at 11% less cost per task; Opus kept its results and
   cost 4.5% less. No run took the false correction turn (24 of 156 before).
-  `docs/benchmarks/2026-10-bench-full.md` has the tables and intervals.
 
 ## [0.9.10] - 2026-10-18
 
@@ -115,9 +120,8 @@ DD v2 replaces the core. Memories fire by rules (their triggers) at the action t
 being searched for by similarity on every prompt and tool call, so DD costs about what the agent costs alone:
 on this repository's 15-task agent trial, the same resolution, 7 more points of code quality and every
 project requirement met, at 1% more cost; DD 0.8 reached similar quality at 46% more
-([how it is measured](docs/guide/how-it-works.md#how-it-is-measured),
-[why v2](docs/architecture/history.md)). A second trial on the v2 code with Claude Opus 5.5 and Claude
-Haiku 5.5 at high effort ([write-up and data](docs/benchmarks/2026-10-v2-trial-opus-haiku.md)) met every
+([how it is measured](docs/guide/how-it-works.md#how-it-is-measured)). A second trial on the v2 code with Claude Opus 5.5 and Claude
+Haiku 5.5 at high effort met every
 requirement in every condition with both models and kept DD the cheapest condition.
 
 ### Breaking

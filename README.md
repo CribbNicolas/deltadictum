@@ -43,8 +43,7 @@ The earlier version of DD, which searched its memories by similarity, reached si
 cost. These numbers come from one project, one model and a small sample; they say DD is on track, not that
 it will do the same on yours. A second trial with Claude Opus 5.5 and Claude Haiku 5.5 at high effort
 found no quality difference between any condition (both models reached every rule by reading the code)
-and DD again the cheapest condition for both
-([details](docs/benchmarks/2026-10-v2-trial-opus-haiku.md)). More:
+and DD again the cheapest condition for both. More:
 [how it is measured](docs/guide/how-it-works.md#how-it-is-measured).
 
 ## Quickstart (Claude Code)
@@ -211,8 +210,7 @@ pages with navigation and search. In the repository:
 - [Security boundary](docs/guide/security.md)
 - Harness guides: [Codex](docs/integrations/codex.md), [OpenCode](docs/integrations/opencode.md),
   [Grok Build](docs/integrations/grok-build.md)
-- [Behavioural contract](docs/DD.md), [plugin constraints](docs/architecture/plugin-constraints.md) and
-  [where DD came from](docs/architecture/history.md)
+- [Behavioural contract](docs/DD.md)
 - [Changelog](CHANGELOG.md) and [contributing](CONTRIBUTING.md)
 
 ## Security

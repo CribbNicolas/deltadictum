@@ -4,8 +4,7 @@
 
 **DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.**
 
-Read [`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md) before
-proposing any architecture. It states seven limits, each verified against the code. A proposal that
+These seven limits, each verified against the code, bound every architecture proposal. A proposal that
 fails one of them is rejected on that basis alone, however good the idea is:
 
 | | Limit |
@@ -24,9 +23,6 @@ federation, multi-tenancy or RBAC. Memories fire by rule matching over a compile
 ## Where the truth is
 
 - `docs/DD.md` — the behavioural contract DD guarantees today.
-- `docs/architecture/plugin-constraints.md` — the boundary everything operates inside.
-- `docs/architecture/invariants.md` — properties that must never break.
-- `docs/architecture/history.md` — where v1 went wrong, the mistakes not to repeat, and what comes next.
 - **`src/` is authoritative over every document.** Where a document and the code disagree, the code is
   what DD does; fix the document.
 

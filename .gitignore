@@ -20,6 +20,22 @@ docs/plans/
 docs/specs/
 docs/superpowers/
 docs/research/
+docs/memory/
+docs/decisions/
+docs/failures/
+docs/evaluation/
+docs/contracts/
+PENDIENTES.md
+TODO.md
+
+# Development documentation and benchmark data stay local; only the summaries the landing's table reads are
+# committed.
+docs/architecture/
+docs/benchmarks/*
+!docs/benchmarks/data/
+docs/benchmarks/data/*
+!docs/benchmarks/data/bench-2026-10-fix-opus.summary.json
+!docs/benchmarks/data/bench-2026-10-fix-haiku.summary.json
 
 # Claude Code project settings written by a local plugin install.
 .claude/settings.json

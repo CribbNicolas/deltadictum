@@ -104,7 +104,7 @@ quality points, the referenced guide 7% more for 9 points, DD v2 1% more for 7 p
 model and small samples: treat these as direction, not as a promise for your project.
 
 A second trial on the v2 code
-([2026-10-14, Claude Opus 5.5 and Claude Haiku 5.5 at high effort](../benchmarks/2026-10-v2-trial-opus-haiku.md),
+(2026-10-14, Claude Opus 5.5 and Claude Haiku 5.5 at high effort,
 10 tasks, four conditions, blind judge and blind audit) met every project requirement in every condition with both models: on that codebase the rules the
 memories carried could be reached by reading, so it measures what DD costs when it is not needed. DD v2
 was the cheapest condition for both models (Opus −7% against no knowledge, Haiku −7%, a tie once the two

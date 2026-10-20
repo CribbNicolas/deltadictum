@@ -140,5 +140,4 @@ corrected.
   at its file (`review.issues: imported_truncated`). A second import updates the memories whose file
   changed and leaves the rest alone.
 
-**DD is a plugin for coding-agent harnesses, not a service.**
-[`architecture/plugin-constraints.md`](architecture/plugin-constraints.md) states the limits that follow.
+**DD is a plugin for coding-agent harnesses, not a service.** These are the limits that follow.

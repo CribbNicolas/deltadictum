@@ -16,7 +16,7 @@ export const SITE = {
   },
 };
 
-// Folders of docs/ the site does not publish: links into them go to GitHub.
-export const OFF_SITE = ['superpowers', 'research', 'benchmarks'];
+// Folders of docs/ the site does not publish (development notes and benchmark data, kept out of git).
+export const OFF_SITE = ['superpowers', 'research', 'benchmarks', 'architecture'];
 
 export const href = path => SITE.base + String(path).replace(/^\//, '');

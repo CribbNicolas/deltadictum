@@ -5,12 +5,11 @@ welcome.
 
 ## Before proposing a design
 
-DD is a plugin for coding-agent harnesses, not a service. Read
-[`docs/architecture/plugin-constraints.md`](docs/architecture/plugin-constraints.md) first: a proposal
-that breaks one of its seven limits (hooks are ephemeral processes, no resident process, no runtime
+DD is a plugin for coding-agent harnesses, not a service. Read the limits in [`CLAUDE.md`](CLAUDE.md)
+first: a proposal that breaks one of its seven limits (hooks are ephemeral processes, no resident process, no runtime
 dependency, per-harness hook contracts, never blocking the host, single-developer data volumes,
-local-first) is out of scope however good it is. [`CLAUDE.md`](CLAUDE.md) lists the properties every
-change keeps, and [`docs/architecture/invariants.md`](docs/architecture/invariants.md) the invariants.
+local-first) is out of scope however good it is. The same file lists the properties every change
+keeps.
 
 Everything in the repository is written in English: code, comments, documentation and commit messages.
 
