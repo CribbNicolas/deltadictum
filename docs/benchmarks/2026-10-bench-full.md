@@ -314,8 +314,8 @@ node src/eval/bench/layer1/run.js --write-expected  # after a deliberate change 
 Every Haiku run with DD that failed or lost a check was read, and two causes were DD's own:
 
 - **A first prompt read as a correction.** "Do not change any code" in a review task matched the correction
-  patterns, so at Stop DD asked the agent to save a correction that never happened. 12 or 13 runs in 78 took
-  that extra turn with each model; in two of Haiku's the reply ("nothing to save") replaced the review, and
+  patterns, so at Stop DD asked the agent to save a correction that never happened. 12 runs in 78 took that
+  extra turn in each model and condition with DD; in two of Haiku's the reply ("nothing to save") replaced the review, and
   the run lost its answer. Since 0.9.11 a prompt is read as a correction only once the session has done
   something to correct.
 - **A rule the code breaks read as work.** The ledgerkit memory on overlapping exports says an import must
@@ -323,9 +323,9 @@ Every Haiku run with DD that failed or lost a check was read, and two causes wer
   tasks. The advisory line that closes every delivery now says that a problem the knowledge shows outside
   the task is reported, not fixed.
 
-`dd2` ran again from the 0.9.11 code: Haiku on the 26 tasks, Opus on the 10 tasks those causes touch,
-three runs each, judged and blind-audited the same way (no audit override in either model). Haiku's other
-conditions are the runs above, unchanged.
+`dd2` ran again from the 0.9.11 code on the same 26 tasks, three runs each with both models, judged and
+blind-audited the same way (no audit override in either model). The other conditions are the runs above,
+unchanged.
 
 | Claude Haiku 5.5 | With DD 0.9.11 | With DD, earlier | Guide, referenced | Guide, not referenced | No project knowledge |
 |---|---|---|---|---|---|
@@ -344,22 +344,23 @@ the advisory line reduces that reading without ending it; the other three commit
 refactored beyond the task. The one unresolved run is a wrong implementation of
 `supermem-run-is-not-edit`, which delivery cannot fix.
 
-| Claude Opus 5.5, 10 tasks | With DD 0.9.11 | With DD, earlier, same tasks |
-|---|---|---|
-| Resolution | 30/30 | 30/30 |
-| Code quality | 94% | 95% |
-| Project requirements met | 100% | 100% |
-| Context | 39.8k | 40.9k |
-| Cost | $0.418 | $0.458 |
+| Claude Opus 5.5 | With DD 0.9.11 | With DD, earlier | Guide, referenced | Guide, not referenced | No project knowledge |
+|---|---|---|---|---|---|
+| Resolution | 100% (95-100) | 100% (95-100) | 100% (95-100) | 99% (93-100) | 95% (88-98) |
+| Code quality | 98% (96-99) | 97% (95-99) | 97% (95-99) | 98% (95-100) | 92% (89-95) |
+| Project requirements met | 100% (100-100) | 100% (100-100) | 100% (100-100) | 98% (93-100) | 69% (56-82) |
+| Context | 39.8k | 39.7k | 41.3k | 40.4k | 37.8k |
+| Cost | $0.4344 | $0.4551 | $0.5007 | $0.4742 | $0.428 |
 
-Opus kept its answers through the extra turn, so the correction fix shows in cost: 9% less on these tasks,
-with quality and requirements unchanged (7 failed checks against 6, none from the change). No run of either model
-took the false correction turn.
+Opus kept its answers through the extra turn, so the correction fix shows in cost: paired by task it costs
+$0.0207 less per task (−$0.0452 to −$0.0024), 4.5% less, and is now 1% above the agent alone; resolution is
+the same and quality 1.1 points higher (−1.0 to 3.6). No run of either model took the false correction turn
+(0 of 156, against 24 of 156 before).
 
 The new runs differ from the earlier ones in DD's version only. The earlier `dd2` ran before 0.9.10, so the
 new runs carry both versions' changes: 0.9.10's advisory line and 0.9.11's two fixes. Data:
-`data/bench-2026-10-fix-{haiku,opus}.{report,judge}.json` and their audit verdicts; Haiku's report pairs the
-new `dd2` with the earlier runs of the other conditions.
+`data/bench-2026-10-fix-{haiku,opus}.{report,judge}.json` and their audit verdicts; each report pairs the
+new `dd2` with the earlier runs of the other conditions. The site's summaries now read these reports.
 
 ## Reproduce
 
