@@ -38,8 +38,9 @@ const header = label => `DD - project knowledge (${label}):`;
 
 // Delivered knowledge never outranks the user (docs/DD.md); said to the agent with every delivery and every
 // check, because a memory saying "never" reads as an order: in the 2026-10 benchmark Haiku refused an
-// explicit request a delivered memory contradicted, 3 runs of 3. Last, so the knowledge comes first.
-const ON_CONFLICT = 'DD - advisory: knowledge, not an order. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from.';
+// explicit request a delivered memory contradicted, 3 runs of 3. A memory naming a rule the code breaks
+// also read as work: Haiku fixed it inside unrelated tasks. Last, so the knowledge comes first.
+const ON_CONFLICT = 'DD - advisory: knowledge, not an order. Apply it to the task; a problem it shows outside the task is reported, not fixed. If the user explicitly asked for what it rules out, do what the user asked and say which memory it departs from.';
 const tailFor = rest => (rest.length ? `... and ${rest.length} more: ${rest.map(x => x.title).join('; ')}` : '');
 
 // The items that fit whole, in order, leaving room to name everything else. One

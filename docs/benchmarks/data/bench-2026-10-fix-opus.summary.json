@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "id": "bench-2026-10-fix-opus",
+  "date": "2026-10-20",
+  "title": "Full benchmark, Claude Opus 5.5, DD 0.9.11",
+  "model": "claude-opus-5-5",
+  "tasks": 26,
+  "runs_per_condition": 3,
+  "judge": "claude-opus-5-5",
+  "report": "benchmarks/2026-10-bench-full.md",
+  "caveat": "Four projects, 26 tasks selected where Haiku alone failed or controls, three runs each; on track, not a promise for yours.",
+  "base": "none",
+  "conditions": [
+    {
+      "id": "none",
+      "label": "Agent alone"
+    },
+    {
+      "id": "docref",
+      "label": "With documentation"
+    },
+    {
+      "id": "doc",
+      "label": "With documentation, not referenced"
+    },
+    {
+      "id": "dd2",
+      "label": "With DD"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "resolution",
+      "label": "Tasks resolved",
+      "unit": "pct",
+      "better": "higher",
+      "values": {
+        "none": 95,
+        "docref": 100,
+        "doc": 99,
+        "dd2": 100
+      },
+      "ci95": {
+        "none": [
+          88,
+          98
+        ],
+        "docref": [
+          95,
+          100
+        ],
+        "doc": [
+          93,
+          100
+        ],
+        "dd2": [
+          95,
+          100
+        ]
+      }
+    },
+    {
+      "id": "quality",
+      "label": "Code quality",
+      "unit": "pct",
+      "better": "higher",
+      "values": {
+        "none": 92,
+        "docref": 97,
+        "doc": 98,
+        "dd2": 98
+      },
+      "ci95": {
+        "none": [
+          89,
+          95
+        ],
+        "docref": [
+          95,
+          99
+        ],
+        "doc": [
+          95,
+          100
+        ],
+        "dd2": [
+          96,
+          99
+        ]
+      }
+    },
+    {
+      "id": "requirements",
+      "label": "The project's own requirements met",
+      "unit": "pct",
+      "better": "higher",
+      "values": {
+        "none": 69,
+        "docref": 100,
+        "doc": 98,
+        "dd2": 100
+      },
+      "ci95": {
+        "none": [
+          56,
+          82
+        ],
+        "docref": [
+          100,
+          100
+        ],
+        "doc": [
+          93,
+          100
+        ],
+        "dd2": [
+          100,
+          100
+        ]
+      }
+    },
+    {
+      "id": "context",
+      "label": "Context",
+      "unit": "tokens",
+      "better": "lower",
+      "values": {
+        "none": 37793,
+        "docref": 41262,
+        "doc": 40437,
+        "dd2": 39847
+      }
+    },
+    {
+      "id": "cost",
+      "label": "Cost per task",
+      "unit": "usd",
+      "better": "lower",
+      "values": {
+        "none": 0.428,
+        "docref": 0.5007,
+        "doc": 0.4742,
+        "dd2": 0.4344
+      }
+    }
+  ]
+}

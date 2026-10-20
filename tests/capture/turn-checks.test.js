@@ -206,7 +206,7 @@ test('the Stop hook says turn violations, also in a turn DD made continue, witho
   assert.equal(first.hookEventName, 'Stop');
   assert.match(first.additionalContext, /^DD - check \(Close stores in t\.after\)/);
   // A check is knowledge too: the user may have asked for what it flags.
-  assert.match(first.additionalContext, /\nDD - advisory: knowledge, not an order\. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from\./);
+  assert.match(first.additionalContext, /\nDD - advisory: knowledge, not an order\. Apply it to the task; a problem it shows outside the task is reported, not fixed[.] If the user explicitly asked for what it rules out, do what the user asked and say which memory it departs from\./);
   // The continued turn fixes a.test.js and breaks b.test.js.
   writeFileSync(join(root, 'tests', 'a.test.js'), 'createMemoryStore(d)\nt.after(() => 1)\n');
   writeFileSync(join(root, 'tests', 'b.test.js'), 'createMemoryStore(d)\n');

@@ -2,11 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compileProject } from '../../src/engine/compile.js';
 import { createMemoryFiles } from '../../src/memory/store.js';
+
+// Session start leaves a detached process in the project for a moment, and Windows refuses to remove a folder
+// a process is in until it exits: the removal retries, asynchronously, since rmSync gives up at the first refusal.
+const removeDir = path => rm(path, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
 
 const RUN = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
 const memory = (id, title, triggers) => ({
@@ -17,7 +22,7 @@ const memory = (id, title, triggers) => ({
 
 async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.git'));
   await createMemoryFiles(join(root, '.dd')).commit({ put: [
     memory('m1', 'Close stores', [{ on: ['read', 'edit'], paths: ['src/a.js'] }]),
@@ -39,7 +44,7 @@ test('a read of a scoped file delivers the memory once per session and once per 
   assert.equal(JSON.parse(first.stdout).hookSpecificOutput.hookEventName, 'PreToolUse');
   // Delivered knowledge never outranks the user (docs/DD.md): the delivery ends by saying what to do on a
   // conflict. In the 2026-10 benchmark, Haiku refused an explicit request a delivered memory contradicted.
-  assert.match(context(first), /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores - Close stores, always\.\nDD - advisory: knowledge, not an order\. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from\.$/);
+  assert.match(context(first), /^DD - project knowledge \(src\/a\.js\):\n\[TRAP\] Close stores - Close stores, always\.\nDD - advisory: knowledge, not an order\. Apply it to the task; a problem it shows outside the task is reported, not fixed\. If the user explicitly asked for what it rules out, do what the user asked and say which memory it departs from\.$/);
   // The claim says what fired it, at which event, and when: health reads that.
   const claim = JSON.parse(readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n')[0]);
   assert.deepEqual([claim.m, claim.e, claim.v], ['m1', 'read', ['paths']]);
@@ -63,7 +68,7 @@ test('a cat of a scoped file through Bash is a read and delivers the memory', as
 // not counted as delivered, so it arrives in full at the next event it fires on.
 test('memories that did not fit are named, not marked delivered, and arrive in full next time', async t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.git'));
   const long = id => ({ ...memory(id, `Rule ${id}`, [{ on: ['read'], paths: ['src/a.js'] }]), body: `Rule ${id}: ${'keep the layers apart. '.repeat(63)}` });
   const ids = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8'];
@@ -81,7 +86,7 @@ test('memories that did not fit are named, not marked delivered, and arrive in f
 
 test('a command run from a subfolder fires the memory for that folder, not the root one', async t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.git'));
   mkdirSync(join(root, 'packages', 'api'), { recursive: true });
   await createMemoryFiles(join(root, '.dd')).commit({ put: [
@@ -97,7 +102,7 @@ test('a command run from a subfolder fires the memory for that folder, not the r
 // A formatter run over hundreds of files must not spend the field on its header.
 test('a command naming many paths gets a short label and the memory in full', async t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.git'));
   await createMemoryFiles(join(root, '.dd')).commit({ put: [memory('fmt', 'Format src/a.js by hand', [{ on: ['run'], paths: ['src/a.js'] }])] });
   await compileProject(root);
@@ -111,7 +116,7 @@ test('a command naming many paths gets a short label and the memory in full', as
 // have no DD: those must not pay for loading the matcher and the index reader.
 test('a tool call in a project without a compiled index loads no matching module', t => {
   const bare = mkdtempSync(join(tmpdir(), 'dd-bare-'));
-  t.after(() => rmSync(bare, { recursive: true, force: true }));
+  t.after(() => removeDir(bare));
   const hookModule = fileURLToPath(new URL('../../src/hooks/v2/hook.cjs', import.meta.url));
   const script = `require(${JSON.stringify(hookModule)}).handle('pre-tool', { cwd: ${JSON.stringify(bare)}, tool_name: 'Read', tool_input: { file_path: 'a.js' } })
     .then(() => console.log(JSON.stringify(Object.keys(require.cache).map(p => p.split(/[\\\\/]/).pop()))))`;
@@ -133,7 +138,7 @@ test('an index whose bodies are missing delivers nothing until session start rec
 // into a hook error: a module that fails to load ends the hook silently too.
 test('a hook whose modules cannot load exits 0 with no output', t => {
   const plugin = mkdtempSync(join(tmpdir(), 'dd-partial-'));
-  t.after(() => rmSync(plugin, { recursive: true, force: true }));
+  t.after(() => removeDir(plugin));
   mkdirSync(join(plugin, 'hooks'));
   for (const name of ['run.cjs', 'node-support.cjs']) copyFileSync(fileURLToPath(new URL(`../../hooks/${name}`, import.meta.url)), join(plugin, 'hooks', name));
   const out = spawnSync(process.execPath, [join(plugin, 'hooks', 'run.cjs'), 'pre-tool'], { input: '{"tool_name":"Read","tool_input":{}}', encoding: 'utf8' });
@@ -145,7 +150,7 @@ test('a prompt naming a keyword delivers its memory', async t => {
   const result = hook('prompt', { session_id: 's1', cwd: root, hook_event_name: 'UserPromptSubmit', prompt: 'Rename the data directory' });
   assert.equal(JSON.parse(result.stdout).hookSpecificOutput.hookEventName, 'UserPromptSubmit');
   assert.match(context(result), /\[TRAP\] Adopt old data directories/);
-  assert.match(context(result), /\nDD - advisory: knowledge, not an order\. Apply it unless the user explicitly asked for what it rules out; then do what the user asked and say which memory it departs from\.$/);
+  assert.match(context(result), /\nDD - advisory: knowledge, not an order\. Apply it to the task; a problem it shows outside the task is reported, not fixed\. If the user explicitly asked for what it rules out, do what the user asked and say which memory it departs from\.$/);
 });
 
 // Session start adds nothing to the agent's context; it tells the person, through
@@ -173,7 +178,7 @@ test('session start compiles a missing index and tells the person, not the model
 // root, so a hook run from a subfolder of a project without .git finds it.
 test('a project with .dd/ and no memory yet records its footprint, asks at Stop and compiles at session start', t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-optin-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.dd'));
   writeFileSync(join(root, '.dd', 'config.json'), '{}\n');
   mkdirSync(join(root, 'src'));
@@ -193,7 +198,7 @@ test('tools, projects and inputs DD has nothing for stay silent and create nothi
   const root = await project(t);
   assert.equal(hook('pre-tool', { session_id: 's', cwd: root, tool_name: 'TodoWrite', tool_input: {} }).stdout, '');
   const bare = mkdtempSync(join(tmpdir(), 'dd-bare-'));
-  t.after(() => rmSync(bare, { recursive: true, force: true }));
+  t.after(() => removeDir(bare));
   const none = hook('session-start', { session_id: 's', cwd: bare, source: 'startup' });
   assert.equal(none.status, 0);
   assert.equal(none.stdout, '');
@@ -208,7 +213,7 @@ test('tools, projects and inputs DD has nothing for stay silent and create nothi
 // no extra file), and each delivery leaves a ledger line the roll-up turns into telemetry.
 test('delivery_limit in .dd/config.json caps a delivery, and the delivery is recorded in the ledger', async t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-hook-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.git'));
   mkdirSync(join(root, '.dd'));
   writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', delivery_limit: 2000 }));
