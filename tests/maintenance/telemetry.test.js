@@ -72,6 +72,8 @@ test('a write waits for another process holding the telemetry lock instead of fa
   const holder = spawn(process.execPath, ['-e', `
     const { DatabaseSync } = require('node:sqlite');
     const other = new DatabaseSync(process.argv.at(-1));
+    // As openTelemetry does: on a slow Windows runner the lock was not free yet (2026-10-20).
+    other.exec('PRAGMA busy_timeout = 5000');
     other.exec('BEGIN IMMEDIATE');
     other.exec("INSERT OR REPLACE INTO meta VALUES ('holder', '1')");
     console.log('locked');
