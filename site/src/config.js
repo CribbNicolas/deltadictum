@@ -10,7 +10,7 @@ export const SITE = {
   // The landing's table: the average of these trials (Opus and Haiku), with the two guide conditions as one.
   featured: {
     title: 'Benchmark with blind judge',
-    trials: ['bench-2026-10-opus', 'bench-2026-10-haiku'],
+    trials: ['bench-2026-10-fix-opus', 'bench-2026-10-fix-haiku'],
     merge: { doc: { label: 'With documentation', of: ['docref', 'doc'] } },
     note: 'Every figure is an average.',
   },
