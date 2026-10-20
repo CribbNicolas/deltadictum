@@ -4,6 +4,21 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.11] - 2026-10-20
+
+- Corrections: a session's first prompt is no longer recorded as a user correction; a prompt counts only
+  once the session has a tool call or a turn behind it. "Do not change any code" in a first prompt matched
+  the correction patterns, and the Stop request that followed cost the turn: in the 2026-10 benchmark 12 or
+  13 runs in 78 took the extra turn with each model, and in two Haiku's reply replaced its review. On Codex
+  that request blocks the Stop.
+- Delivery: the advisory line that closes every delivery and check report also says that a problem the
+  knowledge shows outside the task is reported, not fixed. A memory stating a rule the code breaks read as
+  work, and Haiku fixed it inside unrelated tasks.
+- With both, Haiku with DD resolved 99% of the benchmark's 26 tasks (92% before), scored 97% on quality
+  (94%) and met 98% of the project requirements (96%), at 11% less cost per task; on the ten tasks the
+  changes touch, Opus cost 9% less with the same results. `docs/benchmarks/2026-10-bench-full.md` has the
+  tables and intervals.
+
 ## [0.9.10] - 2026-10-18
 
 - Delivery: every delivery and every check report ends with a line telling the agent the knowledge is
