@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as adapter from '../../adapters/opencode/index.js';
@@ -18,11 +19,13 @@ const memory = (id, title, triggers) => ({
 // The adapter starts `observe` without waiting for it (a hook never holds the host up), and that child
 // writes the session's footprint into the project after the test is done: on a slow Windows runner Node
 // takes seconds to start, and a one-second cleanup failed with ENOTEMPTY (2026-10-18, the 0.9.9 publish).
+// Asynchronously: rmSync gives up at the folder's first refusal whatever maxRetries says (2026-10-20, again).
 const CLEANUP = { recursive: true, force: true, maxRetries: 75, retryDelay: 200 };
+const removeDir = path => rm(path, CLEANUP);
 
 async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-opencode-'));
-  t.after(() => rmSync(root, CLEANUP));
+  t.after(() => removeDir(root));
   mkdirSync(join(root, '.git'));
   mkdirSync(join(root, 'src'));
   writeFileSync(join(root, 'src', 'a.js'), 'export const a = 1;\n');
@@ -63,7 +66,7 @@ test('the system prompt is left alone, so the prompt cache holds', async t => {
 
 test('a tool call without a session or in a project without DD changes nothing', async t => {
   const bare = mkdtempSync(join(tmpdir(), 'dd-opencode-bare-'));
-  t.after(() => rmSync(bare, CLEANUP));
+  t.after(() => removeDir(bare));
   const hooks = await DeltaDictum({ directory: bare });
   assert.equal(await toolCall(hooks, 's1', 'read', { filePath: join(bare, 'a.js') }), 'tool result');
   const root = await project(t);
