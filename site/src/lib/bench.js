@@ -32,13 +32,32 @@ export function validateSummary(summary, name) {
   return summary;
 }
 
-export function tableFor(summary) {
+// A value at the precision the table shows it, so "level" means level on the page.
+function shown(value, unit) {
+  if (unit === 'pct') return Math.round(value);
+  if (unit === 'tokens') return Math.round(value / 100);
+  return Math.round(value * 1000);
+}
+
+// Each cell holds its value and, beside it, the change against the base. With a reference (the documentation)
+// and its contenders (the DD conditions), a contender ahead of the reference is the lead and one level with it
+// makes both a gain; the reference is a gain too when it is ahead of every contender.
+export function tableFor(summary, { reference, contenders = [] } = {}) {
   const columns = summary.conditions.map(c => ({ ...c, base: c.id === summary.base }));
   const rows = summary.metrics.map(metric => {
     const base = metric.values[summary.base];
-    const cells = columns.map(column => (column.base
-      ? { text: 'Base', value: formatValue(base, metric.unit), better: null }
-      : formatChange(metric.values[column.id], base, metric.unit, metric.better)));
+    const at = id => shown(metric.values[id], metric.unit);
+    // Positive when a is ahead of b, in the metric's direction.
+    const ahead = (a, b) => (metric.better === 'higher' ? at(a) - at(b) : at(b) - at(a));
+    const rivals = reference ? contenders.filter(id => id in metric.values) : [];
+    const tone = id => {
+      if (!rivals.length) return null;
+      if (rivals.includes(id)) return ahead(id, reference) > 0 ? 'lead' : ahead(id, reference) === 0 ? 'gain' : null;
+      if (id === reference) return rivals.some(c => ahead(c, reference) === 0) || rivals.every(c => ahead(c, reference) < 0) ? 'gain' : null;
+      return null;
+    };
+    const cells = columns.map(column => ({ text: formatValue(metric.values[column.id], metric.unit),
+      change: column.base ? null : formatChange(metric.values[column.id], base, metric.unit, metric.better).text, tone: tone(column.id) }));
     return { id: metric.id, label: metric.label, cells };
   });
   return { columns, rows };
