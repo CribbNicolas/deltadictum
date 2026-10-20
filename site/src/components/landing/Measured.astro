@@ -1,7 +1,7 @@
 ---
 import { tableFor } from '../../lib/bench.js';
-const { summary, highlight } = Astro.props;
-const table = tableFor(summary, highlight);
+const { summary } = Astro.props;
+const table = tableFor(summary);
 const last = table.columns.at(-1).id;
 ---
 <section class="measured wrap" aria-labelledby="measured-title">
@@ -27,7 +27,7 @@ const last = table.columns.at(-1).id;
       </tbody>
     </table>
   </div>
-  {highlight && <p class="legend">Changes in parentheses are against the agent alone: points for percentages, share of the base for context and cost. <span class="gain">Green</span>: DD level with the documentation. <span class="lead">Gold</span>: DD ahead of it.</p>}
+  <p class="legend">Changes in parentheses are against the agent alone: points for percentages, share of the base for context and cost. <span class="first">Gold</span>: best in its row. <span class="second">Green</span>: second.</p>
 </section>
 <style>
   .measured { padding-top: 96px; padding-bottom: 96px; }
@@ -43,8 +43,8 @@ const last = table.columns.at(-1).id;
   td { font-family: var(--font-mono); color: var(--text-heading); }
   td.base { color: var(--text); }
   .change { margin-left: 8px; color: var(--text-faint); font-weight: 400; }
-  td.gain, .legend .gain { color: var(--gain); font-weight: 500; }
-  td.lead, .legend .lead { color: var(--accent); font-weight: 500; }
-  td.gain .change, td.lead .change { color: inherit; opacity: 0.8; }
+  td.first, .legend .first { color: var(--accent); font-weight: 500; }
+  td.second, .legend .second { color: var(--gain); font-weight: 500; }
+  td.first .change, td.second .change { color: inherit; opacity: 0.8; }
   .legend { margin: 12px 0 0; font-size: 14px; color: var(--text-muted); }
 </style>
