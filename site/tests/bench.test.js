@@ -42,30 +42,22 @@ test('context or cost over a base of zero shows the value itself', () => {
   assert.deepEqual(formatChange(0, 0, 'usd', 'lower'), { text: '$0.000', better: null });
 });
 
-const HIGHLIGHT = { reference: 'docref', contenders: ['docdd'] };
-
 test('the landing table shows every value, with its change against the base beside it', () => {
-  const table = tableFor(SUMMARY, HIGHLIGHT);
+  const table = tableFor(SUMMARY);
   assert.deepEqual(table.columns.map(c => [c.label, c.base]), [['Agent alone', true], ['With documentation', false], ['With documentation + DD', false]]);
   assert.deepEqual(table.rows[0].cells.map(c => [c.text, c.change]), [['70%', null], ['72%', '+2 pts'], ['77%', '+7 pts']]);
   assert.deepEqual(table.rows[1].cells.map(c => [c.text, c.change]), [['27.2k tokens', null], ['31.0k tokens', '+14%'], ['27.2k tokens', '+0%']]);
 });
 
-test('DD ahead of the documentation is the lead; level with it, both are a gain', () => {
-  const table = tableFor(SUMMARY, HIGHLIGHT);
-  assert.deepEqual(table.rows.map(r => r.cells.map(c => c.tone)), [
-    [null, null, 'lead'],   // quality: 77% beats 72%
-    [null, null, 'lead'],   // context: fewer tokens
-    [null, null, 'lead'],   // cost: cheaper
-    [null, 'gain', null],   // errors: the documentation is ahead
+// Each row ranks its columns at the precision shown, the agent alone included: the best is first, the next
+// second. Columns level at the top share first place, and then no column is second.
+test('each row marks its best value first and the next one second', () => {
+  assert.deepEqual(tableFor(SUMMARY).rows.map(r => r.cells.map(c => c.tone)), [
+    [null, 'second', 'first'],   // quality: 77% > 72% > 70%
+    ['first', null, 'first'],    // context: 27.2k shared at the top
+    ['second', null, 'first'],   // cost: $0.080 < $0.090 < $0.100
+    ['first', 'first', null],    // errors: 0% shared at the top
   ]);
-  const level = structuredClone(SUMMARY);
-  level.metrics[0].values.docdd = 72.4;
-  assert.deepEqual(tableFor(level, HIGHLIGHT).rows[0].cells.map(c => c.tone), [null, 'gain', 'gain']);
-});
-
-test('without a reference the table colours nothing', () => {
-  assert.ok(tableFor(SUMMARY).rows.every(r => r.cells.every(c => c.tone === null)));
 });
 
 test('an invalid summary fails, naming the file', () => {

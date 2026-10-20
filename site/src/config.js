@@ -12,8 +12,6 @@ export const SITE = {
     title: 'Benchmark with blind judge',
     trials: ['bench-2026-10-fix-opus', 'bench-2026-10-fix-haiku'],
     merge: { doc: { label: 'With documentation', of: ['docref', 'doc'] } },
-    // DD's columns against the documentation: ahead is the lead, level is a gain for both.
-    highlight: { reference: 'doc', contenders: ['dd2', 'docdd'] },
     note: 'Every figure is an average.',
   },
 };
