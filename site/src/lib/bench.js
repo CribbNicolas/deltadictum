@@ -9,11 +9,15 @@ export function formatValue(value, unit) {
   return `$${value.toFixed(3)}`;
 }
 
+// The change is read off the values as shown, so cell and change always agree: a percentage changes by
+// points (56% to 99% is +43 pts, never +77%), context and cost by their share of the base.
 export function formatChange(value, base, unit, better) {
-  if (base === 0) return { text: formatValue(value, unit), better: value === 0 ? null : (better === 'higher') === (value > 0) };
-  const pct = Math.round(((value - base) / base) * 100) || 0;
-  if (pct === 0) return { text: '+0%', better: null };
-  return { text: `${pct > 0 ? '+' : '-'}${Math.abs(pct)}%`, better: (better === 'higher') === (pct > 0) };
+  const now = shown(value, unit), was = shown(base, unit);
+  const judged = delta => (delta === 0 ? null : (better === 'higher') === (delta > 0));
+  if (unit === 'pct') return { text: `${now - was < 0 ? '-' : '+'}${Math.abs(now - was)} pts`, better: judged(now - was) };
+  if (was === 0) return { text: formatValue(value, unit), better: judged(now) };
+  const pct = Math.round(((now - was) / was) * 100) || 0;
+  return { text: `${pct < 0 ? '-' : '+'}${Math.abs(pct)}%`, better: judged(pct) };
 }
 
 export function validateSummary(summary, name) {
@@ -39,23 +43,16 @@ function shown(value, unit) {
   return Math.round(value * 1000);
 }
 
-// Each cell holds its value and, beside it, the change against the base. With a reference (the documentation)
-// and its contenders (the DD conditions), a contender ahead of the reference is the lead and one level with it
-// makes both a gain; the reference is a gain too when it is ahead of every contender.
-export function tableFor(summary, { reference, contenders = [] } = {}) {
+// Each cell holds its value and, beside it, the change against the base. Each row ranks its columns at the
+// precision shown, the base included: the best is first and the next second (a place is one plus the number of
+// columns ahead, so columns level at the top share first and leave no second).
+export function tableFor(summary) {
   const columns = summary.conditions.map(c => ({ ...c, base: c.id === summary.base }));
   const rows = summary.metrics.map(metric => {
     const base = metric.values[summary.base];
-    const at = id => shown(metric.values[id], metric.unit);
-    // Positive when a is ahead of b, in the metric's direction.
-    const ahead = (a, b) => (metric.better === 'higher' ? at(a) - at(b) : at(b) - at(a));
-    const rivals = reference ? contenders.filter(id => id in metric.values) : [];
-    const tone = id => {
-      if (!rivals.length) return null;
-      if (rivals.includes(id)) return ahead(id, reference) > 0 ? 'lead' : ahead(id, reference) === 0 ? 'gain' : null;
-      if (id === reference) return rivals.some(c => ahead(c, reference) === 0) || rivals.every(c => ahead(c, reference) < 0) ? 'gain' : null;
-      return null;
-    };
+    const score = id => (metric.better === 'higher' ? 1 : -1) * shown(metric.values[id], metric.unit);
+    const place = id => 1 + columns.filter(c => score(c.id) > score(id)).length;
+    const tone = id => ({ 1: 'first', 2: 'second' })[place(id)] ?? null;
     const cells = columns.map(column => ({ text: formatValue(metric.values[column.id], metric.unit),
       change: column.base ? null : formatChange(metric.values[column.id], base, metric.unit, metric.better).text, tone: tone(column.id) }));
     return { id: metric.id, label: metric.label, cells };
