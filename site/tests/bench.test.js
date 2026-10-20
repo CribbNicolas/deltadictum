@@ -33,18 +33,30 @@ test('a base of zero shows the value itself', () => {
   assert.deepEqual(formatChange(0, 0, 'pct', 'lower'), { text: '0%', better: null });
 });
 
-test('the landing table: Base in the base column, changes elsewhere', () => {
-  const table = tableFor(SUMMARY);
+const HIGHLIGHT = { reference: 'docref', contenders: ['docdd'] };
+
+test('the landing table shows every value, with its change against the base beside it', () => {
+  const table = tableFor(SUMMARY, HIGHLIGHT);
   assert.deepEqual(table.columns.map(c => [c.label, c.base]), [['Agent alone', true], ['With documentation', false], ['With documentation + DD', false]]);
-  assert.deepEqual(table.rows[0].cells.map(c => c.text), ['Base', '+3%', '+10%']);
-  assert.deepEqual(table.rows[1].cells.map(c => c.text), ['Base', '+14%', '+0%']);
+  assert.deepEqual(table.rows[0].cells.map(c => [c.text, c.change]), [['70%', null], ['72%', '+3%'], ['77%', '+10%']]);
+  assert.deepEqual(table.rows[1].cells.map(c => [c.text, c.change]), [['27.2k tokens', null], ['31.0k tokens', '+14%'], ['27.2k tokens', '+0%']]);
 });
 
-test('the base cell shows the base value beside the word Base', () => {
-  const table = tableFor(SUMMARY);
-  assert.equal(table.rows[0].cells[0].value, '70%');
-  assert.equal(table.rows[1].cells[0].value, '27.2k tokens');
-  assert.equal(table.rows[0].cells[1].value, undefined);
+test('DD ahead of the documentation is the lead; level with it, both are a gain', () => {
+  const table = tableFor(SUMMARY, HIGHLIGHT);
+  assert.deepEqual(table.rows.map(r => r.cells.map(c => c.tone)), [
+    [null, null, 'lead'],   // quality: 77% beats 72%
+    [null, null, 'lead'],   // context: fewer tokens
+    [null, null, 'lead'],   // cost: cheaper
+    [null, 'gain', null],   // errors: the documentation is ahead
+  ]);
+  const level = structuredClone(SUMMARY);
+  level.metrics[0].values.docdd = 72.4;
+  assert.deepEqual(tableFor(level, HIGHLIGHT).rows[0].cells.map(c => c.tone), [null, 'gain', 'gain']);
+});
+
+test('without a reference the table colours nothing', () => {
+  assert.ok(tableFor(SUMMARY).rows.every(r => r.cells.every(c => c.tone === null)));
 });
 
 test('an invalid summary fails, naming the file', () => {
