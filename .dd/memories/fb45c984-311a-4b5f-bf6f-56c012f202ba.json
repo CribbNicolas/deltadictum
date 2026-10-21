@@ -1,0 +1,51 @@
+{
+  "schema_version": 8,
+  "id": "fb45c984-311a-4b5f-bf6f-56c012f202ba",
+  "project_id": "supermem",
+  "topic": "tooling/windows/junction-delete-follows",
+  "kind": "trap",
+  "status": "candidate",
+  "title": "Unlink a node_modules junction before deleting the tree that holds it",
+  "body": "Unlink the junction first (fs.unlink on the link path, which Node reports as a symbolic link), then delete the tree. Never run git worktree remove --force on a worktree whose node_modules is a junction to the main checkout. If the main node_modules was emptied anyway, restore it with npm ci. Why: on 2026-10-07 git worktree remove --force followed the node_modules junction and emptied the main checkout's node_modules (0 entries left); fs.unlink on the junction followed by fs.rm recursive on the parent kept the target intact in a scratch test, and src/eval/bench/clone.js unlinks a project's links before removing each clone.",
+  "not_derivable": "A Windows junction followed by git worktree remove --force empties the target; no code comment can show it before it happens.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/eval/bench/clone.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt",
+        "search"
+      ],
+      "keywords": [
+        "junction",
+        "worktree remove",
+        "node_modules junction"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/eval/bench/clone.js",
+      "sha256": "e8b9012e1459fd18e21bd51cbe688243d32bb926f5d0998cdd57749580e0c5b9",
+      "summary": "Unlinks a project's links first: a recursive delete that follows a junction empties its target."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "38c30338-16d3-4ba1-bb74-ef5cbdfeb383",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "unversioned-memories-2026-10-21"
+  },
+  "created": "2026-10-21T20:31:57.598Z",
+  "updated": "2026-10-21T20:31:57.730Z"
+}

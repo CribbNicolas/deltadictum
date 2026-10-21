@@ -1,0 +1,67 @@
+{
+  "schema_version": 8,
+  "id": "54353b21-1ed8-42cf-869e-a86a859e42c3",
+  "project_id": "supermem",
+  "topic": "hooks/observe/claude-code-outcomes",
+  "kind": "trap",
+  "status": "candidate",
+  "title": "Claude Code reports tool outcomes by event, not exit code",
+  "body": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.\n\nWhy: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
+  "not_derivable": "A real session showed a failing Bash call fires no PostToolUse at all and a success carries no exit code; the code reads the events, nothing explains the absence.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/hooks/observe.js",
+        "hooks/hooks.json",
+        "src/capture/footprint.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "PostToolUseFailure",
+        "tool outcomes",
+        "tool_response",
+        "hook_event_name",
+        "PostToolUse",
+        "exit code"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/observe.js",
+      "sha256": "850be9500f3ea18afda8b203aef45fb0dbc7127071ddcb89735e49adb4e8dba1",
+      "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then."
+    },
+    {
+      "type": "file",
+      "path": "hooks/hooks.json",
+      "sha256": "33afbfd046d64040287f633f589b9730232a9ed2e8f2ea3251dbe6632d2543a7",
+      "summary": "PostToolUseFailure is registered to the observe command."
+    },
+    {
+      "type": "file",
+      "path": "tests/capture/stop.test.js",
+      "sha256": "9cdca92908b10bbb5612d0b4351baa19b4cb2c2c5d1f8fe6f4a8f4087f49471a",
+      "summary": "Stop asks after a failure read from the event, not from an exit code."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "7143dacb-38b1-4506-ac68-1d94f1ad1bcb",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "docs-harness-pages-2026-10-21"
+  },
+  "created": "2026-10-21T13:59:54.979Z",
+  "updated": "2026-10-21T13:59:55.106Z"
+}

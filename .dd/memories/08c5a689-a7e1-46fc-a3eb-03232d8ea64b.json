@@ -43,7 +43,6 @@
   "replaces": "56228242-eef6-4913-bdfd-6f746e1af86d",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "batch": "memory-refresh-2026-10-21",
     "accepted": {

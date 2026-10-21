@@ -57,7 +57,6 @@
   "replaces": "97b6d88f-9550-41fb-8788-dcfdd8cd1811",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "batch": "memory-refresh-2026-10-21",
     "accepted": {

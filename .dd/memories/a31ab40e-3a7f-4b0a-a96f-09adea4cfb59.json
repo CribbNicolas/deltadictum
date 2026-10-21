@@ -1,0 +1,59 @@
+{
+  "schema_version": 8,
+  "id": "a31ab40e-3a7f-4b0a-a96f-09adea4cfb59",
+  "project_id": "supermem",
+  "topic": "development/claude-code/live-session-probe",
+  "kind": "procedure",
+  "status": "candidate",
+  "title": "Verify the Claude Code plugin in a real session with --plugin-dir",
+  "body": "In a scratch git project that holds a `.dd/config.json` (and memories to try), run `claude -p \"<prompt>\" --plugin-dir <this checkout> --output-format stream-json --verbose --include-hook-events < /dev/null` and read the JSONL: the hook_response events carry what DD injected (hookSpecificOutput.additionalContext) and the assistant text is the agent's work; plain text output shows only the reply to DD's Stop request. The session's ledger and footprint land in `<scratch>/.dd/local/sessions/`. Why: --plugin-dir loads hooks/hooks.json exactly as a marketplace install does, for that run only, so the checkout is tested rather than the installed copy; src/eval/bench/run.js drives the same flags for the benchmark. A probe in a scratch project without a `.dd/` folder records nothing: the folder is the opt-in.",
+  "not_derivable": "No test can run Claude Code; the flags, the event the injection appears in and the opt-in trap were found by running it.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "hooks/hooks.json",
+        "hooks/run.cjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "plugin-dir",
+        "stream-json",
+        "real session",
+        "live session",
+        "sesion real",
+        "probe the plugin"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "hooks/hooks.json",
+      "sha256": "5e840a2a85d2e2acfff0d68b3ef3246beb8228213a9619bb3014ff31056f00b4",
+      "summary": "The hooks --plugin-dir loads."
+    },
+    {
+      "type": "file",
+      "path": "src/eval/bench/run.js",
+      "sha256": "86365c0adc0280cbe319ea7679394e34566f3e304b2c2272d97ca4ff9d683d28",
+      "summary": "The trial runner's claude -p flags."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "22827666-d3ee-487c-8339-498f856c0900",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "unversioned-memories-2026-10-21"
+  },
+  "created": "2026-10-21T20:31:57.310Z",
+  "updated": "2026-10-21T20:31:57.443Z"
+}

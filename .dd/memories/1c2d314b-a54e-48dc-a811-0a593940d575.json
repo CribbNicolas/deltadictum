@@ -1,0 +1,59 @@
+{
+  "schema_version": 8,
+  "id": "1c2d314b-a54e-48dc-a811-0a593940d575",
+  "project_id": "supermem",
+  "topic": "store/layout/new-dd-directory",
+  "kind": "trap",
+  "status": "candidate",
+  "title": "A new folder under .dd/ needs four places updated",
+  "body": "When adding a folder or file under .dd/, update every place that names them in the same change: operationPath's whitelist in src/store/transactions.js (a journaled write outside it fails with invalid_journal_path), DERIVED_ENTRIES in src/memory/ignore.js when it is derived (or it lands in git), localPaths in src/engine/locate.cjs, and the table in docs/guide/storage.md. The Codex installer's ignore list (scripts/install-codex.mjs) and `deltadictum init` write the same entries. Why: the journal whitelist was once the one place a plan missed, and the first write failed with invalid_journal_path; the ignore list and the docs fail silently, which is worse.",
+  "not_derivable": "The whitelist fails loudly; that the ignore list and the storage table must move with it is written nowhere near them.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/store/transactions.js",
+        "src/memory/ignore.js",
+        "src/engine/locate.cjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "new directory under .dd",
+        "new folder under .dd",
+        "invalid_journal_path",
+        "DERIVED_ENTRIES",
+        "localPaths"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/store/transactions.js",
+      "sha256": "b6d29aaa96d872aa915ab249d6fca0b04be86ba5a8070d4b9ba6a78994297c22",
+      "summary": "operationPath accepts journal paths under an explicit list."
+    },
+    {
+      "type": "file",
+      "path": "src/memory/ignore.js",
+      "sha256": "e2119b1383607de12b30da8293d1807e7449ed3ccbad0e268626b0058f1bacc3",
+      "summary": "DERIVED_ENTRIES."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "43b80c35-3f71-4c95-a4c9-c3f3fa15352c",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "unversioned-memories-2026-10-21"
+  },
+  "created": "2026-10-21T20:31:57.880Z",
+  "updated": "2026-10-21T20:31:58.010Z"
+}

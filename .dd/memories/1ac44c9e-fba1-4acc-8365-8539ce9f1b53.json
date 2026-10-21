@@ -1,0 +1,65 @@
+{
+  "schema_version": 8,
+  "id": "1ac44c9e-fba1-4acc-8365-8539ce9f1b53",
+  "project_id": "supermem",
+  "topic": "integrations/codex/project-trust-gates-config",
+  "kind": "trap",
+  "status": "candidate",
+  "title": "Codex ignores a project's .codex config until the project is trusted",
+  "body": "Expect the hooks scripts/install-codex.mjs writes (.codex/hooks.json) to be absent until the user trusts the project in an interactive Codex session and trusts the hooks in /hooks; project skills in .agents/skills still load without trust. Do not try to force trust from the agent: a -c projects.'<path>'.trust_level=\"trusted\" override did not make `codex exec` load the project layer. Ask the user to open the project in codex once, accept trust, approve the hooks, then run the live check. Why: on 2026-09-24 (codex-cli 0.154.0) a scratch project with a correct DD config ran codex exec with a working model, loaded the dd-* skills, and reported no DD at all, with and without the -c trust override. Trusted project keys in ~/.codex/config.toml are lowercase Windows paths. On 2026-10-21 (codex-cli 0.163.0) `codex exec` loaded the skills ($dd-recall invokes one) and ran no hook in an untrusted scratch project; its `--dangerously-bypass-hook-trust` flag exists but the agent's permission classifier refuses it.",
+  "not_derivable": "Codex's trust gate is not in its documentation; a correct config loading nothing was found live.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "scripts/install-codex.mjs",
+        "src/hooks/codex.cjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "codex exec",
+        "trusted project",
+        "trust_level",
+        "Codex trust",
+        "live Codex"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/getting-started.md",
+      "sha256": "4cca002795946e211a49197d7b4d8d6feee0a3a525de639f14c5e510bc206960",
+      "summary": "Codex install, trusting the project and its hooks, moved from docs/integrations/codex.md on 2026-10-21."
+    },
+    {
+      "type": "file",
+      "path": "README.md",
+      "sha256": "8d043dbde0daf771e74ec27a1475f10071acf9de427562e090e7f0fb6d1bab97",
+      "summary": "Codex install steps include trusting the project and hooks."
+    },
+    {
+      "type": "note",
+      "summary": "2026-10-21: codex exec 0.163.0 in an untrusted scratch project listed dd-save, dd-recall and dd-review, said a user invokes one as $dd-recall, and recorded no hook payload."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "7ce7be63-61a7-4ee9-b627-43a31bd61d7c",
+  "revisit_when": [],
+  "review": {
+    "issues": [
+      "supersedes_candidate:4ab4c68b-0f89-4508-88dd-4858f2b87e5b"
+    ],
+    "batch": "unversioned-memories-2026-10-21"
+  },
+  "created": "2026-10-21T20:31:58.164Z",
+  "updated": "2026-10-21T20:31:58.292Z"
+}

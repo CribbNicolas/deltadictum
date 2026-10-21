@@ -1,0 +1,65 @@
+{
+  "schema_version": 8,
+  "id": "8116b9a3-8c79-44b7-916e-d0e437123243",
+  "project_id": "supermem",
+  "topic": "integrations/grok/manifest-traps",
+  "kind": "trap",
+  "status": "candidate",
+  "title": "Grok Build manifest traps",
+  "body": "In .grok-plugin/plugin.json and .grok-plugin/marketplace.json, anchor every path with ${GROK_PLUGIN_ROOT} and never with ${VAR:-default} (Grok expands ${VAR} only), and name the marketplace plugin source by git URL, not \"./\" (its marketplace rejects it as \"marketplace path is empty\"). `grok plugin validate` passes on all of these, so check a change with `grok inspect` from an isolated HOME/USERPROFILE. Why: found on Grok 1.0.41 on 2026-09-23 with a manifest Grok accepted and partly ignored; the manifest registers hooks only, mirroring hooks/hooks.json. On 2026-10-21, installed from this checkout with `grok plugin install <path> --trust`, `grok inspect` listed its hooks and the skills /save, /recall and /deltadictum:review (Grok keeps /review); no live Grok session has been recorded, Grok not being signed in.",
+  "not_derivable": "Grok accepts the broken manifests without an error; only a live grok inspect showed what it ignored.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        ".grok-plugin/**",
+        ".grok/**"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "grok-plugin",
+        "GROK_PLUGIN_ROOT",
+        "grok marketplace",
+        "grok inspect",
+        "Grok Build"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/getting-started.md",
+      "sha256": "4cca002795946e211a49197d7b4d8d6feee0a3a525de639f14c5e510bc206960",
+      "summary": "Grok Build install and status, moved from docs/integrations/grok-build.md on 2026-10-21."
+    },
+    {
+      "type": "file",
+      "path": ".grok-plugin/plugin.json",
+      "sha256": "cf5796dd8c1f1cbb2c55c528f2a9d3231d4d896c5db8b40a7c09deb1c61cf2a4",
+      "summary": "Hooks anchored with GROK_PLUGIN_ROOT."
+    },
+    {
+      "type": "note",
+      "summary": "2026-10-21: grok 1.0.41 installed the plugin from this checkout with --trust; grok inspect listed its hooks and the skills recall, save and review, review renamed /deltadictum:review."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "11a59098-b095-4b6e-8daa-9b8eec7304bf",
+  "revisit_when": [],
+  "review": {
+    "issues": [
+      "supersedes_candidate:e6c84cbc-a99d-4e4d-bfad-e4a76ad05a46"
+    ],
+    "batch": "unversioned-memories-2026-10-21"
+  },
+  "created": "2026-10-21T20:31:57.018Z",
+  "updated": "2026-10-21T20:31:57.155Z"
+}

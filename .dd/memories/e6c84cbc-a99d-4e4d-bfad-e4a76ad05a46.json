@@ -1,0 +1,61 @@
+{
+  "schema_version": 8,
+  "id": "e6c84cbc-a99d-4e4d-bfad-e4a76ad05a46",
+  "project_id": "supermem",
+  "topic": "integrations/grok/manifest-traps",
+  "kind": "trap",
+  "status": "archived",
+  "title": "Grok Build manifest traps",
+  "body": "In .grok-plugin/plugin.json and .grok-plugin/marketplace.json, anchor every path with ${GROK_PLUGIN_ROOT} and never with ${VAR:-default} (Grok expands ${VAR} only), and name the marketplace plugin source by git URL, not \"./\" (its marketplace rejects it as \"marketplace path is empty\"). `grok plugin validate` passes on all of these, so check a change with `grok inspect` from an isolated HOME/USERPROFILE. Why: found on Grok 1.0.41 on 2026-09-23 with the v1 manifest, which also inlined an mcpServers object Grok ignored; v2 registers hooks only, mirroring hooks/hooks.json, and no live Grok session has been recorded since.",
+  "not_derivable": "Grok accepts the broken manifests without an error; only a live grok mcp doctor and inspect showed what it ignored.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        ".grok-plugin/**",
+        ".grok/**"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "grok-plugin",
+        "GROK_PLUGIN_ROOT",
+        "grok marketplace",
+        "grok inspect",
+        "Grok Build"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/getting-started.md",
+      "sha256": "4f83d3d9ebe4d01a640d9e9d1e851ec871316d0ac8b031487c77bfd512c00ad0",
+      "summary": "Grok Build install and status, moved from docs/integrations/grok-build.md on 2026-10-21."
+    },
+    {
+      "type": "file",
+      "path": ".grok-plugin/plugin.json",
+      "sha256": "58692cc52ac5288f97e08cac6e04fb72bc9ef294fe5df06e08e8fbfa26de8dd4",
+      "summary": "Hooks anchored with GROK_PLUGIN_ROOT."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "11a59098-b095-4b6e-8daa-9b8eec7304bf",
+  "revisit_when": [],
+  "review": {
+    "issues": [
+      "replaced_by_candidate:8116b9a3-8c79-44b7-916e-d0e437123243"
+    ],
+    "batch": "docs-harness-pages-2026-10-21"
+  },
+  "created": "2026-10-21T13:59:54.343Z",
+  "updated": "2026-10-21T20:31:57.155Z"
+}
