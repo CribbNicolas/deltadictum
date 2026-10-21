@@ -57,8 +57,9 @@ ingests it in the same turn and answers:
 - **stored as a candidate** for review, saying which condition was not met;
 - **rejected** with reasons, for example generic advice, a missing `not_derivable` or a secret in the text.
 
-When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive or
-revise a memory wait for a person in the review UI, and what DD activated on its own waits in the "Accepted
+When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive,
+revise, re-verify, merge or delete memories wait for a person in the review UI, which carries one out only
+when the person applies it (delete takes only memories already archived or superseded), and what DD activated on its own waits in the "Accepted
 by DD" queue until a person marks it reviewed. The review UI's dashboard shows the capture funnel (asks,
 proposals, stored, activated, rejected), and `deltadictum health` adds the rejection reasons and each
 memory's fires by the trigger dimension that matched.
@@ -79,7 +80,7 @@ memory's fires by the trigger dimension that matched.
 ## How it is measured
 
 - **`npm run bench:v2`** replays the tool calls of a recorded agent trial through the matching engine, over
-  the memories that trial was recorded against (archived ones included, as they were then), and reports
+  the memories that trial was recorded against, frozen beside its events (archived ones included), and reports
   which memories each task would receive, and the hook's latency.
 - **The agent trial** (`src/eval/agent/run.js`) runs Claude Code on 15 tasks in this repository, each in a
   fresh clone, under several conditions: no project knowledge, DD v1, DD v2, the same knowledge as a guide

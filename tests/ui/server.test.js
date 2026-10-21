@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
 import { join } from 'node:path';
 import { startReviewServer } from '../../src/ui/server.js';
@@ -59,6 +59,21 @@ test('reads and actions go through the API; mutations take JSON only', async t =
   assert.equal(form.status, 415);
   assert.equal((await json('/api/memories/nope')).status, 404);
   assert.equal((await json('/api/memories?queue=bogus')).status, 400);
+});
+
+test('an agent request is carried out through the API; one that needs a person is refused', async t => {
+  const { server, cookie, root } = await serve(t, [memory('m1'), memory('a1', { topic: 'ui/a1', status: 'archived' })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'delete', target: 'a1', why: 'Archived long ago.' }));
+  writeFileSync(join(dir, 'r2.json'), JSON.stringify({ id: 'r2', request: 'revise', target: 'm1', why: 'Outdated.' }));
+  const post = path => call(server, path, { method: 'POST', body: '{}', headers: { cookie, 'content-type': 'application/json' } });
+  const applied = await post('/api/requests/r1/apply');
+  assert.equal(applied.status, 200);
+  assert.deepEqual(JSON.parse(applied.text).done, ['a1']);
+  const refused = await post('/api/requests/r2/apply');
+  assert.equal(refused.status, 400);
+  assert.ok(JSON.parse(refused.text).problems.includes('needs_a_person'));
 });
 
 test('a malformed percent-encoding in an API path is refused, not an internal error', async t => {

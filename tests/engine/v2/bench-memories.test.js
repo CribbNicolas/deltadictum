@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadBenchMemories } from '../../../src/eval/v2bench/memories.js';
+import { freezeBenchMemories, frozenBenchMemories, loadBenchMemories } from '../../../src/eval/v2bench/memories.js';
 import { convertV1 } from '../../../src/memory/convert-v1.js';
 
 const scratch = t => { const dir = mkdtempSync(join(tmpdir(), 'dd-bench-mem-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
@@ -31,6 +31,18 @@ test('without v1 atoms, the bench replays the live and the archived memories of 
   assert.deepEqual(loaded.map(m => m.id).sort(), ['a', 'b', 'e']);
   // Replayed as they were when the trial ran: the engine compiles live memories only.
   assert.equal(loaded.find(m => m.id === 'e').status, 'active');
+});
+
+// Frozen beside the trial's events, the replayed set no longer depends on the store,
+// which can then be curated down to what is live.
+test('the replayed memories freeze into a fixture and thaw unchanged; the repository ships one', async t => {
+  const dd = scratch(t);
+  const path = join(dd, 'frozen.json.gz');
+  assert.equal(await freezeBenchMemories([v2('b', 'active'), v2('a', 'active')], path), 2);
+  assert.deepEqual((await frozenBenchMemories(path)).map(m => m.id), ['a', 'b']);
+  const shipped = await frozenBenchMemories();
+  assert.ok(shipped.length > 0);
+  assert.ok(shipped.every(m => ['active', 'contested'].includes(m.status)));
 });
 
 test('with v1 atoms, the bench converts the live and legacy ones as it always did', async t => {

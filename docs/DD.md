@@ -89,10 +89,13 @@ corrected.
 - Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings pane, turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
-- The agent's requests to archive or revise a memory wait for a person in the review UI. A proposal or
-  request may name a `batch`; the review UI accepts or rejects a batch whole, each candidate under the
-  same rules as alone (a refused one is reported, the rest proceed), carrying out its archive requests on
-  live targets and leaving revise requests to the person.
+- The agent's requests to archive, revise, re-verify, merge or delete memories wait for a person in the
+  review UI, which carries one out only when the person applies it; archive, re-verify and delete may name
+  up to 200 memories at once. Delete takes only memories that are no longer live (archived or superseded),
+  so a live memory is archived first and its file kept until then. A proposal or request may name a
+  `batch`; the review UI accepts or rejects a batch whole, each candidate under the same rules as alone (a
+  refused one is reported, the rest proceed), then carries out its archive, merge and re-verify requests
+  and, last, its deletions, leaving revise requests, and any that could do nothing, to the person.
 
 ## Maintenance and review
 

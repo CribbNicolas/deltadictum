@@ -426,18 +426,21 @@
         h('ul', { class: 'plain' },
           ...batch.candidates.map(c => h('li', {}, h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(c.id) } }, 'Open'),
             h('span', { class: 'badge' }, c.kind), ` ${c.title} `, h('span', { class: 'mono' }, c.topic))),
-          ...batch.requests.map(r => h('li', {}, h('span', { class: 'badge' }, r.request), h('span', { class: 'mono' }, ` ${r.target} `), r.why))),
+          ...batch.requests.map(r => h('li', {}, h('span', { class: 'badge' }, r.request), h('span', { class: 'mono' }, ` ${requestWhat(r)} `), r.why, requestTargets(r)))),
         h('div', { class: 'row' },
           h('button', { type: 'button', class: 'act small ok', on: { click: () => actBatch(batch.name, 'accept') } }, 'Accept all'),
           h('button', { type: 'button', class: 'act small danger', on: { click: () => actBatch(batch.name, 'reject') } }, 'Reject all')))),
       loose.length ? h('h3', { class: 'section' }, 'Requests') : null,
       ...loose.map(request => h('div', { class: 'request' },
-        h('div', {}, h('span', { class: 'badge warn' }, request.request), h('span', { class: 'mono' }, request.target)),
+        h('div', {}, h('span', { class: 'badge warn' }, request.request), h('span', { class: 'mono' }, requestWhat(request))),
         h('p', {}, request.why),
+        requestTargets(request),
         h('span', { class: 'mono' }, request.at ?? ''),
         h('div', { class: 'row' },
-          h('button', { type: 'button', class: 'act small', on: { click: () => openTarget(request.target) } }, 'Open memory'),
-          h('button', { type: 'button', class: 'act small ok', on: { click: () => closeRequest(request.id, 'done') } }, 'Done'),
+          request.targets ? null : h('button', { type: 'button', class: 'act small', on: { click: () => openTarget(request.target) } }, 'Open memory'),
+          APPLIED_REQUESTS.includes(request.request)
+            ? h('button', { type: 'button', class: 'act small ok', on: { click: () => applyRequest(request.id) } }, 'Apply') : null,
+          h('button', { type: 'button', class: 'act small', on: { click: () => closeRequest(request.id, 'done') } }, 'Done'),
           h('button', { type: 'button', class: 'act small', on: { click: () => closeRequest(request.id, 'dismissed') } }, 'Dismiss')))));
   }
 
@@ -446,7 +449,7 @@
     try { result = await api(`/api/batches/${encodeURIComponent(name)}/${outcome}`, { method: 'POST' }); }
     catch (err) { refused(`${outcome === 'accept' ? 'Accepting' : 'Rejecting'} the batch`, err); return; }
     const notes = [];
-    if (result.refused.length) notes.push(`refused: ${result.refused.map(r => `${r.id} (${r.problems.join(', ')})`).join('; ')}`);
+    if (result.refused.length) notes.push(`refused: ${result.refused.map(r => `${r.target ?? r.id} (${r.problems.join(', ')})`).join('; ')}`);
     if (result.left.length) notes.push(`left for a person: ${result.left.map(r => `${r.id} (${r.reason})`).join('; ')}`);
     say(notes.length ? 'error' : 'ok', `Batch ${name}: ${result.accepted.length + result.rejected.length} memories, ${result.closed.length} requests${notes.length ? `. ${notes.join('. ')}` : '.'}`);
     await Promise.all([loadOverview(), loadList()]);
@@ -460,6 +463,20 @@
       if (!found) { showEmpty(); say('error', `No memory has the id or topic ${target}.`); return; }
       openMemory(found.id);
     } catch (err) { refused('Opening the memory', err); }
+  }
+
+  // The requests the page can carry out as asked; a revise is the person's to write.
+  const APPLIED_REQUESTS = ['archive', 'merge', 'reverify', 'delete'];
+  const requestWhat = r => `${r.targets ? `${r.targets.length} memories` : r.target}${r.into ? ` into ${r.into}` : ''}`;
+  const requestTargets = r => (r.targets ? h('details', {}, h('summary', {}, 'Memories'), h('p', { class: 'mono' }, r.targets.join(', '))) : null);
+
+  async function applyRequest(id) {
+    let result;
+    try { result = await api(`/api/requests/${encodeURIComponent(id)}/apply`, { method: 'POST' }); }
+    catch (err) { refused('Carrying out the request', err); return; }
+    const notes = result.refused.map(r => `${r.target} (${r.problems.join(', ')})`);
+    say(notes.length ? 'error' : 'ok', `Done for ${result.done.length} ${result.done.length === 1 ? 'memory' : 'memories'}${notes.length ? `; refused: ${notes.join('; ')}` : '.'}`);
+    await Promise.all([loadOverview(), loadList()]);
   }
 
   async function closeRequest(id, outcome) {

@@ -1,6 +1,6 @@
 {
   "name": "dd",
-  "version": "0.9.13",
+  "version": "0.9.14",
   "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git.",
   "author": {
     "name": "DeltaDictum"

@@ -151,7 +151,7 @@ session recorded); the "live" mark beside the DD logo says it is connected. The 
 | **Dashboard** | The store by status, what waits for you, sessions, deliveries, coverage, the capture funnel, fires by trigger and by event, and the memories that fire most |
 | **+ New memory** | A memory written by hand, validated as the agent's proposals are |
 | **Candidates** | Proposals waiting for a person: accept, edit, or archive |
-| **Agent requests** | What the agent asked: batches of proposals saved under one name (accept or reject the lot in one action), then requests to archive or revise a memory, with their reasons |
+| **Agent requests** | What the agent asked: batches of proposals saved under one name (accept or reject the lot in one action), then requests to archive, revise, re-verify, merge or delete memories, with their reasons; Apply carries one out |
 | **Accepted by DD** | Memories auto-accept activated; already firing. Mark each reviewed once you have read it |
 | **Recent deliveries**, **All memories** | The last deliveries; the whole store |
 | **Stale evidence** | The file a memory cites changed since it was hashed: re-verify or revise |

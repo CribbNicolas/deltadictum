@@ -30,3 +30,14 @@ test('with the repository at hand, named paths and symbols must exist in it', ()
   assert.deepEqual(judge('Keep src/config.js free of side effects.'), []);
   assert.deepEqual(judge('Hooks time out after 10 s.'), []);
 });
+
+// Both were refused as generic on 2026-10-21: a path that ends a sentence kept the
+// sentence's period, and a percentage never counted as a value.
+test('a path that ends a sentence, and a percentage, still make it specific', () => {
+  const repoFiles = ['src/config.js', 'docs/guide/how-it-works.md'];
+  const judge = body => genericReasons(m(body, 'A rule'), { repoFiles, symbolExists: () => false });
+  assert.deepEqual(judge('The trials are described in docs/guide/how-it-works.md. Quote them with care.'), []);
+  assert.deepEqual(judge('Read the defaults in src/config.js.'), []);
+  assert.deepEqual(judge('Requirements met went from 69% to 100% with it.'), []);
+  assert.deepEqual(judge('Quote the numbers with care. They hold.'), ['generic_advice']);
+});

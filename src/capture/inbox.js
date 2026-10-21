@@ -25,7 +25,10 @@ const PROPOSAL_FIELDS = ['topic', 'kind', 'title', 'body', 'not_derivable', 'tri
 const BATCH = /^[A-Za-z0-9_-]{1,64}$/;
 const invalidBatch = proposal => proposal.batch !== undefined && !(typeof proposal.batch === 'string' && BATCH.test(proposal.batch));
 const NOT_DERIVABLE_MIN = 20;
-const REQUESTS = ['archive', 'revise'];
+const REQUESTS = ['archive', 'revise', 'reverify', 'merge', 'delete'];
+// The requests that may name several memories at once, so a cleanup is one request, not one per memory.
+const MULTI_TARGET = ['archive', 'reverify', 'delete'];
+const TARGETS_MAX = 200;
 
 export const inboxDir = root => join(localPaths(root).dd, 'inbox');
 
@@ -143,19 +146,28 @@ function duplicateOf(memory, live) {
   return null;
 }
 
+const targetName = value => typeof value === 'string' && value.trim() && value.length <= 100;
+
+// A request names its memory by id or topic: one, or for MULTI_TARGET a list. A merge
+// also names the memory it goes `into`. Nothing is done here: a person carries it out.
 function storeRequest(root, file, proposal, now) {
   const name = basename(file);
-  if (!REQUESTS.includes(proposal.request) || typeof proposal.target !== 'string' || typeof proposal.why !== 'string' || !proposal.why.trim()) {
-    return reject(name, ['invalid_request']);
-  }
+  const { request, target, into } = proposal;
+  const many = Array.isArray(target);
+  const valid = REQUESTS.includes(request) && typeof proposal.why === 'string' && proposal.why.trim()
+    && (many ? MULTI_TARGET.includes(request) && target.length > 0 && target.length <= TARGETS_MAX && target.every(targetName) : targetName(target))
+    && (request === 'merge' ? !many && targetName(into) && into !== target : into === undefined);
+  if (!valid) return reject(name, ['invalid_request']);
   if (invalidBatch(proposal)) return reject(name, ['invalid_batch']);
+  const targets = many ? [...new Set(target)] : [target];
   const dir = join(localPaths(root).local, 'requests');
   mkdirSync(dir, { recursive: true });
   const id = randomUUID();
-  writeFileSync(join(dir, `${id}.json`), `${JSON.stringify({ id, request: proposal.request, target: proposal.target.slice(0, 100),
-    why: proposal.why.slice(0, 500), at: now.toISOString(), ...(proposal.batch ? { batch: proposal.batch } : {}) }, null, 2)}\n`);
+  writeFileSync(join(dir, `${id}.json`), `${JSON.stringify({ id, request, ...(targets.length > 1 ? { targets } : { target: targets[0] }),
+    ...(into ? { into } : {}), why: proposal.why.slice(0, 500), at: now.toISOString(), ...(proposal.batch ? { batch: proposal.batch } : {}) }, null, 2)}\n`);
   rmSync(file, { force: true });
-  return { reply: `DD - request ${id} (${proposal.request} ${proposal.target.slice(0, 100)}) waits for a person in the review UI.`, request: id };
+  const what = targets.length > 1 ? `${targets.length} memories` : targets[0];
+  return { reply: `DD - request ${id} (${request} ${what}${into ? ` into ${into}` : ''}) waits for a person in the review UI.`, request: id };
 }
 
 function storedReply(memory, { suggested, warnings, accept }) {

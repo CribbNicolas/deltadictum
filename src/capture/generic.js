@@ -6,7 +6,8 @@
 const PATHLIKE = /[\w.@-]+\/(?:[\w./@-]+|(?=[\s.,;:)]|$))|\b[\w-]+\.(?:[cm]?[jt]sx?|json|md|py|go|rs|java|cs|rb|php|ya?ml|toml|sh|ps1|sql|html|css)\b/gi;
 const CODE = /`([^`\s][^`]*)`/g;
 const IDENTIFIER = /\b[a-z]+[A-Z]\w*\b|\b[A-Za-z]+_\w+\b/g;
-const VALUE = /\b\d+(?:\.\d+)?\s*(?:ms|s|kb|mb|gb|%|px|tokens?|characters?|bytes?|lines?|seconds?|minutes?)\b|(?:^|\s)--[a-z][\w-]+|\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/;
+// A percentage ends on a non-word character, so it takes no closing \b.
+const VALUE = /\b\d+(?:\.\d+)?\s*(?:%|(?:ms|s|kb|mb|gb|px|tokens?|characters?|bytes?|lines?|seconds?|minutes?)\b)|(?:^|\s)--[a-z][\w-]+|\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/;
 
 // The paths and symbols a body names, for the caller to look up in the repository.
 export function namedSymbols(memory) {
@@ -17,7 +18,8 @@ export function namedSymbols(memory) {
 export function genericReasons(memory, { repoFiles = null, symbolExists = null } = {}) {
   const text = `${memory.title ?? ''}\n${memory.body ?? ''}`;
   if (VALUE.test(text)) return [];
-  const paths = (text.match(PATHLIKE) ?? []).map(path => path.replace(/^\.\//, ''));
+  // A path that ends a sentence brings the sentence's period with it.
+  const paths = (text.match(PATHLIKE) ?? []).map(path => path.replace(/^\.\//, '').replace(/\.+$/, ''));
   const pathExists = path => !repoFiles || repoFiles.some(file => file === path || file.startsWith(`${path.replace(/\/$/, '')}/`));
   const symbolKnown = name => !symbolExists || symbolExists(name) || pathExists(name);
   return paths.some(pathExists) || namedSymbols(memory).some(symbolKnown) ? [] : ['generic_advice'];

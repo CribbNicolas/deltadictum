@@ -1,6 +1,7 @@
 // The v2 bench: the
 // trial's recorded runs replayed through trigger matching, with no agent runs.
 //   node src/eval/v2bench/run.js [--fixture=PATH] [--no-latency] [--out=output/eval/v2bench-report.json]
+//     [--memories=store] [--freeze]
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -17,7 +18,7 @@ import { scoreCheck, scoreCommandCheck } from './checks.js';
 import { classifyMemory } from './classify.js';
 import { loadFixture } from './fixture.js';
 import { stalenessTiming, timeInterleaved, timeSpawn } from './latency.js';
-import { loadBenchMemories } from './memories.js';
+import { FROZEN_MEMORIES, freezeBenchMemories, frozenBenchMemories, loadBenchMemories } from './memories.js';
 import { benchMetrics } from './metrics.js';
 import { replay } from './replay.js';
 import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from './spike-checks.js';
@@ -34,8 +35,15 @@ export const VARIANTS = {
   'keywords-only': memory => ({ ...memory, triggers: memory.triggers.filter(c => c.keywords) }),
 };
 
-const memories = await loadBenchMemories(join(REPO, '.dd'));
+// The frozen memories by default; --memories=store reads the project's store, and
+// --freeze writes what it reads as the new frozen set.
+const fromStore = args.memories === 'store' || 'freeze' in args;
+const memories = fromStore ? await loadBenchMemories(join(REPO, '.dd')) : await frozenBenchMemories();
 if (!memories.length) throw new Error('bench_no_memories: nothing live under .dd/atoms, .dd/legacy or .dd/memories');
+if ('freeze' in args) {
+  console.log(`froze ${await freezeBenchMemories(memories)} memories into ${FROZEN_MEMORIES}`);
+  process.exit(0);
+}
 const fixture = await loadFixture(args.fixture ? resolve(REPO, args.fixture) : undefined);
 const conditions = [...new Set(fixture.runs.map(run => run.condition))];
 

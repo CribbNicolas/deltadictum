@@ -4,6 +4,15 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.14] - 2026-10-21
+
+- Agent requests: besides archive and revise, the agent can ask to re-verify stale evidence, merge one
+  memory into another (`"into"`) and delete memories that are already archived or superseded. Archive,
+  re-verify and delete take up to 200 targets in one request. Each waits for a person: accepting its batch
+  carries it out (deletions last), and a request outside a batch has an Apply button in the review UI.
+- Capture: a proposal that names a path at the end of a sentence, or a percentage, is no longer refused
+  as generic advice.
+
 ## [0.9.13] - 2026-10-21
 
 - Code comments no longer cite design notes and plans that are not in the repository. No behavior

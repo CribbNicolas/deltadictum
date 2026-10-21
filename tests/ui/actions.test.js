@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from '../../src/ui/actions.js';
+import { listRequests } from '../../src/ui/requests.js';
+import { acceptMemory, applyRequest, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from '../../src/ui/actions.js';
 import { loadIndex } from '../../src/engine/index-file.cjs';
 import { createMemoryFiles } from '../../src/memory/store.js';
 import { memory, project } from '../helpers/review.js';
@@ -152,4 +153,49 @@ test('accepting a batch accepts its candidates, carries out its archive requests
   assert.deepEqual(rejected.rejected, ['other']);
   assert.equal((await list(root)).other.status, 'archived');
   await assert.rejects(batchAction(root, 'nothing', 'accept'), err => err instanceof ReviewError && err.problems.includes('batch_not_found'));
+});
+
+// The agent's cleanup, carried out only when a person accepts it: the batch's revision is accepted
+// first, so a merge can name its topic; deletion takes only what is no longer live.
+test('accepting a batch carries out its reverify, merge and delete requests; a live memory is never deleted', async t => {
+  const stale = { type: 'file', path: 'src/a.js', sha256: 'a'.repeat(64), summary: 'changed since' };
+  const root = await project(t, [memory('keep', { topic: 'ui/keep' }), memory('rev', { topic: 'ui/keep', status: 'candidate', replaces: 'keep', review: { migrated: false, issues: [], batch: 'lot' } }),
+    memory('drop', { topic: 'ui/drop' }), memory('s1', { topic: 'ui/s1', evidence: [stale] }), memory('s2', { topic: 'ui/s2', evidence: [stale] }),
+    memory('old1', { topic: 'ui/old1', status: 'superseded' }), memory('old2', { topic: 'ui/old2', status: 'archived' }), memory('live', { topic: 'ui/live' })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  const put = request => writeFileSync(join(dir, `${request.id}.json`), JSON.stringify({ why: 'Cleanup.', batch: 'lot', ...request }));
+  put({ id: 'r-del', request: 'delete', targets: ['old1', 'old2', 'live'] });
+  put({ id: 'r-merge', request: 'merge', target: 'ui/drop', into: 'ui/keep' });
+  put({ id: 'r-ver', request: 'reverify', targets: ['ui/s1', 's2'] });
+  put({ id: 'r-gone', request: 'delete', target: 'nowhere' });
+  const result = await batchAction(root, 'lot', 'accept');
+  assert.deepEqual(result.accepted, ['rev']);
+  assert.deepEqual(result.closed.sort(), ['r-del', 'r-merge', 'r-ver']);
+  assert.deepEqual(result.refused.map(r => [r.id, r.target, r.problems[0]]).sort(), [['r-del', 'live', 'delete_live:live'], ['r-gone', 'nowhere', 'memory_not_found']]);
+  const after = await list(root);
+  assert.equal(after.keep.status, 'superseded');
+  assert.equal(after.drop.status, 'archived');
+  assert.ok(after.drop.review.issues.includes('merged_into:rev'));
+  assert.notEqual(after.s1.evidence[0].sha256, 'a'.repeat(64));
+  assert.notEqual(after.s2.evidence[0].sha256, 'a'.repeat(64));
+  assert.equal(after.old1, undefined);
+  assert.equal(after.old2, undefined);
+  assert.equal(after.live.status, 'active');
+  // Nothing of r-gone could be done: it stays open for the person.
+  assert.deepEqual(listRequests(root).map(r => r.id), ['r-gone']);
+});
+
+test('a request outside any batch is applied by a person one at a time, and closed when done', async t => {
+  const root = await project(t, [memory('a1', { status: 'archived' })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'delete', target: 'a1', why: 'Archived in 2026-09.' }));
+  writeFileSync(join(dir, 'r2.json'), JSON.stringify({ id: 'r2', request: 'revise', target: 'a1', why: 'Outdated.' }));
+  const result = await applyRequest(root, 'r1');
+  assert.deepEqual(result.done, ['a1']);
+  assert.equal((await list(root)).a1, undefined);
+  await assert.rejects(applyRequest(root, 'r2'), err => err instanceof ReviewError && err.problems.includes('needs_a_person'));
+  await assert.rejects(applyRequest(root, 'nope'), err => err instanceof ReviewError && err.problems.includes('request_not_found'));
+  assert.deepEqual(listRequests(root).map(r => r.id), ['r2']);
 });
