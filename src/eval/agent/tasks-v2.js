@@ -1,5 +1,4 @@
-// Tasks of the v2 agent trial (docs/superpowers/specs/2026-10-14-agent-trial-v2.md),
-// on the v2 codebase, each with an automatic check of the outcome.
+// Tasks of the v2 agent trial, on the v2 codebase, each with an automatic check of the outcome.
 // kind 'memory': one trial memory (named by topic) changes how the work should be
 // done; the prompt never names it. kind 'control': no memory bears on the work.
 // check(dir, answer) answers passed (the task as asked works) and requirements

@@ -1,4 +1,4 @@
-// The tollgate store (docs/superpowers/plans/2026-10-16-bench-02-tollgate.md, Task 4): seventeen
+// The tollgate store: seventeen
 // memories about tollgate's invented surroundings that nothing in its code, tests, docs or history
 // states. Thirteen bear on a task; four are realistic knowledge no task needs. Written before the
 // tasks and not edited after them.

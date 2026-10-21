@@ -1,4 +1,4 @@
-// tollgate, the invented Go project of the bench (docs/superpowers/plans/2026-10-16-bench-02-tollgate.md):
+// tollgate, the invented Go project of the bench:
 // a webhook relay to an invented payments partner, built from tollgate/src with its history.
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

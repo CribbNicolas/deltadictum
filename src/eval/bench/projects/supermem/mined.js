@@ -1,4 +1,4 @@
-// supermem's mined tasks (docs/superpowers/plans/2026-10-16-bench-04-supermem.md): each starts at a v2 fix
+// supermem's mined tasks: each starts at a v2 fix
 // commit's parent, and the test the fix added decides it. The check copies the fix's version of the test
 // file beside the original (zz_bench_<name>, so its relative imports resolve) and runs it; a deciding test
 // passes when the spec reporter prints it with a check mark.

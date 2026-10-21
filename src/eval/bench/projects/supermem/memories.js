@@ -1,4 +1,4 @@
-// The supermem bench store (docs/superpowers/plans/2026-10-16-bench-04-supermem.md): the lessons of
+// The supermem bench store: the lessons of
 // fifteen verified v2 fix commits, written from the mining report before any task, plus the thirteen
 // memories of the 2026-10-14 trial. Paths are those of the fixes' parents; some moved later, and the
 // compiler's dead-glob warnings for them are expected at other bases.

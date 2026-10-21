@@ -1,4 +1,4 @@
-// The vocabulary of the full benchmark (docs/superpowers/specs/2026-10-16-bench-full-design.md):
+// The vocabulary of the full benchmark:
 // each task belongs to one situation, which fixes what it tests about DD beyond
 // whether the agent knows the rule, and one origin, so invented results never
 // pass for real ones.

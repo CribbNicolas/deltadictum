@@ -1,4 +1,4 @@
-// supermem, DeltaDictum itself, as a real bench project (docs/superpowers/plans/2026-10-16-bench-04-supermem.md):
+// supermem, DeltaDictum itself, as a real bench project:
 // tasks mined from v2 fix commits and the 2026-10-14 trial's tasks, on a bench store of their lessons.
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -1,5 +1,5 @@
-// Project-Patriark, a real C#/.NET 8 game project with its own DD store, as a bench project
-// (docs/superpowers/plans/2026-10-16-bench-05-patriark.md). The store is the repository's at the base
+// Project-Patriark, a real C#/.NET 8 game project with its own DD store, as a bench project.
+// The store is the repository's at the base
 // commit (87 live memories of 357); the project commits a plugin setting and an AGENTS.md block that would
 // bring DD into every condition, so prepare removes them in all four.
 import { execFileSync } from 'node:child_process';

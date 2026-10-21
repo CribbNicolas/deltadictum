@@ -1,4 +1,4 @@
-// Builds an invented bench project (docs/superpowers/plans/2026-10-16-bench-02-tollgate.md) into a git
+// Builds an invented bench project into a git
 // repository: the final tree in projects/<name>/src/, committed in the order its history.json gives, with
 // fixed authors and dates so the commits are the same on every machine. A hash of the source beside the
 // repository says whether a build is current; without it, or with another, it is built again from nothing.

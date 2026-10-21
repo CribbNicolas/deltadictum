@@ -3,8 +3,7 @@ import { DIMENSIONS, EVENT_KINDS } from '../engine/clause.cjs';
 import { containsSecret, hasUnsafeMemoryContent } from '../engine/v2/sanitizer.js';
 import { BODY_MAX } from './convert-v1.js';
 
-// Schema 8: a memory is a rule with triggers (docs/superpowers/specs/
-// 2026-10-08-dd-v2-design.md, section 2). validateMemory names every problem;
+// Schema 8: a memory is a rule with triggers. validateMemory names every problem;
 // nothing is defaulted or repaired here.
 export const SCHEMA_VERSION = 8;
 export const KINDS = ['decision', 'trap', 'failed_approach', 'fact', 'procedure'];

@@ -2,8 +2,7 @@
 
 const { containsPhrase, words } = require('./text.cjs');
 
-// The reference semantics of a v2 trigger clause (docs/superpowers/specs/
-// 2026-10-08-dd-v2-design.md, section 3), written for clarity, not speed: the
+// The reference semantics of a v2 trigger clause, written for clarity, not speed: the
 // compiled matcher (match.cjs) must agree with it on every event. CommonJS
 // because hooks load it: an ES module costs a hook about 3 ms more.
 

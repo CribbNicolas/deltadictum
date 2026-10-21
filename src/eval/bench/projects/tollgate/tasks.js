@@ -1,4 +1,4 @@
-// tollgate's candidate tasks (docs/superpowers/plans/2026-10-16-bench-02-tollgate.md, Tasks 5-7). Each
+// tollgate's candidate tasks. Each
 // check runs a hidden Go test from hidden/ in one package, and static checks over the lines the change
 // added. `passed` says the task as asked works; `requirements` say what the memory requires.
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
