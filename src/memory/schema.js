@@ -1,7 +1,6 @@
 import { compilePattern } from '../checks/pattern.cjs';
 import { DIMENSIONS, EVENT_KINDS } from '../engine/clause.cjs';
-import { containsSecret, hasUnsafeMemoryContent } from '../engine/v2/sanitizer.js';
-import { BODY_MAX } from './convert-v1.js';
+import { containsSecret, hasUnsafeMemoryContent } from '../engine/sanitizer.js';
 
 // Schema 8: a memory is a rule with triggers. validateMemory names every problem;
 // nothing is defaulted or repaired here.
@@ -11,7 +10,7 @@ export const STATUSES = ['candidate', 'active', 'contested', 'superseded', 'arch
 export const LIVE_STATUSES = ['active', 'contested'];
 export const ORIGINS = ['model_initiated', 'user_explicit'];
 export const EVIDENCE_TYPES = ['file', 'observation', 'correction', 'note'];
-// keywords and not allow 16 because v1 anchors did: a migrated store must still validate.
+export const BODY_MAX = 1500;
 export const LIMITS = { body: BODY_MAX, title: 200, not_derivable: 300, file: 16000, list: 12, keywords: 16,
   phrase: 100, glob: 200, say: 200, summary: 500 };
 
@@ -104,7 +103,6 @@ function revisionProblems(rule) {
 export function validateMemory(memory) {
   if (!isObject(memory)) return ['invalid_memory'];
   const reasons = [];
-  const migrated = memory.review?.migrated === true;
   const live = LIVE_STATUSES.includes(memory.status);
   for (const key of Object.keys(memory)) if (!FIELDS.includes(key)) reasons.push(`unknown_field:${key}`);
   if (memory.schema_version !== SCHEMA_VERSION) reasons.push('invalid_schema_version');
@@ -117,10 +115,10 @@ export function validateMemory(memory) {
   if (!isText(memory.title)) reasons.push('missing_title');
   else if (memory.title.length > LIMITS.title) reasons.push('title_too_long');
   if (!isText(memory.body)) reasons.push('missing_body');
-  else if (memory.body.length > LIMITS.body && !migrated) reasons.push('body_too_long');
+  else if (memory.body.length > LIMITS.body) reasons.push('body_too_long');
   if (typeof memory.not_derivable !== 'string') reasons.push('invalid_not_derivable');
   else if (memory.not_derivable.length > LIMITS.not_derivable) reasons.push('not_derivable_too_long');
-  else if (live && !migrated && !memory.not_derivable.trim()) reasons.push('not_derivable_required');
+  else if (live && !memory.not_derivable.trim()) reasons.push('not_derivable_required');
   if (!Array.isArray(memory.triggers)) reasons.push('invalid_triggers');
   else {
     if (memory.triggers.length > LIMITS.list) reasons.push('too_many_triggers');

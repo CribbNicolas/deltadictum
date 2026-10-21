@@ -22,6 +22,12 @@ test('top-level pages form Start; sections follow in order, each opening with it
   assert.equal(groups[2].items[1].href, 'DD.html');
 });
 
+test('a section of one page lists the page under its own title, without an overview', () => {
+  const groups = buildNav([...PAGES, { id: 'commands', title: 'Commands', nav_order: 4, has_children: true }]);
+  assert.deepEqual(groups.map(g => g.title), ['Start', 'Commands', 'Reference', 'Architecture']);
+  assert.deepEqual(groups[1].items.map(i => [i.title, i.href]), [['Commands', 'commands.html']]);
+});
+
 test('prev and next follow the sidebar order across sections', () => {
   const groups = buildNav(PAGES);
   assert.equal(neighbours(groups, 'using-dd').prev.id, 'getting-started');

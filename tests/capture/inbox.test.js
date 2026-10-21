@@ -247,6 +247,28 @@ test('a request waits for a person and the inbox file is removed', async t => {
   assert.equal((await createMemoryFiles(join(root, '.dd')).list()).length, 0);
 });
 
+// Cleanup requests wait for a person like archive does: re-verify, merge and delete.
+// Re-verify, archive and delete may name several memories at once; merge names one and what it goes into.
+test('reverify, merge and delete requests are stored for a person; malformed ones are refused', async t => {
+  const root = repo(t);
+  const stored = async body => (await ingestInboxFile({ root, file: write(root, 'q.json', body), sessionId: 's1' }));
+  const readAll = () => readdirSync(join(root, '.dd', 'local', 'requests')).filter(name => name.endsWith('.json'))
+    .map(name => JSON.parse(readFileSync(join(root, '.dd', 'local', 'requests', name), 'utf8')));
+  assert.match((await stored({ request: 'reverify', target: ['m1', 'm2'], why: 'The claims still hold.' })).reply, /reverify 2 memories/);
+  assert.match((await stored({ request: 'merge', target: 'ui/drop', into: 'ui/keep', why: 'Same rule twice.' })).reply, /merge ui\/drop into ui\/keep/);
+  assert.match((await stored({ request: 'delete', target: ['a1'], why: 'Superseded long ago.' })).reply, /delete a1/);
+  const requests = readAll();
+  assert.deepEqual(requests.find(r => r.request === 'reverify').targets, ['m1', 'm2']);
+  assert.equal(requests.find(r => r.request === 'merge').into, 'ui/keep');
+  assert.equal(requests.find(r => r.request === 'delete').target, 'a1');
+  for (const bad of [{ request: 'merge', target: 'ui/drop', why: 'No destination.' }, { request: 'merge', target: ['a', 'b'], into: 'c', why: 'Two at once.' },
+    { request: 'revise', target: ['a', 'b'], why: 'Two at once.' }, { request: 'delete', target: [], why: 'Nothing.' },
+    { request: 'delete', target: [1], why: 'Not a name.' }, { request: 'purge', target: 'a', why: 'Unknown.' }]) {
+    assert.ok((await stored(bad)).rejected?.includes('invalid_request'), JSON.stringify(bad));
+  }
+  assert.equal(readAll().length, 3);
+});
+
 // A batch names the lot a proposal belongs to: the review UI accepts or rejects it in one action.
 test('a batch name is kept on the candidate and on a request; an invalid one is refused', async t => {
   const root = repo(t);

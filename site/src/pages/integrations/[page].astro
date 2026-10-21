@@ -1,0 +1,10 @@
+---
+import Redirect from '../../components/Redirect.astro';
+import { href } from '../../config.js';
+
+// The harness guides the site published before each page followed the reader's harness.
+export function getStaticPaths() {
+  return ['codex', 'opencode', 'grok-build'].map(page => ({ params: { page } }));
+}
+---
+<Redirect to={href('getting-started.html#2-install-the-plugin')} />

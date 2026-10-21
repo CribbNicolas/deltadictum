@@ -50,7 +50,7 @@
     {
       "type": "file",
       "path": "package.json",
-      "sha256": "e790407de430178b9fd39b3eaa6cd7c219e5ddde178e6137c69decb7f3dd5db5",
+      "sha256": "0d906fd9887ac99b900b6b654ced4c6bf054b8082b6c58bacaa1b8a24b5a9cc3",
       "summary": "Test scripts with quoted globs."
     }
   ],
@@ -58,13 +58,12 @@
   "replaces": "7b5d2510-a33e-4d28-8793-4c031292f51f",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T20:37:13.585Z"
     }
   },
   "created": "2026-09-27T02:37:09.360Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:13.586Z"
 }

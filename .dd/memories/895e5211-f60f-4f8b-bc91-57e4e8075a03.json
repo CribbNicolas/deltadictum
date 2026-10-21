@@ -1,0 +1,80 @@
+{
+  "schema_version": 8,
+  "id": "895e5211-f60f-4f8b-bc91-57e4e8075a03",
+  "project_id": "supermem",
+  "topic": "eval/agent-trial/effectiveness-numbers",
+  "kind": "fact",
+  "status": "active",
+  "title": "Quote DD's effectiveness from the 2026-10-20 full benchmark, with its caveats; never the September minutes",
+  "body": "Quote DD's effectiveness from the full benchmark of 2026-10-20 (DD 0.9.11, Claude Opus 5.5 and Claude Haiku 5.5, four projects, 26 tasks chosen where Haiku alone failed plus controls, three runs per condition, blind Opus judge). Its two summaries, docs/benchmarks/data/bench-2026-10-fix-opus.summary.json and docs/benchmarks/data/bench-2026-10-fix-haiku.summary.json, are what the landing averages. With DD, project requirements met went from 69% to 100% (Opus) and 43% to 98% (Haiku), quality from 92% to 98% and 85% to 97%, at +1.5% and +15% cost. The documentation conditions reached the same quality and requirements with more context, so DD's difference from them is context and, with Opus, cost, not quality. The landing is the only place benchmark figures are shown: the README and the docs carry none, and the earlier trials (the 15-task Sonnet 5.5 trial; the 2026-10-14 Opus/Haiku ceiling) live only in the local write-ups. Always with caveats: few projects, small samples, tasks selected where the agent alone failed. Never quote the September 2026 trial's minutes (72.4 against 37.3: one 25-minute timeout) or the 84% token saving of the replay scenarios as task success. The write-ups (docs/benchmarks/2026-10-bench-full.md and the rest) are local and git-ignored. Why: summaries drop the caveats the write-ups keep, and a reader reports what one outlier or the task selection produced.",
+  "not_derivable": "The summaries hold the numbers; which claims they cannot support, and that the write-ups with the caveats are kept out of git, is written only here.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "README.md",
+        "docs/guide/how-it-works.md",
+        "docs/benchmarks/**",
+        "CHANGELOG.md"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "agent trial",
+        "speedup",
+        "benchmark numbers",
+        "measured effectiveness",
+        "how much better",
+        "cuanto mejora",
+        "full benchmark"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/benchmarks/data/bench-2026-10-fix-opus.summary.json",
+      "sha256": "88ad17b6aa88d6c940f7749d27287803397d1d97d91f2b1096cc33bfe6a6a6cb",
+      "summary": "Opus: requirements 69 -> 100, quality 92 -> 98, cost $0.428 -> $0.4344; the caveat on task selection."
+    },
+    {
+      "type": "file",
+      "path": "docs/benchmarks/data/bench-2026-10-fix-haiku.summary.json",
+      "sha256": "1ca1d637dabbffd1a1e383e4ea14f378640cd72d42c8906f8bb6c24c107ef630",
+      "summary": "Haiku: requirements 43 -> 98, quality 85 -> 97, cost $0.0205 -> $0.0236."
+    },
+    {
+      "type": "file",
+      "path": "site/src/config.js",
+      "sha256": "396e690d70cb19873545292f8924027ee83b8e22e35766435fbbd252aac800f3",
+      "summary": "The landing reads the two summaries (featured.trials)."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "ef33dd42-f0cb-4c15-adba-700894406ac4",
+  "revisit_when": [
+    {
+      "kind": "file_changed",
+      "path": "site/src/config.js",
+      "description": "The landing features a new benchmark."
+    }
+  ],
+  "review": {
+    "issues": [
+      "supersedes_candidate:10f9a01c-8eb9-4e5b-a280-8613487cbf75"
+    ],
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:09.732Z"
+    }
+  },
+  "created": "2026-10-21T20:32:24.807Z",
+  "updated": "2026-10-21T20:37:09.814Z"
+}

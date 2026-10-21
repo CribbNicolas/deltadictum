@@ -48,9 +48,9 @@ benchmark inputs that exercise them.
 ```bash
 npm test          # full suite, including the engine's equivalence with the bench reference
 npm run test:stress
-npm run bench:v2  # delivery over the recorded trial and hook latency; read its report
+npm run bench:replay  # delivery over the recorded trial and hook latency; read its report
 ```
 
 The hot path is `PreToolUse`, once per tool call, with the cost dominated by Node start-up. Measure
-matching changes there (`npm run bench:v2` reports it), not in a microbenchmark. Check changes to the hook
-contract against Claude Code, the `--codex` path (`src/hooks/v2/codex.cjs`) and the OpenCode adapter.
+matching changes there (`npm run bench:replay` reports it), not in a microbenchmark. Check changes to the hook
+contract against Claude Code, the `--codex` path (`src/hooks/codex.cjs`) and the OpenCode adapter.

@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "tooling/install-codex/managed-block-drops-manual-fields",
   "kind": "trap",
-  "status": "active",
+  "status": "archived",
   "title": "The Codex installer replaces everything inside its managed block",
   "body": "Re-running `deltadictum install --host codex` rewrites every line between BEGIN and END DD MANAGED CONFIG in .codex/config.toml with the current configBody (in v2 a single comment: DD runs no MCP server), and gives DD's own handlers in .codex/hooks.json the installer's timeout and limits back; handlers DD did not write, their matcher groups, and everything outside the block are kept. Move hand edits out of the block, or run with --dry-run first and diff the files it lists. Why: in a real project (2026-10) regenerating the block dropped a hand-set approval_mode; 0.8.4 preserved tools.* tables only, and v2 drops the MCP block altogether, so any key a person added inside it goes without a warning.",
   "not_derivable": "The installer replaces the block silently; a person's edits inside it vanish with no message, which only a real project showed.",
@@ -41,7 +41,7 @@
     {
       "type": "file",
       "path": "tests/hooks/codex.test.js",
-      "sha256": "620270d6858e268c6861598c73e8b22f64107c401e2be53e017f9826adebc2c9",
+      "sha256": "0ccd728e89496e74ef74e14add7401ca796302c500d5030cca101822840ff304",
       "summary": "The installer tests."
     }
   ],
@@ -49,13 +49,14 @@
   "replaces": "2f29fdc6-cb28-4b17-95c4-1c0e832f0c7f",
   "revisit_when": [],
   "review": {
-    "migrated": false,
-    "issues": [],
+    "issues": [
+      "archived_by_person: The Codex installer no longer writes a config.toml block (2026-10-21): the trap it describes cannot happen. The AGENTS.md block it still manages holds only DD's own text."
+    ],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:33.841Z"
     }
   },
   "created": "2026-10-06T17:40:50.529Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:11.014Z"
 }

@@ -4,36 +4,32 @@ import { aboveBest, limitWait, meanCi, qualityScore, parseNumstat, redact, media
 
 const toolUse = (...names) => JSON.stringify({ type: 'assistant', message: { content: names.map((name, i) => ({ type: 'tool_use', id: `t${i}`, name, input: {} })) } });
 
-test('stream metrics count tool calls, exploration and DD tool calls', () => {
-  const stream = [toolUse('Read', 'Grep'), '{"type":"rate_limit_event"}', 'not json', toolUse('Edit', 'mcp__dd__retrieve', 'Glob'),
+test('stream metrics count tool calls and exploration', () => {
+  const stream = [toolUse('Read', 'Grep'), '{"type":"rate_limit_event"}', 'not json', toolUse('Edit', 'Bash', 'Glob'),
     JSON.stringify({ type: 'result', subtype: 'success' })].join('\n');
   const m = streamMetrics(stream, null);
   assert.equal(m.tool_calls, 5);
   assert.equal(m.exploration_calls, 3);
-  assert.equal(m.dd_tool_calls, 1);
   assert.equal(m.key_memory, null);
 });
 
 const KEY = '19a1686f-66d6-4d5f-88f9-cfe3b46d6f1b';
-const OTHER = 'a9fe1f6b-036d-4a63-9805-2462ed5dc6a4';
 const hook = (event, context) => JSON.stringify({ type: 'system', subtype: 'hook_response', hook_event: event,
   stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: context } }) });
 const toolCall = (id, name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } });
-const toolResult = (id, text) => JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text }] }] } });
 
 test('stream metrics read what DD injected and whether session start found DD active', () => {
-  const stream = [hook('SessionStart', 'DD - loaded for `p` (2 active).\nDD - Memory map (2):\ndd/x — when y'),
-    hook('PreToolUse', `DD - Project knowledge (advisory):\n[LESSON ${OTHER}] Close stores.\n[DECISION ${OTHER}] again`),
+  const stream = [hook('PreToolUse', 'DD - project knowledge (src/a.js):\n[TRAP] Close stores - Close them in t.after.'),
     JSON.stringify({ type: 'system', subtype: 'hook_response', hook_event: 'PostToolUse', stdout: '' })].join('\n');
   const m = streamMetrics(stream, null);
   assert.equal(m.dd_inactive, false);
   assert.equal(m.memories_pushed, 1);
-  assert.ok(m.injected_tokens > 20);
-  assert.equal(streamMetrics(hook('SessionStart', 'DD - Inactive: the resident DD process is loading'), null).dd_inactive, true);
+  assert.ok(m.injected_tokens > 10);
+  assert.equal(streamMetrics(hook('SessionStart', 'DD - Inactive: DD needs Node.js 22.16 or later.'), null).dd_inactive, true);
 });
 
-// v2 names a delivered memory by its title; the list tells the key memory from the noise.
-test('v2 deliveries are listed by title, once each, so the key memory and the noise can be told apart', () => {
+// A delivery names a memory by its title; the list tells the key memory from the noise.
+test('deliveries are listed by title, once each, so the key memory and the noise can be told apart', () => {
   const stream = [hook('PreToolUse', 'DD - project knowledge (src/a.js):\n[TRAP] Close stores - Close them in t.after.\n[DECISION] Keep CJS - Because it is faster.'),
     hook('UserPromptSubmit', 'DD - project knowledge (prompt):\n[FACT] Codex shapes - Recorded from sessions.\n... and 1 more: Other rule'),
     hook('PreToolUse', 'DD - project knowledge (src/b.js):\n[TRAP] Close stores - Close them in t.after.')].join('\n');
@@ -41,20 +37,6 @@ test('v2 deliveries are listed by title, once each, so the key memory and the no
   assert.deepEqual(m.delivered_titles, ['Close stores', 'Keep CJS', 'Codex shapes']);
   assert.equal(m.memories_pushed, 3);
   assert.equal(m.key_memory.pushed, true);
-});
-
-test('the key memory counts as pushed, pointed or pulled by how it reached the agent', () => {
-  const pushed = streamMetrics(hook('PreToolUse', `[LESSON ${KEY}] [anchor: threshold] Use a reachable ceiling.`), KEY);
-  assert.deepEqual(pushed.key_memory, { pushed: true, pointed: false, pulled: false });
-  const pointed = streamMetrics(hook('PreToolUse', `DD - Possibly relevant, not pushed:\n- dd/engine/x — when (get ${KEY.slice(0, 8)})`), KEY);
-  assert.deepEqual(pointed.key_memory, { pushed: false, pointed: true, pulled: false });
-  const pulledById = streamMetrics([toolCall('t1', 'mcp__dd__get', { id: KEY.slice(0, 8) })].join('\n'), KEY);
-  assert.equal(pulledById.key_memory.pulled, true);
-  const retrieved = streamMetrics([toolCall('t2', 'mcp__dd__retrieve', { action: 'set threshold' }),
-    toolResult('t2', JSON.stringify({ memories: [{ id: KEY, content: 'Use a reachable ceiling.' }] }))].join('\n'), KEY);
-  assert.equal(retrieved.key_memory.pulled, true);
-  const missed = streamMetrics([toolResult('t3', `unrelated ${KEY}`), hook('SessionStart', `map mentions ${KEY.slice(0, 8)}`)].join('\n'), KEY);
-  assert.deepEqual(missed.key_memory, { pushed: false, pointed: false, pulled: false });
 });
 
 const text = t => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: t }] } });
@@ -109,18 +91,18 @@ test('numstat counts files and lines, and counts a binary file without lines', (
 test('redaction removes what reveals DD to a blind judge and keeps the engineering content', () => {
   const answer = [
     'Per the retrieved memory 19a1686f-66d6-4d5f-88f9-cfe3b46d6f1b, 0.8 sits in a dead zone.',
-    'DD - Project knowledge (advisory): [LESSON 19a1686f] use a reachable ceiling.',
-    'I set the default to 0.85 (get 19a1686f) in src/store/paths.js.',
+    'DD - project knowledge (src/store/paths.js): use a reachable ceiling.',
+    'I set the default to 0.85 (memory 19a1686f) in src/store/paths.js.',
   ].join('\n');
   const out = redact(answer);
   assert.doesNotMatch(out, /19a1686f/);
-  assert.doesNotMatch(out, /retrieved memory|DD - |\[LESSON/i);
+  assert.doesNotMatch(out, /retrieved memory|DD - /i);
   assert.match(out, /0\.8 sits in a dead zone/);
-  assert.match(out, /I set the default to 0\.85 +in src\/store\/paths\.js/);
+  assert.match(out, /I set the default to 0\.85 \(memory \) in src\/store\/paths\.js/);
 });
 
-// DD v2 delivers "[KIND] title - body" lines without ids; its key memory is found by title.
-test('stream metrics count v2 deliveries and find the key memory by its title', () => {
+// DD delivers "[KIND] title - body" lines without ids; its key memory is found by title.
+test('stream metrics count deliveries and find the key memory by its title', () => {
   const stream = [
     hook('PreToolUse', 'DD - project knowledge (src/store/paths.js):\n[TRAP] Reachable ceilings - Use a reachable ceiling.\n[ABANDONED] Old cache - It went stale.'),
     hook('PreToolUse', 'DD - project knowledge (src/a.js):\n[DECISION] [DISPUTED] Ports - Use 7733.'),
@@ -131,7 +113,7 @@ test('stream metrics count v2 deliveries and find the key memory by its title', 
   assert.equal(streamMetrics(stream, { id: KEY, title: 'Something else' }).key_memory.pushed, false);
 });
 
-test('redaction removes v2 delivery lines too', () => {
+test('redaction removes delivery lines too', () => {
   const out = redact('I kept the ceiling reachable.\n[TRAP] Reachable ceilings - Use a reachable ceiling.\n[FACT] Ports - 7733.\nDone in src/store/paths.js.');
   assert.doesNotMatch(out, /\[TRAP\]|\[FACT\]|Reachable ceilings/);
   assert.match(out, /I kept the ceiling reachable\.\n+Done in src\/store\/paths\.js\./);

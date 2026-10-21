@@ -1,0 +1,66 @@
+{
+  "schema_version": 8,
+  "id": "462af759-5cf7-4c8e-9421-02657a400572",
+  "project_id": "supermem",
+  "topic": "distribution/harness-native-install-mechanisms",
+  "kind": "fact",
+  "status": "active",
+  "title": "How each harness loads DD, and which OpenCode hooks can carry text",
+  "body": "Claude Code and Grok Build install plugins from a marketplace that auto-discovers skills/ (Grok mirrors Claude Code's layout almost exactly); Codex has no marketplace or npm pull, so `deltadictum install --host codex` writes its config. OpenCode has no hook shaped like PreToolUse: tool.execute.before outputs {args} only and session events return void. Text reaches its model two ways: experimental.chat.system.transform (once per turn; it rewrites the system prompt and breaks the prompt cache) and the output of tool.execute.after ({title, output, metadata}), which DD uses to append the memories that fired to the tool's own result; that output carries no exit status, so outcomes cannot be read there. Why: verified 2026-09-19 against @opencode-ai/plugin@1.18.31's type definitions and a real plugin's compiled source, after a first version written from a documentation summary got the signatures wrong.",
+  "not_derivable": "The adapter shows the hook it uses, not the hooks tried and ruled out, nor that the published docs described them wrongly.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/**",
+        "scripts/install-codex.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "OpenCode",
+        "Grok Build",
+        "tool.execute",
+        "system.transform",
+        "marketplace",
+        "install mechanism"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "adapters/opencode/index.js",
+      "sha256": "c88636d4dbb3e01c0b2cb4386677cecc73782251bc4d693e1f8f957f92e5e1b9",
+      "summary": "The header cites the plugin version and the real plugin read before the shim."
+    },
+    {
+      "type": "file",
+      "path": "docs/guide/how-it-works.md",
+      "sha256": "8958f4bc744c866dc2b93ae58a9e160bc20538c1e5d2c6d167adf16d8a4b1fda",
+      "summary": "How DD reaches the agent on OpenCode, moved from docs/integrations/opencode.md on 2026-10-21."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "dc877e79-833d-4164-832f-5441ba2a0524",
+  "revisit_when": [],
+  "review": {
+    "issues": [
+      "supersedes_candidate:4dea8f3f-3ddb-4802-9db2-3bed846e4cc7"
+    ],
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:08.497Z"
+    }
+  },
+  "created": "2026-10-21T20:31:58.444Z",
+  "updated": "2026-10-21T20:37:08.580Z"
+}

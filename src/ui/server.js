@@ -3,7 +3,7 @@ import { existsSync, watch } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { acceptMemory, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from './actions.js';
+import { acceptMemory, applyRequest, archiveMemory, batchAction, createMemory, deleteMemory, editMemory, markReviewed, mergeMemories, rejectMemory, restoreMemory, retopicMemory, reverifyEvidence, ReviewError } from './actions.js';
 import { listBatches } from './batches.js';
 import { readSettings, writeSettings } from './config.js';
 import { dashboard } from './dashboard.js';
@@ -105,7 +105,7 @@ async function route(root, req, url, body) {
     if (req.method === 'PUT') return writeSettings(root, body);
   }
   if (req.method === 'GET' && area === 'requests') return listRequests(root);
-  if (req.method === 'POST' && area === 'requests' && parts.length === 3) return closeRequest(root, id, action);
+  if (req.method === 'POST' && area === 'requests' && parts.length === 3) return action === 'apply' ? applyRequest(root, id) : closeRequest(root, id, action);
   if (req.method === 'POST' && area === 'merge') return mergeMemories(root, body.keep, body.drop);
   if (req.method === 'GET' && area === 'batches' && parts.length === 1) return listBatches(root);
   if (req.method === 'POST' && area === 'batches' && parts.length === 3) return batchAction(root, id, action);

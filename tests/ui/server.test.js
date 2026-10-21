@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
 import { join } from 'node:path';
 import { startReviewServer } from '../../src/ui/server.js';
@@ -61,6 +61,21 @@ test('reads and actions go through the API; mutations take JSON only', async t =
   assert.equal((await json('/api/memories?queue=bogus')).status, 400);
 });
 
+test('an agent request is carried out through the API; one that needs a person is refused', async t => {
+  const { server, cookie, root } = await serve(t, [memory('m1'), memory('a1', { topic: 'ui/a1', status: 'archived' })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'delete', target: 'a1', why: 'Archived long ago.' }));
+  writeFileSync(join(dir, 'r2.json'), JSON.stringify({ id: 'r2', request: 'revise', target: 'm1', why: 'Outdated.' }));
+  const post = path => call(server, path, { method: 'POST', body: '{}', headers: { cookie, 'content-type': 'application/json' } });
+  const applied = await post('/api/requests/r1/apply');
+  assert.equal(applied.status, 200);
+  assert.deepEqual(JSON.parse(applied.text).done, ['a1']);
+  const refused = await post('/api/requests/r2/apply');
+  assert.equal(refused.status, 400);
+  assert.ok(JSON.parse(refused.text).problems.includes('needs_a_person'));
+});
+
 test('a malformed percent-encoding in an API path is refused, not an internal error', async t => {
   const { server, cookie } = await serve(t);
   const bad = await call(server, '/api/memories/%E0%A4%A', { headers: { cookie } });
@@ -73,10 +88,17 @@ test('the settings are read and changed through the API; unknown keys are kept a
   const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
   writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1 }));
   const before = JSON.parse((await json('/api/config')).text);
-  assert.deepEqual({ ...before, limits: undefined }, { project_id: 'p', auto_accept: true, delivery_limit: 10000, limits: undefined, file: { project_id: 'p', custom: 1 } });
+  assert.deepEqual({ ...before, limits: undefined }, { project_id: 'p', auto_accept: true, delivery_limit: 10000, retire_after_sessions: 20, limits: undefined, file: { project_id: 'p', custom: 1 } });
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: false }) })).status, 200);
   assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')), { project_id: 'p', custom: 1, auto_accept: false });
   assert.equal(JSON.parse((await json('/api/config')).text).auto_accept, false);
+  // retire.after_sessions, the one nested setting, is written in place.
+  assert.equal(JSON.parse((await json('/api/config')).text).retire_after_sessions, 20);
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ retire_after_sessions: 30 }) })).status, 200);
+  assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')).retire, { after_sessions: 30 });
+  assert.equal(JSON.parse((await json('/api/config')).text).retire_after_sessions, 30);
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ retire_after_sessions: 0 }) })).status, 400);
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1, auto_accept: false }));
   const bad = await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: 'yes' }) });
   assert.equal(bad.status, 400);
   assert.ok(JSON.parse(bad.text).problems.includes('invalid_setting:auto_accept'));
@@ -91,7 +113,7 @@ test('delivery_limit is a setting with bounds, compiled into the index when chan
   assert.equal(JSON.parse((await json('/api/config')).text).delivery_limit, 10000);
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 1000 }) })).status, 400);
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 5000 }) })).status, 200);
-  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8')).limit, 5000);
+  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'compiled', 'index.json'), 'utf8')).limit, 5000);
 });
 
 // Opens the live stream and collects its events until the test closes it.
@@ -119,13 +141,13 @@ test('the page hears about a change to the store, and not about the UI\'s own re
   const res = await live.ready;
   assert.match(res.headers['content-type'], /text\/event-stream/);
   const { mkdirSync } = await import('node:fs');
-  mkdirSync(join(root, '.dd', 'local', 'v2'), { recursive: true });
+  mkdirSync(join(root, '.dd', 'local', 'compiled'), { recursive: true });
   // macOS reports file events with a delay and can still deliver the project's own setup writes:
   // let those land, then listen from a clean slate.
   await settle(1200);
   live.events.length = 0;
   writeFileSync(join(root, '.dd', 'local', 'telemetry.sqlite-wal'), 'x');
-  writeFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), '{}');
+  writeFileSync(join(root, '.dd', 'local', 'compiled', 'index.json'), '{}');
   await settle(800);
   assert.deepEqual(live.events, []);
   mkdirSync(join(root, '.dd', 'local', 'requests'), { recursive: true });

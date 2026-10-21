@@ -1,17 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { TRIAL_MEMORIES, materializeTrialMemories } from '../../../src/eval/agent/trial-memories.js';
-import { TASKS } from '../../../src/eval/agent/tasks-v2.js';
+import { execFileSync } from 'node:child_process';
+import { TRIAL_BASE, TRIAL_MEMORIES, materializeTrialMemories } from '../../../src/eval/agent/trial-memories.js';
+import { TASKS } from '../../../src/eval/agent/tasks.js';
 import { validateMemory } from '../../../src/memory/schema.js';
 
 const REPO = fileURLToPath(new URL('../../..', import.meta.url));
 
-// The trial's store must be a valid DD store of this codebase: every memory
-// validates as a live memory, no trigger is dead against the tracked files and
-// code symbols, and every file it cites exists and is hashed.
-test('every trial memory materializes as a valid live memory of this repository with live triggers', async () => {
-  const { memories, warnings } = await materializeTrialMemories(REPO);
+// The trial's store must be a valid DD store of the code the trial ran on: every
+// memory validates as a live memory, no trigger is dead against that commit's
+// files and code symbols, and every file it cites exists there and is hashed. A
+// shallow clone (CI) lacks the commit, and the test says so instead of failing.
+test("every trial memory materializes as a valid live memory of the trial's base with live triggers", async t => {
+  try { execFileSync('git', ['-C', REPO, 'cat-file', '-e', `${TRIAL_BASE}^{commit}`], { stdio: 'ignore' }); }
+  catch { t.skip(`the trial's base ${TRIAL_BASE} is not in this clone`); return; }
+  const { memories, warnings } = await materializeTrialMemories(REPO, { rev: TRIAL_BASE });
   assert.equal(memories.length, TRIAL_MEMORIES.length);
   for (const memory of memories) {
     assert.deepEqual(validateMemory(memory), [], memory.topic);

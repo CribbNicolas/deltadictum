@@ -5,7 +5,7 @@ import { prepareClone, removeClone } from '../../src/eval/bench/clone.js';
 import { validateMemory } from '../../src/memory/schema.js';
 
 // The store compiles at the project base and at a mined task's parent; dead globs at one base or the
-// other are expected (paths moved during v2) and reported, never fatal.
+// other are expected (paths moved between them) and reported, never fatal.
 for (const task of [supermem.tasks.find(t => !t.base) ?? { id: 'base', base: supermem.base }, supermem.tasks.find(t => t.id === 'supermem-session-cwd')]) {
   test(`the supermem store compiles in a dd2 clone at ${task.base ?? supermem.base}`, async t => {
     const { dir, store_warnings: warnings, index_memories: indexMemories } = await prepareClone(supermem, task, 'dd2');

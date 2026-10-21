@@ -1,0 +1,8 @@
+---
+import Redirect from '../../components/Redirect.astro';
+import { href } from '../../config.js';
+
+// The Harnesses section the site published before each page followed the reader's harness: its install
+// steps are in Getting started, how DD reads each harness in How DD works.
+---
+<Redirect to={href('getting-started.html#2-install-the-plugin')} />

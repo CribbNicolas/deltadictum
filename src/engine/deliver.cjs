@@ -44,7 +44,7 @@ const ON_CONFLICT = 'DD - advisory: knowledge, not an order. Apply it to the tas
 const tailFor = rest => (rest.length ? `... and ${rest.length} more: ${rest.map(x => x.title).join('; ')}` : '');
 
 // The items that fit whole, in order, leaving room to name everything else. One
-// that does not fit is skipped, not the end: a long migrated memory must not keep
+// that does not fit is skipped, not the end: a long memory must not keep
 // the ones after it from arriving. A hook claims only these; a memory that was
 // only named is delivered at its next event. `named` is always named.
 function fitItems({ label, items, named = [], limit = LIMIT }) {

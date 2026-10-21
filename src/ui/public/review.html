@@ -100,8 +100,9 @@
     table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
     th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
     th { color: var(--muted); font-weight: 500; }
-    .request { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-    .request p { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .request-card { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
+    .request-card p { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .request-card ul.plain { margin-top: 6px; }
     .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .row input { flex: 1 1 260px; width: auto; min-width: 0; }
 
@@ -175,7 +176,7 @@
     [['dashboard', 'Dashboard'], ['create', '+ New memory']],
     [['candidates', 'Candidates'], ['from_agent', 'Agent requests'], ['auto_accepted', 'Accepted by DD']],
     [['activity', 'Recent deliveries'], ['all', 'All memories'], ['stale', 'Stale evidence'], ['hubs', 'Hubs'], ['dead', 'Dead triggers'],
-      ['false_alarms', 'Suspected false alarms'], ['duplicates', 'Duplicates'], ['missing_not_derivable', 'Missing not_derivable']],
+      ['false_alarms', 'Suspected false alarms'], ['duplicates', 'Duplicates']],
   ];
   const LABELS = Object.fromEntries(SECTIONS.flat());
   // Views that take the whole width: no list of memories beside them.
@@ -412,33 +413,81 @@
         card('Memories that fire most', true, bars(d.top.map(row => ({ label: row.title, value: row.fires, open: () => openAnywhere(row.memory) })), 'var(--c3)')))));
   }
 
-  // What the agent asked: the batches it named, accepted or rejected whole, then the requests no batch names.
+  // What the agent asked: one row per batch it named and per request no batch names. A row opens in the
+  // detail pane, where a batch lists its memories and its requests apart and is accepted or rejected whole.
   async function loadFromAgent() {
-    let batches, requests;
-    try { [batches, requests] = await Promise.all([api('/api/batches'), api('/api/requests')]); } catch (err) { refused('Reading the agent\'s requests', err); return; }
+    let batches, requests, memories;
+    try { [batches, requests, memories] = await Promise.all([api('/api/batches'), api('/api/requests'), api('/api/memories?queue=all')]); }
+    catch (err) { refused('Reading the agent\'s requests', err); return; }
+    const byKey = new Map(memories.flatMap(m => [[m.id, m], ...(['active', 'contested', 'candidate'].includes(m.status) ? [[m.topic, m]] : [])]));
     const loose = requests.filter(request => typeof request.batch !== 'string');
-    if (!batches.length && !loose.length) { $('list').replaceChildren(h('p', { class: 'empty' }, 'Nothing the agent asked waits.')); return; }
-    $('list').replaceChildren(
+    if (!batches.length && !loose.length) {
+      $('list').replaceChildren(h('p', { class: 'empty' }, 'Nothing the agent asked waits.'));
+      if (!state.selected || /^(batch|request):/.test(state.selected)) showEmpty();
+      return;
+    }
+    const row = (key, title, meta, open) => h('button', { type: 'button', class: `item${key === state.selected ? ' active' : ''}`, 'data-id': key,
+      on: { click: () => { quiet(); state.selected = key; markActive(); open(); } } }, h('div', {}, title), h('span', { class: 'meta' }, meta));
+    const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+    $('list').replaceChildren(...[
       batches.length ? h('h3', { class: 'section' }, 'Batches') : null,
-      ...batches.map(batch => h('div', { class: 'request' },
-        h('div', {}, h('span', { class: 'badge warn' }, 'batch'), h('span', { class: 'mono' }, batch.name),
-          h('span', { class: 'mono' }, ` ${batch.candidates.length} memories, ${batch.requests.length} requests`)),
-        h('ul', { class: 'plain' },
-          ...batch.candidates.map(c => h('li', {}, h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(c.id) } }, 'Open'),
-            h('span', { class: 'badge' }, c.kind), ` ${c.title} `, h('span', { class: 'mono' }, c.topic))),
-          ...batch.requests.map(r => h('li', {}, h('span', { class: 'badge' }, r.request), h('span', { class: 'mono' }, ` ${r.target} `), r.why))),
-        h('div', { class: 'row' },
-          h('button', { type: 'button', class: 'act small ok', on: { click: () => actBatch(batch.name, 'accept') } }, 'Accept all'),
-          h('button', { type: 'button', class: 'act small danger', on: { click: () => actBatch(batch.name, 'reject') } }, 'Reject all')))),
+      ...batches.map(batch => row(`batch:${batch.name}`, batch.name,
+        `${count(batch.candidates.length, 'memory', 'memories')} · ${count(batch.requests.length, 'request', 'requests')}`, () => showBatch(batch, byKey))),
       loose.length ? h('h3', { class: 'section' }, 'Requests') : null,
-      ...loose.map(request => h('div', { class: 'request' },
-        h('div', {}, h('span', { class: 'badge warn' }, request.request), h('span', { class: 'mono' }, request.target)),
-        h('p', {}, request.why),
-        h('span', { class: 'mono' }, request.at ?? ''),
-        h('div', { class: 'row' },
-          h('button', { type: 'button', class: 'act small', on: { click: () => openTarget(request.target) } }, 'Open memory'),
-          h('button', { type: 'button', class: 'act small ok', on: { click: () => closeRequest(request.id, 'done') } }, 'Done'),
-          h('button', { type: 'button', class: 'act small', on: { click: () => closeRequest(request.id, 'dismissed') } }, 'Dismiss')))));
+      ...loose.map(request => row(`request:${request.id}`, `${request.request} ${requestWhat(request)}`, request.why, () => showRequest(request, byKey))),
+    ].filter(Boolean));
+    // The open batch or request stays open across a reload; one that is gone leaves the pane empty. A
+    // memory opened from a batch stays open.
+    const open = batches.find(b => `batch:${b.name}` === state.selected) ?? loose.find(r => `request:${r.id}` === state.selected);
+    if (open?.candidates) showBatch(open, byKey);
+    else if (open) showRequest(open, byKey);
+    else if (!state.selected || /^(batch|request):/.test(state.selected)) showEmpty();
+  }
+
+  // A request's memories, each by its title when the store has it, and openable.
+  function requestMemories(request, byKey) {
+    const keys = request.targets ?? [request.target];
+    return h('ul', { class: 'plain' }, keys.map(key => {
+      const memory = byKey.get(key);
+      return h('li', {},
+        memory ? h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(memory.id) } }, 'Open') : h('span', { class: 'badge bad' }, 'not found'),
+        memory ? h('span', {}, memory.title) : null,
+        h('span', { class: 'mono' }, memory ? `${memory.topic} · ${memory.status}` : key));
+    }));
+  }
+
+  function requestBlock(request, byKey) {
+    return h('div', { class: 'request-card' },
+      h('div', {}, h('span', { class: 'badge warn' }, request.request), h('span', { class: 'mono' }, requestWhat(request))),
+      h('p', {}, request.why),
+      request.into ? h('p', { class: 'mono' }, `into: ${byKey.get(request.into)?.title ?? request.into}`) : null,
+      requestMemories(request, byKey));
+  }
+
+  function showBatch(batch, byKey) {
+    const bar = h('div', { class: 'bar' },
+      h('button', { type: 'button', class: 'act ok', on: { click: () => actBatch(batch.name, 'accept') } }, 'Accept all'),
+      h('button', { type: 'button', class: 'act danger', on: { click: () => actBatch(batch.name, 'reject') } }, 'Reject all'),
+      h('span', { class: 'mono' }, 'Memories are accepted first, then the requests are carried out, deletions last.'));
+    const pane = h('div', { class: 'pane' },
+      h('h2', {}, `Batch ${batch.name}`),
+      batch.candidates.length ? h('h3', {}, `Memories (${batch.candidates.length})`) : null,
+      batch.candidates.length ? h('ul', { class: 'plain' }, batch.candidates.map(c => h('li', {},
+        h('button', { type: 'button', class: 'act small', on: { click: () => openMemory(c.id) } }, 'Open'),
+        h('span', { class: 'badge' }, c.kind), h('span', {}, c.title), h('span', { class: 'mono' }, c.topic)))) : null,
+      batch.requests.length ? h('h3', {}, `Requests (${batch.requests.length})`) : null,
+      ...batch.requests.map(request => requestBlock(request, byKey)));
+    $('detail').replaceChildren(bar, pane);
+  }
+
+  function showRequest(request, byKey) {
+    const bar = h('div', { class: 'bar' },
+      APPLIED_REQUESTS.includes(request.request)
+        ? h('button', { type: 'button', class: 'act ok', on: { click: () => applyRequest(request.id) } }, 'Apply') : null,
+      h('button', { type: 'button', class: 'act', on: { click: () => closeRequest(request.id, 'done') } }, 'Done'),
+      h('button', { type: 'button', class: 'act', on: { click: () => closeRequest(request.id, 'dismissed') } }, 'Dismiss'),
+      h('span', { class: 'mono' }, request.at ?? ''));
+    $('detail').replaceChildren(bar, h('div', { class: 'pane' }, h('h2', {}, `Request: ${request.request}`), requestBlock(request, byKey)));
   }
 
   async function actBatch(name, outcome) {
@@ -446,20 +495,24 @@
     try { result = await api(`/api/batches/${encodeURIComponent(name)}/${outcome}`, { method: 'POST' }); }
     catch (err) { refused(`${outcome === 'accept' ? 'Accepting' : 'Rejecting'} the batch`, err); return; }
     const notes = [];
-    if (result.refused.length) notes.push(`refused: ${result.refused.map(r => `${r.id} (${r.problems.join(', ')})`).join('; ')}`);
+    if (result.refused.length) notes.push(`refused: ${result.refused.map(r => `${r.target ?? r.id} (${r.problems.join(', ')})`).join('; ')}`);
     if (result.left.length) notes.push(`left for a person: ${result.left.map(r => `${r.id} (${r.reason})`).join('; ')}`);
-    say(notes.length ? 'error' : 'ok', `Batch ${name}: ${result.accepted.length + result.rejected.length} memories, ${result.closed.length} requests${notes.length ? `. ${notes.join('. ')}` : '.'}`);
+    const memories = result.accepted.length + result.rejected.length;
+    say(notes.length ? 'error' : 'ok', `Batch ${name}: ${memories} ${memories === 1 ? 'memory' : 'memories'}, ${result.closed.length} ${result.closed.length === 1 ? 'request' : 'requests'}${notes.length ? `. ${notes.join('. ')}` : '.'}`);
     await Promise.all([loadOverview(), loadList()]);
   }
 
-  async function openTarget(target) {
-    try {
-      const all = await api('/api/memories?queue=all');
-      const found = all.find(m => m.id === target) ?? all.find(m => m.topic === target && m.status !== 'superseded' && m.status !== 'archived')
-        ?? all.find(m => m.topic === target);
-      if (!found) { showEmpty(); say('error', `No memory has the id or topic ${target}.`); return; }
-      openMemory(found.id);
-    } catch (err) { refused('Opening the memory', err); }
+  // The requests the page can carry out as asked; a revise is the person's to write.
+  const APPLIED_REQUESTS = ['archive', 'merge', 'reverify', 'delete'];
+  const requestWhat = r => `${r.targets ? `${r.targets.length} memories` : r.target}${r.into ? ` into ${r.into}` : ''}`;
+
+  async function applyRequest(id) {
+    let result;
+    try { result = await api(`/api/requests/${encodeURIComponent(id)}/apply`, { method: 'POST' }); }
+    catch (err) { refused('Carrying out the request', err); return; }
+    const notes = result.refused.map(r => `${r.target} (${r.problems.join(', ')})`);
+    say(notes.length ? 'error' : 'ok', `Done for ${result.done.length} ${result.done.length === 1 ? 'memory' : 'memories'}${notes.length ? `; refused: ${notes.join('; ')}` : '.'}`);
+    await Promise.all([loadOverview(), loadList()]);
   }
 
   async function closeRequest(id, outcome) {
@@ -641,11 +694,14 @@
     const bounds = settings.limits.delivery_limit;
     const limit = h('input', { id: 's-limit', type: 'number', min: String(bounds.min), max: String(bounds.max), step: '500' });
     limit.value = String(settings.delivery_limit);
+    const sessionsBounds = settings.limits.retire_after_sessions;
+    const retire = h('input', { id: 's-retire', type: 'number', min: String(sessionsBounds.min), max: String(sessionsBounds.max), step: '1' });
+    retire.value = String(settings.retire_after_sessions);
     async function save() {
-      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value) } }); }
+      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value), retire_after_sessions: Number(retire.value) } }); }
       catch (err) { refused('Saving the settings', err); return; }
       dialog.close();
-      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters.`);
+      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters; retire after ${settings.retire_after_sessions} sessions.`);
       await loadOverview();
     }
     dialog.replaceChildren(
@@ -654,7 +710,9 @@
         h('div', { class: 'mono' }, `.dd/config.json · project ${settings.project_id ?? '(no project_id)'}`),
         h('label', { for: 's-auto', class: 'check' }, auto, h('span', {}, 'Auto-accept: DD activates a proposal on its own when it verified the evidence itself, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits as a candidate.')),
         h('label', { for: 's-limit' }, `Delivery cap, in characters (${bounds.min} to ${bounds.max}; default ${bounds.default})`), limit,
-        h('p', { class: 'mono' }, 'What does not fit whole is named and arrives at its next event. Other keys in the file are kept as they are.')),
+        h('p', { class: 'mono' }, 'What does not fit whole is named and arrives at its next event.'),
+        h('label', { for: 's-retire' }, `Retire after, in sessions (${sessionsBounds.min} to ${sessionsBounds.max}; default ${sessionsBounds.default})`), retire,
+        h('p', { class: 'mono' }, 'Maintenance archives a memory whose files that many sessions touched without it ever firing; never one a person reviewed. Other keys in the file are kept as they are.')),
       h('div', { class: 'actions' },
         h('button', { type: 'button', class: 'act', on: { click: () => dialog.close() } }, 'Cancel'),
         h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save')));

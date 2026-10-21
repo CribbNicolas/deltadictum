@@ -1,6 +1,6 @@
 // Correctness rules only, no style: an undefined name or an unused binding is a
-// bug or dead code (a `status` command that referenced two undefined variables
-// shipped in 0.8.2). ESLint is run through npx (`npm run lint`) rather than
+// bug or dead code (a command that referenced two undefined variables once
+// shipped). ESLint is run through npx (`npm run lint`) rather than
 // installed: a devDependency would land in every host that installs the plugin
 // with a plain `npm ci`, and the config imports nothing for the same reason.
 const NODE_GLOBALS = ['process', 'Buffer', 'console', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',

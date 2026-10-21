@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "testing/store-handle-hangs-node-test",
   "kind": "trap",
-  "status": "active",
+  "status": "superseded",
   "title": "Close every node:sqlite handle a test opens before its folder goes, and before an assertion can fail",
   "body": "Register the close of a telemetry database (openTelemetry, DatabaseSync) in t.after before the folder's rmSync, or close it in the test before asserting: t.after callbacks run in registration order, Windows answers EPERM when a folder holds an open database, and a failing assertion before the close keeps node --test alive past its timeout with no output. Do not make --test-force-exit the default: it hides the hang (and crashed server tests on Windows in v1); a standalone script that opens a database ends with process.exit. Why: a store left open hung tests/mcp/tools.test.js for 120 s silently on 2026-09-22; the v2 maintenance tests hit EPERM on 2026-10-13 until the handle closed before the folder was removed.",
   "not_derivable": "The tests close their handles, but not why the order matters, nor that a failing assertion hangs the runner without a word.",
@@ -43,13 +43,13 @@
     {
       "type": "file",
       "path": "tests/maintenance/telemetry.test.js",
-      "sha256": "c2d9a692a09c82f0395a273466aebb30d63a8358412dc2d9b4c12b20df458be2",
+      "sha256": "898246ce3d665cb83cdb69d172efed3f2ecce97fdf8ac3071562feea9e6856fe",
       "summary": "Tests close the database before the temporary folder is removed."
     },
     {
       "type": "file",
       "path": "src/maintenance/telemetry.js",
-      "sha256": "8d5acaaccdcf1c135bde2b5d7bbe44ecbfcd3cb4e8a8f4fa030ddedd08103a8d",
+      "sha256": "1521d947956aa987c0a818b237bcd6f9da3a151d1017a0d72e1c418d5b1f3c27",
       "summary": "openTelemetry returns a DatabaseSync the caller closes."
     }
   ],
@@ -57,13 +57,12 @@
   "replaces": "b85c7346-45dd-4416-a2b2-99dd9a6a494a",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:33.569Z"
     }
   },
   "created": "2026-09-27T02:37:09.031Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:10.378Z"
 }

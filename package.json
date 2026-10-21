@@ -1,6 +1,6 @@
 {
   "name": "deltadictum",
-  "version": "0.9.13",
+  "version": "0.9.14",
   "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git; a plugin for Claude Code, with Codex, Grok Build and OpenCode in progress.",
   "keywords": [
     "claude-code",
@@ -31,7 +31,7 @@
     "test:all": "npm test && npm run test:stress",
     "lint": "npx --yes eslint@10.11.0 .",
     "start": "node src/cli.js",
-    "bench:v2": "node src/eval/v2bench/run.js"
+    "bench:replay": "node src/eval/replay/run.js"
   },
   "files": [
     "src",
@@ -40,7 +40,6 @@
     "adapters",
     "docs/DD.md",
     "docs/guide",
-    "docs/integrations",
     "skills",
     "hooks",
     "scripts",

@@ -26,12 +26,11 @@ test('deltadictum install --host codex writes Codex project files without openin
   assert.equal(code, 0);
   const result = JSON.parse(stdout);
   assert.equal(result.dry_run, true);
-  assert.ok(result.files.some(f => f.endsWith('.codex/config.toml') || f.endsWith('.codex\\config.toml')));
+  assert.ok(result.files.some(f => f.endsWith('.codex/hooks.json') || f.endsWith('.codex\\hooks.json')));
   await assert.rejects(access(join(root, '.codex')));
 });
 
-// 0.8.2 printed "ddDir is not defined" for status: the command had never run.
-// v2 keeps everything in the project's .dd/, and status creates none of it.
+// DD keeps everything in the project's .dd/, and status creates none of it.
 test('deltadictum status counts the project memories and creates nothing', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dd-cli-status-'));
   await mkdir(join(root, '.git'));
@@ -58,10 +57,8 @@ test('help, version and an unknown command leave the current directory untouched
   await assert.rejects(access(join(root, '.dd')));
 });
 
-test('deltadictum version prints the package version without loading v1 modules', async () => {
+test('deltadictum version prints the package version', async () => {
   const { code, stdout } = await run(['version']);
   assert.equal(code, 0);
   assert.equal(stdout.trim(), JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version);
-  const source = await readFile(new URL('../../src/cli.js', import.meta.url), 'utf8');
-  for (const v1 of ['./project.js', './resident.js', './hooks/build.js', './engine/project-context.js']) assert.ok(!source.includes(v1), v1);
 });

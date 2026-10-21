@@ -1,0 +1,61 @@
+{
+  "schema_version": 8,
+  "id": "4ab4c68b-0f89-4508-88dd-4858f2b87e5b",
+  "project_id": "supermem",
+  "topic": "integrations/codex/project-trust-gates-config",
+  "kind": "trap",
+  "status": "archived",
+  "title": "Codex ignores a project's .codex config until the project is trusted",
+  "body": "Expect the hooks scripts/install-codex.mjs writes (.codex/hooks.json) to be absent until the user trusts the project in an interactive Codex session and trusts the hooks in /hooks; project skills in .agents/skills still load without trust. Do not try to force trust from the agent: a -c projects.'<path>'.trust_level=\"trusted\" override did not make `codex exec` load the project layer. Ask the user to open the project in codex once, accept trust, approve the hooks, then run the live check. Why: on 2026-09-24 (codex-cli 0.154.0) a scratch project with a correct DD config ran codex exec with a working model, loaded the dd-* skills, and reported no DD at all, with and without the -c trust override. Trusted project keys in ~/.codex/config.toml are lowercase Windows paths.",
+  "not_derivable": "Codex's trust gate is not in its documentation; a correct config loading nothing was found live.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "scripts/install-codex.mjs",
+        "src/hooks/v2/codex.cjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "codex exec",
+        "trusted project",
+        "trust_level",
+        "Codex trust",
+        "live Codex"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "docs/getting-started.md",
+      "sha256": "4f83d3d9ebe4d01a640d9e9d1e851ec871316d0ac8b031487c77bfd512c00ad0",
+      "summary": "Codex install, trusting the project and its hooks, moved from docs/integrations/codex.md on 2026-10-21."
+    },
+    {
+      "type": "file",
+      "path": "README.md",
+      "sha256": "962413c9a1a4170dab846b4a3806eb969d7165e3fc81299dc0091f1076857050",
+      "summary": "Codex install steps include trusting the project and hooks."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "7ce7be63-61a7-4ee9-b627-43a31bd61d7c",
+  "revisit_when": [],
+  "review": {
+    "issues": [
+      "replaced_by_candidate:1ac44c9e-fba1-4acc-8365-8539ce9f1b53"
+    ],
+    "batch": "docs-harness-pages-2026-10-21"
+  },
+  "created": "2026-10-21T14:00:12.407Z",
+  "updated": "2026-10-21T20:31:58.292Z"
+}

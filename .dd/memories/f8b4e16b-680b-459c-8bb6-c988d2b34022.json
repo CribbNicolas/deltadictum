@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "tooling/scripted-edits-lose-escapes",
   "kind": "trap",
-  "status": "active",
+  "status": "superseded",
   "title": "Edit code containing regex or escapes with the Edit tool, not generated JS strings",
   "body": "Use the Edit tool for any replacement whose new text contains backslashes (regex classes like \\s, \\n literals, Windows paths). A replacement written as a JavaScript string in a `node -e` script or a heredoc drops one level of escaping silently, and CRLF files make exact-match replacements fail. Why: on 2026-09-22 heredoc-generated edits turned /\\s+/ into /s+/ and broke two other regexes before a test caught one; the symptom is a regex that stops matching with no error.",
   "not_derivable": "Nothing in the repository shows an edit that lost its escapes; the failure is silent until a pattern stops matching.",
@@ -32,7 +32,6 @@
   "replaces": "6abc175a-4533-4aba-81f1-b372af7ef21c",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "accepted": {
       "by": "person",
@@ -40,5 +39,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.325Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:08.330Z"
 }

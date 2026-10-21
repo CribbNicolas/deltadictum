@@ -49,7 +49,7 @@ export async function doctorReport(root, { now = Date.now() } = {}) {
   const node = { version: process.versions.node, minimum: MINIMUM_NODE, supported: supportedNode() };
   if (!node.supported) problems.push(item('node_unsupported', `DD needs Node.js ${MINIMUM_NODE} or later; on ${process.version} every hook ends silently.`));
   const optedIn = existsSync(paths.dd);
-  const report = { ok: false, summary: '', node, project: { root, opted_in: optedIn, v1_store: existsSync(join(paths.dd, 'atoms')), config: configInfo(paths.dd) },
+  const report = { ok: false, summary: '', node, project: { root, opted_in: optedIn, config: configInfo(paths.dd) },
     git: repoFilesOf(root) !== null, memories: null, index: null, sessions: null, maintenance: null, signals: null, problems, notes };
   if (!optedIn) {
     // Nothing is read or created for a project that did not opt in.
@@ -57,7 +57,6 @@ export async function doctorReport(root, { now = Date.now() } = {}) {
     report.summary = 'DD: not opted in (no .dd/ folder): run `deltadictum init`.';
     return report;
   }
-  if (report.project.v1_store) problems.push(item('v1_store', 'The .dd/ folder holds a v1 store (atoms/): run `deltadictum migrate` and commit the result.'));
   if (!report.project.config.valid) problems.push(item('config_invalid', '.dd/config.json is not valid JSON; DD reads its defaults until it is fixed.'));
   if (!report.git) notes.push(item('no_git', 'Not a git repository: dead triggers and stale evidence cannot be judged, and evidence files cannot be verified.'));
 
@@ -75,7 +74,7 @@ export async function doctorReport(root, { now = Date.now() } = {}) {
   const withSignal = signal => health.memories.filter(memory => memory.signals.some(s => s.signal === signal)).length;
   report.signals = { dead_triggers: withSignal('dead_trigger'), stale_evidence: withSignal('stale_evidence'), hubs: withSignal('hub'),
     suspected_false_alarms: withSignal('suspected_false_alarm'), conflicts: health.conflicts.length, candidates: health.queues.candidates.length,
-    auto_accepted: health.queues.auto_accepted.length, migrated_without_not_derivable: health.queues.migrated_without_not_derivable.length };
+    auto_accepted: health.queues.auto_accepted.length };
 
   if (health.unsupported.length) problems.push(item('unsupported_memory_files', `${plural(health.unsupported.length, 'memory file')} cannot be read (${health.unsupported.map(u => u.path).slice(0, 3).join(', ')}): fix or remove them; \`deltadictum health\` lists the reasons.`));
   if (health.conflicts.length) problems.push(item('topic_conflicts', `${plural(health.conflicts.length, 'topic')} with more than one live memory (${health.conflicts.map(c => c.topic).slice(0, 3).join(', ')}): archive or merge one in the review UI.`));
@@ -91,7 +90,6 @@ export async function doctorReport(root, { now = Date.now() } = {}) {
   if (!report.maintenance) notes.push(item('maintenance_never_ran', 'Maintenance has not run yet; a session start runs it once a day, `deltadictum maintain` runs it now.'));
   if (report.signals.candidates) notes.push(item('candidates_waiting', `${plural(report.signals.candidates, 'candidate')} wait for review (/dd:review).`));
   if (report.signals.auto_accepted) notes.push(item('auto_accepted_waiting', `${plural(report.signals.auto_accepted, 'memory')} DD accepted on its own wait for a person to mark them reviewed.`));
-  if (report.signals.migrated_without_not_derivable) notes.push(item('migrated_without_not_derivable', `${plural(report.signals.migrated_without_not_derivable, 'migrated memory')} still need their not_derivable line.`));
 
   report.ok = problems.length === 0;
   const maintenance = !report.maintenance ? 'never ran' : report.maintenance.state === 'finished' ? `finished ${day(report.maintenance.finished)}` : `started ${day(report.maintenance.started)}`;

@@ -43,12 +43,12 @@ npm test              # full suite, including the engine's equivalence with the 
 npm run test:stress   # concurrent hook processes claiming the same memories
 ```
 
-A change to matching or delivery is measured with `npm run bench:v2` (delivery over the recorded agent
+A change to matching or delivery is measured with `npm run bench:replay` (delivery over the recorded agent
 trial, and hook latency) and with `node src/eval/bench/layer1/run.js` (the full benchmark's runs replayed;
 `npm test` fails when a summary moves, and `--write-expected` records a deliberate change). One that may
 change what agents do is measured with the agent trial
 (`src/eval/agent/run.js`, which spends model usage). A change to the hook contract is checked against
-Claude Code, the `--codex` path (`src/hooks/v2/codex.cjs`) and the OpenCode adapter.
+Claude Code, the `--codex` path (`src/hooks/codex.cjs`) and the OpenCode adapter.
 
 ## Versions and releases
 

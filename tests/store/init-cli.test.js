@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +29,7 @@ test('deltadictum init opts the project in: config, ignore file, memories folder
   const ignored = readFileSync(join(root, '.dd', '.gitignore'), 'utf8').split('\n');
   for (const entry of ['local/', 'memories/manifest.json', 'inbox/']) assert.ok(ignored.includes(entry), entry);
   assert.ok(existsSync(join(root, '.dd', 'memories')));
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
   assert.match(report.next, /git add \.dd/);
   const second = dd(root, 'init');
   assert.equal(second.status, 0, second.stderr);
@@ -46,12 +46,3 @@ test('init takes the project id, and leaves an existing config alone', t => {
   assert.equal(readFileSync(join(root, '.dd', 'config.json'), 'utf8'), '{ "auto_accept": false }\n');
 });
 
-// A v1 store is converted, not opted in beside its atoms.
-test('init refuses a project whose .dd still holds a v1 store', t => {
-  const root = fresh(t);
-  mkdirSync(join(root, '.dd', 'atoms'), { recursive: true });
-  const out = dd(root, 'init');
-  assert.equal(out.status, 1);
-  assert.match(out.stderr, /v1_store_present.*deltadictum migrate/);
-  assert.equal(existsSync(join(root, '.dd', 'config.json')), false);
-});

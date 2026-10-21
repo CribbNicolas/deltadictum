@@ -15,7 +15,7 @@ export function autoAcceptReasons({ memory, verified, warnings = [], duplicateOf
   return reasons;
 }
 
-// On by default (spec section 7). v1's confidence threshold has no meaning here.
+// On by default (spec section 7).
 export function autoAcceptEnabled(config) {
   const setting = config?.auto_accept;
   return !(setting === false || setting?.enabled === false);

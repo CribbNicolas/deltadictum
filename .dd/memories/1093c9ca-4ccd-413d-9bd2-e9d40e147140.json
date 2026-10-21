@@ -1,0 +1,64 @@
+{
+  "schema_version": 8,
+  "id": "1093c9ca-4ccd-413d-9bd2-e9d40e147140",
+  "project_id": "supermem",
+  "topic": "development/hooks/capture-real-payloads",
+  "kind": "procedure",
+  "status": "active",
+  "title": "Record a host's real hook payloads with DD_CAPTURE_PAYLOADS, not from documentation",
+  "body": "To learn what a harness really sends a hook, set DD_CAPTURE_PAYLOADS=<file> in the environment the hooks run with (hooks/run.cjs appends every command and payload as one JSON line), trigger the tool call, read the file, then unset it. Do not trust a documentation summary for a payload's shape, and do not register new events from the agent in .claude/settings.local.json: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a --plugin-dir session. Why: on 2026-09-24 a capture contradicted a docs-derived summary of Claude Code's payloads (the outcomes memory holds the recorded shapes); adding PostToolUseFailure to settings.local.json was denied by the permission classifier.",
+  "not_derivable": "run.cjs shows the variable; that documentation summaries were wrong and that the permission classifier refuses settings edits is recorded nowhere else.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "hooks/run.cjs",
+        "src/hooks/events.cjs",
+        "src/hooks/codex.cjs",
+        "src/hooks/observe.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "hook payload",
+        "payload shape",
+        "DD_CAPTURE_PAYLOADS",
+        "payload real",
+        "what the host sends"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "hooks/run.cjs",
+      "sha256": "b5542902b69a5b3a533dabb94cd6a46180b4772464b15faa2b52abaeb7fedcc3",
+      "summary": "DD_CAPTURE_PAYLOADS appends every command and payload."
+    },
+    {
+      "type": "file",
+      "path": "src/hooks/observe.js",
+      "sha256": "a2788caf72f63ed2d181a157e10544ad5e633d10048e6c7a24cbe22d1648c7bf",
+      "summary": "The comment records the shapes captured this way."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "d5d418f9-24b0-4275-9409-155f62d967fb",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:07.507Z"
+    }
+  },
+  "created": "2026-10-21T20:32:08.447Z",
+  "updated": "2026-10-21T20:37:07.588Z"
+}

@@ -1,22 +1,27 @@
 ---
 title: Getting started
-description: Install DeltaDictum in Claude Code, opt a project in, save a first memory, see it fire, review it and share it with the team.
+description: Install DeltaDictum in Claude Code, Codex, OpenCode or Grok Build, opt a project in, save a first memory, see it fire, review it and share it with the team.
 nav_order: 2
 ---
 
 # Getting started
 
 Twenty minutes from nothing to a memory the agent receives at the right moment. Every step says what you
-will see, so you know it worked.
+will see, so you know it worked. The steps follow the harness chosen in the menu; the tabs above a block
+change it too.
 
 ## 1. Requirements
 
 - [Node.js](https://nodejs.org) 22.16 or later on the machine's `PATH` (Windows, Linux or macOS).
-- Claude Code. For Codex, OpenCode or Grok Build see [Harnesses](integrations/index.md); the rest of this
-  page assumes Claude Code.
 - A git repository. Memories are files you commit; DD does nothing with them outside a repository.
+- One of the harnesses DD runs in. Claude Code is supported in full and is where DD is measured; the others
+  are added one at a time, each verified against a recorded session before it is called supported.
+
+The memory store is the same for every harness: a project's `.dd/memories/` serves them all.
 
 ## 2. Install the plugin
+
+<!-- for: claude-code -->
 
 In Claude Code:
 
@@ -27,6 +32,70 @@ In Claude Code:
 
 Start a new session. `/dd:save`, `/dd:recall` and `/dd:review` are now available, and DD's hooks run on
 every tool call. Update later from `/plugin`.
+
+<!-- /for -->
+
+<!-- for: codex -->
+
+> **Status:** the adapter is unit-tested against Codex payloads recorded in 2026-09 (codex-cli 0.154); it
+> is not yet verified in a live session.
+
+Codex has no plugin marketplace, so DD writes the project's Codex configuration. Install DD globally
+first, so the configuration points at a directory that stays (an `npx` cache can be cleared):
+
+```bash
+npm install -g deltadictum
+deltadictum install --host codex --project "<absolute-project-path>" --dry-run   # what it would write
+deltadictum install --host codex --project "<absolute-project-path>"
+```
+
+It writes, keeping everything else in each file:
+
+- `.codex/hooks.json`: DD's hooks (session start, prompt, every tool call before and after, proposals
+  made through `apply_patch`, and Stop), each running `hooks/run.cjs <command> --codex`;
+- `AGENTS.md`: a short managed block telling the agent what DD's deliveries are and how to save knowledge;
+- `.agents/skills/dd-save`, `dd-recall`, `dd-review`: the commands, as Codex skills.
+
+Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`: Codex ignores a project's
+`.codex/` configuration until both are trusted. After `npm update -g deltadictum`, run the install
+command again; it refreshes DD's own handlers and keeps yours.
+
+<!-- /for -->
+
+<!-- for: opencode -->
+
+> **Status:** the adapter is unit-tested against OpenCode's plugin API; it is not yet verified in a live
+> session.
+
+Add DD to the project's `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["deltadictum"]
+}
+```
+
+OpenCode runs plugins in Bun, which has no `node:sqlite`, so the adapter imports nothing from DD: it runs
+DD's hooks in Node, which must be 22.16 or later on the `PATH`. OpenCode has no DD commands; ask the agent
+in words, and use `npx deltadictum` in a terminal for the rest.
+
+<!-- /for -->
+
+<!-- for: grok -->
+
+> **Status:** not verified. The plugin runs the hooks Claude Code runs, assuming Claude Code's payload
+> shape; Grok's real payloads have not been recorded yet, so a tool name Grok spells differently fires
+> nothing.
+
+```bash
+grok plugin install CribbNicolas/deltadictum --trust
+```
+
+`--trust` is required for the hooks to load. `grok inspect`, run in the project, lists the plugin's hooks
+and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok keeps `/review` for its own).
+
+<!-- /for -->
 
 **What you will see:** nothing yet. A project without a `.dd/` folder is left alone.
 
@@ -50,8 +119,10 @@ It writes three things, all meant to be committed:
 git add .dd && git commit -m "Opt the project into DeltaDictum"
 ```
 
-> **Tip:** a `.dd/config.json` holding `{}` written by hand works too, as does a first memory saved with
-> `/dd:save`. The folder is the opt-in; DD never creates it on its own.
+> **Tip:** a `.dd/config.json` holding `{}` written by hand works too, as does a first memory the agent
+> saves. The folder is the opt-in; DD never creates it on its own.
+
+<!-- for: claude-code -->
 
 **What you will see:** from the next session on, one line when the session starts:
 
@@ -61,6 +132,15 @@ DD - on for this project, no memories yet. Save one with /dd:save; review with /
 
 Once there are memories, the line counts them and points at the review UI. It is shown to you only; the
 agent's context gets nothing at session start.
+
+<!-- /for -->
+
+<!-- for: codex opencode grok -->
+
+**What you will see:** nothing at session start; the agent's context gets nothing then either. The check
+below is how you know DD is on.
+
+<!-- /for -->
 
 **Check:** `npx deltadictum doctor` prints a `summary` line. In a fresh project it says DD is working and
 that there are no memories yet.
@@ -116,8 +196,28 @@ DD - project knowledge (tests/store.test.js):
 [TRAP] Close stores in t.after - A test that opens a store must close it in t.after: …
 ```
 
-The agent does not announce it; it acts on it. To see what DD knows explicitly, ask `/dd:recall store`
-or run `npx deltadictum recall store` from a terminal.
+The agent does not announce it; it acts on it. To see what DD knows explicitly, run
+`npx deltadictum recall store` from a terminal, or in the session:
+
+```text for=claude-code
+/dd:recall store
+```
+
+```text for=codex
+$dd-recall store
+```
+
+```text for=grok
+/recall store
+```
+
+<!-- for: opencode -->
+
+On OpenCode a memory arrives with the result of the tool call it applies to, not before the call: a read
+is unaffected, and an edit learns of its trap one step late. The system prompt is left alone, so the
+prompt cache holds.
+
+<!-- /for -->
 
 A memory is delivered once per session (again after a compaction or `/clear`). If it did not fire, see
 [Troubleshooting](using-dd.md#troubleshooting).
@@ -139,14 +239,34 @@ store unseen.
 
 To review every proposal yourself before it fires, set `{ "auto_accept": false }` in `.dd/config.json`.
 
+<!-- for: opencode -->
+
+OpenCode has no Stop hook, so DD does not ask at the end of a turn, and the checks that run once at the
+end of a turn do not run. The agent still saves knowledge when you ask for it.
+
+<!-- /for -->
+
 ## 7. Review
 
-```text
+```text for=claude-code
 /dd:review
 ```
 
-The agent runs `deltadictum doctor`, tells you its summary, and starts the review UI in the background. It
-prints an address like:
+```text for=codex
+$dd-review
+```
+
+```text for=grok
+/deltadictum:review
+```
+
+```bash for=opencode
+npx deltadictum doctor
+npx deltadictum ui
+```
+
+The agent runs `deltadictum doctor`, tells you its summary, and starts the review UI in the background
+(on OpenCode you run both yourself). It prints an address like:
 
 ```text
 DD - review UI: http://127.0.0.1:7733/?key=3f9a…
@@ -194,14 +314,3 @@ npx deltadictum import
 It turns the `.claude/rules/*.md` and `.cursor/rules/*.mdc` files that name paths into memories, with the
 file as evidence. A rule with no paths belongs in `CLAUDE.md` and is left alone.
 
-## Upgrading from DD 0.8 or earlier
-
-DD v2 replaced the memory format. Convert once and commit the result:
-
-```bash
-npx deltadictum migrate --dry-run
-npx deltadictum migrate
-```
-
-Every converted memory keeps its id and waits in the review UI for one line saying why the code does not
-show it. Details in the [changelog](https://github.com/CribbNicolas/deltadictum/blob/main/CHANGELOG.md).

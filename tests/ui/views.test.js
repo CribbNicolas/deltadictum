@@ -7,20 +7,19 @@ import { memory, project } from '../helpers/review.js';
 
 test('the overview counts each queue', async t => {
   const root = await project(t, [memory('live'), memory('cand', { status: 'candidate' }),
-    memory('mig', { not_derivable: '', review: { migrated: true, issues: [] } }), memory('dead', { triggers: [{ on: ['edit'], paths: ['docs/none.md'] }] }),
-    memory('auto', { review: { migrated: false, issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } })]);
+    memory('dead', { triggers: [{ on: ['edit'], paths: ['docs/none.md'] }] }),
+    memory('auto', { review: { issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } })]);
   mkdirSync(join(root, '.dd', 'local', 'requests'), { recursive: true });
   writeFileSync(join(root, '.dd', 'local', 'requests', 'r1.json'), JSON.stringify({ id: 'r1', request: 'archive', target: 'live', why: 'Replaced.' }));
   const { status, queues, capture, recent } = await overview(root);
-  assert.equal(status.total, 5);
+  assert.equal(status.total, 4);
   assert.equal(capture.proposals, 0);
   assert.deepEqual(recent, []);
   assert.equal(queues.candidates, 1);
-  assert.equal(queues.missing_not_derivable, 1);
   assert.equal(queues.dead, 1);
   assert.equal(queues.requests, 1);
   assert.equal(queues.auto_accepted, 1);
-  assert.equal(queues.all, 5);
+  assert.equal(queues.all, 4);
   assert.deepEqual((await listMemories(root, { queue: 'auto_accepted' })).map(m => m.id), ['auto']);
 });
 
@@ -45,8 +44,8 @@ test('a memory comes with its breadth, its check result and suggestions when it 
 });
 
 test('batches group the pending candidates and open requests that name them', async t => {
-  const root = await project(t, [memory('live'), memory('c1', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot-a' } }),
-    memory('c2', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot-b' } }), memory('c3', { status: 'candidate' })]);
+  const root = await project(t, [memory('live'), memory('c1', { status: 'candidate', review: { issues: [], batch: 'lot-a' } }),
+    memory('c2', { status: 'candidate', review: { issues: [], batch: 'lot-b' } }), memory('c3', { status: 'candidate' })]);
   mkdirSync(join(root, '.dd', 'local', 'requests'), { recursive: true });
   writeFileSync(join(root, '.dd', 'local', 'requests', 'r1.json'), JSON.stringify({ id: 'r1', request: 'archive', target: 'live', why: 'Replaced.', batch: 'lot-a' }));
   writeFileSync(join(root, '.dd', 'local', 'requests', 'r2.json'), JSON.stringify({ id: 'r2', request: 'archive', target: 'live', why: 'Alone.' }));

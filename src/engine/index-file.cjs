@@ -28,7 +28,7 @@ function loadIndex(root) {
 const BODIES_NAME = /^bodies-[a-z0-9]+\.json$/;
 function readBodies(root, index) {
   const name = index?.bodies;
-  return typeof name === 'string' && BODIES_NAME.test(name) ? readJson(join(localPaths(root).v2, name)) : null;
+  return typeof name === 'string' && BODIES_NAME.test(name) ? readJson(join(localPaths(root).compiled, name)) : null;
 }
 const manifestHash = root => readJson(localPaths(root).manifest)?.hash ?? null;
 
@@ -52,7 +52,7 @@ function memoryFilesFingerprint(memoriesDir) {
 
 // Session start also rebuilds an index whose bodies file is gone (two compiles
 // that overlapped, a hand deletion): hooks deliver nothing from it meanwhile.
-const bodiesPresent = (index, root) => typeof index.bodies === 'string' && BODIES_NAME.test(index.bodies) && existsSync(join(localPaths(root).v2, index.bodies));
+const bodiesPresent = (index, root) => typeof index.bodies === 'string' && BODIES_NAME.test(index.bodies) && existsSync(join(localPaths(root).compiled, index.bodies));
 const needsCompile = (index, root) => isStale(index, root) || index.fingerprint !== memoryFilesFingerprint(localPaths(root).memories)
   || !bodiesPresent(index, root);
 

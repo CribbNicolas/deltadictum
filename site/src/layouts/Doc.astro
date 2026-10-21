@@ -77,6 +77,8 @@ const jsonLd = [
   .side { flex: 1 1 220px; max-width: 250px; }
   .main { flex: 999 1 560px; min-width: 0; max-width: 760px; padding: 40px 0 80px; }
   .toc-col { flex: 1 1 180px; max-width: 220px; }
+  /* The columns themselves stick: a sticky child of a column only as tall as itself has nowhere to go. */
+  @media (min-width: 960px) { .side, .toc-col { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; } }
   .crumbs { margin: 0 0 10px; font-size: 14px; color: var(--text-faint); }
   .edit { margin: 22px 0 0; font-size: 14px; }
   .edit a { color: var(--text-muted); }

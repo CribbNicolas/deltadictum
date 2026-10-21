@@ -10,7 +10,7 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 
 const memory = (id, title, body, state = 'active') => ({ schema_version: 8, id, project_id: 'p', topic: `recall/${id}`, kind: 'trap', status: state,
   title, body, not_derivable: 'Hidden.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }], evidence: [], origin: 'model_initiated', replaces: null,
-  revisit_when: [], review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z' });
+  revisit_when: [], review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z' });
 
 async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-recall-'));
@@ -32,7 +32,7 @@ test('recall prints the matching live memories in full; candidates only with --a
   assert.equal(await recall(root, '"*:-'), 'DD - nothing matches.');
 });
 
-// Seen on this repository's migrated store: 69 superseded versions outranked the
+// Seen on this repository's store: 69 superseded versions outranked the
 // live memories, and "the" counted as a search term.
 test('recall finds the live memory among many superseded versions, whatever the stop words', async t => {
   const root = await project(t);

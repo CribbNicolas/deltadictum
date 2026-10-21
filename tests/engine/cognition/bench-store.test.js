@@ -46,7 +46,7 @@ test('installing a bench store replaces the clone\'s memories and compiles them'
   assert.ok(existsSync(join(root, '.dd', 'config.json')));
   assert.ok(!readdirSync(join(root, '.dd', 'memories')).includes('stale.json'));
   assert.equal(out.index_memories, 2);
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
 });
 
 test('the guide holds the live memories and is named in the guide target only when referenced', async t => {
@@ -61,14 +61,14 @@ test('the guide holds the live memories and is named in the guide target only wh
   assert.match(readFileSync(join(root, 'CLAUDE.md'), 'utf8'), /docs\/engineering-guide\.md/);
 });
 
-test('a bench store starts from an empty .dd: v1 atoms and other leftovers do not stay', async t => {
+test('a bench store starts from an empty .dd: leftovers of another layout do not stay', async t => {
   const root = repo(t);
-  mkdirSync(join(root, '.dd', 'atoms'), { recursive: true });
-  writeFileSync(join(root, '.dd', 'atoms', 'lesson.json'), '{}');
-  writeFileSync(join(root, '.dd', 'relations.json'), '{}');
+  mkdirSync(join(root, '.dd', 'old'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'old', 'x.json'), '{}');
+  writeFileSync(join(root, '.dd', 'leftover.json'), '{}');
   await installStore(root, project());
-  assert.ok(!existsSync(join(root, '.dd', 'atoms')));
-  assert.ok(!existsSync(join(root, '.dd', 'relations.json')));
+  assert.ok(!existsSync(join(root, '.dd', 'old')));
+  assert.ok(!existsSync(join(root, '.dd', 'leftover.json')));
 });
 
 test('a definition\'s check reaches the stored memory', async t => {

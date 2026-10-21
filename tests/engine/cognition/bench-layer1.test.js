@@ -5,7 +5,7 @@ import { gzipSync } from 'node:zlib';
 import { extractTraces, runEvents } from '../../../src/eval/bench/layer1/extract.js';
 import { MUTATIONS, mutateRun } from '../../../src/eval/bench/layer1/mutate.js';
 import { layer1Summary } from '../../../src/eval/bench/layer1/metrics.js';
-import { replay } from '../../../src/eval/v2bench/replay.js';
+import { replay } from '../../../src/eval/replay/replay.js';
 
 const RUNS = fileURLToPath(new URL('../../fixtures/bench/layer1/', import.meta.url));
 const TASKS = [

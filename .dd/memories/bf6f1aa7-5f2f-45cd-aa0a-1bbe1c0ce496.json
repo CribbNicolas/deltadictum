@@ -1,0 +1,58 @@
+{
+  "schema_version": 8,
+  "id": "bf6f1aa7-5f2f-45cd-aa0a-1bbe1c0ce496",
+  "project_id": "supermem",
+  "topic": "environment/dev-machine/query-telemetry-with-node-sqlite",
+  "kind": "fact",
+  "status": "active",
+  "title": "No sqlite3 CLI on this machine: open DD's telemetry with node:sqlite",
+  "body": "To look inside a project's telemetry (`.dd/local/telemetry.sqlite`: rolled, sessions, fires, touches, events, checks, fire_events, signals, inbox, meta, deliveries), open it with node:sqlite from a one-off script: `node -e \"const {DatabaseSync}=require('node:sqlite'); const db=new DatabaseSync('.dd/local/telemetry.sqlite'); console.log(db.prepare('SELECT memory, via, kind, at FROM fire_events ORDER BY at DESC LIMIT 20').all()); db.close()\"`. The sqlite3 command-line tool is not installed on this development machine (`which sqlite3` finds nothing), and `deltadictum health` and the review UI already answer the common questions: fires by dimension, the capture funnel, the last deliveries (the deliveries table: memories, named and chars per delivery). Close the handle before deleting anything: Windows refuses to remove an open database.",
+  "not_derivable": "What is installed on the development machine is recorded nowhere in the repository.",
+  "triggers": [
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "telemetry.sqlite",
+        "sqlite3",
+        "node:sqlite",
+        "query the telemetry",
+        "DatabaseSync"
+      ]
+    },
+    {
+      "on": [
+        "read"
+      ],
+      "paths": [
+        "src/maintenance/telemetry.js"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/maintenance/telemetry.js",
+      "sha256": "1521d947956aa987c0a818b237bcd6f9da3a151d1017a0d72e1c418d5b1f3c27",
+      "summary": "SCHEMA: the eleven tables, deliveries added 2026-10-15."
+    },
+    {
+      "type": "note",
+      "summary": "sqlite3 is not on this machine's PATH (checked 2026-09-19, 2026-10-06 and 2026-10-21)."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "2019b712-5bfc-46d1-9dc8-1ae5988f4557",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "memory-refresh-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T12:58:42.141Z"
+    }
+  },
+  "created": "2026-10-21T12:57:15.476Z",
+  "updated": "2026-10-21T12:58:42.268Z"
+}

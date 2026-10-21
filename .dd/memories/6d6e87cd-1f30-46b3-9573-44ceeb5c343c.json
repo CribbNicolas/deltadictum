@@ -39,21 +39,20 @@
     {
       "type": "file",
       "path": "src/eval/bench/projects/supermem/mined.js",
-      "sha256": "e60180e6e64a42bac4851ccb4189ed0a3f68e52a072ef08f357bcf5db4183082",
+      "sha256": "024ea087b2d2466b314894e0e6c31dec8c37e4cca63dfbe71783cf207da2170d",
       "summary": "Cited when this memory was saved."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": null,
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "accepted": {
-      "by": "dd",
-      "at": "2026-10-16T16:17:37.825Z"
+      "by": "person",
+      "at": "2026-10-21T12:52:40.025Z"
     }
   },
   "created": "2026-10-16T16:17:37.825Z",
-  "updated": "2026-10-16T16:17:38.075Z"
+  "updated": "2026-10-21T12:52:40.144Z"
 }

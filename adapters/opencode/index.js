@@ -71,7 +71,7 @@ export default async function DeltaDictum({ directory }) {
   };
 
   return {
-    // Session start injects nothing in v2; it compiles a stale index and starts
+    // Session start injects nothing; it compiles a stale index and starts
     // maintenance, once per session.
     'experimental.chat.system.transform': async input => {
       const sessionId = input?.sessionID;

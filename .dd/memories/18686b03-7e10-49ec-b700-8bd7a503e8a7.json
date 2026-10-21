@@ -1,0 +1,60 @@
+{
+  "schema_version": 8,
+  "id": "18686b03-7e10-49ec-b700-8bd7a503e8a7",
+  "project_id": "supermem",
+  "topic": "environment/dev-machine-harness-clis",
+  "kind": "fact",
+  "status": "active",
+  "title": "Grok Build and OpenCode CLIs are installed on this development machine",
+  "body": "Run Grok Build and OpenCode checks directly: both CLIs are installed on this machine (`grok --version` 1.0.41 and `opencode --version` 1.16.2 on 2026-10-21; grok was 1.0.25 on 2026-09-19). Useful: `grok inspect` (lists the instructions, skills, hooks and MCP servers discovered for the current project), `grok plugin validate <path>` (validates a plugin manifest and lists its components; it passes manifests Grok then ignores, so confirm with inspect) and `opencode debug startup` (loads the configured plugins, including a local file:// path, and says whether startup completed without an import-time crash). Prefer them to assuming a harness integration can only be checked by hand. Why: the 2026-09-19 install plan had treated both as manual, probably unavailable steps; both were present and gave real signal.",
+  "not_derivable": "What is installed on the development machine is recorded nowhere in the repository.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/**",
+        ".grok-plugin/**"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "grok inspect",
+        "opencode debug",
+        "grok plugin validate",
+        "live Grok",
+        "live OpenCode",
+        "verify the integration"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "note",
+      "summary": "2026-10-21: grok --version prints 1.0.41 (4220f3b224a6) [stable]; opencode --version prints 1.16.2."
+    },
+    {
+      "type": "note",
+      "summary": "2026-09-19: grok 1.0.25 and opencode 1.16.2 installed and working against this repository, including a local file:// plugin path."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "550e1d16-32da-4cdb-ad96-f5d8bad12374",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "docs-harness-pages-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:12.900Z"
+    }
+  },
+  "created": "2026-10-21T13:59:54.702Z",
+  "updated": "2026-10-21T20:37:12.984Z"
+}

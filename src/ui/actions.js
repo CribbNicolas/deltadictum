@@ -7,7 +7,7 @@ import { codeSymbols, compileProject, presentFilesOf, triggerWarnings } from '..
 import { localPaths } from '../engine/locate.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory } from '../memory/schema.js';
 import { listBatches } from './batches.js';
-import { closeRequest } from './requests.js';
+import { closeRequest, listRequests } from './requests.js';
 import { createMemoryFiles } from '../memory/store.js';
 
 // What a person does in the review UI (spec section 8). Every action validates as
@@ -71,11 +71,6 @@ export async function editMemory(root, id, changes) {
   const at = now();
   const next = reviewedByPerson({ ...memory, ...changes, origin: 'user_explicit', updated: at }, at);
   if (changes.check === null) delete next.check;
-  // A migrated memory waits for a person to say why the code does not show it
-  // (spec section 9). Once one does, its v2 review is done and v2's rules apply.
-  if (next.review?.migrated && String(next.not_derivable ?? '').trim()) {
-    next.review = { ...next.review, migrated: false, issues: (next.review.issues ?? []).filter(issue => issue !== 'not_derivable_missing') };
-  }
   const problems = problemsOf(root, next);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [next]);
@@ -138,10 +133,76 @@ export async function reverifyEvidence(root, id) {
   return { memory: saved, stale };
 }
 
+// The agent's requests a person can carry out as asked. A revise request is not one:
+// what to change is the person's to write.
+const APPLIED = ['archive', 'merge', 'reverify', 'delete'];
+const targetsOf = request => (Array.isArray(request.targets) ? request.targets : [request.target]).filter(target => typeof target === 'string');
+
+// The live memory that replaced `id` by revision, through any revisions between them:
+// a request written before another batch revised its target acts on the revision.
+function revisionOf(memories, id) {
+  const seen = new Set();
+  let current = id;
+  while (!seen.has(current)) {
+    seen.add(current);
+    const next = memories.find(memory => memory.replaces === current && memory.status !== 'candidate' && memory.status !== 'archived');
+    if (!next) return null;
+    if (LIVE_STATUSES.includes(next.status)) return next;
+    current = next.id;
+  }
+  return null;
+}
+
+// One request, carried out on each memory it names (an id, or the topic of a live
+// memory; deletion takes ids only, of memories no longer live: a live one is archived
+// first, so the file is kept). Closed once anything was done; what could not be done
+// is reported, and a request that did nothing stays open for the person.
+async function carryOut(root, request) {
+  const done = [];
+  const refused = [];
+  for (const target of targetsOf(request)) {
+    try {
+      const memories = await storeOf(root).list();
+      const live = memories.filter(memory => LIVE_STATUSES.includes(memory.status));
+      const named = request.request === 'delete' ? memories.find(memory => memory.id === target)
+        : live.find(memory => memory.id === target) ?? live.find(memory => memory.topic === target) ?? revisionOf(memories, target);
+      if (!named) throw new ReviewError([request.request === 'delete' ? 'memory_not_found' : 'target_not_live']);
+      if (request.request === 'archive') await archiveMemory(root, named.id, request.why);
+      if (request.request === 'reverify') await reverifyEvidence(root, named.id);
+      if (request.request === 'merge') {
+        const into = memories.find(memory => memory.id === request.into && memory.status !== 'superseded')
+          ?? live.find(memory => memory.topic === request.into);
+        if (!into) throw new ReviewError(['into_not_live']);
+        await mergeMemories(root, into.id, named.id);
+      }
+      if (request.request === 'delete') {
+        if (LIVE_STATUSES.includes(named.status) || named.status === 'candidate') throw new ReviewError([`delete_live:${named.id}`]);
+        await deleteMemory(root, named.id);
+      }
+      done.push(named.id);
+    } catch (err) {
+      if (!(err instanceof ReviewError)) throw err;
+      refused.push({ id: request.id, target, problems: err.problems });
+    }
+  }
+  if (done.length) closeRequest(root, request.id, 'done');
+  return { done, refused };
+}
+
+// A request no batch names, carried out by a person from the review UI.
+export async function applyRequest(root, id) {
+  const request = listRequests(root).find(open => open.id === id);
+  if (!request) throw new ReviewError(['request_not_found']);
+  if (!APPLIED.includes(request.request)) throw new ReviewError(['needs_a_person']);
+  return carryOut(root, request);
+}
+
 // A batch, accepted or rejected whole by a person. Each candidate goes through the
 // same acceptance as alone, so one that is refused (a dead trigger, say) is reported
-// and the rest proceed. An archive request is carried out on its live target and
-// closed; a revise request, or one whose target is not live, is left for a person.
+// and the rest proceed. Then its requests are carried out, archives, merges and
+// re-verifications before deletions, so a merge can name a topic the batch just
+// revised and a deletion can take what the batch just archived; a revise request,
+// or one that could do nothing, is left for a person.
 export async function batchAction(root, name, outcome) {
   if (!['accept', 'reject'].includes(outcome)) throw new ReviewError(['invalid_outcome']);
   const batch = (await listBatches(root)).find(b => b.name === name);
@@ -156,20 +217,14 @@ export async function batchAction(root, name, outcome) {
       result.refused.push({ id, problems: err.problems });
     }
   }
-  const live = (await storeOf(root).list()).filter(memory => LIVE_STATUSES.includes(memory.status));
-  for (const request of batch.requests) {
+  const order = request => (request.request === 'delete' ? 1 : 0);
+  for (const request of [...batch.requests].sort((a, b) => order(a) - order(b))) {
     if (outcome === 'reject') { closeRequest(root, request.id, 'dismissed'); result.closed.push(request.id); continue; }
-    const target = live.find(memory => memory.id === request.target) ?? live.find(memory => memory.topic === request.target);
-    if (request.request !== 'archive') { result.left.push({ id: request.id, reason: 'needs_a_person' }); continue; }
-    if (!target) { result.left.push({ id: request.id, reason: 'target_not_live' }); continue; }
-    try {
-      await archiveMemory(root, target.id, request.why);
-      closeRequest(root, request.id, 'done');
-      result.closed.push(request.id);
-    } catch (err) {
-      if (!(err instanceof ReviewError)) throw err;
-      result.refused.push({ id: request.id, problems: err.problems });
-    }
+    if (!APPLIED.includes(request.request)) { result.left.push({ id: request.id, reason: 'needs_a_person' }); continue; }
+    const { done, refused } = await carryOut(root, request);
+    if (done.length) result.closed.push(request.id);
+    else result.left.push({ id: request.id, reason: refused[0]?.problems[0] ?? 'nothing_to_do' });
+    result.refused.push(...refused);
   }
   return result;
 }
@@ -193,7 +248,7 @@ export async function createMemory(root, fields = {}) {
     topic: fields.topic, kind: fields.kind, status: 'active', title: fields.title, body: fields.body,
     not_derivable: String(fields.not_derivable ?? '').trim(), triggers: fields.triggers ?? [], ...(fields.check ? { check: fields.check } : {}),
     evidence: fields.evidence ?? [], origin: 'user_explicit', replaces: null, revisit_when: [],
-    review: { migrated: false, issues: [], accepted: { by: 'person', at } }, created: at, updated: at };
+    review: { issues: [], accepted: { by: 'person', at } }, created: at, updated: at };
   const problems = problemsOf(root, memory);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [memory]);

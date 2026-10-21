@@ -1,0 +1,61 @@
+{
+  "schema_version": 8,
+  "id": "868ee1ee-dd36-4509-a8eb-90801ab08249",
+  "project_id": "supermem",
+  "topic": "maintenance/retirement-spares-what-review-holds",
+  "kind": "trap",
+  "status": "active",
+  "title": "Retirement by disuse must not touch what a review holds",
+  "body": "Keep the exclusions of retireByDisuse (src/maintenance/retire.js) in the selector itself, so health never names a memory the sweep would decline to touch: a contested memory, a memory a pending candidate names in `replaces`, and a memory a person accepted or edited (review.accepted.by \"person\") stay out of it, whatever retire.after_sessions says. Why: a revision whose target was retired can never be accepted, and the candidate looks normal until someone presses Accept; a reviewer's held memories must not move under them. The race shipped once in 2026-09 and was re-learned in the retire tests on 2026-10-13.",
+  "not_derivable": "The code exempts them; that a retired revision target strands its candidate, and that the race already shipped once, is written nowhere in it.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/maintenance/retire.js",
+        "src/maintenance/health.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "retirement",
+        "retire by disuse",
+        "retired automatically",
+        "after_sessions"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/maintenance/retire.js",
+      "sha256": "2f4a8347a6826c628e671fc60b6258e258396036ca0631ec97f4b1d4911c1a8a",
+      "summary": "retireByDisuse retires only active memories not accepted by a person and not named by a pending candidate's replaces."
+    },
+    {
+      "type": "file",
+      "path": "tests/maintenance/retire.test.js",
+      "sha256": "e6fb9675b1a9a94a1ca0a7c034dd9c36b093bcf4646cef57111ec9a919b3fd2c",
+      "summary": "A memory a pending candidate revises is not retired."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "d4451758-2b19-4a09-9001-79ead0471f42",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:09.483Z"
+    }
+  },
+  "created": "2026-10-21T20:32:08.165Z",
+  "updated": "2026-10-21T20:37:09.564Z"
+}

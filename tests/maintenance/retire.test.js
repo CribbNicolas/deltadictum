@@ -9,7 +9,7 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 
 const memory = (id, triggers, extra = {}) => ({ schema_version: 8, id, project_id: 'p', topic: `retire/${id}`, kind: 'trap', status: 'active',
   title: `Rule ${id}`, body: `Rule ${id}.`, not_derivable: 'Hidden.', triggers, evidence: [], origin: 'model_initiated', replaces: null,
-  revisit_when: [], review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
+  revisit_when: [], review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
 
 test('a memory that never fired despite opportunity retires; reviewed, measured-less and firing ones do not', async t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-retire-'));
@@ -19,7 +19,7 @@ test('a memory that never fired despite opportunity retires; reviewed, measured-
   const narrow = [{ on: ['edit'], paths: ['src/a.js'], symbols: ['neverWritten'] }];
   await store.commit({ put: [
     memory('unused', narrow),
-    memory('reviewed', narrow, { review: { migrated: false, issues: [], accepted: { by: 'person', at: null } } }),
+    memory('reviewed', narrow, { review: { issues: [], accepted: { by: 'person', at: null } } }),
     // An origin the agent can write is not a person's review.
     memory('claimed', narrow, { origin: 'user_explicit' }),
     memory('keywords', [{ on: ['prompt'], keywords: ['release'] }]),

@@ -13,7 +13,7 @@ const DeltaDictum = adapter.default;
 const memory = (id, title, triggers) => ({
   schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title, body: `${title}, always.`,
   not_derivable: 'Hidden.', triggers, evidence: [], origin: 'model_initiated', replaces: null, revisit_when: [],
-  review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
+  review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
 });
 
 // The adapter starts `observe` without waiting for it (a hook never holds the host up), and that child

@@ -7,9 +7,8 @@ nav_order: 6
 
 # DeltaDictum current contract
 
-DD v2 keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
-applies to. The design is the v2 spec (the owner's design note, kept outside git); this page states what
-the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
+DD keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
+applies to. This page states what the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
 corrected.
 
 ## Memories
@@ -19,8 +18,7 @@ corrected.
   `active`, `contested`, `superseded` or `archived`.
 - A memory carries a title, a body, `not_derivable` (why a capable agent reading the code would not work it
   out), triggers, an optional check, evidence and its origin (`model_initiated` or `user_explicit`).
-  `not_derivable` is required for a memory to be live, except for memories converted from v1
-  (`review.migrated`) until a person supplies it in the review UI.
+  `not_derivable` is required for a memory to be live.
 - At most one live (`active` or `contested`) memory per topic. A revision is a candidate that `replaces` a live
   memory; accepting it supersedes that memory in the same commit.
 - Writes go through one journaled, locked transaction (`src/store/transactions.js`); an interrupted one is
@@ -40,7 +38,7 @@ corrected.
   `systemMessage`, which the model does not see) with the number of live memories and how to open the
   review UI, except after a compaction. There is no MCP server. A shell command that only reads or searches (`cat`, `head`, `sed -n`,
   `rg`, `ls`…) is a read or search event, in Claude Code as in Codex; one that may change something (a
-  redirection, an in-place `sed`, any other program) is a run (`src/hooks/v2/events.cjs`).
+  redirection, an in-place `sed`, any other program) is a run (`src/hooks/events.cjs`).
 - Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);
   a compaction or `/clear` starts a new epoch. The ledger's claim records the dimension that fired the
   memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters (`delivery_limit`
@@ -70,9 +68,9 @@ corrected.
 ## Capture
 
 - A project opts in with its `.dd/` folder: a committed `.dd/config.json`, or its first memory. Without
-  it, hooks record nothing and ask nothing (`src/hooks/v2/hook.cjs`). `deltadictum init` writes the
+  it, hooks record nothing and ask nothing (`src/hooks/hook.cjs`). `deltadictum init` writes the
   opt-in (`.dd/config.json` with the project id, `.dd/.gitignore`, `.dd/memories/`) and compiles; the
-  Codex installer writes the config too. A project still holding a v1 store is migrated, not initialised.
+  Codex installer writes the config too.
 - Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
   Prompt text is not kept, except a short preview of a prompt detected as a user correction. A session's
   first prompt, before any tool call or Stop, is never a correction: there is nothing yet to correct. Past 4 MB
@@ -89,10 +87,13 @@ corrected.
 - Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings pane, turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
-- The agent's requests to archive or revise a memory wait for a person in the review UI. A proposal or
-  request may name a `batch`; the review UI accepts or rejects a batch whole, each candidate under the
-  same rules as alone (a refused one is reported, the rest proceed), carrying out its archive requests on
-  live targets and leaving revise requests to the person.
+- The agent's requests to archive, revise, re-verify, merge or delete memories wait for a person in the
+  review UI, which carries one out only when the person applies it; archive, re-verify and delete may name
+  up to 200 memories at once. Delete takes only memories that are no longer live (archived or superseded),
+  so a live memory is archived first and its file kept until then. A proposal or request may name a
+  `batch`; the review UI accepts or rejects a batch whole, each candidate under the same rules as alone (a
+  refused one is reported, the rest proceed), then carries out its archive, merge and re-verify requests
+  and, last, its deletions, leaving revise requests, and any that could do nothing, to the person.
 
 ## Maintenance and review
 
@@ -126,10 +127,8 @@ corrected.
   session.
 - A hook that fails ends silently: DD never blocks the host.
 
-## Migration and import
+## Import
 
-- `deltadictum migrate [--dry-run]` converts a v1 store (`.dd/atoms/` and the rest) into v2 memories, keeping
-  their ids, and queues every converted memory for a person to supply `not_derivable`.
 - `deltadictum import [--from DIR] [--dry-run]` turns the project's `.claude/rules/*.md` (`paths` in the
   frontmatter) and `.cursor/rules/*.mdc` (`globs`) into active memories (`src/memory/import.js`): one
   `procedure` per file under `rules/<claude|cursor>/<file>`, firing on reads, edits and writes of the paths

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { join } from 'node:path';
 import { findProjectRoot } from './engine/locate.cjs';
-import { migrateProject } from './memory/migrate.js';
 import { compileProject } from './engine/compile.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
 import { VERSION } from './version.js';
@@ -17,10 +15,9 @@ Usage: deltadictum [command]
                       Opt this project in: write .dd/config.json, .dd/.gitignore and .dd/memories/, and compile
   install --host codex --project PATH [--dry-run]
                       Write DD's Codex configuration into a project
-  migrate [--dry-run] Convert this project's v1 knowledge (.dd/atoms and the rest) to v2 memories
   import [--from DIR] [--dry-run]
                       Turn the project's .claude/rules/ and .cursor/rules/ files that name paths into memories
-  compile             Compile this project's memories for delivery (.dd/local/v2)
+  compile             Compile this project's memories for delivery (.dd/local/compiled)
   recall QUERY [--all] [--limit N]
                       Print the memories that match QUERY in full (--all includes candidates)
   status              Memory counts by status, and topics with more than one live memory
@@ -58,20 +55,11 @@ async function runInit(args) {
   console.log(JSON.stringify(await initProject(findProjectRoot(process.cwd()), { projectId: idAt >= 0 ? args[idAt + 1] : null }), null, 2));
 }
 
-// Converts the project's v1 store before any store opens it: a v2 store has no atoms to index.
-async function runMigrate(args) {
-  const repoRoot = findProjectRoot(process.cwd());
-  const report = await migrateProject({ ddDir: join(repoRoot, '.dd'), dryRun: args.includes('--dry-run') });
-  console.log(JSON.stringify(report, null, 2));
-  if (report.failures.length || report.unreadable.length) process.exitCode = 1;
-}
-
 async function main() {
   if (['help', '--help', '-h'].includes(command)) { console.log(USAGE); return; }
   if (['version', '--version', '-v'].includes(command)) { console.log(VERSION ?? 'unknown'); return; }
   if (command === 'init') return runInit(rest);
   if (command === 'install') return runInstall(rest);
-  if (command === 'migrate') return runMigrate(rest);
   if (command === 'import') {
     const { importRules } = await import('./memory/import.js');
     const fromAt = rest.indexOf('--from');

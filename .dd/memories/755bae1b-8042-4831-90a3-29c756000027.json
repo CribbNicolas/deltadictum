@@ -1,0 +1,55 @@
+{
+  "schema_version": 8,
+  "id": "755bae1b-8042-4831-90a3-29c756000027",
+  "project_id": "supermem",
+  "topic": "telemetry/schema-changes-need-a-migration",
+  "kind": "trap",
+  "status": "active",
+  "title": "A change to an existing telemetry table does not reach an existing telemetry.sqlite",
+  "body": "SCHEMA in src/maintenance/telemetry.js runs with CREATE TABLE IF NOT EXISTS at every open. A new table reaches old files that way (deliveries, added 2026-10-15, did), but a table that already exists is never altered: a new column, a changed primary key or a CHECK added later is absent from every telemetry.sqlite built by an earlier version, and the first statement that needs it fails in maintenance, health and the review UI. Add the column with ALTER TABLE guarded by PRAGMA table_info, or record a schema version in `meta` and recreate the file when it is behind: the database is derived (.dd/local/) and rolls up again from the session files still present (seven days). Why: a CHECK value added to an existing SQLite table kept being rejected after a schema edit until an explicit migration was written (2026-09-24); the telemetry has no migration path yet.",
+  "not_derivable": "SQLite's IF NOT EXISTS semantics are not in the code, and no test opens a database built by an older schema.",
+  "triggers": [
+    {
+      "on": [
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "src/maintenance/telemetry.js",
+        "src/maintenance/similar.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "telemetry schema",
+        "new column",
+        "ALTER TABLE",
+        "CREATE TABLE"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/maintenance/telemetry.js",
+      "sha256": "1521d947956aa987c0a818b237bcd6f9da3a151d1017a0d72e1c418d5b1f3c27",
+      "summary": "SCHEMA runs CREATE TABLE IF NOT EXISTS at every open; no ALTER TABLE or schema version anywhere."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "08c5a689-a7e1-46fc-a3eb-03232d8ea64b",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:08.991Z"
+    }
+  },
+  "created": "2026-10-21T20:31:56.719Z",
+  "updated": "2026-10-21T20:37:09.074Z"
+}

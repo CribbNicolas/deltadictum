@@ -20,7 +20,7 @@ test('every plugin hook command is anchored at the plugin root and names a real 
   await access(join(ROOT, 'hooks', 'run.cjs'));
 });
 
-test('v2 listens at session start, at prompts and before the tools that carry project work', async () => {
+test('DD listens at session start, at prompts and before the tools that carry project work', async () => {
   const manifest = JSON.parse(await readFile(join(ROOT, 'hooks', 'hooks.json'), 'utf8'));
   assert.deepEqual(Object.keys(manifest.hooks).sort(), ['PostToolUse', 'PostToolUseFailure', 'PreToolUse', 'SessionStart', 'Stop', 'UserPromptSubmit']);
   assert.match(manifest.hooks.Stop[0].hooks[0].command, / stop$/);
@@ -36,7 +36,7 @@ test('v2 listens at session start, at prompts and before the tools that carry pr
   assert.match(command('PreToolUse'), / pre-tool$/);
 });
 
-// Grok Build runs Claude Code's hooks (docs/integrations/grok-build.md): both
+// Grok Build runs Claude Code's hooks: both
 // Grok files register the events, matchers and commands hooks/hooks.json does,
 // each with its own root. Found missing: inbox (so /dd:save was never ingested
 // on Grok), observe-prompt and PostToolUseFailure.

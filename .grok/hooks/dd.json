@@ -1,5 +1,5 @@
 {
-  "description": "DD v2 delivery and capture for Grok Build inside this checkout: the hooks hooks/hooks.json registers, as a project-level configuration. Failures never block the host.",
+  "description": "DD delivery and capture for Grok Build inside this checkout: the hooks hooks/hooks.json registers, as a project-level configuration. Failures never block the host.",
   "hooks": {
     "SessionStart": [
       { "hooks": [ { "type": "command", "command": "node ../../hooks/run.cjs session-start", "timeout": 30 } ] }

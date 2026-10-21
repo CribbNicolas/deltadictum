@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "hooks/observe/claude-code-outcomes",
   "kind": "trap",
-  "status": "active",
+  "status": "superseded",
   "title": "Claude Code reports tool outcomes by event, not exit code",
   "body": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.\n\nWhy: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
   "not_derivable": "A real session showed a failing Bash call fires no PostToolUse at all and a success carries no exit code; the code reads the events, nothing explains the absence.",
@@ -40,7 +40,7 @@
     {
       "type": "file",
       "path": "src/hooks/observe.js",
-      "sha256": "2aa970fc4c1139d2ec9f107fe3b503b55f15d6c4edf4d33c9d6df7eaf9b3eb4d",
+      "sha256": "850be9500f3ea18afda8b203aef45fb0dbc7127071ddcb89735e49adb4e8dba1",
       "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then."
     },
     {
@@ -52,7 +52,7 @@
     {
       "type": "file",
       "path": "tests/capture/stop.test.js",
-      "sha256": "71fe34cca8f14962233bd138480b6e93a63f49ca0c149a0443911e246bb22e82",
+      "sha256": "9cdca92908b10bbb5612d0b4351baa19b4cb2c2c5d1f8fe6f4a8f4087f49471a",
       "summary": "Stop asks after a failure read from the event, not from an exit code."
     }
   ],
@@ -60,13 +60,12 @@
   "replaces": "354338bf-10ee-40df-998c-744c227affd4",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:31.720Z"
     }
   },
   "created": "2026-09-27T02:37:09.061Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:13.237Z"
 }

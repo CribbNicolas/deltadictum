@@ -26,7 +26,7 @@ definition is `src/memory/schema.js`.
   "origin": "model_initiated",
   "replaces": null,
   "revisit_when": [],
-  "review": { "migrated": false, "issues": [] },
+  "review": { "issues": [] },
   "created": "2026-10-13T12:00:00.000Z",
   "updated": "2026-10-13T12:00:00.000Z"
 }
@@ -98,5 +98,3 @@ next compaction or `/clear`), and never runs code.
 | `superseded` | No: a revision replaced it |
 | `archived` | No: retired, merged or archived by a person; restorable |
 
-A memory converted from v1 carries `review.migrated: true` and stays live without `not_derivable` until a
-person supplies it in the review UI.

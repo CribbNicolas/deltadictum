@@ -11,7 +11,7 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 
 const memory = (id, triggers, extra = {}) => ({ schema_version: 8, id, project_id: 'p', topic: `health/${id}`, kind: 'trap', status: 'active',
   title: `Rule ${id}`, body: `Rule ${id}.`, not_derivable: 'Hidden.', triggers, evidence: [], origin: 'model_initiated', replaces: null,
-  revisit_when: [], review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
+  revisit_when: [], review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
 
 async function project(t, memories, sessions) {
   const root = mkdtempSync(join(tmpdir(), 'dd-health-'));
@@ -54,7 +54,7 @@ test('each signal of spec section 8 on synthetic telemetry', async t => {
   assert.deepEqual(signalsOf(report, 'hub').filter(s => s === 'never_fired_with_opportunity'), []);
 });
 
-// Fires by dimension expose the hub shape v2 worried about (prompt keywords);
+// Fires by dimension expose a hub (prompt keywords that fire everywhere);
 // the capture funnel says whether asking for memories works at all.
 test('fires by dimension, the capture funnel and recent deliveries come with the report', async t => {
   const root = await project(t, [memory('m1', [{ on: ['read'], paths: ['src/a.js'] }, { on: ['prompt'], keywords: ['alpha'] }])], [{ session: 's1' }, { session: 's2' }]);
@@ -82,17 +82,13 @@ test('fires by dimension, the capture funnel and recent deliveries come with the
 
 test('suspected false alarms and queues come with the report', async t => {
   const root = await project(t, [memory('chk', [{ on: ['edit'], paths: ['src/a.js'] }]),
-    memory('mig', [{ on: ['edit'], paths: ['src/a.js'] }], { not_derivable: '', review: { migrated: true, issues: ['not_derivable_missing'] } }),
-    // A line drafted through the store is not a person's review: the memory stays queued until one saves it.
-    memory('drafted', [{ on: ['edit'], paths: ['src/a.js'] }], { not_derivable: 'Drafted by an agent.', review: { migrated: true, issues: [] } }),
     memory('cand', [{ on: ['edit'], paths: ['src/a.js'] }], { status: 'candidate' }),
-    memory('auto', [{ on: ['edit'], paths: ['src/a.js'] }], { review: { migrated: false, issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } })], []);
+    memory('auto', [{ on: ['edit'], paths: ['src/a.js'] }], { review: { issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } })], []);
   mkdirSync(join(root, '.dd', 'local', 'telemetry'), { recursive: true });
   writeFileSync(join(root, '.dd', 'local', 'telemetry', 'checks.jsonl'), `${Array.from({ length: 3 }, () => JSON.stringify({ m: 'chk', path: 'src/a.js', outcome: 'ignored' })).join('\n')}\n`);
   const report = await healthReport(root);
   assert.ok(signalsOf(report, 'chk').includes('suspected_false_alarm'));
   assert.deepEqual(report.queues.candidates, ['cand']);
-  assert.deepEqual(report.queues.migrated_without_not_derivable.sort(), ['drafted', 'mig']);
   // What DD accepted on its own stays reviewable: a queue, until a person has seen it.
   assert.deepEqual(report.queues.auto_accepted, ['auto']);
 });

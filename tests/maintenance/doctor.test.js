@@ -16,7 +16,7 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 const CLI = fileURLToPath(new URL('../../src/cli.js', import.meta.url));
 const memory = (id, extra = {}) => ({ schema_version: 8, id, project_id: 'p', topic: `doctor/${id}`, kind: 'trap', status: 'active', title: `Rule ${id}`,
   body: `Rule ${id}, always.`, not_derivable: 'Hidden.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }], evidence: [], origin: 'model_initiated',
-  replaces: null, revisit_when: [], review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
+  replaces: null, revisit_when: [], review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
 
 async function project(t, memories = [memory('m1')]) {
   const root = mkdtempSync(join(tmpdir(), 'dd-doctor-'));

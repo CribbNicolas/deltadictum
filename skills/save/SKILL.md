@@ -20,8 +20,12 @@ or `{ "type": "correction", "ref": "..." }`, or `{ "type": "note", "summary": ".
 DD uses the ones it suggested for the fix you cite. When the user asked to save it, add
 `"origin": "user_explicit"`. Save only what changes what a capable agent would do.
 
-To ask for a change to an existing memory instead, write `{ "request": "archive" | "revise",
-"target": "<id or topic>", "why": "..." }`; it waits for a person in the review UI.
+To ask for a change to an existing memory instead, write `{ "request": "archive" | "revise" |
+"reverify" | "merge" | "delete", "target": "<id or topic>", "why": "..." }`; it waits for a person in
+the review UI. `reverify` re-hashes stale evidence once you checked the claim still holds; `merge` also
+names `"into": "<id or topic>"`, the memory that keeps the knowledge (revise it first if it must say
+more); `delete` takes ids of archived or superseded memories only. Archive, reverify and delete accept a
+list of up to 200 targets.
 
 When you save or request several things at once, give them one `"batch": "<name>"` (letters, digits,
 `-` or `_`, at most 64 characters, for example the task's name): the person accepts or rejects the

@@ -1,9 +1,11 @@
 ---
 import { href } from '../config.js';
+import HarnessSelect from './HarnessSelect.astro';
 const { groups, current } = Astro.props;
 ---
 <details class="sidebar" open data-sidebar>
   <summary>Menu</summary>
+  <div class="harness-pick"><HarnessSelect label="Harness" /></div>
   <nav aria-label="Documentation">
     {groups.map(group => (
       <div class="group">
@@ -30,7 +32,8 @@ const { groups, current } = Astro.props;
   .sidebar { padding: 32px 0; font-size: 14px; }
   summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--text-heading); font-weight: 600; }
   @media (max-width: 959px) { .sidebar { padding: 8px 0 0; border-bottom: 1px solid var(--border-1); } .sidebar[open] { padding-bottom: 12px; } }
-  @media (min-width: 960px) { summary { display: none; } .sidebar { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; } }
+  @media (min-width: 960px) { summary { display: none; } }
+  .harness-pick { margin-bottom: 22px; }
   .group { margin-bottom: 22px; }
   .group-title { margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }

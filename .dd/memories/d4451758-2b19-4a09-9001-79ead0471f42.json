@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "maintenance/retirement-spares-what-review-holds",
   "kind": "trap",
-  "status": "active",
+  "status": "superseded",
   "title": "Retirement by disuse must not touch what a review holds",
   "body": "Keep the exclusions of retireByDisuse (src/maintenance/retire.js) in the selector itself, so health never names a memory the sweep would decline to touch: a contested memory, a memory a pending candidate names in `replaces`, and a memory a person accepted or edited (review.accepted.by \"person\") stay out of it, whatever retire.after_sessions says. Why: a revision whose target was retired can never be accepted, and the candidate looks normal until someone presses Accept; a reviewer's held memories must not move under them. v1 shipped the race in 2026-09 and v2 re-learned it in the retire tests on 2026-10-13.",
   "not_derivable": "The code exempts them; that a retired revision target strands its candidate, and that v1 shipped the race, is written nowhere in it.",
@@ -49,7 +49,6 @@
   "replaces": "9dc49d33-f37e-4fa7-90ac-ae3e1e7cc841",
   "revisit_when": [],
   "review": {
-    "migrated": false,
     "issues": [],
     "accepted": {
       "by": "person",
@@ -57,5 +56,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.921Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:09.564Z"
 }
