@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "hooks/observe/claude-code-outcomes",
   "kind": "trap",
-  "status": "candidate",
+  "status": "active",
   "title": "Claude Code reports tool outcomes by event, not exit code",
   "body": "Read Claude Code outcomes from hook_event_name, gated on CLAUDECODE=1: PostToolUseFailure (error string, is_timeout) is a failure, PostToolUse with tool_response.interrupted === false is a success. Do not extend that reading to other hosts. Any hand registration of DD hooks for Claude Code must include PostToolUseFailure, as hooks/hooks.json does, or failures are never recorded.\n\nWhy: Recorded in a real session on 2026-09-24: a successful Bash call's PostToolUse carries {stdout, stderr, interrupted, isImage, noOutputExpected} and no exit code, and a failing call (exit 3) fired no PostToolUse at all. Before this, a full day of tests left 0 tool observations. Grok also sends PostToolUse, with an unverified shape.",
   "not_derivable": "A real session showed a failing Bash call fires no PostToolUse at all and a success carries no exit code; the code reads the events, nothing explains the absence.",
@@ -60,8 +60,12 @@
   "revisit_when": [],
   "review": {
     "issues": [],
-    "batch": "docs-harness-pages-2026-10-21"
+    "batch": "docs-harness-pages-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:13.151Z"
+    }
   },
   "created": "2026-10-21T13:59:54.979Z",
-  "updated": "2026-10-21T13:59:55.106Z"
+  "updated": "2026-10-21T20:37:13.237Z"
 }

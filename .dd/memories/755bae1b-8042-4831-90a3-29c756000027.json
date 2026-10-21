@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "telemetry/schema-changes-need-a-migration",
   "kind": "trap",
-  "status": "candidate",
+  "status": "active",
   "title": "A change to an existing telemetry table does not reach an existing telemetry.sqlite",
   "body": "SCHEMA in src/maintenance/telemetry.js runs with CREATE TABLE IF NOT EXISTS at every open. A new table reaches old files that way (deliveries, added 2026-10-15, did), but a table that already exists is never altered: a new column, a changed primary key or a CHECK added later is absent from every telemetry.sqlite built by an earlier version, and the first statement that needs it fails in maintenance, health and the review UI. Add the column with ALTER TABLE guarded by PRAGMA table_info, or record a schema version in `meta` and recreate the file when it is behind: the database is derived (.dd/local/) and rolls up again from the session files still present (seven days). Why: a CHECK value added to an existing SQLite table kept being rejected after a schema edit until an explicit migration was written (2026-09-24); the telemetry has no migration path yet.",
   "not_derivable": "SQLite's IF NOT EXISTS semantics are not in the code, and no test opens a database built by an older schema.",
@@ -44,8 +44,12 @@
   "revisit_when": [],
   "review": {
     "issues": [],
-    "batch": "unversioned-memories-2026-10-21"
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:08.991Z"
+    }
   },
   "created": "2026-10-21T20:31:56.719Z",
-  "updated": "2026-10-21T20:31:56.861Z"
+  "updated": "2026-10-21T20:37:09.074Z"
 }

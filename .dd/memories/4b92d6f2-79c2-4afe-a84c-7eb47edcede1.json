@@ -38,13 +38,13 @@
     {
       "type": "file",
       "path": "adapters/opencode/index.js",
-      "sha256": "b173476f1addb61da81e2ba2b99854401ae1a07e22a3ebf83c86f5656ff85d30",
+      "sha256": "c88636d4dbb3e01c0b2cb4386677cecc73782251bc4d693e1f8f957f92e5e1b9",
       "summary": "The header records the Bun/node:sqlite failure found 2026-09-24 and the spawn-the-hook design."
     },
     {
       "type": "file",
       "path": "tests/hooks/opencode.test.js",
-      "sha256": "f2486e0387c920cd9da6088b5914b10a6d9e31e109a9734410d872f17c1ceb21",
+      "sha256": "c15fc80063bb426c6774c8294d222295810c36d9f28bc6f613834730700c7b23",
       "summary": "The adapter imports only node:child_process, node:url and ./frame.js, exports only default; package.json keeps ./server."
     }
   ],
@@ -55,9 +55,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T13:24:32.885Z"
+      "at": "2026-10-21T20:37:11.187Z"
     }
   },
   "created": "2026-09-27T02:37:09.148Z",
-  "updated": "2026-10-21T13:24:32.886Z"
+  "updated": "2026-10-21T20:37:11.189Z"
 }

@@ -52,7 +52,7 @@
     {
       "type": "file",
       "path": "package.json",
-      "sha256": "35f36a304279625d349c9d11d14bf35c88ecab47eb6def842adc13389bd94a7f",
+      "sha256": "0d906fd9887ac99b900b6b654ced4c6bf054b8082b6c58bacaa1b8a24b5a9cc3",
       "summary": "bin reads {\"deltadictum\": \"src/cli.js\"}."
     },
     {
@@ -69,9 +69,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T13:24:33.113Z"
+      "at": "2026-10-21T20:37:13.762Z"
     }
   },
   "created": "2026-09-27T02:37:09.235Z",
-  "updated": "2026-10-21T13:24:33.114Z"
+  "updated": "2026-10-21T20:37:13.763Z"
 }

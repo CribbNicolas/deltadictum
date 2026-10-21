@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "integrations/codex/project-trust-gates-config",
   "kind": "trap",
-  "status": "candidate",
+  "status": "active",
   "title": "Codex ignores a project's .codex config until the project is trusted",
   "body": "Expect the hooks scripts/install-codex.mjs writes (.codex/hooks.json) to be absent until the user trusts the project in an interactive Codex session and trusts the hooks in /hooks; project skills in .agents/skills still load without trust. Do not try to force trust from the agent: a -c projects.'<path>'.trust_level=\"trusted\" override did not make `codex exec` load the project layer. Ask the user to open the project in codex once, accept trust, approve the hooks, then run the live check. Why: on 2026-09-24 (codex-cli 0.154.0) a scratch project with a correct DD config ran codex exec with a working model, loaded the dd-* skills, and reported no DD at all, with and without the -c trust override. Trusted project keys in ~/.codex/config.toml are lowercase Windows paths. On 2026-10-21 (codex-cli 0.163.0) `codex exec` loaded the skills ($dd-recall invokes one) and ran no hook in an untrusted scratch project; its `--dangerously-bypass-hook-trust` flag exists but the agent's permission classifier refuses it.",
   "not_derivable": "Codex's trust gate is not in its documentation; a correct config loading nothing was found live.",
@@ -58,8 +58,12 @@
     "issues": [
       "supersedes_candidate:4ab4c68b-0f89-4508-88dd-4858f2b87e5b"
     ],
-    "batch": "unversioned-memories-2026-10-21"
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:07.754Z"
+    }
   },
   "created": "2026-10-21T20:31:58.164Z",
-  "updated": "2026-10-21T20:31:58.292Z"
+  "updated": "2026-10-21T20:37:07.835Z"
 }

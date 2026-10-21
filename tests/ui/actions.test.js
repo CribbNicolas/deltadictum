@@ -174,6 +174,21 @@ test('accepting a batch carries out its reverify, merge and delete requests; a l
   assert.deepEqual(listRequests(root).map(r => r.id), ['r-gone']);
 });
 
+// Two batches accepted in either order: a request naming a memory another batch has since revised
+// acts on the revision, the memory that now holds the knowledge, instead of failing.
+test('a request whose target was revised since follows it to the live revision', async t => {
+  const stale = { type: 'file', path: 'src/a.js', sha256: 'a'.repeat(64), summary: 'changed since' };
+  const root = await project(t, [memory('old', { topic: 'ui/x', status: 'superseded', evidence: [stale] }),
+    memory('mid', { topic: 'ui/x', status: 'superseded', replaces: 'old', evidence: [stale] }),
+    memory('new', { topic: 'ui/x', replaces: 'mid', evidence: [stale] })]);
+  const dir = join(root, '.dd', 'local', 'requests');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'reverify', target: 'old', why: 'Checked.' }));
+  assert.deepEqual((await applyRequest(root, 'r1')).done, ['new']);
+  assert.notEqual((await list(root)).new.evidence[0].sha256, 'a'.repeat(64));
+  assert.deepEqual(listRequests(root), []);
+});
+
 test('a request outside any batch is applied by a person one at a time, and closed when done', async t => {
   const root = await project(t, [memory('a1', { status: 'archived' })]);
   const dir = join(root, '.dd', 'local', 'requests');

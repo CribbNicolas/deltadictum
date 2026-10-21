@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "testing/store-handle-hangs-node-test",
   "kind": "trap",
-  "status": "candidate",
+  "status": "active",
   "title": "Close every node:sqlite handle a test opens before its folder goes, and before an assertion can fail",
   "body": "Register the close of a telemetry database (openTelemetry, DatabaseSync) in t.after before the folder's rmSync, or close it in the test before asserting: t.after callbacks run in registration order, Windows answers EPERM when a folder holds an open database, and a failing assertion before the close keeps node --test alive past its timeout with no output. Do not make --test-force-exit the default: it hides the hang (and once crashed server tests on Windows); a standalone script that opens a database ends with process.exit. Why: a store left open hung a server test for 120 s silently on 2026-09-22; the maintenance tests hit EPERM on 2026-10-13 until the handle closed before the folder was removed.",
   "not_derivable": "The tests close their handles, but not why the order matters, nor that a failing assertion hangs the runner without a word.",
@@ -58,8 +58,12 @@
   "revisit_when": [],
   "review": {
     "issues": [],
-    "batch": "unversioned-memories-2026-10-21"
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:10.237Z"
+    }
   },
   "created": "2026-10-21T20:31:58.728Z",
-  "updated": "2026-10-21T20:31:58.904Z"
+  "updated": "2026-10-21T20:37:10.378Z"
 }

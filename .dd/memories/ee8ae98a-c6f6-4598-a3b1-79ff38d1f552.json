@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "hooks/paths/fold-case-never-realpath",
   "kind": "decision",
-  "status": "active",
+  "status": "superseded",
   "title": "Fold letter case when matching paths on win32 and darwin; never canonicalise with realpath",
   "body": "Compare and match repository paths with letter case folded on win32 and darwin (relativize in src/hooks/v2/events.cjs lowercases both sides; FOLD_CASE in src/engine/clause.cjs compiles globs with the i flag on those platforms) and never canonicalise a hook's cwd or file path with realpath: it also resolves junctions and symlinks (macOS /tmp is /private/tmp), so a project reached through a link stops relativizing to the repository root and nothing matches. Linux keeps case apart on purpose. Why: v1 compared resolve() strings and split one project into two data directories by case; v2's first fix used realpathSync.native and broke linked projects, so plan 3 replaced it with case folding (2026-10-12).",
   "not_derivable": "The code folds case; that realpath was tried and rejected, and why, is only in a plan ledger kept outside git.",
@@ -60,5 +60,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.295Z",
-  "updated": "2026-10-21T13:24:32.232Z"
+  "updated": "2026-10-21T20:37:07.340Z"
 }

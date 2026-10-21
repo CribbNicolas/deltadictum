@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "development/claude-code/live-session-probe",
   "kind": "procedure",
-  "status": "candidate",
+  "status": "active",
   "title": "Verify the Claude Code plugin in a real session with --plugin-dir",
   "body": "In a scratch git project that holds a `.dd/config.json` (and memories to try), run `claude -p \"<prompt>\" --plugin-dir <this checkout> --output-format stream-json --verbose --include-hook-events < /dev/null` and read the JSONL: the hook_response events carry what DD injected (hookSpecificOutput.additionalContext) and the assistant text is the agent's work; plain text output shows only the reply to DD's Stop request. The session's ledger and footprint land in `<scratch>/.dd/local/sessions/`. Why: --plugin-dir loads hooks/hooks.json exactly as a marketplace install does, for that run only, so the checkout is tested rather than the installed copy; src/eval/bench/run.js drives the same flags for the benchmark. A probe in a scratch project without a `.dd/` folder records nothing: the folder is the opt-in.",
   "not_derivable": "No test can run Claude Code; the flags, the event the injection appears in and the opt-in trap were found by running it.",
@@ -52,8 +52,12 @@
   "revisit_when": [],
   "review": {
     "issues": [],
-    "batch": "unversioned-memories-2026-10-21"
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:09.982Z"
+    }
   },
   "created": "2026-10-21T20:31:57.310Z",
-  "updated": "2026-10-21T20:31:57.443Z"
+  "updated": "2026-10-21T20:37:10.066Z"
 }

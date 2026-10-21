@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "distribution/harness-native-install-mechanisms",
   "kind": "fact",
-  "status": "active",
+  "status": "superseded",
   "title": "How each harness loads DD, and which OpenCode hooks can carry text",
   "body": "Claude Code and Grok Build install plugins from a marketplace that auto-discovers skills/ (Grok mirrors Claude Code's layout almost exactly); Codex has no marketplace or npm pull, so `deltadictum install --host codex` writes its config. OpenCode has no hook shaped like PreToolUse: tool.execute.before outputs {args} only and session events return void. Text reaches its model two ways: experimental.chat.system.transform (once per turn; it rewrites the system prompt and breaks the prompt cache) and the output of tool.execute.after ({title, output, metadata}), which v2 uses to append the memories that fired to the tool's own result; that output carries no exit status, so outcomes cannot be read there. Why: verified 2026-09-19 against @opencode-ai/plugin@1.18.31's type definitions and a real plugin's compiled source, after a first version written from a documentation summary got the signatures wrong.",
   "not_derivable": "The adapter shows the hook it uses, not the hooks tried and ruled out, nor that the published docs described them wrongly.",
@@ -60,5 +60,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.857Z",
-  "updated": "2026-10-21T13:24:31.220Z"
+  "updated": "2026-10-21T20:37:08.580Z"
 }

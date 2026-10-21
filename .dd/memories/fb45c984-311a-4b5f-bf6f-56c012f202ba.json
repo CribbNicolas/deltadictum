@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "tooling/windows/junction-delete-follows",
   "kind": "trap",
-  "status": "candidate",
+  "status": "active",
   "title": "Unlink a node_modules junction before deleting the tree that holds it",
   "body": "Unlink the junction first (fs.unlink on the link path, which Node reports as a symbolic link), then delete the tree. Never run git worktree remove --force on a worktree whose node_modules is a junction to the main checkout. If the main node_modules was emptied anyway, restore it with npm ci. Why: on 2026-10-07 git worktree remove --force followed the node_modules junction and emptied the main checkout's node_modules (0 entries left); fs.unlink on the junction followed by fs.rm recursive on the parent kept the target intact in a scratch test, and src/eval/bench/clone.js unlinks a project's links before removing each clone.",
   "not_derivable": "A Windows junction followed by git worktree remove --force empties the target; no code comment can show it before it happens.",
@@ -44,8 +44,12 @@
   "revisit_when": [],
   "review": {
     "issues": [],
-    "batch": "unversioned-memories-2026-10-21"
+    "batch": "unversioned-memories-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T20:37:10.758Z"
+    }
   },
   "created": "2026-10-21T20:31:57.598Z",
-  "updated": "2026-10-21T20:31:57.730Z"
+  "updated": "2026-10-21T20:37:10.840Z"
 }

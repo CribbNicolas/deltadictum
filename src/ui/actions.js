@@ -138,6 +138,21 @@ export async function reverifyEvidence(root, id) {
 const APPLIED = ['archive', 'merge', 'reverify', 'delete'];
 const targetsOf = request => (Array.isArray(request.targets) ? request.targets : [request.target]).filter(target => typeof target === 'string');
 
+// The live memory that replaced `id` by revision, through any revisions between them:
+// a request written before another batch revised its target acts on the revision.
+function revisionOf(memories, id) {
+  const seen = new Set();
+  let current = id;
+  while (!seen.has(current)) {
+    seen.add(current);
+    const next = memories.find(memory => memory.replaces === current && memory.status !== 'candidate' && memory.status !== 'archived');
+    if (!next) return null;
+    if (LIVE_STATUSES.includes(next.status)) return next;
+    current = next.id;
+  }
+  return null;
+}
+
 // One request, carried out on each memory it names (an id, or the topic of a live
 // memory; deletion takes ids only, of memories no longer live: a live one is archived
 // first, so the file is kept). Closed once anything was done; what could not be done
@@ -150,7 +165,7 @@ async function carryOut(root, request) {
       const memories = await storeOf(root).list();
       const live = memories.filter(memory => LIVE_STATUSES.includes(memory.status));
       const named = request.request === 'delete' ? memories.find(memory => memory.id === target)
-        : live.find(memory => memory.id === target) ?? live.find(memory => memory.topic === target);
+        : live.find(memory => memory.id === target) ?? live.find(memory => memory.topic === target) ?? revisionOf(memories, target);
       if (!named) throw new ReviewError([request.request === 'delete' ? 'memory_not_found' : 'target_not_live']);
       if (request.request === 'archive') await archiveMemory(root, named.id, request.why);
       if (request.request === 'reverify') await reverifyEvidence(root, named.id);

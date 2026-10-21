@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "eval/headless/claude-p-with-dd-hooks",
   "kind": "trap",
-  "status": "active",
+  "status": "superseded",
   "title": "Headless Claude Code with DD hooks: where the task report is, and how the runner handles a flaky suite",
   "body": "In a headless run with DD's hooks (`claude -p ... --output-format stream-json --verbose --include-hook-events`), the agent's task report is the assistant text after its last tool call and before the Stop hook_response that adds context; the result event's text is the reply to DD's Stop capture request (\"I'm not proposing a memory from this turn\"). A blind judge handed that text penalises DD and learns the condition (seen 2026-10-07); taskReport in src/eval/agent/metrics.js cuts at the right place. Register the hooks from hooks/hooks.json, never by hand. The suite in a fresh clone can still flake under load: src/eval/agent/run.js reruns it and records both outcomes (suite_first_passed, suite_flaky_tests) rather than counting a flake against the agent. The telemetry lock test (`a write waits for another process holding the telemetry lock instead of failing`) failed first in 5 of 80 runs of the 2026-10-14 trial; on 2026-10-20 its lock holder gained `PRAGMA busy_timeout = 5000`, as openTelemetry sets, which removed the race Windows CI also hit. A flake of it after that date is new.",
   "not_derivable": "metrics.js implements the cut; why it is needed (the judge reading DD's Stop reply) and the lock test's flaky history live only in the trial write-ups kept out of git.",
@@ -65,5 +65,5 @@
     }
   },
   "created": "2026-10-21T12:57:14.750Z",
-  "updated": "2026-10-21T12:58:41.138Z"
+  "updated": "2026-10-21T20:37:08.829Z"
 }

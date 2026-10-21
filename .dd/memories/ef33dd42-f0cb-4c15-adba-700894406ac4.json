@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "eval/agent-trial/effectiveness-numbers",
   "kind": "fact",
-  "status": "active",
+  "status": "superseded",
   "title": "Quote DD's effectiveness from the 2026-10-20 full benchmark, with its caveats; never the September minutes",
   "body": "Quote DD's effectiveness from the full benchmark of 2026-10-20 (DD 0.9.11, Claude Opus 5.5 and Claude Haiku 5.5, four projects, 26 tasks chosen where Haiku alone failed plus controls, three runs per condition, blind Opus judge). Its two summaries, docs/benchmarks/data/bench-2026-10-fix-opus.summary.json and docs/benchmarks/data/bench-2026-10-fix-haiku.summary.json, are what the landing averages. With DD, project requirements met went from 69% to 100% (Opus) and 43% to 98% (Haiku), quality from 92% to 98% and 85% to 97%, at +1.5% and +15% cost. The documentation conditions reached the same quality and requirements with more context, so DD's difference from them is context and, with Opus, cost, not quality. The earlier trials (15-task Sonnet 5.5; the 2026-10-14 Opus/Haiku ceiling) are in docs/guide/how-it-works.md. Always with caveats: few projects, small samples, tasks selected where the agent alone failed. Never quote the September 2026 trial's minutes (72.4 against 37.3: one 25-minute timeout) or the 84% token saving of the replay scenarios as task success. The write-ups (docs/benchmarks/2026-10-bench-full.md and the rest) are local and git-ignored. Why: summaries drop the caveats the write-ups keep, and a reader reports what one outlier or the task selection produced.",
   "not_derivable": "The summaries hold the numbers; which claims they cannot support, and that the write-ups with the caveats are kept out of git, is written only here.",
@@ -74,5 +74,5 @@
     }
   },
   "created": "2026-10-21T12:57:35.011Z",
-  "updated": "2026-10-21T13:24:31.447Z"
+  "updated": "2026-10-21T20:37:09.814Z"
 }

@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "store/layout/new-dd-directory",
   "kind": "trap",
-  "status": "active",
+  "status": "superseded",
   "title": "A new folder under .dd/ needs four places updated",
   "body": "When adding a folder or file under .dd/, update every place that names them in the same change: operationPath's whitelist in src/store/transactions.js (a journaled write outside it fails with invalid_journal_path), DERIVED_ENTRIES in src/memory/ignore.js when it is derived (or it lands in git), localPaths in src/engine/locate.cjs, and the table in docs/guide/storage.md. The Codex installer's ignore list (scripts/install-codex.mjs) and `deltadictum init` write the same entries. Why: in v1 the journal whitelist was the one place a plan missed, and the first write failed with invalid_journal_path; the ignore list and the docs fail silently, which is worse.",
   "not_derivable": "The whitelist fails loudly; that the ignore list and the storage table must move with it is written nowhere near them.",
@@ -58,5 +58,5 @@
     }
   },
   "created": "2026-09-27T02:37:09.002Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T20:37:08.083Z"
 }
