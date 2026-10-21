@@ -38,13 +38,13 @@
     {
       "type": "file",
       "path": ".claude-plugin/plugin.json",
-      "sha256": "3eee8f642ca9fca163a650bbdc472416a31116e79f17d12163ba2fff9bea91d5",
+      "sha256": "bbeaed270c163ff143bcd790bad831feb9ae4d7f51d3377e5d87065e006a0a87",
       "summary": "\"name\": \"dd\"."
     },
     {
       "type": "file",
       "path": "README.md",
-      "sha256": "ad27465a33260b972e241975a2108d9b83dda545c3d4ddb52584f383dd16e778",
+      "sha256": "74875de3d5e3f27eba9e16b19be9d85f1c18c3bd8aa9c2ef50f28a635f0656fe",
       "summary": "Install section: /plugin install dd@deltadictum; the command table lists /dd:* commands."
     }
   ],
@@ -56,9 +56,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:30.977Z"
     }
   },
   "created": "2026-09-27T02:37:08.691Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:30.979Z"
 }

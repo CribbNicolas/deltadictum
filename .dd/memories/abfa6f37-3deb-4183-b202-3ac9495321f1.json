@@ -1,0 +1,70 @@
+{
+  "schema_version": 8,
+  "id": "abfa6f37-3deb-4183-b202-3ac9495321f1",
+  "project_id": "supermem",
+  "topic": "eval/headless/claude-p-with-dd-hooks",
+  "kind": "trap",
+  "status": "active",
+  "title": "Headless Claude Code with DD hooks: where the task report is, and how the runner handles a flaky suite",
+  "body": "In a headless run with DD's hooks (`claude -p ... --output-format stream-json --verbose --include-hook-events`), the agent's task report is the assistant text after its last tool call and before the Stop hook_response that adds context; the result event's text is the reply to DD's Stop capture request (\"I'm not proposing a memory from this turn\"). A blind judge handed that text penalises DD and learns the condition (seen 2026-10-07); taskReport in src/eval/agent/metrics.js cuts at the right place. Register the hooks from hooks/hooks.json, never by hand. The suite in a fresh clone can still flake under load: src/eval/agent/run.js reruns it and records both outcomes (suite_first_passed, suite_flaky_tests) rather than counting a flake against the agent. The telemetry lock test (`a write waits for another process holding the telemetry lock instead of failing`) failed first in 5 of 80 runs of the 2026-10-14 trial; on 2026-10-20 its lock holder gained `PRAGMA busy_timeout = 5000`, as openTelemetry sets, which removed the race Windows CI also hit. A flake of it after that date is new.",
+  "not_derivable": "metrics.js implements the cut; why it is needed (the judge reading DD's Stop reply) and the lock test's flaky history live only in the trial write-ups kept out of git.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "src/eval/agent/run.js",
+        "src/eval/agent/metrics.js",
+        "src/eval/agent/judge.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "headless",
+        "stream-json",
+        "task report",
+        "flaky test",
+        "agent trial"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/eval/agent/metrics.js",
+      "sha256": "143f1960fd63647dfd73ee1a485f49033a92e2fbb86d88f2c39ebf9919ea3321",
+      "summary": "taskReport stops at a Stop hook_response that adds context."
+    },
+    {
+      "type": "file",
+      "path": "src/eval/agent/run.js",
+      "sha256": "b4cbe8a50da7955feb76b3644437ed83508ad0d5240b4bb3c329444f86f2b3d1",
+      "summary": "Reruns the suite and records suite_first_passed and suite_flaky_tests."
+    },
+    {
+      "type": "file",
+      "path": "tests/maintenance/telemetry.test.js",
+      "sha256": "898246ce3d665cb83cdb69d172efed3f2ecce97fdf8ac3071562feea9e6856fe",
+      "summary": "The lock holder sets PRAGMA busy_timeout = 5000 (commit 4478c2d, 2026-10-20)."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "97b6d88f-9550-41fb-8788-dcfdd8cd1811",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "batch": "memory-refresh-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-21T12:58:41.015Z"
+    }
+  },
+  "created": "2026-10-21T12:57:14.750Z",
+  "updated": "2026-10-21T12:58:41.138Z"
+}

@@ -38,13 +38,13 @@
     {
       "type": "file",
       "path": "docs/integrations/codex.md",
-      "sha256": "7ade7d191e50bf7f55b18e1dafe0856d1f0d1b7b707ea84c21864fcfa7499034",
+      "sha256": "a72ddf77b5f5d78cced6d3b40622847bc791e0425479f590ac7e64be6feb61e0",
       "summary": "Codex loads project configuration only for trusted projects; each hook needs trust in /hooks."
     },
     {
       "type": "file",
       "path": "README.md",
-      "sha256": "ad27465a33260b972e241975a2108d9b83dda545c3d4ddb52584f383dd16e778",
+      "sha256": "74875de3d5e3f27eba9e16b19be9d85f1c18c3bd8aa9c2ef50f28a635f0656fe",
       "summary": "Codex install steps include trusting the project and hooks."
     }
   ],
@@ -56,9 +56,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:32.451Z"
     }
   },
   "created": "2026-09-27T02:37:08.753Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:32.452Z"
 }

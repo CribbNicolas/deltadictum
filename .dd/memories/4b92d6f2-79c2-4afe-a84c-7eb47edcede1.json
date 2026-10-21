@@ -44,7 +44,7 @@
     {
       "type": "file",
       "path": "tests/hooks/opencode.test.js",
-      "sha256": "05415b366eaa7ba5d0297112eb2142b84973f09b8349c192450d30507819972a",
+      "sha256": "f2486e0387c920cd9da6088b5914b10a6d9e31e109a9734410d872f17c1ceb21",
       "summary": "The adapter imports only node:child_process, node:url and ./frame.js, exports only default; package.json keeps ./server."
     }
   ],
@@ -56,9 +56,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:32.885Z"
     }
   },
   "created": "2026-09-27T02:37:09.148Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:32.886Z"
 }

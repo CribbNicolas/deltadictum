@@ -34,17 +34,17 @@
       "summary": "Cited when this memory was saved."
     }
   ],
-  "origin": "model_initiated",
+  "origin": "user_explicit",
   "replaces": null,
   "revisit_when": [],
   "review": {
     "migrated": false,
     "issues": [],
     "accepted": {
-      "by": "dd",
-      "at": "2026-10-21T00:30:17.734Z"
+      "by": "person",
+      "at": "2026-10-21T12:52:31.853Z"
     }
   },
   "created": "2026-10-21T00:30:17.734Z",
-  "updated": "2026-10-21T00:30:17.881Z"
+  "updated": "2026-10-21T12:52:31.932Z"
 }

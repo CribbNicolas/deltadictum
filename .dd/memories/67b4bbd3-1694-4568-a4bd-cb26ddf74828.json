@@ -41,7 +41,7 @@
     {
       "type": "file",
       "path": "tests/hooks/codex.test.js",
-      "sha256": "620270d6858e268c6861598c73e8b22f64107c401e2be53e017f9826adebc2c9",
+      "sha256": "0ccd728e89496e74ef74e14add7401ca796302c500d5030cca101822840ff304",
       "summary": "The installer tests."
     }
   ],
@@ -53,9 +53,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:33.841Z"
     }
   },
   "created": "2026-10-06T17:40:50.529Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:33.842Z"
 }

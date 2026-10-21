@@ -45,7 +45,7 @@
     {
       "type": "file",
       "path": "src/engine/clause.cjs",
-      "sha256": "ff56dbd3a2aa08cf8bf86caab6ecb447fe779f569bc28a23c4ca08dce91e1f47",
+      "sha256": "2b0245493c801b016282b114854cab9a37eb2a6a5fef10fdd3e16619373f411c",
       "summary": "FOLD_CASE and PATH_FLAGS."
     }
   ],
@@ -57,9 +57,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:32.230Z"
     }
   },
   "created": "2026-09-27T02:37:09.295Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:32.232Z"
 }

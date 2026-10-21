@@ -44,7 +44,7 @@
     {
       "type": "file",
       "path": "src/hooks/observe.js",
-      "sha256": "2aa970fc4c1139d2ec9f107fe3b503b55f15d6c4edf4d33c9d6df7eaf9b3eb4d",
+      "sha256": "850be9500f3ea18afda8b203aef45fb0dbc7127071ddcb89735e49adb4e8dba1",
       "summary": "The comment records the shapes captured this way."
     }
   ],
@@ -56,9 +56,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-16T12:37:17.341Z"
+      "at": "2026-10-21T13:24:30.747Z"
     }
   },
   "created": "2026-10-16T12:27:39.847Z",
-  "updated": "2026-10-16T12:37:17.414Z"
+  "updated": "2026-10-21T13:24:30.749Z"
 }

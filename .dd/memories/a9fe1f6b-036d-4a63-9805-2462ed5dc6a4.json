@@ -43,13 +43,13 @@
     {
       "type": "file",
       "path": "tests/maintenance/telemetry.test.js",
-      "sha256": "c2d9a692a09c82f0395a273466aebb30d63a8358412dc2d9b4c12b20df458be2",
+      "sha256": "898246ce3d665cb83cdb69d172efed3f2ecce97fdf8ac3071562feea9e6856fe",
       "summary": "Tests close the database before the temporary folder is removed."
     },
     {
       "type": "file",
       "path": "src/maintenance/telemetry.js",
-      "sha256": "8d5acaaccdcf1c135bde2b5d7bbe44ecbfcd3cb4e8a8f4fa030ddedd08103a8d",
+      "sha256": "1521d947956aa987c0a818b237bcd6f9da3a151d1017a0d72e1c418d5b1f3c27",
       "summary": "openTelemetry returns a DatabaseSync the caller closes."
     }
   ],
@@ -61,9 +61,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:33.569Z"
     }
   },
   "created": "2026-09-27T02:37:09.031Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:33.570Z"
 }

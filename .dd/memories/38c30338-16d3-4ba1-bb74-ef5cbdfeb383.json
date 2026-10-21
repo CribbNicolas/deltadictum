@@ -35,7 +35,7 @@
     {
       "type": "file",
       "path": "src/eval/agent/run.js",
-      "sha256": "957560537e4a30c512446a0212a36b28c6016e65b656d0ea13cce6a2b2d8d18c",
+      "sha256": "b4cbe8a50da7955feb76b3644437ed83508ad0d5240b4bb3c329444f86f2b3d1",
       "summary": "Unlinks the shared node_modules junction before removing the clone, naming git worktree remove --force as the reason."
     }
   ],
@@ -47,9 +47,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:34.387Z"
     }
   },
   "created": "2026-10-07T17:16:04.532Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:34.389Z"
 }

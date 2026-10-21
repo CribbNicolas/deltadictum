@@ -40,7 +40,7 @@
     {
       "type": "file",
       "path": "src/hooks/observe.js",
-      "sha256": "2aa970fc4c1139d2ec9f107fe3b503b55f15d6c4edf4d33c9d6df7eaf9b3eb4d",
+      "sha256": "850be9500f3ea18afda8b203aef45fb0dbc7127071ddcb89735e49adb4e8dba1",
       "summary": "observationFromTool takes { claudeCode } and reads PostToolUse/PostToolUseFailure only then."
     },
     {
@@ -52,7 +52,7 @@
     {
       "type": "file",
       "path": "tests/capture/stop.test.js",
-      "sha256": "71fe34cca8f14962233bd138480b6e93a63f49ca0c149a0443911e246bb22e82",
+      "sha256": "9cdca92908b10bbb5612d0b4351baa19b4cb2c2c5d1f8fe6f4a8f4087f49471a",
       "summary": "Stop asks after a failure read from the event, not from an exit code."
     }
   ],
@@ -64,9 +64,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-15T07:29:31.448Z"
+      "at": "2026-10-21T13:24:31.720Z"
     }
   },
   "created": "2026-09-27T02:37:09.061Z",
-  "updated": "2026-10-15T07:29:31.504Z"
+  "updated": "2026-10-21T13:24:31.722Z"
 }
