@@ -53,7 +53,6 @@ It writes, keeping everything else in each file:
 
 - `.codex/hooks.json`: DD's hooks (session start, prompt, every tool call before and after, proposals
   made through `apply_patch`, and Stop), each running `hooks/run.cjs <command> --codex`;
-- `.codex/config.toml`: a managed block saying DD runs no MCP server;
 - `AGENTS.md`: a short managed block telling the agent what DD's deliveries are and how to save knowledge;
 - `.agents/skills/dd-save`, `dd-recall`, `dd-review`: the commands, as Codex skills.
 

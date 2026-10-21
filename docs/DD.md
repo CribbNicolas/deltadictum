@@ -7,9 +7,8 @@ nav_order: 6
 
 # DeltaDictum current contract
 
-DD v2 keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
-applies to. The design is the v2 spec (the owner's design note, kept outside git); this page states what
-the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
+DD keeps project knowledge an agent cannot derive from the code, and delivers each piece at the action it
+applies to. This page states what the code does today. Where this document and `src/` disagree, `src/` is what DD does and this document is
 corrected.
 
 ## Memories
@@ -19,8 +18,7 @@ corrected.
   `active`, `contested`, `superseded` or `archived`.
 - A memory carries a title, a body, `not_derivable` (why a capable agent reading the code would not work it
   out), triggers, an optional check, evidence and its origin (`model_initiated` or `user_explicit`).
-  `not_derivable` is required for a memory to be live, except for memories converted from v1
-  (`review.migrated`) until a person supplies it in the review UI.
+  `not_derivable` is required for a memory to be live.
 - At most one live (`active` or `contested`) memory per topic. A revision is a candidate that `replaces` a live
   memory; accepting it supersedes that memory in the same commit.
 - Writes go through one journaled, locked transaction (`src/store/transactions.js`); an interrupted one is
@@ -72,7 +70,7 @@ corrected.
 - A project opts in with its `.dd/` folder: a committed `.dd/config.json`, or its first memory. Without
   it, hooks record nothing and ask nothing (`src/hooks/hook.cjs`). `deltadictum init` writes the
   opt-in (`.dd/config.json` with the project id, `.dd/.gitignore`, `.dd/memories/`) and compiles; the
-  Codex installer writes the config too. A project still holding a v1 store is migrated, not initialised.
+  Codex installer writes the config too.
 - Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
   Prompt text is not kept, except a short preview of a prompt detected as a user correction. A session's
   first prompt, before any tool call or Stop, is never a correction: there is nothing yet to correct. Past 4 MB
@@ -129,10 +127,8 @@ corrected.
   session.
 - A hook that fails ends silently: DD never blocks the host.
 
-## Migration and import
+## Import
 
-- `deltadictum migrate [--dry-run]` converts a v1 store (`.dd/atoms/` and the rest) into v2 memories, keeping
-  their ids, and queues every converted memory for a person to supply `not_derivable`.
 - `deltadictum import [--from DIR] [--dry-run]` turns the project's `.claude/rules/*.md` (`paths` in the
   frontmatter) and `.cursor/rules/*.mdc` (`globs`) into active memories (`src/memory/import.js`): one
   `procedure` per file under `rules/<claude|cursor>/<file>`, firing on reads, edits and writes of the paths

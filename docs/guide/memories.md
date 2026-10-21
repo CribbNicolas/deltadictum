@@ -26,7 +26,7 @@ definition is `src/memory/schema.js`.
   "origin": "model_initiated",
   "replaces": null,
   "revisit_when": [],
-  "review": { "migrated": false, "issues": [] },
+  "review": { "issues": [] },
   "created": "2026-10-13T12:00:00.000Z",
   "updated": "2026-10-13T12:00:00.000Z"
 }
