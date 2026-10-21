@@ -28,7 +28,7 @@ test('past the limit, whole memories are named instead of cut', () => {
   assert.match(text, /\[TRAP\] Title m0 - x{300}\n\[TRAP\] Title m1 - x{300}\n\.\.\. and 3 more: Title m2; Title m3; Title m4$/);
 });
 
-// A migrated memory may be far longer than 1,500 characters: one that cannot fit
+// A memory may be longer than a delivery has room for: one that cannot fit
 // must not keep every memory after it from arriving.
 test('a memory too long to fit is named, and the ones after it still arrive in full', () => {
   const items = [item('m0', { body: 'x'.repeat(300) }), item('huge', { body: 'y'.repeat(5000) }), item('m2', { body: 'z'.repeat(300) })];

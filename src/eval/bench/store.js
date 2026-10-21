@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { compileProject } from '../../engine/compile.js';
 import { initProject } from '../../memory/init.js';
 import { createMemoryFiles } from '../../memory/store.js';
-import { engineeringGuideV2 } from '../agent/guide.js';
+import { engineeringGuide } from '../agent/guide.js';
 
 const CREATED = '2026-10-16T12:00:00.000Z';
 const LIVE = ['active', 'contested'];
@@ -22,7 +22,7 @@ export const benchMemoryId = (projectId, topic) => {
 const benchMemory = (project, d, evidence) => ({ schema_version: 8, id: benchMemoryId(project.id, d.topic), project_id: project.id, topic: d.topic, kind: d.kind,
   status: d.status ?? 'active', title: d.title, body: d.body, not_derivable: d.not_derivable, triggers: d.triggers, ...(d.check ? { check: d.check } : {}), evidence,
   origin: 'user_explicit', replaces: d.replaces ? benchMemoryId(project.id, d.replaces) : null, revisit_when: [],
-  review: { migrated: false, issues: [], accepted: { by: 'person', at: CREATED } }, created: CREATED, updated: CREATED });
+  review: { issues: [], accepted: { by: 'person', at: CREATED } }, created: CREATED, updated: CREATED });
 
 // The memories a project's store gets, with no clone to hash evidence in (layer 1 replays).
 export const benchMemories = project => (project.store === 'existing' ? project.memories : project.memories.map(d => benchMemory(project, d, [])));
@@ -46,7 +46,7 @@ export async function installStore(root, project) {
   const { memories, warnings } = await materializeMemories(root, project);
   const dd = join(root, '.dd');
   if (project.store === 'bench') {
-    // From an empty .dd: an older base can hold a v1 store (atoms, archive, legacy) only this condition would see.
+    // From an empty .dd: an older base can hold a store of another layout only this condition would see.
     await rm(dd, { recursive: true, force: true });
     await initProject(root, { projectId: project.id });
     await createMemoryFiles(dd).commit({ put: memories });
@@ -58,7 +58,7 @@ export async function installStore(root, project) {
 
 export async function writeGuide(root, project, memories, referenced) {
   await mkdir(join(root, 'docs'), { recursive: true });
-  await writeFile(join(root, 'docs', 'engineering-guide.md'), engineeringGuideV2(memories.filter(m => LIVE.includes(m.status))));
+  await writeFile(join(root, 'docs', 'engineering-guide.md'), engineeringGuide(memories.filter(m => LIVE.includes(m.status))));
   if (!referenced) return;
   const target = join(root, project.guideTarget);
   const text = existsSync(target) ? `${(await readFile(target, 'utf8')).trimEnd()}\n\n` : '';

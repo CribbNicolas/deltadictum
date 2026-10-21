@@ -13,7 +13,7 @@ import { createMemoryFiles } from '../../../src/memory/store.js';
 const memory = (id, over = {}) => ({
   schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title: `Memory ${id}`,
   body: `Body of ${id}.`, not_derivable: 'Hidden.', origin: 'model_initiated', replaces: null, revisit_when: [],
-  review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
+  review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
   triggers: [{ on: ['read', 'edit'], paths: ['src/a.js'] }],
   evidence: [{ type: 'file', path: 'src/a.js', sha256: 'a'.repeat(64), summary: 's' }, { type: 'note', ref: 'x', summary: 'n' }],
   ...over,

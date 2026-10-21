@@ -10,7 +10,7 @@ const memory = (id, over = {}) => ({
   schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title: `Memory ${id}`,
   body: 'Do the thing.\n\nWhy: it broke.', not_derivable: 'Only visible when it fails.',
   triggers: [{ on: ['edit'], paths: ['src/a.js'] }], evidence: [], origin: 'model_initiated', replaces: null,
-  revisit_when: [], review: { migrated: false, issues: [] },
+  revisit_when: [], review: { issues: [] },
   created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...over,
 });
 function scratch(t) {

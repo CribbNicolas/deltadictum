@@ -182,7 +182,7 @@ export async function materializeTrialMemories(root) {
     }
     memories.push({ schema_version: 8, id: trialMemoryId(definition.topic), project_id: 'supermem', topic: definition.topic, kind: definition.kind,
       status: 'active', title: definition.title, body: definition.body, not_derivable: definition.not_derivable, triggers: definition.triggers,
-      evidence, origin: 'user_explicit', replaces: null, revisit_when: [], review: { migrated: false, issues: [], accepted: { by: 'person', at: CREATED } },
+      evidence, origin: 'user_explicit', replaces: null, revisit_when: [], review: { issues: [], accepted: { by: 'person', at: CREATED } },
       created: CREATED, updated: CREATED });
   }
   const repoFiles = repoFilesOf(root);

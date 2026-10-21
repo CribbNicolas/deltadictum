@@ -1,6 +1,6 @@
-// Pure helpers for the agent trial: what run.js recorded, turned into numbers.
+// Pure helpers for the agent trials: what a run recorded, turned into numbers.
 // No model calls and no file access here, so all of it is unit-tested.
-// About three bytes a token, as v1 measured injected context.
+// About three bytes a token.
 const estimateTokens = value => Math.max(1, Math.ceil(Buffer.byteLength(typeof value === 'string' ? value : JSON.stringify(value), 'utf8') / 3));
 
 export function median(values) {
@@ -61,19 +61,16 @@ export function parseNumstat(text) {
 }
 
 // What would tell a judge which change had DD: the delivery lines DD's hooks
-// write, memory ids, pointers and phrases naming a recalled memory. Project
-// vocabulary (memory_atoms, DD_DATA) stays: this repository is DD itself.
-// v1 labels, then v2's (src/engine/deliver.cjs).
-const DELIVERY_LINE = /^.*(?:DD - |\[(?:LESSON|DECISION|CLAIM|PROCEDURE|ANTI|TRAP|FACT|ABANDONED)\b).*$/gm;
+// write (src/engine/deliver.cjs), memory ids and phrases naming a recalled memory.
+const DELIVERY_LINE = /^.*(?:DD - |\[(?:DECISION|PROCEDURE|TRAP|FACT|ABANDONED|DISPUTED)\b).*$/gm;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
-const POINTER = /\(get [0-9a-f]{6,}\)/gi;
 const RECALL = /\b(?:the |a |this |that )?(?:retrieved|recalled|pushed|injected|stored|project|dd)\s+(?:memory|memories|lesson|lessons|knowledge)\b/gi;
 const SHORT_ID = /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{8}\b/gi;
 // The documentation conditions' guide, named by path or by title.
 const GUIDE = /(?:(?:as |per |in )?(?:the )?)?(?:docs\/)?engineering[- ]guide(?:\.md)?(?: says)?,?/gi;
 
 export function redact(text) {
-  return String(text ?? '').replace(DELIVERY_LINE, '').replace(UUID, '').replace(POINTER, '')
+  return String(text ?? '').replace(DELIVERY_LINE, '').replace(UUID, '')
     .replace(RECALL, '').replace(SHORT_ID, '').replace(GUIDE, '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
@@ -91,25 +88,18 @@ function hookContexts(all) {
   }).filter(c => c.text);
 }
 
-const PUSHED = /\[(?:LESSON|DECISION|CLAIM|PROCEDURE|ANTI)\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]/g;
-// v2 names a delivered memory by its title: "[KIND] title - body", with " [DISPUTED]" after the kind.
-const PUSHED_V2 = /^\[(?:TRAP|DECISION|FACT|ABANDONED|PROCEDURE)\](?: \[DISPUTED\])? (.+?) - /gm;
-const resultText = r => (typeof r.content === 'string' ? r.content : (r.content ?? []).map(part => part.text ?? '').join(''));
+// A delivered memory is named by its title: "[KIND] title - body", with " [DISPUTED]" after the kind.
+const PUSHED = /^\[(?:TRAP|DECISION|FACT|ABANDONED|PROCEDURE)\](?: \[DISPUTED\])? (.+?) - /gm;
 
 // What the agent did and what DD gave it, from its stream-json events
-// (claude -p --verbose --include-hook-events). key: the task's key memory, its
-// id or { id, title } (v2 deliveries carry the title, not the id).
+// (claude -p --verbose --include-hook-events). key: the task's key memory,
+// { id, title }; a delivery names it by its title.
 export function streamMetrics(stream, key) {
-  const memoryId = typeof key === 'string' ? key : key?.id;
-  const title = typeof key === 'string' ? null : key?.title;
+  const title = key?.title ?? null;
   const all = events(stream);
   const calls = all.filter(e => e.type === 'assistant').flatMap(e => e.message?.content ?? []).filter(c => c.type === 'tool_use');
-  const results = all.filter(e => e.type === 'user').flatMap(e => e.message?.content ?? []).filter(c => c.type === 'tool_result');
   const contexts = hookContexts(all);
-  const pushed = new Set(contexts.flatMap(c => [...c.text.matchAll(PUSHED)].map(m => m[1])));
-  const pushedTitles = new Set(contexts.flatMap(c => [...c.text.matchAll(PUSHED_V2)].map(m => m[1])));
-  const ddCalls = new Set(calls.filter(c => c.name.startsWith('mcp__dd__')).map(c => c.id));
-  const short = memoryId?.slice(0, 8);
+  const pushedTitles = new Set(contexts.flatMap(c => [...c.text.matchAll(PUSHED)].map(m => m[1])));
   // One event per content block repeats a message's usage: count each message once.
   const prompts = new Map(all.filter(e => e.type === 'assistant' && e.message?.usage).map(e => {
     const u = e.message.usage;
@@ -126,19 +116,12 @@ export function streamMetrics(stream, key) {
     peak_context_tokens: Math.max(0, ...prompts.values()),
     guide_reads: calls.filter(c => /engineering-guide/i.test(JSON.stringify(c.input ?? {}))).length,
     exploration_calls: calls.filter(c => EXPLORATION.has(c.name)).length,
-    dd_tool_calls: ddCalls.size,
     dd_inactive: contexts.some(c => c.event === 'SessionStart' && c.text.includes('DD - Inactive')),
     injected_tokens: contexts.reduce((n, c) => n + estimateTokens(c.text), 0),
-    memories_pushed: pushed.size + pushedTitles.size,
-    // v2 deliveries by title, once each, in the order they arrived.
+    memories_pushed: pushedTitles.size,
+    // Deliveries by title, once each, in the order they arrived.
     delivered_titles: [...pushedTitles],
-    // Pointed: a pointer line during the work; the session-start map names every memory.
-    key_memory: memoryId ? {
-      pushed: pushed.has(memoryId) || Boolean(title && pushedTitles.has(title)),
-      pointed: contexts.some(c => c.event !== 'SessionStart' && c.text.includes(`(get ${short})`)),
-      pulled: calls.some(c => c.name === 'mcp__dd__get' && String(c.input?.id ?? '').startsWith(short))
-        || results.some(r => ddCalls.has(r.tool_use_id) && resultText(r).includes(memoryId)),
-    } : null,
+    key_memory: title ? { pushed: pushedTitles.has(title) } : null,
   };
 }
 

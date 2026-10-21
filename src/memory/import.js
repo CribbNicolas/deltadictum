@@ -4,8 +4,7 @@ import { basename, extname, join } from 'node:path';
 import { globToRegExp } from '../engine/clause.cjs';
 import { compileProject, presentFilesOf } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
-import { BODY_MAX } from './convert-v1.js';
-import { LIMITS, LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from './schema.js';
+import { BODY_MAX, LIMITS, LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from './schema.js';
 import { createMemoryFiles } from './store.js';
 
 // `deltadictum import`: Claude Code's `.claude/rules/*.md` (a `paths` list in the
@@ -150,7 +149,7 @@ export async function importRules(root, { from = null, dryRun = false, now = new
       evidence: [{ type: 'file', path: file, sha256: sha256(join(root, file)), summary: 'The rules file this memory was imported from.' }],
       origin: 'user_explicit', replaces: null,
       revisit_when: [{ kind: 'file_changed', path: file, description: 'The rules file changed since the import.' }],
-      review: { migrated: false, issues: fitted.truncated ? ['imported_truncated'] : [], accepted: { by: 'person', at } },
+      review: { issues: fitted.truncated ? ['imported_truncated'] : [], accepted: { by: 'person', at } },
       created: previous?.created ?? at, updated: at,
     };
     const problems = validateMemory(memory);

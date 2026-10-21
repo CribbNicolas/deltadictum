@@ -39,7 +39,7 @@ export const VARIANTS = {
 // --freeze writes what it reads as the new frozen set.
 const fromStore = args.memories === 'store' || 'freeze' in args;
 const memories = fromStore ? await loadBenchMemories(join(REPO, '.dd')) : await frozenBenchMemories();
-if (!memories.length) throw new Error('bench_no_memories: nothing live under .dd/atoms, .dd/legacy or .dd/memories');
+if (!memories.length) throw new Error('bench_no_memories: nothing live under .dd/memories');
 if ('freeze' in args) {
   console.log(`froze ${await freezeBenchMemories(memories)} memories into ${FROZEN_MEMORIES}`);
   process.exit(0);

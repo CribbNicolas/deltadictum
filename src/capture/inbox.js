@@ -242,11 +242,11 @@ async function ingest({ root, file, sessionId, now = new Date(), compile = compi
     }
   }
   const previous = live.find(memory => memory.topic === proposal.topic);
-  // `review` is DD's: a proposal cannot claim the migrated exemption.
+  // `review` is DD's: a proposal cannot set it.
   const memory = { schema_version: SCHEMA_VERSION, id: randomUUID(), project_id: projectId(root, config, all), topic: proposal.topic,
     kind: proposal.kind, status: 'candidate', title: proposal.title, body: proposal.body, not_derivable: notDerivable, triggers,
     ...(proposal.check ? { check: proposal.check } : {}), evidence, origin: proposal.origin ?? 'model_initiated',
-    replaces: previous?.id ?? null, revisit_when: proposal.revisit_when ?? [], review: { migrated: false, issues: [] },
+    replaces: previous?.id ?? null, revisit_when: proposal.revisit_when ?? [], review: { issues: [] },
     created: now.toISOString(), updated: now.toISOString() };
   // Held to the rules of a live memory: it may activate below.
   reasons.push(...validateMemory({ ...memory, status: 'active' }));
@@ -270,7 +270,7 @@ async function ingest({ root, file, sessionId, now = new Date(), compile = compi
   // commit. They are archived, not deleted (INV-09): a person can restore one.
   const pending = all.filter(other => other.status === 'candidate' && other.topic === memory.topic);
   const stored = { ...memory, status: accept.length ? 'candidate' : 'active',
-    review: { migrated: false, issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)],
+    review: { issues: [...(duplicate ? [`suspected_duplicate:${duplicate}`] : []), ...pending.map(other => `supersedes_candidate:${other.id}`)],
       // Who accepted it: DD here; a person through the review UI. A candidate keeps the lot it was proposed in.
       ...(accept.length ? {} : { accepted: { by: 'dd', at: memory.created } }), ...(accept.length && proposal.batch ? { batch: proposal.batch } : {}) } };
   const replaced = pending.map(other => ({ ...other, status: 'archived', updated: memory.created,

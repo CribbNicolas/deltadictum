@@ -13,7 +13,7 @@ const EVENT_NAMES = { 'session-start': 'SessionStart', prompt: 'UserPromptSubmit
 // Capture (spec section 7) is ES modules off the PreToolUse path, loaded only for these.
 const CAPTURE = ['observe', 'observe-prompt', 'stop', 'inbox'];
 
-// Codex takes Stop's message as a block with the reason (spec section 5), as v1 did.
+// Codex takes Stop's message as a block with the reason (spec section 5).
 function respond(command, text, host = 'claude') {
   if (!text) return '';
   if (host === 'codex' && command === 'stop') return JSON.stringify({ decision: 'block', reason: text });

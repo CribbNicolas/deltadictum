@@ -7,7 +7,7 @@ import { words } from '../engine/text.cjs';
 // delivery.
 const SCHEMA = 'CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(id UNINDEXED, topic, title, body)';
 // Only what can still be delivered or reviewed: superseded versions would outrank
-// the memories that replaced them (seen: 69 of them on one migrated store).
+// the memories that replaced them (seen: 69 of them on one store).
 export const SIMILAR_STATUSES = ['active', 'contested', 'candidate'];
 const INDEX_REVISION = 'v2';
 
@@ -74,7 +74,7 @@ export function overlaps(memories, db, { duplicate = 0.6, overlap = 0.3 } = {}) 
   return [...pairs.values()];
 }
 
-// For a memory with no triggers (such as a migrated one): the repository paths
+// For a memory with no triggers: the repository paths
 // and the code symbols its body names.
 export function suggestTriggersFor(memory, { repoFiles = [], symbolExists = () => false } = {}) {
   const text = `${memory.title ?? ''}\n${memory.body ?? ''}`;

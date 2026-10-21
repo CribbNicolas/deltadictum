@@ -15,7 +15,7 @@ const check = { on: ['edit', 'write'], paths: ['tests/**/*.test.js'], if_content
   say: 'This test opens a store without closing it in t.after.', examples: { violates: 'createMemoryStore(d)', passes: 'createMemoryStore(d); t.after(x)' } };
 const memory = { schema_version: 8, id: 'store', project_id: 'p', topic: 'checks/store', kind: 'trap', status: 'active', title: 'Close stores in t.after',
   body: 'Close stores in t.after, always.', not_derivable: 'Hidden.', triggers: [{ on: ['prompt'], keywords: ['zzstore'] }], check, evidence: [],
-  origin: 'model_initiated', replaces: null, revisit_when: [], review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z' };
+  origin: 'model_initiated', replaces: null, revisit_when: [], review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z' };
 
 async function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-turn-'));

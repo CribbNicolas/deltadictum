@@ -47,24 +47,16 @@ test('the Codex installer writes every command skill under a dd- prefix', async 
   assert.match(String(review.content ?? review.value ?? ''), /^---\r?\nname: dd-review\r?\n/);
 });
 
-// Review finding 3: a project installed by 0.3.x holds dd, dd-save and dd-audit.
-// Reinstalling replaces DD's own skills and removes the retired one; a project
-// skill DD never wrote still stops the install.
-test('reinstalling over a 0.3.x Codex install replaces the skills DD wrote', async () => {
+// Reinstalling replaces the skills DD wrote; a project skill DD never wrote stops the install.
+test('reinstalling replaces the Codex skills DD wrote and stops at one it did not', async () => {
   const { applyCodexInstall } = await import('../../scripts/install-codex.mjs');
   const project = await mkdtemp(join(tmpdir(), 'dd-codex-upgrade-'));
   await mkdir(join(project, '.git'));
   await writeFile(join(project, 'package.json'), '{"name":"fixture"}');
-  for (const old of ['dd', 'dd-save', 'dd-audit']) {
-    await mkdir(join(project, '.agents', 'skills', old), { recursive: true });
-    await writeFile(join(project, '.agents', 'skills', old, 'SKILL.md'), `---\nname: ${old}\ndescription: As 0.3.x wrote it.\n---\n\nOld body.\n`);
-  }
+  await mkdir(join(project, '.agents', 'skills', 'dd-save'), { recursive: true });
+  await writeFile(join(project, '.agents', 'skills', 'dd-save', 'SKILL.md'), '---\nname: dd-save\ndescription: An older copy.\n---\n\nOld body.\n');
   await applyCodexInstall(await planCodexInstall(project));
-  const { access } = await import('node:fs/promises');
-  await assert.rejects(access(join(project, '.agents', 'skills', 'dd', 'SKILL.md')));
-  // v2 ships three skills: the ones DD wrote and no longer ships are retired too.
-  await assert.rejects(access(join(project, '.agents', 'skills', 'dd-audit', 'SKILL.md')));
-  assert.match(await readFile(join(project, '.agents', 'skills', 'dd-save', 'SKILL.md'), 'utf8'), /^---\r?\nname: dd-save\r?\n/);
+  assert.match(await readFile(join(project, '.agents', 'skills', 'dd-save', 'SKILL.md'), 'utf8'), /^---\r?\nname: dd-save\r?\ndescription: Save/);
   await writeFile(join(project, '.agents', 'skills', 'dd-review', 'SKILL.md'), '---\nname: my-review\n---\nMine.\n');
   await assert.rejects(planCodexInstall(project), /existing_skill_requires_review/);
 });
@@ -95,10 +87,9 @@ test('the Codex copies of the skills name the plugin root in place of CLAUDE_PLU
   }
 });
 
-// Until plan 7 maps Codex payloads, a Codex install must stay silent, not fail:
-// its hooks name the v2 entry point and it registers no MCP server (v2 has none).
+// A Codex install names the hooks entry point and registers no MCP server: DD has none.
 test('the Codex installer points its hooks at hooks/run.cjs and registers no MCP server', async () => {
-  const project = await mkdtemp(join(tmpdir(), 'dd-codex-v2-'));
+  const project = await mkdtemp(join(tmpdir(), 'dd-codex-hooks-'));
   await mkdir(join(project, '.git'));
   const plan = await planCodexInstall(project);
   const content = suffix => String(plan.operations.find(op => op.path.replaceAll('\\', '/').endsWith(suffix))?.content ?? '');

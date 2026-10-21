@@ -20,18 +20,6 @@ test('an edit by a person is validated, marks the origin and recompiles', async 
   await assert.rejects(editMemory(root, 'm1', { id: 'x', status: 'archived' }), err => err.problems.includes('not_editable:id'));
 });
 
-test('a person supplying not_derivable completes a migrated memory\'s review, and its exemption ends', async t => {
-  const migrated = memory('m1', { not_derivable: '', review: { migrated: true, issues: ['not_derivable_missing', 'folder_scope'] } });
-  const root = await project(t, [migrated]);
-  const reviewed = await editMemory(root, 'm1', { not_derivable: 'Hidden from the code.' });
-  assert.equal(reviewed.review.migrated, false);
-  assert.deepEqual(reviewed.review.issues, ['folder_scope']);
-  await assert.rejects(editMemory(root, 'm1', { not_derivable: '' }), err => err.problems.includes('not_derivable_required'));
-  // An edit that leaves not_derivable empty is not that review: the memory stays migrated and queued.
-  const other = await project(t, [migrated]);
-  assert.equal((await editMemory(other, 'm1', { title: 'Renamed' })).review.migrated, true);
-});
-
 test('accepting a revision supersedes what it replaces, in one commit', async t => {
   const root = await project(t, [memory('old'), memory('new', { topic: 'ui/old', status: 'candidate', replaces: 'old' })]);
   await acceptMemory(root, 'new');
@@ -74,7 +62,7 @@ test('a memory a person writes is active and accepted by a person; merge and re-
 // a restore, an edit or a re-topic of a live memory is that review, or the next
 // maintenance run archives the memory again.
 test('restoring, editing or re-topicking a live memory records the person, so retirement spares it', async t => {
-  const retired = memory('r1', { status: 'archived', review: { migrated: false, issues: ['retired_by_disuse'], accepted: { by: 'dd', at: '2026-09-01T00:00:00.000Z' } } });
+  const retired = memory('r1', { status: 'archived', review: { issues: ['retired_by_disuse'], accepted: { by: 'dd', at: '2026-09-01T00:00:00.000Z' } } });
   const root = await project(t, [retired, memory('e1', { topic: 'ui/e1' })]);
   const restored = await restoreMemory(root, 'r1');
   assert.equal(restored.review.accepted.by, 'person');
@@ -89,7 +77,7 @@ test('restoring, editing or re-topicking a live memory records the person, so re
 // reviewable: a person marks one as seen without changing it, and retirement then
 // spares it like any memory a person reviewed.
 test('a memory DD accepted can be marked as reviewed by a person, unchanged; a candidate cannot', async t => {
-  const root = await project(t, [memory('auto', { review: { migrated: false, issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } }),
+  const root = await project(t, [memory('auto', { review: { issues: [], accepted: { by: 'dd', at: '2026-10-14T00:00:00.000Z' } } }),
     memory('c1', { topic: 'ui/c1', status: 'candidate' })]);
   const seen = await markReviewed(root, 'auto');
   assert.equal(seen.review.accepted.by, 'person');
@@ -130,9 +118,9 @@ test('re-verifying evidence re-hashes the files that exist, keeps the missing on
 });
 
 test('accepting a batch accepts its candidates, carries out its archive requests and reports what it could not do', async t => {
-  const root = await project(t, [memory('old'), memory('c1', { status: 'candidate', review: { migrated: false, issues: [], batch: 'lot' } }),
-    memory('bad', { status: 'candidate', triggers: [{ on: ['edit'], paths: ['docs/none.md'] }], review: { migrated: false, issues: [], batch: 'lot' } }),
-    memory('other', { status: 'candidate', review: { migrated: false, issues: [], batch: 'elsewhere' } })]);
+  const root = await project(t, [memory('old'), memory('c1', { status: 'candidate', review: { issues: [], batch: 'lot' } }),
+    memory('bad', { status: 'candidate', triggers: [{ on: ['edit'], paths: ['docs/none.md'] }], review: { issues: [], batch: 'lot' } }),
+    memory('other', { status: 'candidate', review: { issues: [], batch: 'elsewhere' } })]);
   const dir = join(root, '.dd', 'local', 'requests');
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'r1.json'), JSON.stringify({ id: 'r1', request: 'archive', target: 'ui/old', why: 'Replaced.', batch: 'lot' }));
@@ -159,7 +147,7 @@ test('accepting a batch accepts its candidates, carries out its archive requests
 // first, so a merge can name its topic; deletion takes only what is no longer live.
 test('accepting a batch carries out its reverify, merge and delete requests; a live memory is never deleted', async t => {
   const stale = { type: 'file', path: 'src/a.js', sha256: 'a'.repeat(64), summary: 'changed since' };
-  const root = await project(t, [memory('keep', { topic: 'ui/keep' }), memory('rev', { topic: 'ui/keep', status: 'candidate', replaces: 'keep', review: { migrated: false, issues: [], batch: 'lot' } }),
+  const root = await project(t, [memory('keep', { topic: 'ui/keep' }), memory('rev', { topic: 'ui/keep', status: 'candidate', replaces: 'keep', review: { issues: [], batch: 'lot' } }),
     memory('drop', { topic: 'ui/drop' }), memory('s1', { topic: 'ui/s1', evidence: [stale] }), memory('s2', { topic: 'ui/s2', evidence: [stale] }),
     memory('old1', { topic: 'ui/old1', status: 'superseded' }), memory('old2', { topic: 'ui/old2', status: 'archived' }), memory('live', { topic: 'ui/live' })]);
   const dir = join(root, '.dd', 'local', 'requests');

@@ -1,7 +1,7 @@
 // The bench's tasks across projects, validated, for the runner, the judge and the audit.
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { guideSectionV2 } from '../agent/guide.js';
+import { guideSection } from '../agent/guide.js';
 import { validateProjects } from './validate.js';
 
 const LIVE = ['active', 'contested'];
@@ -20,7 +20,7 @@ export function guidanceFor(task, projects) {
   const project = projects.find(p => p.id === task.project);
   const sections = (task.memories ?? []).map(topic => project?.memories.find(m => m.topic === topic))
     .filter(m => m && LIVE.includes(m.status ?? 'active'))
-    .map(m => guideSectionV2({ ...m, status: m.status ?? 'active', evidence: (m.evidence ?? []).map(e => ({ type: 'file', ...e })) }));
+    .map(m => guideSection({ ...m, status: m.status ?? 'active', evidence: (m.evidence ?? []).map(e => ({ type: 'file', ...e })) }));
   return sections.length ? sections.join('\n') : null;
 }
 

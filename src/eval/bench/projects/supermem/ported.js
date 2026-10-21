@@ -1,7 +1,7 @@
-// The 2026-10-14 trial's tasks (src/eval/agent/tasks-v2.js) on the bench, at the trial's base, labelled
+// The 2026-10-14 trial's tasks (src/eval/agent/tasks.js) on the bench, at the trial's base, labelled
 // with a situation. turn-fixed-test is left out: its only requirement is the judge's, and calibration
 // decides on checks alone.
-import { TASKS as TRIAL } from '../../../agent/tasks-v2.js';
+import { TASKS as TRIAL } from '../../../agent/tasks.js';
 
 // 7c9106f's parent: 7c9106f itself added tasks-v2.js and trial-memories.js, the trial's answer key, and its
 // src/ outside src/eval is the parent's.

@@ -44,7 +44,7 @@ test('a stream yields its tool calls in order, relative to the run directory', (
 test('a diff yields the lines each file gained, leaving out the DD store', () => {
   const diff = [
     'diff --git a/package.json b/package.json', '--- a/package.json', '+++ b/package.json', '@@ -1 +1,2 @@', ' {', '+  "a": 1',
-    'diff --git a/.dd/atoms/x.json b/.dd/atoms/x.json', '+++ b/.dd/atoms/x.json', '+{}',
+    'diff --git a/.dd/memories/x.json b/.dd/memories/x.json', '+++ b/.dd/memories/x.json', '+{}',
     'diff --git a/tests/n.test.js b/tests/n.test.js', 'new file mode 100644', '+++ b/tests/n.test.js', '+one', '+two',
   ].join('\n');
   assert.deepEqual(addedByFile(diff), { 'package.json': '  "a": 1\n', 'tests/n.test.js': 'one\ntwo\n' });

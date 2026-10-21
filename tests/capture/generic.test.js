@@ -12,7 +12,7 @@ test('advice that names nothing of the repository is generic, even with specific
 
 test('a path, a symbol, a command, a flag or a value makes it specific', () => {
   for (const body of ['Close the store in `t.after`.', 'Run src/cli.js compile first.', 'Call createMemoryStore once per test.',
-    'Use --test-concurrency=1 on Windows.', 'Hooks time out after 10 s.', 'Set DD_RESIDENT_REGISTRY to a temp file.', 'Keep tests/helpers/isolate-data.js imported.']) {
+    'Use --test-concurrency=1 on Windows.', 'Hooks time out after 10 s.', 'Set DD_CAPTURE_PAYLOADS to a temp file.', 'Keep tests/helpers/isolate-data.js imported.']) {
     assert.deepEqual(genericReasons(m(body)), [], body);
   }
 });

@@ -1,6 +1,6 @@
 // A first pass at the information-versus-capability test (research section 8):
 // does the memory name something specific to this repository? It orders a
-// person's review of migrated memories; it decides nothing.
+// person's review; it decides nothing.
 const SIGNALS = [
   ['path', /(?:^|[\s`'"(])(?:[\w.-]+\/)+[\w.-]+\.\w+/],
   ['identifier', /\b[a-z]+(?:[A-Z][a-z0-9]*)+\b|\b[a-z]+(?:_[a-z0-9]+)+\b|\b[A-Z]{2,}(?:_[A-Z0-9]+)+\b/],

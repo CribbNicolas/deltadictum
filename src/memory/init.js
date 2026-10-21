@@ -11,8 +11,6 @@ import { ensureIgnored } from './ignore.js';
 // touched: run twice, it reports what was there.
 export async function initProject(root, { projectId = null } = {}) {
   const paths = localPaths(root);
-  // A v1 store is converted, not opted in beside its atoms: hooks would compile nothing from them.
-  if (existsSync(join(paths.dd, 'atoms'))) throw new Error('v1_store_present: this project holds a v1 store; run `deltadictum migrate` first');
   const created = [];
   const existed = [];
   const configPath = join(paths.dd, 'config.json');

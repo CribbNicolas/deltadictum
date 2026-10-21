@@ -11,7 +11,7 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 const RUN = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
 const memory = (id, title, extra) => ({ schema_version: 8, id, project_id: 'p', topic: `checks/${id}`, kind: 'trap', status: 'active', title,
   body: `${title}, always.`, not_derivable: 'Hidden.', triggers: [{ on: ['prompt'], keywords: [`zz${id}`] }], evidence: [], origin: 'model_initiated',
-  replaces: null, revisit_when: [], review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
+  replaces: null, revisit_when: [], review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
 const hook = payload => spawnSync(process.execPath, [RUN, 'pre-tool'], { input: JSON.stringify(payload), encoding: 'utf8' });
 const context = out => (out.stdout ? JSON.parse(out.stdout).hookSpecificOutput.additionalContext : '');
 
@@ -25,7 +25,7 @@ async function project(t, memories) {
   await compileProject(root);
   return root;
 }
-const force = memory('force', 'Never force-exit tests', { check: { on: ['run'], if_command: '--test-force-exit', say: '--test-force-exit crashes the resident tests on Windows.',
+const force = memory('force', 'Never force-exit tests', { check: { on: ['run'], if_command: '--test-force-exit', say: '--test-force-exit crashes the server tests on Windows.',
   examples: { violates: 'node --test --test-force-exit', passes: 'node --test' } } });
 const store = memory('store', 'Close stores in t.after', { check: { on: ['edit', 'write'], when: 'edit', paths: ['tests/**/*.test.js'], if_content: 'createMemoryStore\\(',
   unless_content: 't\\.after\\(', say: 'This test opens a store without closing it in t.after.',
@@ -35,7 +35,7 @@ test('a command check speaks with the command, with the body the first time, at 
   const root = await project(t, [force]);
   const run = session => context(hook({ session_id: session, cwd: root, tool_name: 'Bash', tool_input: { command: 'node --test --test-force-exit tests' } }));
   const first = run('s1');
-  assert.match(first, /DD - check \(Never force-exit tests\): --test-force-exit crashes the resident tests on Windows\./);
+  assert.match(first, /DD - check \(Never force-exit tests\): --test-force-exit crashes the server tests on Windows\./);
   assert.match(first, /Never force-exit tests, always\./);
   // The body came with a check, not a trigger: the claim says so.
   const claim = JSON.parse(readFileSync(join(root, '.dd', 'local', 'sessions', 's1.jsonl'), 'utf8').trim().split('\n').find(line => line.includes('"claim"')));
@@ -58,7 +58,7 @@ test('check lines share the delivery budget: what no longer fits whole is named,
   const run = command => context(hook({ session_id: 's1', cwd: root, tool_name: 'Bash', tool_input: { command } }));
   const first = run('node --test --test-force-exit tests');
   assert.ok(first.length <= 10000, `${first.length}`);
-  assert.match(first, /DD - check \(Never force-exit tests\): --test-force-exit crashes the resident tests on Windows\.\nNever force-exit tests, always\./);
+  assert.match(first, /DD - check \(Never force-exit tests\): --test-force-exit crashes the server tests on Windows\.\nNever force-exit tests, always\./);
   assert.match(first, /\.\.\. and \d more: /);
   const full = text => ids.filter(id => text.includes(`[TRAP] Rule ${id} - Rule ${id}: xxx`));
   const second = run('node --test tests');

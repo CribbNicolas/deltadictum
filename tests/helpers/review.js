@@ -7,7 +7,7 @@ import { createMemoryFiles } from '../../src/memory/store.js';
 // A git project with memories, for the review UI tests.
 export const memory = (id, extra = {}) => ({ schema_version: 8, id, project_id: 'p', topic: `ui/${id}`, kind: 'trap', status: 'active',
   title: `Rule ${id}`, body: `Close the store in t.after (${id}).`, not_derivable: 'Hidden from the code.', triggers: [{ on: ['edit'], paths: ['src/*.js'] }],
-  evidence: [], origin: 'model_initiated', replaces: null, revisit_when: [], review: { migrated: false, issues: [] },
+  evidence: [], origin: 'model_initiated', replaces: null, revisit_when: [], review: { issues: [] },
   created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z', ...extra });
 
 export async function project(t, memories) {

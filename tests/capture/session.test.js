@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createMemoryFiles } from '../../src/memory/store.js';
 
-// Payload shapes recorded from Claude Code (plan 3 Task 7, v1 observe captures):
+// Payload shapes recorded from Claude Code sessions:
 // PostToolUseFailure carries `error`; PostToolUse for Bash carries stdout, stderr
 // and `interrupted`.
 const RUN = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));

@@ -2,9 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { observationFromPrompt, observationFromTool } from '../../src/hooks/observe.js';
 
-// The pure observation rules of src/hooks/observe.js, kept from the v1 capture and
-// corrections tests when the v1 hook path and the MCP server were removed. Plan 4
-// builds capture on them.
+// The pure observation rules of src/hooks/observe.js, which capture builds on.
 
 // Realistic phrasing, not keyword bait: this is how a correction is actually
 // typed mid-session, in both languages the codebase already detects.

@@ -10,14 +10,14 @@ import { compileProject } from '../../src/engine/compile.js';
 import { shellKind } from '../../src/hooks/v2/codex.cjs';
 import { createMemoryFiles } from '../../src/memory/store.js';
 
-// Codex payloads as v1 recorded them from real sessions (2026-09): Claude Code's
+// Codex payloads as recorded from real sessions (2026-09): Claude Code's
 // shape, with the shell tool as Bash and edits through apply_patch, whose patch
 // text is tool_input.command.
 const RUN = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
 const memory = (id, title, triggers) => ({
   schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title, body: `${title}, always.`,
   not_derivable: 'Hidden.', triggers, evidence: [], origin: 'model_initiated', replaces: null, revisit_when: [],
-  review: { migrated: false, issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
+  review: { issues: [] }, created: '2026-09-01T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
 });
 
 async function project(t) {
@@ -104,7 +104,7 @@ test('a proposal written through apply_patch into .dd/inbox is ingested', async 
   assert.equal(existsSync(join(root, file)), false);
 });
 
-test('the Codex installer registers the v2 hooks and writes no MCP server', async t => {
+test('the Codex installer registers the hooks and leaves the project\'s config.toml alone', async t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-codex-install-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, '.codex'));
@@ -118,12 +118,8 @@ test('the Codex installer registers the v2 hooks and writes no MCP server', asyn
     PostToolUse: ['* observe', 'apply_patch inbox'], Stop: [' stop'],
   });
   assert.ok(Object.values(hooks).flat().every(group => group.hooks.every(handler => !handler.command.includes('--data'))));
-  const config = readFileSync(join(root, '.codex', 'config.toml'), 'utf8');
-  assert.match(config, /^model_reasoning_effort = "high"/);
-  assert.doesNotMatch(config, /mcp_servers/);
-  const agents = readFileSync(join(root, 'AGENTS.md'), 'utf8');
-  assert.doesNotMatch(agents, /MCP|orient|retrieve/);
-  assert.match(agents, /dd-save/);
+  assert.equal(readFileSync(join(root, '.codex', 'config.toml'), 'utf8'), 'model_reasoning_effort = "high"\n');
+  assert.match(readFileSync(join(root, 'AGENTS.md'), 'utf8'), /dd-save/);
   // The install is the project's opt-in: DD records and asks from the first session.
   assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')).project_id, basename(root));
   assert.equal((await planCodexInstall(root)).operations.length, 0);

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { TRIAL_MEMORIES, materializeTrialMemories } from '../../../src/eval/agent/trial-memories.js';
-import { TASKS } from '../../../src/eval/agent/tasks-v2.js';
+import { TASKS } from '../../../src/eval/agent/tasks.js';
 import { validateMemory } from '../../../src/memory/schema.js';
 
 const REPO = fileURLToPath(new URL('../../..', import.meta.url));

@@ -71,11 +71,6 @@ export async function editMemory(root, id, changes) {
   const at = now();
   const next = reviewedByPerson({ ...memory, ...changes, origin: 'user_explicit', updated: at }, at);
   if (changes.check === null) delete next.check;
-  // A migrated memory waits for a person to say why the code does not show it
-  // (spec section 9). Once one does, its v2 review is done and v2's rules apply.
-  if (next.review?.migrated && String(next.not_derivable ?? '').trim()) {
-    next.review = { ...next.review, migrated: false, issues: (next.review.issues ?? []).filter(issue => issue !== 'not_derivable_missing') };
-  }
   const problems = problemsOf(root, next);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [next]);
@@ -238,7 +233,7 @@ export async function createMemory(root, fields = {}) {
     topic: fields.topic, kind: fields.kind, status: 'active', title: fields.title, body: fields.body,
     not_derivable: String(fields.not_derivable ?? '').trim(), triggers: fields.triggers ?? [], ...(fields.check ? { check: fields.check } : {}),
     evidence: fields.evidence ?? [], origin: 'user_explicit', replaces: null, revisit_when: [],
-    review: { migrated: false, issues: [], accepted: { by: 'person', at } }, created: at, updated: at };
+    review: { issues: [], accepted: { by: 'person', at } }, created: at, updated: at };
   const problems = problemsOf(root, memory);
   if (problems.length) throw new ReviewError(problems);
   return save(root, [memory]);
