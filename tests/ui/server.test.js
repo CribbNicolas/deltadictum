@@ -88,10 +88,17 @@ test('the settings are read and changed through the API; unknown keys are kept a
   const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
   writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1 }));
   const before = JSON.parse((await json('/api/config')).text);
-  assert.deepEqual({ ...before, limits: undefined }, { project_id: 'p', auto_accept: true, delivery_limit: 10000, limits: undefined, file: { project_id: 'p', custom: 1 } });
+  assert.deepEqual({ ...before, limits: undefined }, { project_id: 'p', auto_accept: true, delivery_limit: 10000, retire_after_sessions: 20, limits: undefined, file: { project_id: 'p', custom: 1 } });
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: false }) })).status, 200);
   assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')), { project_id: 'p', custom: 1, auto_accept: false });
   assert.equal(JSON.parse((await json('/api/config')).text).auto_accept, false);
+  // retire.after_sessions, the one nested setting, is written in place.
+  assert.equal(JSON.parse((await json('/api/config')).text).retire_after_sessions, 20);
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ retire_after_sessions: 30 }) })).status, 200);
+  assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')).retire, { after_sessions: 30 });
+  assert.equal(JSON.parse((await json('/api/config')).text).retire_after_sessions, 30);
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ retire_after_sessions: 0 }) })).status, 400);
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1, auto_accept: false }));
   const bad = await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: 'yes' }) });
   assert.equal(bad.status, 400);
   assert.ok(JSON.parse(bad.text).problems.includes('invalid_setting:auto_accept'));

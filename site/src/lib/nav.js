@@ -15,7 +15,8 @@ export function buildNav(pages) {
   const groups = [{ title: 'Start', items: pages.filter(p => !p.parent && !p.has_children && p.id !== 'index').sort(byOrder).map(item) }];
   for (const section of sections) {
     const children = pages.filter(p => p.parent === section.title).sort(byOrder);
-    groups.push({ title: section.title, items: [{ ...item(section), title: 'Overview' }, ...children.map(item)] });
+    // A section of one page lists it under its own title; "Overview" leads only a section with pages under it.
+    groups.push({ title: section.title, items: children.length ? [{ ...item(section), title: 'Overview' }, ...children.map(item)] : [item(section)] });
   }
   return groups;
 }

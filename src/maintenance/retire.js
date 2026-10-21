@@ -9,8 +9,14 @@ import { openTelemetry } from './telemetry.js';
 // touched in at least N sessions (default 20) without it ever firing is archived.
 // A memory a person reviewed is never retired automatically; `origin` is not
 // proof of a person (the agent writes it). Archiving keeps the file in git.
-function afterSessionsOf(root) {
-  try { return JSON.parse(readFileSync(join(localPaths(root).dd, 'config.json'), 'utf8')).retire?.after_sessions ?? 20; } catch { return 20; }
+export const AFTER_SESSIONS = { default: 20, min: 1, max: 1000 };
+export const validAfterSessions = value => Number.isInteger(value) && value >= AFTER_SESSIONS.min && value <= AFTER_SESSIONS.max;
+
+// retire.after_sessions in .dd/config.json; a value out of bounds counts as unset.
+export function afterSessionsOf(root) {
+  let value;
+  try { value = JSON.parse(readFileSync(join(localPaths(root).dd, 'config.json'), 'utf8')).retire?.after_sessions; } catch { /* no config */ }
+  return validAfterSessions(value) ? value : AFTER_SESSIONS.default;
 }
 
 export async function retireByDisuse(root, { afterSessions = afterSessionsOf(root), now = new Date() } = {}) {

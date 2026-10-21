@@ -36,7 +36,7 @@ test('v2 listens at session start, at prompts and before the tools that carry pr
   assert.match(command('PreToolUse'), / pre-tool$/);
 });
 
-// Grok Build runs Claude Code's hooks (docs/integrations/grok-build.md): both
+// Grok Build runs Claude Code's hooks: both
 // Grok files register the events, matchers and commands hooks/hooks.json does,
 // each with its own root. Found missing: inbox (so /dd:save was never ingested
 // on Grok), observe-prompt and PostToolUseFailure.

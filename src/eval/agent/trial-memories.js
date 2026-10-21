@@ -112,7 +112,7 @@ export const TRIAL_MEMORIES = [
     body: 'Codex (codex-cli 0.154, recorded 2026-09) sends its shell tool as `tool_name: Bash` with `tool_input.command` either a string or an argv such as `["bash", "-lc", "<script>"]` (PowerShell: `["pwsh", "-Command", ...]`), `apply_patch` with the patch text in `tool_input.command`, and `tool_response: { exit_code, output }`; its Stop takes `{ decision: "block", reason }`. tests/hooks/codex.test.js pins those shapes. A field Codex renames is seen only in a live session: record payloads with DD_CAPTURE_PAYLOADS before trusting a documented shape.',
     not_derivable: 'A documented hook payload differed from what the harness sent; only recordings say which fields exist.',
     triggers: [
-      { on: ['read', 'edit', 'write'], paths: ['src/hooks/v2/codex.cjs', 'tests/hooks/codex.test.js', 'docs/integrations/codex.md'] },
+      { on: ['read', 'edit', 'write'], paths: ['src/hooks/v2/codex.cjs', 'tests/hooks/codex.test.js', 'docs/guide/how-it-works.md'] },
       { on: ['prompt', 'search'], keywords: ['codex', 'apply_patch'] },
     ],
     evidence: [{ path: 'src/hooks/v2/codex.cjs', summary: 'The adapter over the recorded shapes.' }],

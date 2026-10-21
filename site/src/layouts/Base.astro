@@ -8,6 +8,7 @@ import '@fontsource/geist-mono/500.css';
 import '../styles/tokens.css';
 import '../styles/global.css';
 import { SITE, href } from '../config.js';
+import { harnessCss, headScript } from '../lib/harness.js';
 
 const { title, description, ogImage = 'og/index.png', jsonLd } = Astro.props;
 const fullTitle = title ? `${title} · ${SITE.name}` : SITE.homeTitle;
@@ -40,6 +41,8 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
     {ld.map(item => <script type="application/ld+json" is:inline set:html={JSON.stringify(item)} />)}
+    <script is:inline set:html={headScript} />
+    <style is:inline set:html={harnessCss} />
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>

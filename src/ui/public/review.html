@@ -658,11 +658,14 @@
     const bounds = settings.limits.delivery_limit;
     const limit = h('input', { id: 's-limit', type: 'number', min: String(bounds.min), max: String(bounds.max), step: '500' });
     limit.value = String(settings.delivery_limit);
+    const sessionsBounds = settings.limits.retire_after_sessions;
+    const retire = h('input', { id: 's-retire', type: 'number', min: String(sessionsBounds.min), max: String(sessionsBounds.max), step: '1' });
+    retire.value = String(settings.retire_after_sessions);
     async function save() {
-      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value) } }); }
+      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value), retire_after_sessions: Number(retire.value) } }); }
       catch (err) { refused('Saving the settings', err); return; }
       dialog.close();
-      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters.`);
+      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters; retire after ${settings.retire_after_sessions} sessions.`);
       await loadOverview();
     }
     dialog.replaceChildren(
@@ -671,7 +674,9 @@
         h('div', { class: 'mono' }, `.dd/config.json · project ${settings.project_id ?? '(no project_id)'}`),
         h('label', { for: 's-auto', class: 'check' }, auto, h('span', {}, 'Auto-accept: DD activates a proposal on its own when it verified the evidence itself, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits as a candidate.')),
         h('label', { for: 's-limit' }, `Delivery cap, in characters (${bounds.min} to ${bounds.max}; default ${bounds.default})`), limit,
-        h('p', { class: 'mono' }, 'What does not fit whole is named and arrives at its next event. Other keys in the file are kept as they are.')),
+        h('p', { class: 'mono' }, 'What does not fit whole is named and arrives at its next event.'),
+        h('label', { for: 's-retire' }, `Retire after, in sessions (${sessionsBounds.min} to ${sessionsBounds.max}; default ${sessionsBounds.default})`), retire,
+        h('p', { class: 'mono' }, 'Maintenance archives a memory whose files that many sessions touched without it ever firing; never one a person reviewed. Other keys in the file are kept as they are.')),
       h('div', { class: 'actions' },
         h('button', { type: 'button', class: 'act', on: { click: () => dialog.close() } }, 'Cancel'),
         h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save')));

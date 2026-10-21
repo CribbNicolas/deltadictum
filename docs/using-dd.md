@@ -1,6 +1,6 @@
 ---
 title: Using DD well
-description: What belongs in a memory, how to write one that fires when it should, checks, the review UI, a working rhythm, commands and troubleshooting.
+description: What belongs in a memory, how to write one that fires when it should, checks, the review UI, a working rhythm and troubleshooting.
 nav_order: 3
 ---
 
@@ -142,7 +142,8 @@ Rules for checks:
 
 ## The review UI
 
-`/dd:review` runs `deltadictum doctor`, shows its summary, and starts the UI. Open the printed address,
+The review command (`/dd:review` in Claude Code; every harness's in [Commands](commands.md)) runs
+`deltadictum doctor`, shows its summary, and starts the UI; `npx deltadictum ui` starts it from a terminal. Open the printed address,
 key included. The page updates itself as the store changes (a memory saved, a request from the agent, a
 session recorded); the "live" mark beside the DD logo says it is connected. The views, in three groups:
 
@@ -159,7 +160,6 @@ session recorded); the "live" mark beside the DD logo says it is connected. The 
 | **Dead triggers** | Globs or symbols that match nothing |
 | **Suspected false alarms** | Checks that fired on a file the agent then left unchanged |
 | **Duplicates** | Pairs of memories that say the same thing: merge |
-| **Missing not_derivable** | Memories converted from v1 that still need their one line |
 
 The dashboard's capture card shows the funnel: how often DD asked the agent for a memory, and how many proposals
 were stored, activated or rejected, with the rejection reasons. A funnel with many asks and no proposals
@@ -169,19 +169,20 @@ Each memory opens with its evidence (verified or stale), its breadth (how much o
 triggers cover), its use (fires by the trigger dimension that matched), similar memories, and the dry run.
 Every edit is validated as ingestion validates, and followed by a recompile.
 
-Settings, the gear beside the DD logo: `auto_accept` and the delivery cap (`delivery_limit`, 2,000 to 50,000 characters per
-delivery).
+Settings, the gear beside the DD logo: every setting in [Configuration](guide/configuration.md), each
+changed in place.
 
 ## A working rhythm
 
 - **Let DD ask.** It asks only after a failure followed by a fix, or a correction from you, once per
   evidence set. Answering "save it" when the agent asks is cheaper than remembering later.
-- **Ask for the rest.** `/dd:save` or "save this as a decision" for what you already know. The agent
+- **Ask for the rest.** The save command, or "save this as a decision", for what you already know. The agent
   marks it `"origin": "user_explicit"`, so review knows it was yours.
 - **Review weekly, lightly.** Candidates and Accepted by DD first. Most take a few seconds: the text is
   short and the evidence is one click away.
-- **Archive, never delete.** Archiving keeps the file and the id; a restore is one action. Maintenance
-  archives what never fires, and a memory a person reviewed is exempt from that.
+- **Archive first, delete later.** Archiving keeps the file and the id; a restore is one action.
+  Maintenance archives what never fires, and a memory a person reviewed is exempt from that. Delete only
+  what is already archived or superseded, once nobody will restore it: git keeps the file's history.
 - **Revise rather than pile up.** A new proposal on a topic with a live memory is a revision
   (`replaces`); accepting it supersedes the old one in the same commit. The store stays one memory per topic.
 
@@ -195,28 +196,6 @@ delivery).
 - Set `{ "auto_accept": false }` in `.dd/config.json` if the team prefers every memory to pass a person
   before it fires.
 
-## Commands
-
-| In the session | Does |
-|---|---|
-| `/dd:save` | Saves knowledge from the conversation as a memory (or asks for a change to one) |
-| `/dd:recall <topic>` | Shows what DD knows on a topic |
-| `/dd:review` | Runs doctor, then opens the review UI and prints its address |
-
-| Terminal (`npx deltadictum …`) | Does |
-|---|---|
-| `init [--project-id NAME]` | Opts the project in and compiles |
-| `doctor` | Is DD working here: Node, the opt-in, the index, sessions recorded, maintenance, what needs a person; exit 1 on a problem |
-| `status` | Memory counts by status, and topics with more than one live memory |
-| `health` | Each memory's health: dead triggers, idle, hubs, stale evidence, false alarms; the capture funnel |
-| `recall QUERY [--all] [--limit N]` | Prints the memories that match, in full (`--all` includes candidates) |
-| `ui [--port N]` | The review UI, until interrupted (default port 7733; a busy port falls back to a free one) |
-| `compile` | Rebuilds the index by hand (session start does it when the memories changed) |
-| `maintain` | The daily maintenance, by hand |
-| `import [--from DIR] [--dry-run]` | Turns `.claude/rules/` and `.cursor/rules/` files that name paths into memories |
-| `migrate [--dry-run]` | Converts a DD 0.8 store |
-| `install --host codex --project PATH [--dry-run]` | Writes DD's Codex configuration into a project |
-
 ## Troubleshooting
 
 | Symptom | Look at |
@@ -228,7 +207,7 @@ delivery).
 | Stored as a candidate, not active | The reply names the condition: `no_verified_evidence`, `triggers_unverified`, `dead_trigger`, `has_check`, `suspected_duplicate`, `revision`, or `auto_accept_disabled`. Accept it in the review UI |
 | The review UI answers 403 | Open the exact URL it printed, with `?key=`; the key becomes a cookie. It also refuses any `Host` but its own |
 | A hook is slow | The hot path is one Node start per tool call, a few tens of milliseconds. A very large index or a repository with hundreds of thousands of files shows up here; `health` lists hubs |
-| Everything went quiet after an upgrade | `/plugin` to confirm the version; start a new session; `doctor` |
+| Everything went quiet after an upgrade | Confirm the version the harness loaded (`/plugin` in Claude Code); start a new session; `doctor` |
 
 A hook that fails ends silently by design: DD never blocks the host. Doctor is where failures become
 visible.

@@ -25,6 +25,3 @@ Everything DD keeps for a project lives in its `.dd/` folder.
 Writes to `.dd/memories/` go through one journaled transaction (`.dd/.pending-write.json`, under
 `.dd/.write-lock`), so an interrupted write is completed before the next one. Losing `.dd/local/` loses
 history counters, never knowledge: the index is rebuilt from the memories.
-
-A v1 store (`.dd/atoms/`, `candidates/`, `archive/`, `legacy/`, `registry/`, `actions/`) is converted by
-`deltadictum migrate`, which removes those folders once the memories are written.

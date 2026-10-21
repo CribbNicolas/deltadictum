@@ -12,6 +12,12 @@ when it reaches `main`, and CI refuses a version bump without a section here.
   carries it out (deletions last), and a request outside a batch has an Apply button in the review UI.
 - Capture: a proposal that names a path at the end of a sentence, or a percentage, is no longer refused
   as generic advice.
+- Review UI: `retire.after_sessions` is a setting in the Settings pane, beside auto-accept and the
+  delivery cap; a value out of bounds (1 to 1,000) counts as unset.
+- Docs: every page follows the harness chosen in the menu (Claude Code, Codex, OpenCode or Grok Build),
+  remembered across pages; the harness guides moved into Getting started and How DD works, and the
+  package no longer ships `docs/integrations`. Commands have their own page. The loop in How DD works
+  follows its diagram, and benchmark figures left the docs.
 
 ## [0.9.13] - 2026-10-21
 

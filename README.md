@@ -43,8 +43,7 @@ The earlier version of DD, which searched its memories by similarity, reached si
 cost. These numbers come from one project, one model and a small sample; they say DD is on track, not that
 it will do the same on yours. A second trial with Claude Opus 5.5 and Claude Haiku 5.5 at high effort
 found no quality difference between any condition (both models reached every rule by reading the code)
-and DD again the cheapest condition for both. More:
-[how it is measured](docs/guide/how-it-works.md#how-it-is-measured).
+and DD again the cheapest condition for both.
 
 ## Quickstart (Claude Code)
 
@@ -134,23 +133,12 @@ deltadictum install --host codex --project "<absolute-project-path>"
 ```
 
 Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`. The install writes the
-project's opt-in (`.dd/config.json`) when there is none. Details: [Codex guide](docs/integrations/codex.md).
+project's opt-in (`.dd/config.json`) when there is none.
 
 ### OpenCode and Grok Build
 
-See the [OpenCode guide](docs/integrations/opencode.md) and the [Grok Build guide](docs/integrations/grok-build.md).
-
-### Upgrading from DD 0.8 or earlier
-
-DD v2 replaces the memory format. Convert a project's store once, then commit the result:
-
-```bash
-npx deltadictum migrate --dry-run   # what would change
-npx deltadictum migrate
-```
-
-Every converted memory keeps its id and waits in the review UI for one line saying why the code does not
-show it. Details: [CHANGELOG](CHANGELOG.md).
+Their install steps, and what each one does not get yet, are in
+[Getting started](https://cribbnicolas.github.io/deltadictum/getting-started), with the harness chosen in the menu.
 
 ## Using DD
 
@@ -204,12 +192,11 @@ The site, [cribbnicolas.github.io/deltadictum](https://cribbnicolas.github.io/de
 pages with navigation and search. In the repository:
 
 - [Getting started](https://cribbnicolas.github.io/deltadictum/getting-started) and [Using DD well](https://cribbnicolas.github.io/deltadictum/using-dd)
-- [How DD works](docs/guide/how-it-works.md): triggers, delivery, capture, checks, maintenance, measurements
+- [How DD works](docs/guide/how-it-works.md): the loop, delivery in each harness, capture, checks, maintenance
+- [Commands](docs/commands.md): in the session, by harness, and the command line
 - [Memories](docs/guide/memories.md): kinds, fields, triggers, statuses
 - [Configuration](docs/guide/configuration.md) and [storage](docs/guide/storage.md)
 - [Security boundary](docs/guide/security.md)
-- Harness guides: [Codex](docs/integrations/codex.md), [OpenCode](docs/integrations/opencode.md),
-  [Grok Build](docs/integrations/grok-build.md)
 - [Behavioural contract](docs/DD.md)
 - [Changelog](CHANGELOG.md) and [contributing](CONTRIBUTING.md)
 
