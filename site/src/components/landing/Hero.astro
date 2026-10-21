@@ -1,16 +1,25 @@
 ---
 import { href } from '../../config.js';
+import HarnessSelect from '../HarnessSelect.astro';
+import { HARNESSES, INSTALL } from '../../lib/harness.js';
 ---
 <section class="hero wrap">
   <div class="copy">
-    <p class="eyebrow">PLUGIN FOR CLAUDE CODE · CODEX AND OPENCODE IN PROGRESS</p>
+    <p class="eyebrow">PLUGIN FOR CLAUDE CODE · CODEX, OPENCODE AND GROK BUILD IN PROGRESS</p>
     <h1>What your code doesn't say, said at the right moment.</h1>
     <p class="lede">DeltaDictum keeps the decisions, traps and unwritten steps of your project as memories in git, and hands each one to the agent right before the tool call it applies to.</p>
     <div class="actions">
       <a class="btn btn-primary" href={href('getting-started.html')}>Get started</a>
       <a class="btn btn-ghost" href={href('guide/how-it-works.html')}>How it works</a>
     </div>
-    <p class="install"><span aria-hidden="true">$</span> <code>/plugin install dd@deltadictum</code></p>
+    <div class="install-row">
+      <HarnessSelect compact />
+      {HARNESSES.map(h => (
+        <p class="install" data-for={h.id}>
+          {!INSTALL[h.id].hero.startsWith('#') && <span aria-hidden="true">$</span>} <code>{INSTALL[h.id].hero}</code>
+        </p>
+      ))}
+    </div>
   </div>
   <figure class="terminal" data-terminal aria-label="An agent session: DD adds a memory to the edit it applies to">
     <div class="chrome" aria-hidden="true">
@@ -74,7 +83,8 @@ import { href } from '../../config.js';
   h1 { margin: 0; font-size: clamp(36px, 6vw, 60px); line-height: 1.04; letter-spacing: -0.035em; color: var(--text-strong); font-weight: 700; }
   .lede { margin: 24px 0 0; font-size: 19px; color: var(--text-muted); max-width: 520px; }
   .actions { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
-  .install { margin: 28px 0 0; display: inline-flex; gap: 12px; max-width: 100%; font-family: var(--font-mono); font-size: 14px; background: var(--surface-3); border: 1px solid var(--border-1); border-radius: 8px; padding: 10px 14px; color: var(--text); overflow-x: auto; }
+  .install-row { margin: 28px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 100%; }
+  .install { margin: 0; display: inline-flex; gap: 12px; max-width: 100%; font-family: var(--font-mono); font-size: 14px; background: var(--surface-3); border: 1px solid var(--border-1); border-radius: 8px; padding: 10px 14px; color: var(--text); overflow-x: auto; }
   .install span { color: var(--text-faint); }
   .install code { font-size: inherit; white-space: nowrap; }
   .terminal { flex: 1 1 460px; min-width: 0; margin: 0; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); overflow: hidden; transition: opacity 0.45s ease; }

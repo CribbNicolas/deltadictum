@@ -1,13 +1,17 @@
 ---
 import { SITE, href } from '../../config.js';
+import { HARNESSES, INSTALL } from '../../lib/harness.js';
 ---
 <footer class="foot">
   <div class="wrap row">
     <div>
       <p class="lead">Twenty minutes to a first memory.</p>
-      <pre><code><span>$</span> /plugin marketplace add CribbNicolas/deltadictum
-<span>$</span> /plugin install dd@deltadictum
-<span>$</span> npx deltadictum init</code></pre>
+      <div class="tabs" role="group" aria-label="Harness">
+        {HARNESSES.map(h => <button type="button" class="tab" data-set-harness={h.id}>{h.label}</button>)}
+      </div>
+      {HARNESSES.map(h => (
+        <pre data-for={h.id}><code>{INSTALL[h.id].steps.map(line => line.startsWith('#') ? <span>{line}</span> : <Fragment><span>$</span> {line}</Fragment>).map((line, i) => i ? ['\n', line] : line)}</code></pre>
+      ))}
     </div>
     <div class="meta">
       <p><a href={href('getting-started.html')}>Docs</a> · <a href={SITE.repo}>GitHub</a> · <a href={SITE.npm}>npm</a></p>
@@ -20,6 +24,9 @@ import { SITE, href } from '../../config.js';
   .row { padding-top: 56px; padding-bottom: 56px; display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; align-items: center; }
   .row > div:first-child { min-width: 0; max-width: 100%; }
   .lead { margin: 0 0 14px; color: var(--text-muted); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .tab { min-height: 32px; padding: 0 12px; border: 1px solid var(--border-3); border-radius: var(--radius-s); background: var(--surface-3); color: var(--text-muted); font: 13px var(--font-sans); cursor: pointer; }
+  .tab:hover { color: var(--text-strong); }
   pre { margin: 0; font-size: 15px; line-height: 1.9; color: #e6e9ee; overflow-x: auto; }
   pre span { color: var(--text-faint); }
   .meta { font-size: 14px; color: var(--text-faint); }

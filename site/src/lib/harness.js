@@ -10,6 +10,18 @@ export const HARNESSES = [
   { id: 'grok', label: 'Grok Build' },
 ];
 export const DEFAULT_HARNESS = 'claude-code';
+// The landing's install lines, the same steps Getting started gives: the hero shows `hero`, the
+// footer every step. A line starting with # is a note, not a command.
+export const INSTALL = {
+  'claude-code': { hero: '/plugin install dd@deltadictum',
+    steps: ['/plugin marketplace add CribbNicolas/deltadictum', '/plugin install dd@deltadictum', 'npx deltadictum init'] },
+  codex: { hero: 'deltadictum install --host codex --project <path>',
+    steps: ['npm install -g deltadictum', 'deltadictum install --host codex --project <path>'] },
+  opencode: { hero: '# opencode.json: "plugin": ["deltadictum"]',
+    steps: ['# opencode.json: "plugin": ["deltadictum"]', 'npx deltadictum init'] },
+  grok: { hero: 'grok plugin install CribbNicolas/deltadictum --trust',
+    steps: ['grok plugin install CribbNicolas/deltadictum --trust', 'npx deltadictum init'] },
+};
 export const STORAGE_KEY = 'dd-harness';
 const IDS = new Set(HARNESSES.map(h => h.id));
 

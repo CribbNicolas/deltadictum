@@ -1,0 +1,28 @@
+---
+// The reader's harness, as a select: in the docs sidebar and on the landing. Every page shares the
+// choice (src/lib/harness-client.js); `label` is shown above the select when given.
+import { DEFAULT_HARNESS, HARNESSES } from '../lib/harness.js';
+const { label = null, compact = false } = Astro.props;
+---
+<label class:list={['harness', { compact }]}>
+  {label && <span class="label">{label}</span>}
+  <select data-harness-select aria-label="Harness">
+    {HARNESSES.map(h => <option value={h.id} selected={h.id === DEFAULT_HARNESS}>{h.label}</option>)}
+  </select>
+</label>
+<script>
+  import { currentHarness, setHarness } from '../lib/harness-client.js';
+  for (const select of document.querySelectorAll('[data-harness-select]')) {
+    select.addEventListener('change', () => setHarness(select.value));
+  }
+  for (const tab of document.querySelectorAll('[data-set-harness]')) {
+    tab.addEventListener('click', () => setHarness(tab.dataset.setHarness));
+  }
+  setHarness(currentHarness());
+</script>
+<style>
+  .harness { display: flex; flex-direction: column; gap: 8px; }
+  .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+  select { min-height: 36px; padding: 0 10px; border: 1px solid var(--border-3); border-radius: var(--radius-s); background: var(--surface-2); color: var(--text-strong); font: inherit; font-size: 14px; }
+  .compact select { min-height: 32px; font-size: 13px; }
+</style>

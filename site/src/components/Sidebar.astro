@@ -1,16 +1,11 @@
 ---
 import { href } from '../config.js';
-import { DEFAULT_HARNESS, HARNESSES } from '../lib/harness.js';
+import HarnessSelect from './HarnessSelect.astro';
 const { groups, current } = Astro.props;
 ---
 <details class="sidebar" open data-sidebar>
   <summary>Menu</summary>
-  <label class="harness">
-    <span class="group-title">Harness</span>
-    <select data-harness-select aria-label="Harness the docs describe">
-      {HARNESSES.map(h => <option value={h.id} selected={h.id === DEFAULT_HARNESS}>{h.label}</option>)}
-    </select>
-  </label>
+  <div class="harness-pick"><HarnessSelect label="Harness" /></div>
   <nav aria-label="Documentation">
     {groups.map(group => (
       <div class="group">
@@ -25,13 +20,6 @@ const { groups, current } = Astro.props;
   </nav>
 </details>
 <script>
-  import { currentHarness, setHarness } from '../lib/harness-client.js';
-  // The docs follow one harness everywhere: the select changes it, and shows the one stored.
-  for (const select of document.querySelectorAll('[data-harness-select]')) {
-    select.addEventListener('change', () => setHarness(select.value));
-  }
-  setHarness(currentHarness());
-
   // On a narrow screen the menu is closed behind its summary; on a wide one, where the summary is
   // hidden, it must be open, also after a rotation or a resize. Without JavaScript it stays open.
   const sidebar = document.querySelector('[data-sidebar]');
@@ -45,9 +33,7 @@ const { groups, current } = Astro.props;
   summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--text-heading); font-weight: 600; }
   @media (max-width: 959px) { .sidebar { padding: 8px 0 0; border-bottom: 1px solid var(--border-1); } .sidebar[open] { padding-bottom: 12px; } }
   @media (min-width: 960px) { summary { display: none; } }
-  .harness { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
-  .harness .group-title { margin: 0; }
-  select { min-height: 36px; padding: 0 10px; border: 1px solid var(--border-3); border-radius: var(--radius-s); background: var(--surface-2); color: var(--text-strong); font: inherit; }
+  .harness-pick { margin-bottom: 22px; }
   .group { margin-bottom: 22px; }
   .group-title { margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }

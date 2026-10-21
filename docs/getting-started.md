@@ -90,12 +90,11 @@ in words, and use `npx deltadictum` in a terminal for the rest.
 > nothing.
 
 ```bash
-grok plugin marketplace add CribbNicolas/deltadictum
-grok plugin install deltadictum@deltadictum --trust
+grok plugin install CribbNicolas/deltadictum --trust
 ```
 
-`--trust` is required for the hooks to load. The plugin's `save`, `recall` and `review` skills come with
-it.
+`--trust` is required for the hooks to load. `grok inspect`, run in the project, lists the plugin's hooks
+and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok keeps `/review` for its own).
 
 <!-- /for -->
 
@@ -206,11 +205,11 @@ The agent does not announce it; it acts on it. To see what DD knows explicitly, 
 ```
 
 ```text for=codex
-Use the dd-recall skill: what does DD know about the store?
+$dd-recall store
 ```
 
 ```text for=grok
-Use the deltadictum recall skill: what does DD know about the store?
+/recall store
 ```
 
 <!-- for: opencode -->
@@ -255,11 +254,11 @@ end of a turn do not run. The agent still saves knowledge when you ask for it.
 ```
 
 ```text for=codex
-Use the dd-review skill.
+$dd-review
 ```
 
 ```text for=grok
-Use the deltadictum review skill.
+/deltadictum:review
 ```
 
 ```bash for=opencode

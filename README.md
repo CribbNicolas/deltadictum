@@ -26,24 +26,7 @@ and stays silent otherwise.
 DD is a **plugin**, not a service. Memories are JSON files in your repository, shared through git;
 everything else stays on your machine. No account, no model calls, no background process, no dependencies.
 
-## Measured
-
-On this repository's 15 agent tasks (Claude Code, Claude Sonnet 5.5, 30 runs with DD against 15 without,
-same day, code quality scored by a blind Claude Opus judge):
-
-| | Agent alone | With DD |
-|---|---|---|
-| Tasks resolved | 93% | 93% |
-| Code quality | 70% | 77% |
-| The project's own requirements met | 78% | 100% |
-| Context | 27.2k tokens | 27.2k tokens |
-| Cost per task | $0.090 | $0.090 |
-
-The earlier version of DD, which searched its memories by similarity, reached similar quality at 46% more
-cost. These numbers come from one project, one model and a small sample; they say DD is on track, not that
-it will do the same on yours. A second trial with Claude Opus 5.5 and Claude Haiku 5.5 at high effort
-found no quality difference between any condition (both models reached every rule by reading the code)
-and DD again the cheapest condition for both.
+The benchmark, with its caveats, is on the [site](https://cribbnicolas.github.io/deltadictum/#measured-title).
 
 ## Quickstart (Claude Code)
 

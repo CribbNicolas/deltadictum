@@ -25,23 +25,24 @@ The prefix is the plugin's name, `dd`.
 
 | Skill | Does |
 |---|---|
-| `dd-save` | Saves knowledge from the conversation as a memory, or asks for a change to one |
-| `dd-recall` | Shows what DD knows on a topic (`deltadictum recall`) |
-| `dd-review` | Runs doctor, then opens the review UI and prints its address |
+| `$dd-save` | Saves knowledge from the conversation as a memory, or asks for a change to one |
+| `$dd-recall <topic>` | Shows what DD knows on a topic (`deltadictum recall`) |
+| `$dd-review` | Runs doctor, then opens the review UI and prints its address |
 
-`deltadictum install --host codex` writes them into `.agents/skills/`; ask the agent for one by name.
+`deltadictum install --host codex` writes them into `.agents/skills/`; Codex invokes a skill with `$` and its name.
 
 <!-- /for -->
 
 <!-- for: grok -->
 
-| Skill | Does |
+| Command | Does |
 |---|---|
-| `save` | Saves knowledge from the conversation as a memory, or asks for a change to one |
-| `recall` | Shows what DD knows on a topic (`deltadictum recall`) |
-| `review` | Runs doctor, then opens the review UI and prints its address |
+| `/save` | Saves knowledge from the conversation as a memory, or asks for a change to one |
+| `/recall <topic>` | Shows what DD knows on a topic (`deltadictum recall`) |
+| `/deltadictum:review` | Runs doctor, then opens the review UI and prints its address |
 
-They come with the `deltadictum` plugin; ask the agent for one by name.
+They come with the `deltadictum` plugin. Grok keeps `/review` for its own command, so DD's takes the
+plugin's prefix (`grok inspect` shows each name).
 
 <!-- /for -->
 

@@ -49,12 +49,6 @@ const jsonLd = [
     <div class="toc-col"><Toc headings={headings} /></div>
   </div>
   <script>
-    import { currentHarness, setHarness } from '../lib/harness-client.js';
-    // A harness tab changes the harness of every page, as the sidebar's select does.
-    for (const tab of document.querySelectorAll('[data-set-harness]')) {
-      tab.addEventListener('click', () => setHarness(tab.dataset.setHarness));
-    }
-    setHarness(currentHarness());
     // A copy button on every code block, a scroll box around every table, an anchor on every section heading.
     for (const heading of document.querySelectorAll('.prose h2[id], .prose h3[id]')) {
       heading.append(Object.assign(document.createElement('a'), { className: 'anchor', href: `#${heading.id}`, textContent: '#', ariaLabel: `Link to ${heading.textContent}` }));
