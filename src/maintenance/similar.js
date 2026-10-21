@@ -9,7 +9,7 @@ const SCHEMA = 'CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(id UN
 // Only what can still be delivered or reviewed: superseded versions would outrank
 // the memories that replaced them (seen: 69 of them on one store).
 export const SIMILAR_STATUSES = ['active', 'contested', 'candidate'];
-const INDEX_REVISION = 'v2';
+const INDEX_REVISION = '2';
 
 export function refreshSimilarity(root, db, memories, hash) {
   db.exec(SCHEMA);

@@ -2,9 +2,9 @@
 
 // The production delivery path a pre-tool hook runs, timed by the bench:
 //   node hook-real.cjs <project root> <session id>  < event.json
-// It times deliverFor (src/hooks/v2/hook.cjs) on an already normalized event.
+// It times deliverFor (src/hooks/hook.cjs) on an already normalized event.
 const { readFileSync } = require('node:fs');
-const { deliverFor } = require('../../hooks/v2/hook.cjs');
+const { deliverFor } = require('../../hooks/hook.cjs');
 
 try {
   const [root, session] = process.argv.slice(2);

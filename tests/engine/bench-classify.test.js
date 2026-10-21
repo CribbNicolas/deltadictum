@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyMemory } from '../../../src/eval/v2bench/classify.js';
+import { classifyMemory } from '../../src/eval/replay/classify.js';
 
 const memory = (title, body) => ({ topic: 'a/b', title, body });
 

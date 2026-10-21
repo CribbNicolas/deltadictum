@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ledgerPath, openLedger, REPORT_LIMIT, TAIL_BYTES } from '../../../src/engine/ledger.cjs';
+import { ledgerPath, openLedger, REPORT_LIMIT, TAIL_BYTES } from '../../src/engine/ledger.cjs';
 
 function dir(t) {
   const d = mkdtempSync(join(tmpdir(), 'dd-ledger-'));

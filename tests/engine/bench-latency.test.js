@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stalenessTiming, summarize, timeInterleaved, timeSpawn } from '../../../src/eval/v2bench/latency.js';
+import { stalenessTiming, summarize, timeInterleaved, timeSpawn } from '../../src/eval/replay/latency.js';
 
 test('interleaved timing alternates its commands, so machine drift hits them alike', () => {
   const order = [];
@@ -42,7 +42,7 @@ test('the simulated hook answers with what fired and claims it once in the ledge
   const index = join(dir, 'index.json');
   const ledger = join(dir, 'ledger.jsonl');
   writeFileSync(index, JSON.stringify([{ id: 'm1', status: 'active', body: 'Close stores.', triggers: [{ on: ['read'], paths: ['src/a.js'] }] }]));
-  const sim = fileURLToPath(new URL('../../../src/eval/v2bench/hook-sim.mjs', import.meta.url));
+  const sim = fileURLToPath(new URL('../../src/eval/replay/hook-sim.mjs', import.meta.url));
   const event = JSON.stringify({ kind: 'read', paths: ['src/a.js'] });
   const first = JSON.parse(execFileSync(process.execPath, [sim, index, ledger], { input: event }).toString());
   const second = JSON.parse(execFileSync(process.execPath, [sim, index, ledger], { input: event }).toString());

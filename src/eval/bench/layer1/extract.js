@@ -7,7 +7,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
-import { addedByFile, toolEvent } from '../../v2bench/extract.js';
+import { addedByFile, toolEvent } from '../../replay/extract.js';
 
 export const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
 const REPO = resolve(fileURLToPath(new URL('../../../..', import.meta.url)));

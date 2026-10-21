@@ -3,9 +3,9 @@
 const { existsSync } = require('node:fs');
 const { join } = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { findProjectRoot, localPaths } = require('../../engine/locate.cjs');
+const { findProjectRoot, localPaths } = require('../engine/locate.cjs');
 
-// What a Claude Code hook does in v2 (spec section 5): nothing at session start
+// What a Claude Code hook does (spec section 5): nothing at session start
 // but bookkeeping, memories at the prompt and at tool calls, once per epoch per
 // session and subagent. Modules a quiet event does not need load lazily, and a
 // project without a compiled index loads none of the matching code.
@@ -32,24 +32,24 @@ function labelFor(event) {
 
 // Memories that fire at this event and checks that speak at it (spec sections 3 and 6).
 function deliverFor(root, event, session, payload = {}) {
-  const { loadIndex, readBodies } = require('../../engine/index-file.cjs');
+  const { loadIndex, readBodies } = require('../engine/index-file.cjs');
   const index = event ? loadIndex(root) : null;
   if (!index) return '';
-  const { matchEvent, prepareIndex } = require('../../engine/match.cjs');
+  const { matchEvent, prepareIndex } = require('../engine/match.cjs');
   const fired = matchEvent(prepareIndex(index), event);
   const checks = applicableChecks(index, event);
   if (!fired.length && !checks.length) return '';
-  const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
+  const { ledgerPath, openLedger } = require('../engine/ledger.cjs');
   const ledger = session ? openLedger(ledgerPath(localPaths(root).sessions, session.id, session.agent)) : null;
   let bodies;
   const bodiesOf = () => (bodies === undefined ? (bodies = readBodies(root, index)) : bodies);
   // Checks speak first: a violation the call is about to introduce comes before
   // knowledge about its files, and both share the 10,000-character field.
   // The line saying the user outranks what follows closes the field, so both share what is left of it.
-  const { LIMIT, ON_CONFLICT, validLimit } = require('../../engine/deliver.cjs');
+  const { LIMIT, ON_CONFLICT, validLimit } = require('../engine/deliver.cjs');
   const reserve = ON_CONFLICT.length + 1;
   const violations = checks.length
-    ? require('../../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf, budget: LIMIT - reserve }).join('\n') : '';
+    ? require('../checks/tool.cjs').toolViolations({ root, index, event, payload, ledger, checks, bodiesOf, budget: LIMIT - reserve }).join('\n') : '';
   const parts = [violations];
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
   if (fired.length && bodiesOf()) {
@@ -66,13 +66,13 @@ function deliverFor(root, event, session, payload = {}) {
 function applicableChecks(index, event) {
   const checks = (index.checks ?? []).filter(check => check.on.includes(event.kind) && check.when === (event.kind === 'run' ? 'run' : 'edit'));
   if (!checks.length || event.kind === 'run') return checks;
-  const { PATH_FLAGS } = require('../../engine/clause.cjs');
+  const { PATH_FLAGS } = require('../engine/clause.cjs');
   const target = event.paths?.[0];
   return target ? checks.filter(check => (check.paths ?? []).some(source => new RegExp(source, PATH_FLAGS).test(target))) : [];
 }
 
 function delivery(root, index, event, fired, ledger, bodies, limit) {
-  const { fitItems, renderDelivery, staleEvidence } = require('../../engine/deliver.cjs');
+  const { fitItems, renderDelivery, staleEvidence } = require('../engine/deliver.cjs');
   const done = ledger ? ledger.delivered() : new Set();
   const fresh = fired.filter(hit => !done.has(hit.id) && typeof bodies[hit.id]?.body === 'string');
   if (!fresh.length) return '';
@@ -102,21 +102,21 @@ function delivery(root, index, event, fired, ledger, bodies, limit) {
 async function sessionStart(root, payload, session) {
   const paths = localPaths(root);
   if (!existsSync(paths.dd)) return '';
-  const { ledgerPath, openLedger } = require('../../engine/ledger.cjs');
+  const { ledgerPath, openLedger } = require('../engine/ledger.cjs');
   if (session && ['compact', 'clear'].includes(payload.source)) openLedger(ledgerPath(paths.sessions, session.id, session.agent)).newEpoch(payload.source);
   // Maintenance (roll-up, then pruning) runs detached at most once a day; session
   // start never waits for it.
-  const { maintenanceDue } = require('../../maintenance/due.cjs');
+  const { maintenanceDue } = require('../maintenance/due.cjs');
   // DD_MAINTENANCE=0 turns it off (tests, CI).
   if (process.env.DD_MAINTENANCE !== '0' && maintenanceDue(root)) {
     try {
       const { spawn } = require('node:child_process');
-      spawn(process.execPath, [join(__dirname, '..', '..', 'cli.js'), 'maintain'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      spawn(process.execPath, [join(__dirname, '..', 'cli.js'), 'maintain'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref();
     } catch { /* maintenance is best effort */ }
   }
-  const { loadIndex, needsCompile } = require('../../engine/index-file.cjs');
+  const { loadIndex, needsCompile } = require('../engine/index-file.cjs');
   if (needsCompile(loadIndex(root), root)) {
-    const { compileProject } = await import(pathToFileURL(join(__dirname, '..', '..', 'engine', 'compile.js')).href);
+    const { compileProject } = await import(pathToFileURL(join(__dirname, '..', 'engine', 'compile.js')).href);
     await compileProject(root);
   }
   // A compaction keeps the session: the person saw the line when it started.
@@ -131,7 +131,7 @@ async function handle(command, payload, { host = 'claude' } = {}) {
   if (host === 'codex') payload = require('./codex.cjs').codexPayload(payload);
   const root = findProjectRoot(payload.cwd || process.cwd());
   if (CAPTURE.includes(command)) {
-    const capturePath = pathToFileURL(join(__dirname, '..', '..', 'capture', 'hooks.js')).href;
+    const capturePath = pathToFileURL(join(__dirname, '..', 'capture', 'hooks.js')).href;
     // The inbox hook runs after every write; only a JSON file in .dd/inbox/ loads
     // capture, and it may create the project's first memory. A patch may add several.
     if (command === 'inbox') {

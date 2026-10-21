@@ -46,7 +46,7 @@ test('installing a bench store replaces the clone\'s memories and compiles them'
   assert.ok(existsSync(join(root, '.dd', 'config.json')));
   assert.ok(!readdirSync(join(root, '.dd', 'memories')).includes('stale.json'));
   assert.equal(out.index_memories, 2);
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
 });
 
 test('the guide holds the live memories and is named in the guide target only when referenced', async t => {

@@ -1,4 +1,4 @@
-// A stand-in for a v2 pre-tool hook, timed by the bench: start Node, read the
+// A stand-in for the pre-tool hook, timed by the bench: start Node, read the
 // event and the memories, match, claim in the session ledger, answer.
 //   node hook-sim.mjs <memories.json> <ledger.jsonl>  < event.json
 import { appendFileSync, readFileSync } from 'node:fs';

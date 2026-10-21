@@ -3,8 +3,8 @@ import { appendFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { ledgerPath } from '../engine/ledger.cjs';
 import { localPaths } from '../engine/locate.cjs';
-import { containsSecret, redactSecrets, sanitizeText } from '../engine/v2/sanitizer.js';
-import { toolEvent } from '../hooks/v2/events.cjs';
+import { containsSecret, redactSecrets, sanitizeText } from '../engine/sanitizer.js';
+import { toolEvent } from '../hooks/events.cjs';
 import { observationFromPrompt, observationFromTool, runsValidation } from '../hooks/observe.js';
 
 // A session's footprint (spec section 7): what the agent touched and ran, and

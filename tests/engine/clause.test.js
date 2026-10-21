@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clauseMatches, globToRegExp, hasCommand, hasSymbol, memoryMatch } from '../../../src/engine/clause.cjs';
+import { clauseMatches, globToRegExp, hasCommand, hasSymbol, memoryMatch } from '../../src/engine/clause.cjs';
 
 const ev = (kind, paths = [], text = '') => ({ kind, paths, text });
 

@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fitItems, renderDelivery, staleEvidence } from '../../../src/engine/deliver.cjs';
+import { fitItems, renderDelivery, staleEvidence } from '../../src/engine/deliver.cjs';
 
 const item = (id, over = {}) => ({ id, title: `Title ${id}`, kind: 'trap', status: 'active', body: `Body ${id}.`, stale: [], ...over });
 

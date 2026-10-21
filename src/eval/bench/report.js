@@ -15,7 +15,7 @@ import { bootstrapMean, pairedDiffs } from './stats.js';
 
 const GENERAL = new Set(GENERAL_REQUIREMENTS.map(r => r.id));
 const TIMING = ['before_edit', 'at_edit', 'after_edit', 'no_edit'];
-const LABELS = { dd2: 'With DD v2', docref: 'Guide, referenced', doc: 'Guide, not referenced', none: 'No project knowledge', docdd: 'Guide, referenced, and DD v2' };
+const LABELS = { dd2: 'With DD', docref: 'Guide, referenced', doc: 'Guide, not referenced', none: 'No project knowledge', docdd: 'Guide, referenced, and DD v2' };
 
 // requireJudge: a judge ran over these results, so a run it did not decide is left out of quality.
 export function enrichRow(row, task, stream, judgedRequirements, titleOf, { requireJudge = false, titles = [] } = {}) {

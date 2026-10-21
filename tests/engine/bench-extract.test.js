@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { addedByFile, bashPaths, relativize, streamEvents, toolEvent } from '../../../src/eval/v2bench/extract.js';
+import { addedByFile, bashPaths, relativize, streamEvents, toolEvent } from '../../src/eval/replay/extract.js';
 
 const CWD = 'C:\\Users\\dev\\AppData\\Local\\Temp\\dd-agent-AbC123\\supermem';
 

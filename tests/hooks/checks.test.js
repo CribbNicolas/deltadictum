@@ -113,7 +113,7 @@ test('checks that do not apply to the tool call load no check module', async t =
   const turnOnly = memory('turnonly', 'Turn rule', { check: { ...store.check, when: undefined } });
   const elsewhere = memory('elsewhere', 'Elsewhere rule', { check: { ...store.check, paths: ['docs/**/*.md'] } });
   const root = await project(t, [turnOnly, elsewhere]);
-  const hookModule = fileURLToPath(new URL('../../src/hooks/v2/hook.cjs', import.meta.url));
+  const hookModule = fileURLToPath(new URL('../../src/hooks/hook.cjs', import.meta.url));
   const payload = { session_id: 's', cwd: root, tool_name: 'Edit', tool_input: { file_path: join(root, 'tests', 'a.test.js'), old_string: 'const s', new_string: 'const t' } };
   const script = `require(${JSON.stringify(hookModule)}).handle('pre-tool', ${JSON.stringify(payload)})
     .then(() => console.log(JSON.stringify(Object.keys(require.cache).map(p => p.split(/[\\\\/]/).pop()))))`;
@@ -123,7 +123,7 @@ test('checks that do not apply to the tool call load no check module', async t =
 
 test('a project whose memories have no check loads no check module at the tool call', async t => {
   const root = await project(t, [memory('plain', 'Plain rule', {})]);
-  const hookModule = fileURLToPath(new URL('../../src/hooks/v2/hook.cjs', import.meta.url));
+  const hookModule = fileURLToPath(new URL('../../src/hooks/hook.cjs', import.meta.url));
   const script = `require(${JSON.stringify(hookModule)}).handle('pre-tool', { session_id: 's', cwd: ${JSON.stringify(root)}, tool_name: 'Bash', tool_input: { command: 'ls' } })
     .then(() => console.log(JSON.stringify(Object.keys(require.cache).map(p => p.split(/[\\\\/]/).pop()))))`;
   const loaded = JSON.parse(spawnSync(process.execPath, ['-e', script], { encoding: 'utf8' }).stdout);

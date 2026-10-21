@@ -17,7 +17,7 @@ to. The behavioural contract is [`docs/DD.md`](../DD.md).
 The six boxes of the diagram, in order:
 
 1. **Session start: compile the index.** DD compiles the project's memories into an index when they
-   changed (`.dd/local/v2/index.json`). Nothing enters the agent's context; in Claude Code you see one line
+   changed (`.dd/local/compiled/index.json`). Nothing enters the agent's context; in Claude Code you see one line
    with the number of live memories and how to open the review UI.
 2. **Prompt or tool call: match the triggers.** At each prompt and before each tool call, a hook turns the
    event into its kind and paths (a read, an edit, a command…) and matches it against the triggers. In a

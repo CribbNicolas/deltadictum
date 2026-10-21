@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultWhen, evaluateCommand, evaluateContent, exampleProblems } from '../../../src/checks/check.cjs';
-import { createMatcher } from '../../../src/checks/pattern.cjs';
+import { defaultWhen, evaluateCommand, evaluateContent, exampleProblems } from '../../src/checks/check.cjs';
+import { createMatcher } from '../../src/checks/pattern.cjs';
 
 const matcher = createMatcher();
 const store = { on: ['edit', 'write'], paths: ['tests/**/*.test.js'], if_content: 'createMemoryStore\\(', unless_content: 't\\.after\\(',

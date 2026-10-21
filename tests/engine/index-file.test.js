@@ -3,20 +3,20 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { INDEX_VERSION, isStale, loadIndex, memoryFilesFingerprint, needsCompile, readBodies } from '../../../src/engine/index-file.cjs';
-import { localPaths } from '../../../src/engine/locate.cjs';
+import { INDEX_VERSION, isStale, loadIndex, memoryFilesFingerprint, needsCompile, readBodies } from '../../src/engine/index-file.cjs';
+import { localPaths } from '../../src/engine/locate.cjs';
 
 function project(t) {
   const root = mkdtempSync(join(tmpdir(), 'dd-index-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const p = localPaths(root);
   mkdirSync(p.memories, { recursive: true });
-  mkdirSync(p.v2, { recursive: true });
+  mkdirSync(p.compiled, { recursive: true });
   writeFileSync(join(p.memories, 'm1.json'), '{"id":"m1"}');
   writeFileSync(p.manifest, JSON.stringify({ version: 1, count: 1, hash: 'h1' }));
   const index = { version: INDEX_VERSION, manifest: { count: 1, hash: 'h1' }, fingerprint: memoryFilesFingerprint(p.memories), bodies: 'bodies-t1.json', memories: {}, clauses: [] };
   writeFileSync(p.index, JSON.stringify(index));
-  writeFileSync(join(p.v2, 'bodies-t1.json'), JSON.stringify({ m1: { body: 'b', evidence: [] } }));
+  writeFileSync(join(p.compiled, 'bodies-t1.json'), JSON.stringify({ m1: { body: 'b', evidence: [] } }));
   return { root, p };
 }
 
@@ -57,7 +57,7 @@ test('a missing or unreadable index, another version or a changed manifest is st
 
 test('an index whose bodies file is gone needs a compile', t => {
   const { root, p } = project(t);
-  rmSync(join(p.v2, 'bodies-t1.json'));
+  rmSync(join(p.compiled, 'bodies-t1.json'));
   assert.equal(needsCompile(loadIndex(root), root), true);
 });
 

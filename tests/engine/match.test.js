@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compileIndex } from '../../../src/engine/compile.js';
-import { FOLD_CASE, memoryMatch } from '../../../src/engine/clause.cjs';
-import { matchEvent, prepareIndex } from '../../../src/engine/match.cjs';
-import { loadFixture } from '../../../src/eval/v2bench/fixture.js';
-import { synthesizeMemories } from '../../../src/eval/v2bench/synth.js';
+import { compileIndex } from '../../src/engine/compile.js';
+import { FOLD_CASE, memoryMatch } from '../../src/engine/clause.cjs';
+import { matchEvent, prepareIndex } from '../../src/engine/match.cjs';
+import { loadFixture } from '../../src/eval/replay/fixture.js';
+import { synthesizeMemories } from '../../src/eval/replay/synth.js';
 
 const runtime = memories => prepareIndex(compileIndex({ memories, manifest: { count: 0, hash: '' } }).index);
 const memory = (id, kind, triggers, status = 'active') => ({ id, topic: `t/${id}`, kind, status, title: id, body: id, evidence: [], triggers });

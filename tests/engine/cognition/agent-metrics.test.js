@@ -113,7 +113,7 @@ test('stream metrics count deliveries and find the key memory by its title', () 
   assert.equal(streamMetrics(stream, { id: KEY, title: 'Something else' }).key_memory.pushed, false);
 });
 
-test('redaction removes v2 delivery lines too', () => {
+test('redaction removes delivery lines too', () => {
   const out = redact('I kept the ceiling reachable.\n[TRAP] Reachable ceilings - Use a reachable ceiling.\n[FACT] Ports - 7733.\nDone in src/store/paths.js.');
   assert.doesNotMatch(out, /\[TRAP\]|\[FACT\]|Reachable ceilings/);
   assert.match(out, /I kept the ceiling reachable\.\n+Done in src\/store\/paths\.js\./);

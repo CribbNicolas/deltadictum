@@ -2,8 +2,8 @@
 // normalized event (spec section 3), and the lines it added per file. The
 // committed fixture was built from the trial's runs with these; the layer-1
 // bench extracts its traces with them too.
-import { redactSecrets } from '../../engine/v2/sanitizer.js';
-import { bashPaths, relativize, toolEvent as hookEvent } from '../../hooks/v2/events.cjs';
+import { redactSecrets } from '../../engine/sanitizer.js';
+import { bashPaths, relativize, toolEvent as hookEvent } from '../../hooks/events.cjs';
 
 const TEXT_MAX = 2000;
 const ADDED_MAX = 16000;
@@ -11,7 +11,7 @@ const clip = text => redactSecrets(String(text ?? '')).slice(0, TEXT_MAX);
 
 export { bashPaths, relativize };
 
-// The hook's event (src/hooks/v2/events.cjs), with its text clipped and redacted
+// The hook's event (src/hooks/events.cjs), with its text clipped and redacted
 // for a committed fixture; null for a tool that carries no project work.
 export function toolEvent(name, input, cwd) {
   const event = hookEvent(name, input, cwd);

@@ -111,15 +111,15 @@ function pruneBodies(dir, keep, now) {
 // holding either index finds the bodies of its build. The previous build's
 // bodies stay for a hook that read the previous index; older ones are removed.
 export function writeCompiled(paths, { index, bodies }, { rename = renameSync, now = Date.now() } = {}) {
-  mkdirSync(paths.v2, { recursive: true });
+  mkdirSync(paths.compiled, { recursive: true });
   const named = { ...index, bodies: index.bodies ?? newBodiesName() };
   const previous = readJson(paths.index)?.bodies;
-  for (const [file, value] of [[join(paths.v2, named.bodies), bodies], [paths.index, named]]) {
+  for (const [file, value] of [[join(paths.compiled, named.bodies), bodies], [paths.index, named]]) {
     const temp = `${file}.${process.pid}.tmp`;
     writeFileSync(temp, JSON.stringify(value));
     try { renameRetrying(temp, file, rename); } finally { rmSync(temp, { force: true }); }
   }
-  pruneBodies(paths.v2, [named.bodies, previous], now);
+  pruneBodies(paths.compiled, [named.bodies, previous], now);
 }
 
 function gitLines(root, args) {
@@ -141,10 +141,11 @@ export function presentFilesOf(root) {
 // The trigger symbols the project's code holds, in one git grep over tracked
 // files. DD's own files are excluded: a memory names its own symbols. null when
 // git cannot answer, so no symbol is reported dead on a guess.
-export function codeSymbols(root, symbols) {
+// The symbols found in the tracked code, or in a commit's (`rev`) when given.
+export function codeSymbols(root, symbols, rev = null) {
   if (!symbols.length) return new Set();
   try {
-    const out = execFileSync('git', ['-C', root, 'grep', '-h', '-o', '-w', '-F', '-I', '-f', '-', '--', '.', ':(exclude).dd'],
+    const out = execFileSync('git', ['-C', root, 'grep', '-h', '-o', '-w', '-F', '-I', '-f', '-', ...(rev ? [rev] : []), '--', '.', ':(exclude).dd'],
       { input: `${symbols.join('\n')}\n`, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true, maxBuffer: 256 * 1024 * 1024 });
     return new Set(out.split('\n').map(line => line.trim()).filter(Boolean));
   } catch (err) { return err.status === 1 ? new Set() : null; }

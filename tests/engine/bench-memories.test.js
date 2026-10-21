@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { freezeBenchMemories, frozenBenchMemories, loadBenchMemories } from '../../../src/eval/v2bench/memories.js';
+import { freezeBenchMemories, frozenBenchMemories, loadBenchMemories } from '../../src/eval/replay/memories.js';
 
 const scratch = t => { const dir = mkdtempSync(join(tmpdir(), 'dd-bench-mem-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
 const memory = (id, status) => ({ schema_version: 8, id, project_id: 'p', topic: `t/${id}`, kind: 'trap', status, title: `Rule ${id}`, body: `Rule ${id}.`,

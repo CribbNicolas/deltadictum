@@ -3,7 +3,7 @@
 // every task of every registered project, done by Claude Code headless in a fresh
 // clone under each knowledge condition, with the task's check, the project's
 // suite and lint on the changed tree, and the run's stream and diff kept.
-//   dd2     DD v2 hooks from this checkout, the project's store compiled
+//   dd2     DD's hooks from this checkout, the project's store compiled
 //   docref  the same memories as docs/engineering-guide.md, named in CLAUDE.md or AGENTS.md
 //   doc     the same guide, nothing points to it
 //   none    no .dd/, no guide
@@ -126,7 +126,7 @@ Run every command in the foreground and wait for it to finish before your final 
   if (EFFORT) argv.push('--effort', EFFORT);
   let ddReady = null, latency = {};
   if (WITH_DD.includes(condition)) {
-    ddReady = existsSync(join(dir, '.dd', 'local', 'v2', 'index.json'));
+    ddReady = existsSync(join(dir, '.dd', 'local', 'compiled', 'index.json'));
     if (ddReady) latency = await hookLatency(dir, env, project).catch(() => ({}));
     const settings = join(dir, '..', 'dd-settings.json');
     await writeFile(settings, JSON.stringify(await ddSettings()));

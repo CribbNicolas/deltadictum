@@ -7,7 +7,7 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyCodexInstall, planCodexInstall } from '../../scripts/install-codex.mjs';
 import { compileProject } from '../../src/engine/compile.js';
-import { shellKind } from '../../src/hooks/v2/codex.cjs';
+import { shellKind } from '../../src/hooks/codex.cjs';
 import { createMemoryFiles } from '../../src/memory/store.js';
 
 // Codex payloads as recorded from real sessions (2026-09): Claude Code's

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { replay } from '../../../src/eval/v2bench/replay.js';
-import { benchMetrics } from '../../../src/eval/v2bench/metrics.js';
+import { replay } from '../../src/eval/replay/replay.js';
+import { benchMetrics } from '../../src/eval/replay/metrics.js';
 
 const fixture = {
   tasks: { t1: { kind: 'memory', memory: 'a/key' }, t2: { kind: 'control', memory: null }, t3: { kind: 'memory', memory: 'a/key' } },

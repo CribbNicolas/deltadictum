@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bashPaths, relativize, toolEvent } from '../../src/hooks/v2/events.cjs';
+import { bashPaths, relativize, toolEvent } from '../../src/hooks/events.cjs';
 
 const ROOT = 'C:\\work\\project';
 

@@ -113,7 +113,7 @@ test('delivery_limit is a setting with bounds, compiled into the index when chan
   assert.equal(JSON.parse((await json('/api/config')).text).delivery_limit, 10000);
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 1000 }) })).status, 400);
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ delivery_limit: 5000 }) })).status, 200);
-  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8')).limit, 5000);
+  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'local', 'compiled', 'index.json'), 'utf8')).limit, 5000);
 });
 
 // Opens the live stream and collects its events until the test closes it.
@@ -141,13 +141,13 @@ test('the page hears about a change to the store, and not about the UI\'s own re
   const res = await live.ready;
   assert.match(res.headers['content-type'], /text\/event-stream/);
   const { mkdirSync } = await import('node:fs');
-  mkdirSync(join(root, '.dd', 'local', 'v2'), { recursive: true });
+  mkdirSync(join(root, '.dd', 'local', 'compiled'), { recursive: true });
   // macOS reports file events with a delay and can still deliver the project's own setup writes:
   // let those land, then listen from a clean slate.
   await settle(1200);
   live.events.length = 0;
   writeFileSync(join(root, '.dd', 'local', 'telemetry.sqlite-wal'), 'x');
-  writeFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), '{}');
+  writeFileSync(join(root, '.dd', 'local', 'compiled', 'index.json'), '{}');
   await settle(800);
   assert.deepEqual(live.events, []);
   mkdirSync(join(root, '.dd', 'local', 'requests'), { recursive: true });

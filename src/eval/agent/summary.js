@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // A trial's headline numbers in the fixed shape the documentation site reads
 // (docs/benchmarks/data/*.summary.json), from a report report.js wrote:
-//   node src/eval/agent/summary.js --report=docs/benchmarks/data/trial-v2-opus.report.json \
-//     --id=trial-v2-opus --date=2026-10-14 --title="Trial v2, Claude Opus 5.5" --base=none \
-//     --compare=docref,dd2 --judge=claude-opus-5-5 --doc=benchmarks/2026-10-v2-trial-opus-haiku.md \
-//     --caveat="One project, ten tasks, one run each."
+//   node src/eval/agent/summary.js --report=output/eval/bench-2026-10-fix/opus.report.json \
+//     --id=bench-2026-10-fix-opus --date=2026-10-20 --title="Full benchmark, Claude Opus 5.5" --base=none \
+//     --compare=docref,doc,dd2 --judge=claude-opus-5-5 --doc=benchmarks/2026-10-bench-full.md \
+//     --caveat="Four projects, 26 tasks; on track, not a promise for yours."
 // The site computes the changes against the base; the summary keeps the values.
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';

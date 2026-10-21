@@ -29,7 +29,7 @@ test('deltadictum init opts the project in: config, ignore file, memories folder
   const ignored = readFileSync(join(root, '.dd', '.gitignore'), 'utf8').split('\n');
   for (const entry of ['local/', 'memories/manifest.json', 'inbox/']) assert.ok(ignored.includes(entry), entry);
   assert.ok(existsSync(join(root, '.dd', 'memories')));
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
   assert.match(report.next, /git add \.dd/);
   const second = dd(root, 'init');
   assert.equal(second.status, 0, second.stderr);

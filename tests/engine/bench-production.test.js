@@ -5,12 +5,12 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compileIndex, writeCompiled } from '../../../src/engine/compile.js';
-import { localPaths } from '../../../src/engine/locate.cjs';
-import { productionEngine } from '../../../src/eval/v2bench/engine.js';
-import { loadFixture } from '../../../src/eval/v2bench/fixture.js';
-import { replay } from '../../../src/eval/v2bench/replay.js';
-import { synthesizeMemories } from '../../../src/eval/v2bench/synth.js';
+import { compileIndex, writeCompiled } from '../../src/engine/compile.js';
+import { localPaths } from '../../src/engine/locate.cjs';
+import { productionEngine } from '../../src/eval/replay/engine.js';
+import { loadFixture } from '../../src/eval/replay/fixture.js';
+import { replay } from '../../src/eval/replay/replay.js';
+import { synthesizeMemories } from '../../src/eval/replay/synth.js';
 
 const plain = results => results.map(r => [r.run_id, [...r.delivered].map(([id, hit]) => `${id}@${hit.at}:${hit.via.join('+')}`).sort()]);
 
@@ -29,7 +29,7 @@ test('the production hook answers once per epoch with the complete memory', t =>
   const memory = { id: 'm1', topic: 't/m1', kind: 'trap', status: 'active', title: 'Close stores', body: 'Close them in t.after.',
     evidence: [], triggers: [{ on: ['read'], paths: ['src/a.js'] }] };
   writeCompiled(p, compileIndex({ memories: [memory], manifest: { count: 1, hash: 'h' } }));
-  const hook = fileURLToPath(new URL('../../../src/eval/v2bench/hook-real.cjs', import.meta.url));
+  const hook = fileURLToPath(new URL('../../src/eval/replay/hook-real.cjs', import.meta.url));
   const input = JSON.stringify({ kind: 'read', paths: ['src/a.js'] });
   const run = () => JSON.parse(execFileSync(process.execPath, [hook, root, 'session-1'], { input }).toString() || '{}');
   assert.equal(run().additionalContext, 'DD - project knowledge (src/a.js):\n[TRAP] Close stores - Close them in t.after.\n'

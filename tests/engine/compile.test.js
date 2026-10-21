@@ -5,10 +5,10 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compileIndex, compileProject, INDEX_VERSION, writeCompiled } from '../../../src/engine/compile.js';
-import { loadIndex, readBodies } from '../../../src/engine/index-file.cjs';
-import { localPaths } from '../../../src/engine/locate.cjs';
-import { createMemoryFiles } from '../../../src/memory/store.js';
+import { compileIndex, compileProject, INDEX_VERSION, writeCompiled } from '../../src/engine/compile.js';
+import { loadIndex, readBodies } from '../../src/engine/index-file.cjs';
+import { localPaths } from '../../src/engine/locate.cjs';
+import { createMemoryFiles } from '../../src/memory/store.js';
 
 const memory = (id, over = {}) => ({
   schema_version: 8, id, project_id: 'p', topic: `testing/${id}`, kind: 'trap', status: 'active', title: `Memory ${id}`,
@@ -78,7 +78,7 @@ test('each build writes its own bodies file, and a reader of the previous index 
   // A minute later, only the current build and the one before it are kept.
   const third = compileIndex({ memories: await store.list(), manifest: await store.manifest(), fingerprint: 'f' });
   writeCompiled(localPaths(root), third, { now: Date.now() + 2 * 60 * 1000 });
-  const kept = readdirSync(join(root, '.dd', 'local', 'v2')).filter(name => name.startsWith('bodies')).sort();
+  const kept = readdirSync(join(root, '.dd', 'local', 'compiled')).filter(name => name.startsWith('bodies')).sort();
   assert.deepEqual(kept, [second.bodies, loadIndex(root).bodies].sort());
 });
 
@@ -116,7 +116,7 @@ test('a rename the system refuses for a moment is retried, and a lasting refusal
   assert.equal(loadIndex(root).bodies, 'bodies-a.json');
   const refuse = () => { throw Object.assign(new Error('busy'), { code: 'EBUSY' }); };
   assert.throws(() => writeCompiled(paths, { ...compiled, index: { ...compiled.index, bodies: 'bodies-b.json' } }, { rename: refuse }), /busy/);
-  assert.deepEqual(readdirSync(paths.v2).filter(name => name.endsWith('.tmp')), []);
+  assert.deepEqual(readdirSync(paths.compiled).filter(name => name.endsWith('.tmp')), []);
   assert.equal(loadIndex(root).bodies, 'bodies-a.json');
 });
 
@@ -157,9 +157,9 @@ test('compiling a project writes the index, the bodies and the git-ignore for de
   await store.commit({ put: [memory('m1')] });
   const result = await compileProject(root);
   assert.deepEqual({ memories: result.memories, clauses: result.clauses }, { memories: 1, clauses: 1 });
-  const index = JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8'));
+  const index = JSON.parse(readFileSync(join(root, '.dd', 'local', 'compiled', 'index.json'), 'utf8'));
   assert.equal(index.manifest.count, 1);
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', index.bodies)));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', index.bodies)));
   assert.match(readFileSync(join(root, '.dd', '.gitignore'), 'utf8'), /^local\/$/m);
   await compileProject(root);
   assert.equal(readFileSync(join(root, '.dd', '.gitignore'), 'utf8').match(/^local\/$/gm).length, 1);
@@ -190,11 +190,11 @@ test('deltadictum compile compiles the project it runs in', async t => {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, '.git'));
   await createMemoryFiles(join(root, '.dd')).commit({ put: [memory('m1')] });
-  const cli = fileURLToPath(new URL('../../../src/cli.js', import.meta.url));
+  const cli = fileURLToPath(new URL('../../src/cli.js', import.meta.url));
   const out = spawnSync(process.execPath, [cli, 'compile'], { cwd: root, encoding: 'utf8' });
   assert.equal(out.status, 0, out.stderr);
   assert.equal(JSON.parse(out.stdout).memories, 1);
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
 });
 
 test('a project cloned without its manifest gets one, and the index matches it', async t => {
@@ -204,7 +204,7 @@ test('a project cloned without its manifest gets one, and the index matches it',
   await store.commit({ put: [memory('m1')] });
   rmSync(join(root, '.dd', 'memories', 'manifest.json'));
   await compileProject(root);
-  const index = JSON.parse(readFileSync(join(root, '.dd', 'local', 'v2', 'index.json'), 'utf8'));
+  const index = JSON.parse(readFileSync(join(root, '.dd', 'local', 'compiled', 'index.json'), 'utf8'));
   assert.equal(index.manifest.hash, (await store.manifest()).hash);
 });
 

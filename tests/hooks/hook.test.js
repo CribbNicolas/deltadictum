@@ -117,7 +117,7 @@ test('a command naming many paths gets a short label and the memory in full', as
 test('a tool call in a project without a compiled index loads no matching module', t => {
   const bare = mkdtempSync(join(tmpdir(), 'dd-bare-'));
   t.after(() => removeDir(bare));
-  const hookModule = fileURLToPath(new URL('../../src/hooks/v2/hook.cjs', import.meta.url));
+  const hookModule = fileURLToPath(new URL('../../src/hooks/hook.cjs', import.meta.url));
   const script = `require(${JSON.stringify(hookModule)}).handle('pre-tool', { cwd: ${JSON.stringify(bare)}, tool_name: 'Read', tool_input: { file_path: 'a.js' } })
     .then(() => console.log(JSON.stringify(Object.keys(require.cache).map(p => p.split(/[\\\\/]/).pop()))))`;
   const loaded = JSON.parse(spawnSync(process.execPath, ['-e', script], { encoding: 'utf8' }).stdout);
@@ -127,8 +127,8 @@ test('a tool call in a project without a compiled index loads no matching module
 // A memory is never delivered, or counted as delivered, without its body.
 test('an index whose bodies are missing delivers nothing until session start recompiles it', async t => {
   const root = await project(t);
-  const v2 = join(root, '.dd', 'local', 'v2');
-  for (const name of readdirSync(v2).filter(name => name.startsWith('bodies'))) rmSync(join(v2, name));
+  const compiled = join(root, '.dd', 'local', 'compiled');
+  for (const name of readdirSync(compiled).filter(name => name.startsWith('bodies'))) rmSync(join(compiled, name));
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
   hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'startup' });
   assert.match(context(hook('pre-tool', read(root, 's1'))), /\[TRAP\] Close stores - Close stores, always\./);
@@ -157,13 +157,13 @@ test('a prompt naming a keyword delivers its memory', async t => {
 // the host's system message, that DD is on and where the review UI is.
 test('session start compiles a missing index and tells the person, not the model; compaction re-arms delivery', async t => {
   const root = await project(t);
-  rmSync(join(root, '.dd', 'local', 'v2'), { recursive: true, force: true });
+  rmSync(join(root, '.dd', 'local', 'compiled'), { recursive: true, force: true });
   const start = hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'startup' });
   assert.equal(start.status, 0);
   const output = JSON.parse(start.stdout);
   assert.deepEqual(Object.keys(output), ['systemMessage']);
   assert.match(output.systemMessage, /^DD - \d+ memories live in this project\. Review UI: \/dd:review \(or npx deltadictum ui\)\.$/);
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
   assert.match(context(hook('pre-tool', read(root, 's1'))), /Close stores/);
   assert.equal(hook('pre-tool', read(root, 's1')).stdout, '');
   const compact = hook('session-start', { session_id: 's1', cwd: root, hook_event_name: 'SessionStart', source: 'compact' });
@@ -191,7 +191,7 @@ test('a project with .dd/ and no memory yet records its footprint, asks at Stop 
   assert.match(context(hook('stop', { session_id: 's1', cwd })), /^DD - This turn fixed a failure/);
   const start = hook('session-start', { session_id: 's1', cwd, source: 'startup' });
   assert.equal(JSON.parse(start.stdout).systemMessage, 'DD - on for this project, no memories yet. Save one with /dd:save; review with /dd:review.');
-  assert.ok(existsSync(join(root, '.dd', 'local', 'v2', 'index.json')));
+  assert.ok(existsSync(join(root, '.dd', 'local', 'compiled', 'index.json')));
 });
 
 test('tools, projects and inputs DD has nothing for stay silent and create nothing', async t => {

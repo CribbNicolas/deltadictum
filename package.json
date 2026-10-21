@@ -31,7 +31,7 @@
     "test:all": "npm test && npm run test:stress",
     "lint": "npx --yes eslint@10.11.0 .",
     "start": "node src/cli.js",
-    "bench:v2": "node src/eval/v2bench/run.js"
+    "bench:replay": "node src/eval/replay/run.js"
   },
   "files": [
     "src",

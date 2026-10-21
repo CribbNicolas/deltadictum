@@ -5,7 +5,7 @@ import { isShipped, needsRelease } from '../../.github/scripts/version-rule.mjs'
 const FILES = ['src', '!src/eval', '.claude-plugin', 'docs/DD.md', 'docs/guide', 'skills', 'LICENSE', 'npm-shrinkwrap.json'];
 
 test('a path ships when an entry of files covers it and no exclusion does', () => {
-  assert.equal(isShipped('src/hooks/v2/hook.cjs', FILES), true);
+  assert.equal(isShipped('src/hooks/hook.cjs', FILES), true);
   assert.equal(isShipped('src/eval/agent/summary.js', FILES), false);
   assert.equal(isShipped('docs/guide/how-it-works.md', FILES), true);
   assert.equal(isShipped('docs/getting-started.md', FILES), false);

@@ -17,7 +17,7 @@ Usage: deltadictum [command]
                       Write DD's Codex configuration into a project
   import [--from DIR] [--dry-run]
                       Turn the project's .claude/rules/ and .cursor/rules/ files that name paths into memories
-  compile             Compile this project's memories for delivery (.dd/local/v2)
+  compile             Compile this project's memories for delivery (.dd/local/compiled)
   recall QUERY [--all] [--limit N]
                       Print the memories that match QUERY in full (--all includes candidates)
   status              Memory counts by status, and topics with more than one live memory

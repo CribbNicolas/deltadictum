@@ -19,7 +19,7 @@ if (!supportedNode()) {
   }
   process.exit(0);
 }
-// Codex runs these hooks with --codex: its payloads are mapped in src/hooks/v2/codex.cjs.
+// Codex runs these hooks with --codex: its payloads are mapped in src/hooks/codex.cjs.
 const host = process.argv.includes('--codex') ? 'codex' : 'claude';
 
 let payload;
@@ -28,5 +28,5 @@ try { payload = JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { process.e
 if (process.env.DD_CAPTURE_PAYLOADS) {
   try { appendFileSync(process.env.DD_CAPTURE_PAYLOADS, `${JSON.stringify({ command, payload })}\n`); } catch { /* debugging only */ }
 }
-require('../src/hooks/v2/hook.cjs').handle(command, payload, { host })
+require('../src/hooks/hook.cjs').handle(command, payload, { host })
   .then(output => { if (output) process.stdout.write(output); process.exit(0); }, () => process.exit(0));

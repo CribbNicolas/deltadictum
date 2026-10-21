@@ -36,7 +36,7 @@ test('project requirements come from the tasks the knowledge bears on, the rest 
 });
 
 test('labels can be overridden, and a condition the report lacks is refused', () => {
-  assert.equal(summarize(report, { ...options, labels: { dd2: 'With DD v2' } }).conditions[2].label, 'With DD v2');
+  assert.equal(summarize(report, { ...options, labels: { dd2: 'With DD' } }).conditions[2].label, 'With DD');
   assert.throws(() => summarize(report, { ...options, compare: ['docdd'] }), /no condition docdd/);
 });
 

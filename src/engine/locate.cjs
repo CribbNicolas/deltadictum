@@ -22,13 +22,13 @@ function findProjectRoot(start, { stopAt = homedir() } = {}) {
   return resolve(start);
 }
 
-// Every file v2 keeps for a project. `local/` is git-ignored through .dd/.gitignore.
+// Every file DD keeps for a project. `local/` is git-ignored through .dd/.gitignore.
 function localPaths(root) {
   const dd = join(root, '.dd');
   const local = join(dd, 'local');
-  const v2 = join(local, 'v2');
-  return { dd, memories: join(dd, 'memories'), manifest: join(dd, 'memories', 'manifest.json'), local, v2,
-    index: join(v2, 'index.json'), sessions: join(local, 'sessions') };
+  const compiled = join(local, 'compiled');
+  return { dd, memories: join(dd, 'memories'), manifest: join(dd, 'memories', 'manifest.json'), local, compiled,
+    index: join(compiled, 'index.json'), sessions: join(local, 'sessions') };
 }
 
 module.exports = { findProjectRoot, localPaths };

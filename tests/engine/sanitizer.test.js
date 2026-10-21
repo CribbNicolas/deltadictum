@@ -1,8 +1,8 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
-import { sanitizeText, hasUnsafeMemoryContent } from '../../../src/engine/v2/sanitizer.js';
+import { sanitizeText, hasUnsafeMemoryContent } from '../../src/engine/sanitizer.js';
 
-describe('V2 memory sanitizer', () => {
+describe('Memory sanitizer', () => {
   test('removes think blocks and markdown fences', () => {
     const input = '<think>hidden chain</think>```markdown\nUseful lesson\n```';
     assert.strictEqual(sanitizeText(input), 'Useful lesson');

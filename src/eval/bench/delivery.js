@@ -1,6 +1,6 @@
 // When DD's knowledge reached the agent, from a run's stream: before its first
 // edit (in time to shape it), on that edit's own pre-tool event (after the agent
-// decided the write: the limit the v2 trial showed), or later.
+// decided the write: the limit the 2026-10-14 trial showed), or later.
 const EDITS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 // src/engine/deliver.cjs: "[KIND] title - body", " [DISPUTED]" after the kind,
 // and a tail "... and N more: a; b" naming memories it did not deliver.

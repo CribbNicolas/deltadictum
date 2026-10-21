@@ -54,7 +54,7 @@ test('each signal of spec section 8 on synthetic telemetry', async t => {
   assert.deepEqual(signalsOf(report, 'hub').filter(s => s === 'never_fired_with_opportunity'), []);
 });
 
-// Fires by dimension expose the hub shape v2 worried about (prompt keywords);
+// Fires by dimension expose a hub (prompt keywords that fire everywhere);
 // the capture funnel says whether asking for memories works at all.
 test('fires by dimension, the capture funnel and recent deliveries come with the report', async t => {
   const root = await project(t, [memory('m1', [{ on: ['read'], paths: ['src/a.js'] }, { on: ['prompt'], keywords: ['alpha'] }])], [{ session: 's1' }, { session: 's2' }]);

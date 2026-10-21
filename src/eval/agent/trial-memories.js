@@ -4,6 +4,7 @@
 // tasks-v2.js; six are realistic knowledge no task needs, so the trial also
 // measures what DD delivers when nothing applies. Written before the tasks and
 // not edited after them.
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -112,7 +113,7 @@ export const TRIAL_MEMORIES = [
     body: 'Codex (codex-cli 0.154, recorded 2026-09) sends its shell tool as `tool_name: Bash` with `tool_input.command` either a string or an argv such as `["bash", "-lc", "<script>"]` (PowerShell: `["pwsh", "-Command", ...]`), `apply_patch` with the patch text in `tool_input.command`, and `tool_response: { exit_code, output }`; its Stop takes `{ decision: "block", reason }`. tests/hooks/codex.test.js pins those shapes. A field Codex renames is seen only in a live session: record payloads with DD_CAPTURE_PAYLOADS before trusting a documented shape.',
     not_derivable: 'A documented hook payload differed from what the harness sent; only recordings say which fields exist.',
     triggers: [
-      { on: ['read', 'edit', 'write'], paths: ['src/hooks/v2/codex.cjs', 'tests/hooks/codex.test.js', 'docs/guide/how-it-works.md'] },
+      { on: ['read', 'edit', 'write'], paths: ['src/hooks/v2/codex.cjs', 'tests/hooks/codex.test.js', 'docs/integrations/codex.md'] },
       { on: ['prompt', 'search'], keywords: ['codex', 'apply_patch'] },
     ],
     evidence: [{ path: 'src/hooks/v2/codex.cjs', summary: 'The adapter over the recorded shapes.' }],
@@ -170,14 +171,18 @@ export const trialMemoryId = topic => {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 };
 
+// The commit the trial ran on: the memories describe its code, not this checkout's.
+export const TRIAL_BASE = 'ce8d33e';
+
 // The memories as DD stores them, their evidence hashed against the repository at
-// `root`, with the compiler's trigger warnings against that repository.
-export async function materializeTrialMemories(root) {
+// `root` (at commit `rev` when given), with the compiler's trigger warnings against it.
+export async function materializeTrialMemories(root, { rev = null } = {}) {
+  const fileAt = async path => (rev ? execFileSync('git', ['-C', root, 'show', `${rev}:${path}`], { maxBuffer: 64 * 1024 * 1024 }) : readFile(join(root, path)));
   const memories = [];
   for (const definition of TRIAL_MEMORIES) {
     const evidence = [];
     for (const entry of definition.evidence) {
-      const sha256 = createHash('sha256').update(await readFile(join(root, entry.path))).digest('hex');
+      const sha256 = createHash('sha256').update(await fileAt(entry.path)).digest('hex');
       evidence.push({ type: 'file', path: entry.path, sha256, summary: entry.summary });
     }
     memories.push({ schema_version: 8, id: trialMemoryId(definition.topic), project_id: 'supermem', topic: definition.topic, kind: definition.kind,
@@ -185,8 +190,9 @@ export async function materializeTrialMemories(root) {
       evidence, origin: 'user_explicit', replaces: null, revisit_when: [], review: { issues: [], accepted: { by: 'person', at: CREATED } },
       created: CREATED, updated: CREATED });
   }
-  const repoFiles = repoFilesOf(root);
-  const found = repoFiles ? codeSymbols(root, [...new Set(memories.flatMap(m => m.triggers.flatMap(c => c.symbols ?? [])))]) : null;
+  const repoFiles = rev ? execFileSync('git', ['-C', root, 'ls-tree', '-r', '--name-only', rev], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).split('\n').filter(Boolean)
+    : repoFilesOf(root);
+  const found = repoFiles ? codeSymbols(root, [...new Set(memories.flatMap(m => m.triggers.flatMap(c => c.symbols ?? [])))], rev) : null;
   const warnings = memories.flatMap(memory => triggerWarnings(memory, repoFiles, found ? symbol => found.has(symbol) : null));
   return { memories, warnings };
 }

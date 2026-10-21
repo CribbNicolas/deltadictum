@@ -21,7 +21,7 @@ test('the ledgerkit store compiles in a clone: every memory valid, live ones ind
   assert.deepEqual(warnings, []);
   assert.deepEqual(compileWarnings, []);
   assert.equal(indexMemories, 17);
-  const index = JSON.parse(readFileSync(join(dir, '.dd', 'local', 'v2', 'index.json'), 'utf8'));
+  const index = JSON.parse(readFileSync(join(dir, '.dd', 'local', 'compiled', 'index.json'), 'utf8'));
   assert.equal(index.checks.length, 2);
   for (const m of MEMORIES) assert.doesNotMatch(m.title, / - |; /, m.topic);
 });

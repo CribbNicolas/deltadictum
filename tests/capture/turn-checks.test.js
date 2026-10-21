@@ -107,7 +107,7 @@ test('a turn check judges only the files touched by the events it names', async 
 // the turn its capture request.
 test('a check that throws at Stop still lets the capture request through', async t => {
   const root = await project(t);
-  const indexPath = join(root, '.dd', 'local', 'v2', 'index.json');
+  const indexPath = join(root, '.dd', 'local', 'compiled', 'index.json');
   const index = JSON.parse(readFileSync(indexPath, 'utf8'));
   index.checks = [{ m: 'store', on: ['edit'], when: 'turn', paths: ['('], if_content: 'x', say: 'broken' }];
   writeFileSync(indexPath, JSON.stringify(index));

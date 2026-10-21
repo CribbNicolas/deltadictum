@@ -1,6 +1,6 @@
 import { compilePattern } from '../checks/pattern.cjs';
 import { DIMENSIONS, EVENT_KINDS } from '../engine/clause.cjs';
-import { containsSecret, hasUnsafeMemoryContent } from '../engine/v2/sanitizer.js';
+import { containsSecret, hasUnsafeMemoryContent } from '../engine/sanitizer.js';
 
 // Schema 8: a memory is a rule with triggers. validateMemory names every problem;
 // nothing is defaulted or repaired here.

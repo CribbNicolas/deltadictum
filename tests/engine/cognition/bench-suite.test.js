@@ -85,6 +85,6 @@ test("a suite's own environment is added to the run's (a localized test runner f
 test('a known flaky test is forgiven unless the change touches the code it covers', () => {
   const entries = ['lock', { test: 'maintenance', unlessChanged: ['src/maintenance/', 'src/hooks/'] }];
   assert.deepEqual(flakyFor(entries, ['src/ui/server.js']), ['lock', 'maintenance']);
-  assert.deepEqual(flakyFor(entries, ['src/ui/server.js', 'src/hooks/v2/hook.cjs']), ['lock']);
+  assert.deepEqual(flakyFor(entries, ['src/ui/server.js', 'src/hooks/hook.cjs']), ['lock']);
   assert.deepEqual(flakyFor(entries, []), ['lock', 'maintenance']);
 });

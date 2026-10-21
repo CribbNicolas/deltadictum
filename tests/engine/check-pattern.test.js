@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compilePattern, createMatcher, patternProblem, unsafePattern } from '../../../src/checks/pattern.cjs';
-import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from '../../../src/eval/v2bench/spike-checks.js';
+import { compilePattern, createMatcher, patternProblem, unsafePattern } from '../../src/checks/pattern.cjs';
+import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from '../../src/eval/replay/spike-checks.js';
 
 test('quantified groups that hold a quantifier or an alternation, and backreferences, are refused', () => {
   for (const source of ['(a+)+', '(a+)+$', '(?:\\w*)*x', '(a|aa)+', '((ab)*)+', '(a*)*', '(\\w+\\s?)+', '(.*a){3}', '(?:x|y)*', '((a|b)c)+',

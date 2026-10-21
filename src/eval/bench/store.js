@@ -1,6 +1,6 @@
 // The store each bench project runs with, and the same knowledge as a guide for
 // the documentation conditions. A bench store is written from definitions, as
-// the v2 trial's was (src/eval/agent/trial-memories.js); an existing store is the
+// the 2026-10-14 trial's was (src/eval/agent/trial-memories.js); an existing store is the
 // project's own, as it stands at the base commit.
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -52,7 +52,7 @@ export async function installStore(root, project) {
     await createMemoryFiles(dd).commit({ put: memories });
   }
   const { warnings: compileWarnings } = await compileProject(root);
-  const index = JSON.parse(await readFile(join(dd, 'local', 'v2', 'index.json'), 'utf8').catch(() => 'null'));
+  const index = JSON.parse(await readFile(join(dd, 'local', 'compiled', 'index.json'), 'utf8').catch(() => 'null'));
   return { memories, warnings, compile_warnings: compileWarnings, index_memories: index ? Object.keys(index.memories ?? {}).length : null };
 }
 

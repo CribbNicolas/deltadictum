@@ -4,7 +4,7 @@ const { PATH_FLAGS, hasTokens, shellTokens, symbolPattern } = require('./clause.
 const { containsPhrase, words } = require('./text.cjs');
 
 // The compiled matcher: the same answers as memoryMatch in clause.cjs on every
-// event (tests/engine/v2/match.test.js checks every event of the bench fixture),
+// event (tests/engine/match.test.js checks every event of the bench fixture),
 // with globs and symbols compiled once per hook and clauses grouped by event kind.
 const KIND_ORDER = ['trap', 'decision', 'fact', 'failed_approach', 'procedure'];
 

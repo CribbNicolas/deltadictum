@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { examplesHold, scoreCheck, scoreCommandCheck, unsafePattern, violates } from '../../../src/eval/v2bench/checks.js';
-import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from '../../../src/eval/v2bench/spike-checks.js';
+import { examplesHold, scoreCheck, scoreCommandCheck, unsafePattern, violates } from '../../src/eval/replay/checks.js';
+import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from '../../src/eval/replay/spike-checks.js';
 
 const check = { on: ['edit'], paths: ['tests/**/*.test.js'], if_content: 'createMemoryStore', unless_content: 't\\.after\\(',
   examples: { violates: 'createMemoryStore(d)', passes: 'createMemoryStore(d); t.after(() => 1)' } };
@@ -59,7 +59,7 @@ test('a command check counts the runs it would speak in', () => {
 });
 
 test('the production check module scores the spike checks with no false positive and examples that hold', async () => {
-  const { loadFixture } = await import('../../../src/eval/v2bench/fixture.js');
+  const { loadFixture } = await import('../../src/eval/replay/fixture.js');
   const fixture = await loadFixture();
   for (const spec of SPIKE_CHECKS) {
     const score = scoreCheck(spec, fixture);

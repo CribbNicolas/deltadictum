@@ -1,6 +1,6 @@
-// The v2 bench: the
+// The replay bench: the
 // trial's recorded runs replayed through trigger matching, with no agent runs.
-//   node src/eval/v2bench/run.js [--fixture=PATH] [--no-latency] [--out=output/eval/v2bench-report.json]
+//   node src/eval/replay/run.js [--fixture=PATH] [--no-latency] [--out=output/eval/replay-report.json]
 //     [--memories=store] [--freeze]
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -11,7 +11,7 @@ import { compileIndex, writeCompiled } from '../../engine/compile.js';
 import { localPaths } from '../../engine/locate.cjs';
 import { loadIndex } from '../../engine/index-file.cjs';
 import { matchEvent, prepareIndex } from '../../engine/match.cjs';
-import { toolEvent } from '../../hooks/v2/events.cjs';
+import { toolEvent } from '../../hooks/events.cjs';
 import { synthesizeMemories } from './synth.js';
 import { productionEngine } from './engine.js';
 import { scoreCheck, scoreCommandCheck } from './checks.js';
@@ -25,7 +25,7 @@ import { SPIKE_CHECKS, SPIKE_COMMAND_CHECKS } from './spike-checks.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
-const OUT = resolve(REPO, args.out ?? 'output/eval/v2bench-report.json');
+const OUT = resolve(REPO, args.out ?? 'output/eval/replay-report.json');
 
 // Trigger variants the decisions compare (spec section 3, review note on clause breadth).
 export const VARIANTS = {

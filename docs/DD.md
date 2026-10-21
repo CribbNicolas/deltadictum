@@ -40,7 +40,7 @@ corrected.
   `systemMessage`, which the model does not see) with the number of live memories and how to open the
   review UI, except after a compaction. There is no MCP server. A shell command that only reads or searches (`cat`, `head`, `sed -n`,
   `rg`, `ls`…) is a read or search event, in Claude Code as in Codex; one that may change something (a
-  redirection, an in-place `sed`, any other program) is a run (`src/hooks/v2/events.cjs`).
+  redirection, an in-place `sed`, any other program) is a run (`src/hooks/events.cjs`).
 - Each memory is delivered at most once per epoch of a session, and once per subagent (`src/engine/ledger.cjs`);
   a compaction or `/clear` starts a new epoch. The ledger's claim records the dimension that fired the
   memory (or `check`), the event kind and the time. A delivery is at most 10,000 characters (`delivery_limit`
@@ -70,7 +70,7 @@ corrected.
 ## Capture
 
 - A project opts in with its `.dd/` folder: a committed `.dd/config.json`, or its first memory. Without
-  it, hooks record nothing and ask nothing (`src/hooks/v2/hook.cjs`). `deltadictum init` writes the
+  it, hooks record nothing and ask nothing (`src/hooks/hook.cjs`). `deltadictum init` writes the
   opt-in (`.dd/config.json` with the project id, `.dd/.gitignore`, `.dd/memories/`) and compiles; the
   Codex installer writes the config too. A project still holding a v1 store is migrated, not initialised.
 - Hooks record a footprint per session: paths, redacted commands, search patterns, identifiers and outcomes.
