@@ -16,6 +16,24 @@ export const SITE = {
   },
 };
 
+// The landing's results. totalRuns counts every agent run recorded under output/eval since the first
+// benchmark (each run once by benchmark, model and run id; backups left out): the raw data stays out of
+// git, so the count is written here and updated after a benchmark. The featured metric leads, the others
+// follow two to a row; each card's headline says what its number means.
+export const LANDING = {
+  totalRuns: 1883,
+  highlight: 'dd2',
+  featured: 'requirements',
+  rows: [['quality', 'resolution'], ['cost', 'context']],
+  headlines: {
+    requirements: 'Does it the way your project does',
+    quality: 'Better code, scored by a blind judge',
+    resolution: 'Finishes what it starts',
+    cost: 'Practically the same cost as the agent alone',
+    context: 'Barely more for the agent to read',
+  },
+};
+
 // Folders of docs/ the site does not publish (development notes and benchmark data, kept out of git).
 export const OFF_SITE = ['superpowers', 'research', 'benchmarks', 'architecture'];
 

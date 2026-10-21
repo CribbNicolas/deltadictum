@@ -87,3 +87,22 @@ export function averageSummaries(summaries, { title, note, trials, merge = {} })
 }
 
 function fail(message) { throw new Error(message); }
+
+// The landing's result cards: per metric, the highlighted condition's value and its change against the
+// base, and every condition as a bar with its own change (none for the base). A percentage's bar is its
+// value; context and cost bars are shares of the largest value, so the longest bar is the most expensive.
+// Context reads in thousands without its unit, which the card's label gives.
+export function cardsFor(summary, { highlight, headlines = {} }) {
+  if (!summary.conditions.some(c => c.id === highlight)) fail(`no condition ${highlight}`);
+  return summary.metrics.map(metric => {
+    const max = Math.max(...summary.conditions.map(c => metric.values[c.id]));
+    const share = value => (metric.unit === 'pct' ? Math.round(value) : Math.round((value / max) * 100));
+    const value = metric.values[highlight];
+    const short = v => (metric.unit === 'tokens' ? `${(v / 1000).toFixed(1)}k` : formatValue(v, metric.unit));
+    const change = id => (id === summary.base ? null : formatChange(metric.values[id], metric.values[summary.base], metric.unit, metric.better));
+    return { id: metric.id, label: metric.label, headline: headlines[metric.id] ?? metric.label,
+      unit: metric.unit, value: short(value), change: change(highlight),
+      bars: summary.conditions.map(c => ({ id: c.id, label: c.label, value: short(metric.values[c.id]), share: share(metric.values[c.id]),
+        change: change(c.id), highlight: c.id === highlight })) };
+  });
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { averageSummaries, formatChange, formatValue, tableFor, validateSummary } from '../src/lib/bench.js';
+import { averageSummaries, cardsFor, formatChange, formatValue, tableFor, validateSummary } from '../src/lib/bench.js';
 
 const SUMMARY = {
   schema: 1, id: 't1', date: '2026-10-14', title: 'Trial', model: 'm', tasks: 10, runs_per_condition: 1, judge: 'j', report: 'benchmarks/t1.md', caveat: 'Small.',
@@ -100,4 +100,20 @@ test('the landing summary refuses trials it cannot average', () => {
   assert.throws(() => averageSummaries([OPUS, { ...HAIKU, tasks: 9 }], FEATURED), /b: 9 tasks, a has 10/);
   assert.throws(() => averageSummaries([OPUS, { ...HAIKU, runs_per_condition: 2 }], FEATURED), /b: 2 runs per condition, a has 1/);
   assert.throws(() => averageSummaries([OPUS, { ...HAIKU, metrics: HAIKU.metrics.slice(0, 1) }], FEATURED), /b has no metric cost/);
+});
+
+test('result cards give the highlighted value, its change and every condition as a bar', () => {
+  const cards = cardsFor(SUMMARY, { highlight: 'docdd', headlines: { cost: 'Cheaper' } });
+  const quality = cards.find(c => c.id === 'quality');
+  assert.equal(quality.value, '77%');
+  assert.equal(quality.change.text, '+7 pts');
+  assert.deepEqual(quality.bars.map(b => [b.label, b.value, b.share, b.highlight]),
+    [['Agent alone', '70%', 70, false], ['With documentation', '72%', 72, false], ['With documentation + DD', '77%', 77, true]]);
+  const cost = cards.find(c => c.id === 'cost');
+  assert.equal(cost.headline, 'Cheaper');
+  assert.deepEqual(cost.bars.map(b => b.share), [90, 100, 80]);
+  assert.deepEqual(cost.bars.map(b => b.change?.text ?? null), [null, '+11%', '-11%']);
+  assert.equal(cards.find(c => c.id === 'context').value, '27.2k');
+  assert.equal(quality.headline, 'Code quality');
+  assert.throws(() => cardsFor(SUMMARY, { highlight: 'nope' }), /no condition nope/);
 });

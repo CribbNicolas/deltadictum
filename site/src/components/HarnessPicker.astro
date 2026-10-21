@@ -1,0 +1,18 @@
+---
+// The reader's harness in the docs sidebar: one button per harness, as a radio group. Every page
+// shares the choice (src/lib/harness-client.js); site-client.js binds the buttons.
+import { DEFAULT_HARNESS, HARNESSES } from '../lib/harness.js';
+---
+<div class="picker">
+  <p class="title" id="harness-title">Your harness</p>
+  <div class="grid" role="radiogroup" aria-labelledby="harness-title">
+    {HARNESSES.map(h => <button type="button" role="radio" aria-checked={String(h.id === DEFAULT_HARNESS)} data-pick-harness={h.id}>{h.label}</button>)}
+  </div>
+</div>
+<style>
+  .picker { padding: 12px; border: 1px solid var(--border-2); border-radius: var(--radius-m); background: var(--surface-2); }
+  .title { margin: 0 0 10px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  button { min-height: 36px; padding: 0 8px; border: 1px solid var(--border-3); border-radius: var(--radius-s); background: transparent; color: var(--text-muted); font: 500 13px var(--font-sans); cursor: pointer; }
+  button:hover { color: var(--text-strong); }
+</style>

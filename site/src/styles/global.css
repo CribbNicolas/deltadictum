@@ -1,5 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; }
-html { color-scheme: dark; background: var(--bg); -webkit-text-size-adjust: 100%; }
+html { color-scheme: dark; background: var(--bg); -webkit-text-size-adjust: 100%; scroll-padding-top: var(--header-h); }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 16px; line-height: 1.6; }
 a { color: var(--link); }
 a:hover { color: var(--link-hover); }
@@ -16,3 +16,29 @@ img, svg { max-width: 100%; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .skip { position: absolute; left: -9999px; }
 .skip:focus { left: 16px; top: 16px; z-index: 10; background: var(--accent); color: var(--on-accent); padding: 8px 12px; border-radius: var(--radius-s); }
+
+/* The one code block of the site (docs and landing): a header with tabs or a label and a copy button,
+   an optional strip for a harness not yet verified live, then the code. */
+.codeblock { margin: 0 0 20px; border: 1px solid var(--border-2); border-radius: var(--radius-m); background: var(--surface-2); overflow: hidden; }
+.cb-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border-1); background: #0d1014; }
+/* On a narrow screen the tabs scroll sideways; the copy button keeps its place. */
+.harness-bar { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.harness-tab, .cb-copy { flex: none; }
+.harness-tab, .cb-label { min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted); font: 500 13px var(--font-sans); cursor: pointer; display: inline-flex; align-items: center; }
+.harness-tab:hover { color: var(--text-strong); }
+.cb-label { cursor: default; background: var(--surface-chip); color: var(--text-strong); font-weight: 600; }
+.cb-note { font-size: 12px; color: var(--text-faint); }
+.cb-copy { margin-left: auto; min-height: 32px; padding: 0 12px; border: 1px solid var(--border-3); border-radius: 7px; background: transparent; color: var(--text-muted); font: 12px var(--font-mono); cursor: pointer; }
+.cb-copy:hover { color: var(--text-strong); }
+.cb-status { margin: 0; padding: 8px 16px; border-bottom: 1px solid var(--border-1); background: rgba(232, 184, 74, 0.05); font-size: 13px; color: var(--text); }
+.cb-status strong { color: var(--accent); font-weight: 600; margin-right: 4px; }
+.cb-body { padding: 14px 18px 16px; }
+.cb-body > :last-child, .cb-body .harness-panel > :last-child { margin-bottom: 0; }
+.codeblock pre { margin: 0; padding: 0; border: 0; background: transparent !important; overflow-x: auto; font-size: 14px; line-height: 1.75; }
+.cb-body pre + p, .cb-body p + pre, .cb-body ul + pre { margin-top: 12px; }
+.codeblock .cb-code { padding: 14px 18px 16px; }
+
+/* Sections and cards that appear once, as they scroll into view (src/lib/site-client.js). */
+.reveals [data-reveal] { opacity: 0; transform: translateY(40px); transition: opacity .8s ease, transform .8s cubic-bezier(.2, .8, .2, 1); }
+.reveals [data-reveal].shown { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveals [data-reveal] { opacity: 1; transform: none; transition: none; } }

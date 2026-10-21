@@ -1,36 +1,67 @@
 ---
+// The install section and the page's footer. The install card is the docs' code block: a tab per
+// harness, a copy button, a strip for a harness not yet verified live, then that harness's steps.
 import { SITE, href } from '../../config.js';
 import { HARNESSES, INSTALL } from '../../lib/harness.js';
 ---
-<footer class="foot">
+<section id="install" class="install" aria-labelledby="install-title">
   <div class="wrap row">
-    <div>
-      <p class="lead">Twenty minutes to a first memory.</p>
-      <div class="tabs" role="group" aria-label="Harness">
-        {HARNESSES.map(h => <button type="button" class="tab" data-set-harness={h.id}>{h.label}</button>)}
+    <div class="intro">
+      <p class="eyebrow">INSTALL</p>
+      <h2 id="install-title">Twenty minutes to a first memory.</h2>
+      <p class="need">Node.js 22.16 or later and a git repository. Pick your harness; the docs remember it.</p>
+      <a class="more" href={href('getting-started.html')}>Read Getting started <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="codeblock harness-group">
+      <div class="cb-head">
+        <div class="harness-bar" role="tablist" aria-label="Harness">
+          {HARNESSES.map(h => <button type="button" role="tab" aria-selected="false" class="harness-tab" data-set-harness={h.id}>{h.label}</button>)}
+        </div>
+        <button type="button" class="cb-copy" data-copy aria-label="Copy the install commands">Copy</button>
       </div>
-      {HARNESSES.map(h => (
-        <pre data-for={h.id}><code>{INSTALL[h.id].steps.map(line => line.startsWith('#') ? <span>{line}</span> : <Fragment><span>$</span> {line}</Fragment>).map((line, i) => i ? ['\n', line] : line)}</code></pre>
+      {HARNESSES.filter(h => h.note).map(h => (
+        <p class="cb-status" data-for={h.id}><strong>Not yet verified live.</strong> {h.note}</p>
       ))}
+      <div class="cb-body">
+        {HARNESSES.map(h => (
+          <pre class="steps" data-for={h.id}><code>{INSTALL[h.id].steps.map(line => line.startsWith('#') ? <span class="note">{line}</span> : <Fragment><span class="sign" aria-hidden="true">$ </span>{line}</Fragment>).map((line, i) => i ? ['\n', line] : line)}</code></pre>
+        ))}
+      </div>
     </div>
-    <div class="meta">
-      <p><a href={href('getting-started.html')}>Docs</a> · <a href={SITE.repo}>GitHub</a> · <a href={SITE.npm}>npm</a></p>
-      <p>Source-available under the <a href={`${SITE.repo}/blob/main/LICENSE`}>PolyForm Shield License 1.0.0</a> · a community project</p>
-    </div>
+  </div>
+</section>
+<footer class="foot">
+  <div class="wrap line">
+    <span class="name">DeltaDictum</span>
+    <a href={href('getting-started.html')}>Docs</a>
+    <a href={SITE.repo}>GitHub</a>
+    <a href={SITE.npm}>npm</a>
+    <span class="license">Source-available under the <a href={`${SITE.repo}/blob/main/LICENSE`}>PolyForm Shield License 1.0.0</a> · a community project</span>
   </div>
 </footer>
 <style>
-  .foot { background: var(--surface-2); border-top: 1px solid var(--border-1); }
-  .row { padding-top: 56px; padding-bottom: 56px; display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; align-items: center; }
-  .row > div:first-child { min-width: 0; max-width: 100%; }
-  .lead { margin: 0 0 14px; color: var(--text-muted); }
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
-  .tab { min-height: 32px; padding: 0 12px; border: 1px solid var(--border-3); border-radius: var(--radius-s); background: var(--surface-3); color: var(--text-muted); font: 13px var(--font-sans); cursor: pointer; }
-  .tab:hover { color: var(--text-strong); }
-  pre { margin: 0; font-size: 15px; line-height: 1.9; color: #e6e9ee; overflow-x: auto; }
-  pre span { color: var(--text-faint); }
-  .meta { font-size: 14px; color: var(--text-faint); }
-  .meta p { margin: 0 0 8px; }
-  .meta a { color: var(--text-muted); text-underline-offset: 3px; }
-  .meta a:hover { color: var(--text-strong); }
+  .install { border-top: 1px solid var(--border-1); background: var(--surface-1); }
+  .row { max-width: 1200px; padding-top: 88px; padding-bottom: 88px; display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start; }
+  .intro { flex: 1 1 360px; min-width: 0; }
+  .eyebrow { margin: 0; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; }
+  h2 { margin: 10px 0 0; font-size: clamp(30px, 4vw, 38px); line-height: 1.15; letter-spacing: -0.025em; color: var(--text-strong); font-weight: 600; }
+  .need { margin: 14px 0 0; color: var(--text-muted); }
+  .more { margin-top: 24px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; color: var(--accent); text-decoration: none; }
+  .more:hover { color: #f3d07c; }
+  .codeblock { flex: 1 1 560px; min-width: 0; margin: 0; border-radius: 12px; }
+  .steps { font-size: 14px; line-height: 1.9; color: #e6e9ee; }
+  .sign, .note { color: var(--text-faint); }
+  .foot { border-top: 1px solid var(--border-1); }
+  .line { max-width: 1200px; padding-top: 32px; padding-bottom: 32px; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; font-size: 14px; color: var(--text-faint); }
+  .line a { color: var(--text-muted); text-decoration: none; }
+  .line a:hover { color: var(--text-strong); }
+  .license a { text-decoration: underline; text-underline-offset: 3px; }
+  .name { color: var(--text); font-weight: 600; }
+  .license { margin-left: auto; }
+  @media (max-width: 640px) {
+    .row { padding-top: 64px; padding-bottom: 64px; gap: 32px; }
+    .codeblock { flex-basis: 100%; }
+    .steps { font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .license { margin-left: 0; }
+  }
 </style>

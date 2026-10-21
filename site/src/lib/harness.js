@@ -3,11 +3,12 @@
 // those harnesses; adjacent panels form a group with a tab bar. The reader's choice (the
 // sidebar's select, or a tab) is one global value kept in localStorage: CSS shows the
 // panels for it. On GitHub, and without JavaScript, every panel shows.
+// `note` is set for a harness not yet verified in a live session: every code block for it says so.
 export const HARNESSES = [
   { id: 'claude-code', label: 'Claude Code' },
-  { id: 'codex', label: 'Codex' },
-  { id: 'opencode', label: 'OpenCode' },
-  { id: 'grok', label: 'Grok Build' },
+  { id: 'codex', label: 'Codex', note: 'Unit-tested against Codex payloads recorded in 2026-09 (codex-cli 0.154).' },
+  { id: 'opencode', label: 'OpenCode', note: "Unit-tested against OpenCode's plugin API." },
+  { id: 'grok', label: 'Grok Build', note: "Runs Claude Code's hooks; Grok's real payloads have not been recorded yet." },
 ];
 export const DEFAULT_HARNESS = 'claude-code';
 // The landing's install lines, the same steps Getting started gives: the hero shows `hero`, the
@@ -29,9 +30,10 @@ const IDS = new Set(HARNESSES.map(h => h.id));
 export const headScript = `(function(){var h;try{h=localStorage.getItem(${JSON.stringify(STORAGE_KEY)})}catch(e){}`
   + `document.documentElement.dataset.harness=${JSON.stringify([...IDS])}.indexOf(h)>=0?h:${JSON.stringify(DEFAULT_HARNESS)}})();`;
 
-// Every panel not for the chosen harness is hidden; the chosen harness's tab is marked.
+// Every panel not for the chosen harness is hidden; the chosen harness's tab and picker button are marked.
 export const harnessCss = [...IDS].map(id => `html[data-harness="${id}"] [data-for]:not([data-for~="${id}"]){display:none}`
-  + `html[data-harness="${id}"] [data-set-harness="${id}"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}`).join('\n');
+  + `html[data-harness="${id}"] [data-set-harness="${id}"]{background:var(--surface-chip);color:var(--text-strong);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}`
+  + `html[data-harness="${id}"] [data-pick-harness="${id}"]{background:rgba(232,184,74,.12);color:var(--accent);border-color:var(--accent);font-weight:600}`).join('\n');
 
 const OPEN = /^<!--\s*for:\s*([\w\s-]+?)\s*-->$/;
 const CLOSE = /^<!--\s*\/for\s*-->$/;
@@ -47,11 +49,20 @@ function harnessesOf(list, where) {
 const panel = (ids, children) => ({ type: 'harnessPanel', ids, children,
   data: { hName: 'div', hProperties: { className: ['harness-panel'], dataFor: ids.join(' ') } } });
 
-function bar(panels) {
-  const covered = new Set(panels.flatMap(p => p.ids));
-  return { type: 'harnessBar', data: { hName: 'div', hProperties: { className: ['harness-bar'], role: 'group', ariaLabel: 'Harness' } },
-    children: HARNESSES.filter(h => covered.has(h.id)).map(h => ({ type: 'harnessTab', children: [{ type: 'text', value: h.label }],
-      data: { hName: 'button', hProperties: { type: 'button', className: ['harness-tab'], dataSetHarness: h.id } } })) };
+const el = (name, props, children = []) => ({ type: 'harnessElement', children, data: { hName: name, hProperties: props } });
+const text = value => ({ type: 'text', value });
+
+// The one code block of the docs and the landing: a header with the harness tabs and a copy button, a
+// strip for a harness not yet verified live, then the panels.
+function codeCard(panels) {
+  const covered = HARNESSES.filter(h => panels.some(p => p.ids.includes(h.id)));
+  const tabs = el('div', { className: ['harness-bar'], role: 'tablist', ariaLabel: 'Harness' },
+    covered.map(h => el('button', { type: 'button', role: 'tab', ariaSelected: 'false', className: ['harness-tab'], dataSetHarness: h.id }, [text(h.label)])));
+  const head = el('div', { className: ['cb-head'] }, [tabs, el('button', { type: 'button', className: ['cb-copy'], dataCopy: '' }, [text('Copy')])]);
+  const strips = covered.filter(h => h.note).map(h => el('p', { className: ['cb-status'], dataFor: h.id },
+    [el('strong', {}, [text('Not yet verified live.')]), text(` ${h.note}`)]));
+  return { type: 'harnessGroup', children: [head, ...strips, el('div', { className: ['cb-body'] }, panels)],
+    data: { hName: 'div', hProperties: { className: ['codeblock', 'harness-group'] } } };
 }
 
 // One parent's children: markers and tagged code become panels, adjacent panels a group.
@@ -82,8 +93,7 @@ function regroup(children, where) {
     while (out[j + 1]?.type === 'harnessPanel') j += 1;
     const run = out.slice(i, j + 1);
     // A lone panel is content for some harnesses only; a run of them is a choice, with tabs.
-    grouped.push(run.length === 1 ? run[0] : { type: 'harnessGroup', children: [bar(run), ...run],
-      data: { hName: 'div', hProperties: { className: ['harness-group'] } } });
+    grouped.push(run.length === 1 ? run[0] : codeCard(run));
     i = j;
   }
   return grouped;

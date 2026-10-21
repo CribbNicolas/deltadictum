@@ -1,11 +1,11 @@
 ---
 import { href } from '../config.js';
-import HarnessSelect from './HarnessSelect.astro';
+import HarnessPicker from './HarnessPicker.astro';
 const { groups, current } = Astro.props;
 ---
 <details class="sidebar" open data-sidebar>
   <summary>Menu</summary>
-  <div class="harness-pick"><HarnessSelect label="Harness" /></div>
+  <div class="harness-pick"><HarnessPicker /></div>
   <nav aria-label="Documentation">
     {groups.map(group => (
       <div class="group">

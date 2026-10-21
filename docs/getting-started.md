@@ -37,9 +37,6 @@ every tool call. Update later from `/plugin`.
 
 <!-- for: codex -->
 
-> **Status:** the adapter is unit-tested against Codex payloads recorded in 2026-09 (codex-cli 0.154); it
-> is not yet verified in a live session.
-
 Codex has no plugin marketplace, so DD writes the project's Codex configuration. Install DD globally
 first, so the configuration points at a directory that stays (an `npx` cache can be cleared):
 
@@ -64,9 +61,6 @@ command again; it refreshes DD's own handlers and keeps yours.
 
 <!-- for: opencode -->
 
-> **Status:** the adapter is unit-tested against OpenCode's plugin API; it is not yet verified in a live
-> session.
-
 Add DD to the project's `opencode.json`:
 
 ```json
@@ -84,15 +78,12 @@ in words, and use `npx deltadictum` in a terminal for the rest.
 
 <!-- for: grok -->
 
-> **Status:** not verified. The plugin runs the hooks Claude Code runs, assuming Claude Code's payload
-> shape; Grok's real payloads have not been recorded yet, so a tool name Grok spells differently fires
-> nothing.
-
 ```bash
 grok plugin install CribbNicolas/deltadictum --trust
 ```
 
-`--trust` is required for the hooks to load. `grok inspect`, run in the project, lists the plugin's hooks
+`--trust` is required for the hooks to load. The plugin runs the hooks Claude Code runs, assuming Claude
+Code's payload shape, so a tool name Grok spells differently fires nothing. `grok inspect`, run in the project, lists the plugin's hooks
 and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok keeps `/review` for its own).
 
 <!-- /for -->

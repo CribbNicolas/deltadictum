@@ -41,11 +41,12 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
     {ld.map(item => <script type="application/ld+json" is:inline set:html={JSON.stringify(item)} />)}
-    <script is:inline set:html={headScript} />
+    <script is:inline set:html={`document.documentElement.classList.add('js');${headScript}`} />
     <style is:inline set:html={harnessCss} />
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
     <slot />
+    <script>import '../lib/site-client.js';</script>
   </body>
 </html>

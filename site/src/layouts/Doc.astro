@@ -49,21 +49,27 @@ const jsonLd = [
     <div class="toc-col"><Toc headings={headings} /></div>
   </div>
   <script>
-    // A copy button on every code block, a scroll box around every table, an anchor on every section heading.
+    // A code card around every code block outside a harness group, a scroll box around every table,
+    // an anchor on every section heading. The copy buttons work through site-client.js.
     for (const heading of document.querySelectorAll('.prose h2[id], .prose h3[id]')) {
       heading.append(Object.assign(document.createElement('a'), { className: 'anchor', href: `#${heading.id}`, textContent: '#', ariaLabel: `Link to ${heading.textContent}` }));
     }
+    const LABELS = { bash: 'Terminal', sh: 'Terminal', shell: 'Terminal', json: 'JSON', js: 'JavaScript', javascript: 'JavaScript', toml: 'TOML', yaml: 'YAML', text: 'Text' };
+    const make = (tag, props) => Object.assign(document.createElement(tag), props);
     for (const pre of document.querySelectorAll('.prose pre')) {
-      const button = Object.assign(document.createElement('button'), { type: 'button', className: 'copy', textContent: 'Copy' });
-      button.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(pre.querySelector('code')?.innerText ?? pre.innerText);
-        button.textContent = 'Copied';
-        setTimeout(() => { button.textContent = 'Copy'; }, 1500);
-      });
-      // The button sits on a wrapper, not in the scrolling block, so long lines never pass under it.
-      const wrap = Object.assign(document.createElement('div'), { className: 'code' });
-      pre.replaceWith(wrap);
-      wrap.append(pre, button);
+      if (pre.closest('.codeblock')) continue;
+      const lang = pre.dataset.language ?? pre.querySelector('code')?.className.match(/language-(\w+)/)?.[1] ?? 'text';
+      const head = make('div', { className: 'cb-head' });
+      head.append(make('span', { className: 'cb-label', textContent: LABELS[lang] ?? lang }));
+      // A terminal block outside a harness group reads the same for every harness; say so.
+      if (LABELS[lang] === 'Terminal') head.append(make('span', { className: 'cb-note', textContent: 'Same on every harness' }));
+      head.append(make('button', { type: 'button', className: 'cb-copy', textContent: 'Copy' }));
+      head.lastChild.dataset.copy = '';
+      const card = make('div', { className: 'codeblock' });
+      const body = make('div', { className: 'cb-code' });
+      pre.replaceWith(card);
+      body.append(pre);
+      card.append(head, body);
     }
     for (const table of document.querySelectorAll('.prose table')) {
       const wrap = Object.assign(document.createElement('div'), { className: 'table-wrap' });
@@ -78,7 +84,7 @@ const jsonLd = [
   .main { flex: 999 1 560px; min-width: 0; max-width: 760px; padding: 40px 0 80px; }
   .toc-col { flex: 1 1 180px; max-width: 220px; }
   /* The columns themselves stick: a sticky child of a column only as tall as itself has nowhere to go. */
-  @media (min-width: 960px) { .side, .toc-col { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; } }
+  @media (min-width: 960px) { .side, .toc-col { position: sticky; top: var(--header-h); max-height: calc(100vh - var(--header-h)); overflow-y: auto; } }
   .crumbs { margin: 0 0 10px; font-size: 14px; color: var(--text-faint); }
   .edit { margin: 22px 0 0; font-size: 14px; }
   .edit a { color: var(--text-muted); }

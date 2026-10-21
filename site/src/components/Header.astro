@@ -5,36 +5,74 @@ import Search from './Search.astro';
 import { SITE, href } from '../config.js';
 
 const { docs = false } = Astro.props;
+const github = 'M9 19c-4 1.5-4-2-6-2.5m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6 0C6.8 2.7 5.8 3 5.8 3a4.3 4.3 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.4 9.4c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21';
 ---
-<header class="site-header">
+<header class="site-header" data-header>
   <nav class:list={['bar', { wide: docs }]} aria-label="Site">
     <a class="brand" href={href('')}>
-      <Mark />
+      <Mark size={24} />
       <span>DeltaDictum</span>
-      {docs && <span class="version">{pkg.version}</span>}
     </a>
-    {docs && <Search />}
-    <div class="links">
-      {!docs && <a href={href('getting-started.html')}>Docs</a>}
-      {!docs && <a class="optional" href={href('guide/how-it-works.html')}>How it works</a>}
-      <a href={SITE.repo}>GitHub</a>
-      {docs ? <a href={SITE.npm}>npm</a> : <a class="cta" href={href('getting-started.html')}>Get started</a>}
+    {docs && <span class="version">{pkg.version}</span>}
+    {docs ? <Search /> : (
+      <div class="links" id="site-links">
+        <a href={`${href('')}#how`}>How it works</a>
+        <a href={`${href('')}#measured`}>Benchmark</a>
+        <a href={href('getting-started.html')}>Docs</a>
+      </div>
+    )}
+    <div class="end">
+      <a class="github" href={SITE.repo} aria-label="GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d={github} /></svg>
+        <span>GitHub</span>
+      </a>
+      {docs ? <a class="plain" href={SITE.npm}>npm</a> : <a class="cta" href={`${href('')}#install`}>Install</a>}
+      {!docs && (
+        <button type="button" class="menu" aria-controls="site-links" aria-expanded="false" aria-label="Menu" data-menu>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </button>
+      )}
     </div>
   </nav>
 </header>
-<style>
-  .site-header { background: var(--bg); }
-  .bar { max-width: var(--content); margin: 0 auto; padding: 18px var(--gutter); display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
-  .bar.wide { max-width: 1360px; padding-block: 14px; border-bottom: 1px solid #161b22; }
-  .brand { display: flex; align-items: center; gap: 10px; color: var(--text-heading); font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
-  .version { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); border: 1px solid var(--border-3); border-radius: 999px; padding: 1px 8px; }
-  .links { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; font-size: 14px; }
-  .links a { color: var(--text-muted); text-decoration: none; }
-  .links a:hover { color: var(--text-strong); }
-  @media (max-width: 520px) {
-    .bar { padding-top: 14px; padding-bottom: 14px; }
-    .links { gap: 8px 16px; }
-    .links a.optional { display: none; }
+<script>
+  // The landing's menu on a phone: the section links fold behind a button, and a link closes it again.
+  const header = document.querySelector('[data-header]');
+  const menu = header?.querySelector('[data-menu]');
+  if (header && menu) {
+    const set = open => { header.classList.toggle('open', open); menu.setAttribute('aria-expanded', String(open)); };
+    menu.addEventListener('click', () => set(!header.classList.contains('open')));
+    header.querySelector('#site-links')?.addEventListener('click', event => { if (event.target.closest('a')) set(false); });
   }
-  .links a.cta { background: var(--accent); color: var(--on-accent); font-weight: 600; padding: 0 14px; min-height: 44px; display: inline-flex; align-items: center; border-radius: var(--radius-s); }
+</script>
+<style>
+  .site-header { position: sticky; top: 0; z-index: 20; background: rgba(11, 13, 16, 0.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-1); }
+  .bar { max-width: 1200px; margin: 0 auto; padding: 12px var(--gutter); min-height: var(--header-h); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
+  .bar.wide { max-width: 1360px; gap: 10px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text-heading); font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
+  .brand:hover { color: var(--text-strong); }
+  .version { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); border: 1px solid var(--border-3); border-radius: 999px; padding: 1px 8px; }
+  .links { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 14px; }
+  .links a, .plain { color: var(--text-muted); text-decoration: none; font-size: 14px; }
+  .links a:hover, .plain:hover { color: var(--text-strong); }
+  .end { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .github { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid var(--border-3); border-radius: 8px; color: var(--text-heading); font-size: 14px; text-decoration: none; }
+  .github:hover { color: var(--text-strong); border-color: var(--text-faint); }
+  .cta { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 14px; text-decoration: none; }
+  .cta:hover { color: var(--on-accent); filter: brightness(1.08); }
+  .menu { display: none; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid var(--border-3); border-radius: 8px; background: transparent; color: var(--text-heading); cursor: pointer; }
+  @media (max-width: 760px) {
+    .bar { gap: 10px 12px; }
+    /* The docs bar wraps to two rows on a phone, too tall to keep on screen. */
+    .site-header:has(.wide) { position: relative; }
+    .github { width: 40px; padding: 0; justify-content: center; }
+    .github span { display: none; }
+    :global(html.js) .menu { display: grid; }
+    /* The links fold into the menu; they still show without JavaScript, below the bar. */
+    .links { order: 10; width: 100%; flex-direction: column; gap: 0; }
+    :global(html.js) .links { display: none; }
+    :global(html.js) .open .links { display: flex; }
+    .links a { min-height: 44px; display: flex; align-items: center; font-size: 16px; color: var(--text-heading); border-top: 1px solid var(--border-1); }
+  }
+  @media (min-width: 761px) { .bar:not(.wide) .links { margin-left: 4px; } }
 </style>
