@@ -1,0 +1,50 @@
+{
+  "schema_version": 8,
+  "id": "5fe54a27-286d-4509-94cb-0143712b513d",
+  "project_id": "supermem",
+  "topic": "site/landing-benchmark-table",
+  "kind": "decision",
+  "status": "active",
+  "title": "The landing table has three columns and the summaries are the only benchmark files in git",
+  "body": "The landing's benchmark table shows Agent alone, With documentation (docref and doc merged) and With DD, nothing else: the owner removed the 'With documentation + DD' (docdd) column on 2026-10-20 after it was added. When regenerating docs/benchmarks/data/bench-2026-10-fix-{opus,haiku}.summary.json with src/eval/agent/summary.js, pass --compare=docref,doc,dd2, never docdd, even when the report has it. Those two summaries are the only benchmark files committed: write-ups, reports, judge and audit files, totals and calibration stay on disk (git-ignored) and must never be force-added, because the owner had them removed from the whole git history.",
+  "not_derivable": "The report files carry a docdd condition and summary.js accepts it; nothing in the code says the owner rejected that column or that benchmark data was purged from history on purpose.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "site/src/config.js",
+        "site/src/components/landing/Measured.astro",
+        "src/eval/agent/summary.js",
+        "docs/benchmarks/**"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "correction",
+      "summary": "User correction. La de documentacion + DD no agregues a la landing si lo hiciste. Los benchmarks por otro lado abria que borrarlos del hithub history, no se deberian subir solo el json smmary que se usa para la tabla, pero los datos crudos nada de nada."
+    },
+    {
+      "type": "file",
+      "path": "site/src/config.js",
+      "sha256": "396e690d70cb19873545292f8924027ee83b8e22e35766435fbbd252aac800f3",
+      "summary": "Cited when this memory was saved."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "dd",
+      "at": "2026-10-21T00:30:17.734Z"
+    }
+  },
+  "created": "2026-10-21T00:30:17.734Z",
+  "updated": "2026-10-21T00:30:17.881Z"
+}

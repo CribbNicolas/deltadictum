@@ -1,4 +1,4 @@
-// The v2 bench (docs/superpowers/plans/2026-10-08-dd-v2-plan-0-bench.md): the
+// The v2 bench: the
 // trial's recorded runs replayed through trigger matching, with no agent runs.
 //   node src/eval/v2bench/run.js [--fixture=PATH] [--no-latency] [--out=output/eval/v2bench-report.json]
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';

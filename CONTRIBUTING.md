@@ -29,7 +29,9 @@ Tests run with `--import ./tests/helpers/isolate-data.js` (the npm scripts add i
 daily maintenance run a session start would otherwise detach.
 
 Plans, specs, research notes and other working notes written while developing stay out of the repository:
-`docs/plans/`, `docs/specs/`, `docs/superpowers/` and `docs/research/` are ignored by git.
+`docs/plans/`, `docs/specs/`, `docs/superpowers/`, `docs/research/`, `docs/architecture/` and benchmark
+write-ups and data under `docs/benchmarks/` are ignored by git: only the summaries the landing reads are
+committed.
 
 ## Checks
 

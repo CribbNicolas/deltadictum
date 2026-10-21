@@ -1,4 +1,4 @@
-// The store of the v2 agent trial (docs/superpowers/specs/2026-10-14-agent-trial-v2.md):
+// The store of the v2 agent trial:
 // thirteen memories about this codebase, each something a capable agent would
 // not derive from the code and that no test enforces. Seven bear on a task of
 // tasks-v2.js; six are realistic knowledge no task needs, so the trial also

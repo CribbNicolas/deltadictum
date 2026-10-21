@@ -1,5 +1,4 @@
-// A v1 memory (a schema 7 atom) as a v2 memory (schema 8), following the mapping
-// in docs/superpowers/specs/2026-10-08-dd-v2-design.md, section 9. Pure: one atom
+// A v1 memory (a schema 7 atom) as a v2 memory (schema 8). Pure: one atom
 // in, one memory out, with the review issues a person still has to settle.
 
 export const BODY_MAX = 1500;

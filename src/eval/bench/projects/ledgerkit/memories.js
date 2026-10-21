@@ -1,4 +1,4 @@
-// The ledgerkit store (docs/superpowers/plans/2026-10-16-bench-03-ledgerkit.md, Task 4): eighteen
+// The ledgerkit store: eighteen
 // memories about ledgerkit's invented surroundings that nothing in its code, tests, docs or history
 // states. Fourteen bear on a task; four are realistic knowledge no task needs. Written before the
 // tasks and not edited after them.

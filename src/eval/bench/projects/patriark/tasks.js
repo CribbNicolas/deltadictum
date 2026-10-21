@@ -1,4 +1,4 @@
-// Patriark's candidate tasks (docs/superpowers/plans/2026-10-16-bench-05-patriark.md), at the base commit,
+// Patriark's candidate tasks, at the base commit,
 // on the project's real store. Hidden xUnit classes decide the runtime ones; static checks the rest.
 import { cpSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

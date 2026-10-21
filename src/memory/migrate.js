@@ -6,8 +6,7 @@ import { ensureIgnored } from './ignore.js';
 import { LIVE_STATUSES, validateMemory } from './schema.js';
 import { createMemoryFiles } from './store.js';
 
-// A v1 store (schema 7 files under .dd/) converted to v2 memories, following
-// docs/superpowers/specs/2026-10-08-dd-v2-design.md, section 9. Everything is
+// A v1 store (schema 7 files under .dd/) converted to v2 memories. Everything is
 // converted and validated before anything is written: one problem leaves the
 // store as it was, and the report names it. The real run holds the store's
 // write lock and applies any pending v1 write first, so nothing a v1 process

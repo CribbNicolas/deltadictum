@@ -1,4 +1,4 @@
-// ledgerkit, the invented Python project of the bench (docs/superpowers/plans/2026-10-16-bench-03-ledgerkit.md):
+// ledgerkit, the invented Python project of the bench:
 // a bookkeeping CLI for an invented accounting firm, built from ledgerkit/src with its history.
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -1,4 +1,4 @@
-// Layer 1 of the full benchmark (docs/superpowers/specs/2026-10-16-bench-full-design.md): the tool
+// Layer 1 of the full benchmark: the tool
 // calls each layer-2 run made, as the hook's events, grouped by project. A committed fixture names no
 // clone, user or machine: paths come out repository-relative, a path outside the clone is dropped, and
 // text names the clone as `.`. Patriark is another owner's repository, so its traces stay in output/eval:

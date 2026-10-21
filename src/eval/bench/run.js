@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The full agent benchmark (docs/superpowers/specs/2026-10-16-bench-full-design.md):
+// The full agent benchmark:
 // every task of every registered project, done by Claude Code headless in a fresh
 // clone under each knowledge condition, with the task's check, the project's
 // suite and lint on the changed tree, and the run's stream and diff kept.

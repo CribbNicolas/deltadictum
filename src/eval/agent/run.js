@@ -41,8 +41,7 @@ import { killTree, run as runProcess } from './proc.js';
 
 const REPO = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
-// --taskset=v2 runs the v2 trial (tasks-v2.js on the v2 codebase, docs/superpowers/
-// specs/2026-10-14-agent-trial-v2.md); the default is the 2026-10 trial on v1's code.
+// --taskset=v2 runs the v2 trial (tasks-v2.js on the v2 codebase); the default is the 2026-10 trial on v1's code.
 const TASKSET = args.taskset ?? 'v1';
 const { TASKS } = await import(TASKSET === 'v2' ? './tasks-v2.js' : './tasks.js');
 const MODEL = args.model ?? 'claude-sonnet-5-5';

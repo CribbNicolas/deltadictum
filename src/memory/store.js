@@ -6,7 +6,7 @@ import { LIVE_STATUSES, orderMemory, serializeMemory, validateMemory } from './s
 
 // v2 knowledge: .dd/memories/<id>.json, one memory per file, and manifest.json,
 // rewritten on every commit so a hook can tell its compiled index is stale with
-// one read (docs/research/2026-10-v2-bench-report.md, decision 4).
+// one read.
 export const MANIFEST = 'manifest.json';
 
 export function manifestOf(memories) {

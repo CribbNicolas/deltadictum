@@ -4,6 +4,11 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.13] - 2026-10-21
+
+- Code comments no longer cite design notes and plans that are not in the repository. No behavior
+  changes.
+
 ## [0.9.12] - 2026-10-20
 
 - The package no longer ships `docs/architecture`: development notes, benchmark write-ups and benchmark
