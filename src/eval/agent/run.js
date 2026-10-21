@@ -25,7 +25,7 @@
 //
 // This spends real model usage. It runs only when invoked:
 //   node src/eval/agent/run.js [--model=claude-sonnet-5-5] [--repeat=2] [--tasks=a,b] [--conditions=dd,doc,docref]
-//     [--base=1a406d9] [--out=name.json] [--runs=dir] [--conc=1] [--resume]
+//     [--base=f5449f9] [--out=name.json] [--runs=dir] [--conc=1] [--resume]
 //   node src/eval/agent/run.js --out=name.json --runs=dir --recheck=a,b|all
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -61,7 +61,7 @@ const CONDITIONS = (args.conditions ?? 'dd,doc,docref').split(',');
 if (CONDITIONS.some(c => !['dd', 'dd2', 'none', 'doc', 'docref'].includes(c))) throw new Error(`unknown condition in ${args.conditions}`);
 // The codebase the tasks run on: 0.8.6, the commit the 2026-10 trial cloned, or
 // the v2 trial branch, which carries the trial store in .dd/memories.
-const BASE = execFileSync('git', ['-C', REPO, 'rev-parse', args.base ?? (TASKSET === 'v2' ? 'eval/v2-trial' : '1a406d9')]).toString().trim();
+const BASE = execFileSync('git', ['-C', REPO, 'rev-parse', args.base ?? (TASKSET === 'v2' ? 'eval/v2-trial' : 'f5449f9')]).toString().trim();
 // v1's dependencies for the base's own suite and DD v1, installed once beside the
 // trial's output: this checkout (v2) has none to share.
 const BASE_DEPS = join(REPO, 'output', 'eval', `deps-${BASE.slice(0, 7)}`);

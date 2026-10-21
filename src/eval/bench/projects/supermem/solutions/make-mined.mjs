@@ -22,7 +22,7 @@ const FILES = {
 };
 
 // Hidden tests edited for the benchmark (each edit says so in the file): rewriting them from git would undo it.
-const EDITED = new Set(['d1c4803-compile.test.js', '7160d15-clause.test.js']);
+const EDITED = new Set(['7feddf5-compile.test.js', 'fecb85a-clause.test.js']);
 
 for (const task of MINED_TASKS) {
   const fix = task.source;

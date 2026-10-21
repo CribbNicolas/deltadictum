@@ -82,7 +82,7 @@ test('each build writes its own bodies file, and a reader of the previous index 
 });
 
 // Windows refuses a rename over a file another process holds open for a moment.
-// The bench's version of d1c4803's test: the fix commit also gave each build its own bodies file, which the
+// The bench's version of 7feddf5's test: the fix commit also gave each build its own bodies file, which the
 // task does not ask for, so the written index is told apart by its manifest hash, as the parent writes it.
 test('a rename the system refuses for a moment is retried, and a lasting refusal leaves no temp file', t => {
   const root = mkdtempSync(join(tmpdir(), 'dd-compile-'));

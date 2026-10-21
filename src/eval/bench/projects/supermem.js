@@ -15,7 +15,7 @@ export default {
   id: 'supermem',
   language: 'JavaScript',
   repo: REPO,
-  base: '654a1f1',
+  base: '5af14ac',
   invented: false,
   guideTarget: 'CLAUDE.md',
   store: 'bench',
