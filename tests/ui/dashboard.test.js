@@ -35,8 +35,12 @@ test('the dashboard sums deliveries, the cap hits, the top memories and the sess
   assert.deepEqual(report.sessions, { total: 2, with_deliveries: 2, tool_calls: 50 });
   assert.deepEqual(report.deliveries, { total: 3, memories_avg: 2, chars_avg: 3700, chars_max: 9900, capped: 1, capped_share: 0.33, per_100_tool_calls: 6 });
   assert.deepEqual(report.by_kind, { edit: 1, prompt: 1, read: 1 });
+  // A memory deleted since it fired is left out: there is nothing left to open.
   assert.deepEqual(report.top.map(row => [row.memory, row.title, row.fires, row.sessions]),
-    [['m1', 'First rule', 2, 2], ['gone', 'gone', 1, 1], ['m2', 'Second rule', 1, 1]]);
+    [['m1', 'First rule', 2, 2], ['m2', 'Second rule', 1, 1]]);
+  // The live memories by kind and by the first segment of their topic.
+  assert.equal(Object.values(report.kinds).reduce((a, b) => a + b, 0), 2);
+  assert.equal(Object.values(report.areas).reduce((a, b) => a + b, 0), 2);
   assert.equal(typeof report.capture.proposals, 'number');
   assert.deepEqual(report.by_via, { keywords: 1, paths: 3 });
   assert.deepEqual(report.checks, { fixed: 1, ignored: 1, repeated: 0 });
@@ -50,4 +54,21 @@ test('an empty project has a dashboard of zeros', async t => {
   const report = await dashboard(root);
   assert.deepEqual(report.deliveries, { total: 0, memories_avg: 0, chars_avg: 0, chars_max: 0, capped: 0, capped_share: 0, per_100_tool_calls: 0 });
   assert.deepEqual(report.top, []);
+});
+
+// Blind spots: repository files read or changed in more than one session that no live memory's paths
+// cover. A run's tokens are not files, and a file a memory covers is not a blind spot.
+test('blind spots are files touched across sessions that no live memory covers', async t => {
+  const root = await project(t, [memory('m1', { triggers: [{ on: ['edit'], paths: ['src/a.js'] }] })]);
+  const db = openTelemetry(root);
+  try {
+    const touch = db.prepare('INSERT INTO touches (session, path, kind) VALUES (?, ?, ?)');
+    for (const session of ['s1', 's2', 's3']) {
+      touch.run(session, 'src/a.js', 'edit');
+      touch.run(session, 'console.log', 'run');
+    }
+    touch.run('s1', 'src/b.js', 'edit');
+    touch.run('s2', 'src/b.js', 'read');
+  } finally { db.close(); }
+  assert.deepEqual((await dashboard(root)).blind_spots, [{ path: 'src/b.js', sessions: 2, changed: 1 }]);
 });

@@ -129,7 +129,7 @@ at the foot of the sidebar says it is connected. The views, in the sidebar's ord
 
 | View | What it shows |
 |---|---|
-| **Dashboard** | The store by status, what waits for you, sessions, deliveries, coverage, the capture funnel, fires by trigger and by event, and the memories that fire most |
+| **Dashboard** | What waits for you, the last seven days, coverage, the store by status, kind and area, the capture funnel, fires by trigger and by event, the memories that fire most, delivery size, and blind spots: files the agent keeps opening that no memory covers |
 | **+ New memory** | A memory written by hand, validated as the agent's proposals are |
 | **Candidates** | Proposals waiting for a person: accept, edit, or archive |
 | **Agent requests** | What the agent asked: batches of proposals saved under one name (accept or reject the lot in one action), then requests to archive, revise, re-verify, merge or delete memories, with their reasons; Apply carries one out |

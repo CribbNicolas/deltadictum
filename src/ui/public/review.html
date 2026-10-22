@@ -119,42 +119,115 @@
     .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .row input { flex: 1 1 260px; width: auto; min-width: 0; }
 
-    /* Dashboard */
-    .dash { padding: 28px 28px 56px; max-width: 1280px; }
-    .dash-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 22px; }
-    .dash-head h2 { font-size: 28px; letter-spacing: -0.025em; margin: 0; }
-    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-    .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
-    .tile .label { font: 500 10.5px var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: 0.1em; }
-    .tile .value { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; color: var(--strong); margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
-    .tile .note { font-size: 12px; color: var(--muted); }
-    .tile.wants { border-color: var(--accent-line); background: linear-gradient(180deg, rgba(232, 184, 74, 0.08), var(--panel) 70%); }
-    .tile.wants .value { color: var(--accent); }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; margin-top: 12px; }
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px 18px; min-width: 0; }
-    .card h3 { margin: 0 0 14px; }
-    .card.wide { grid-column: 1 / -1; }
-    .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--track); gap: 2px; }
-    .stack span { height: 100%; }
-    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 12.5px; color: var(--muted); }
-    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
-    .bars { display: grid; grid-template-columns: minmax(80px, max-content) 1fr auto; gap: 8px 12px; align-items: center; font-size: 12.5px; }
-    .bars .track { height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; }
-    .bars .fill { height: 100%; border-radius: 4px; background: var(--c1); }
-    .bars .num { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
-    .bars .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px; color: var(--fg); }
-    .bars button.who { border: none; background: none; padding: 0; color: var(--link); font: inherit; text-align: left; cursor: pointer; }
-    .bars button.who:hover { text-decoration: underline; }
-    .ring { display: flex; align-items: center; gap: 18px; }
-    .ring .big { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--strong); }
-    svg text { fill: var(--faint); font: 11px var(--mono); }
-    .conflicts { margin-top: 12px; }
+    /* Dashboard: one page of sections, no boxes, generous space; each section rises in turn, numbers count
+       up, bars grow, the activity line draws itself. .still skips all of it (a refresh, reduced motion). */
+    .dash { position: relative; padding: 0 48px 96px; max-width: 1180px; margin: 0 auto; }
+    .dash .eyebrow { margin: 0; font: 500 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+    .dash .quiet { margin: 0; font-size: 12.5px; color: var(--muted); }
+    .dash .lead { margin: 0 0 6px; font-size: 15px; color: var(--strong); }
+    .dash > section, .dash .split > section { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dash .split > section + section { transition-delay: 0.12s; }
+    .dash section.in { opacity: 1; transform: none; }
+    .dash .block { padding: 52px 0 0; margin-top: 52px; border-top: 1px solid var(--border); }
+    .block-head { margin-bottom: 26px; }
+    .block-head .title { margin: 8px 0 0; font: 600 22px/1.25 var(--sans); letter-spacing: -0.015em; color: var(--strong); text-transform: none; }
+    .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 72px; }
 
-    /* Settings: a panel from the right, the project's settings first, then this machine's. */
-    dialog.drawer { margin: 0 0 0 auto; width: min(500px, 100vw); max-width: 100vw; height: 100%; max-height: 100vh; border: none; border-left: 1px solid var(--border-2);
-      border-radius: 0; padding: 0; background: var(--bg); color: var(--fg); box-shadow: -24px 0 64px rgba(0, 0, 0, 0.5); }
+    .hero { position: relative; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px 64px; align-items: end; padding: 64px 0 8px; }
+    .hero::before { content: ''; position: absolute; left: -120px; top: -60px; width: 520px; height: 520px; pointer-events: none;
+      background: radial-gradient(closest-side, rgba(232, 184, 74, 0.13), transparent); animation: glow 7s ease-in-out infinite; }
+    @keyframes glow { 50% { transform: scale(1.08); opacity: 0.7; } }
+    .hero-main { position: relative; }
+    .big { margin: 6px 0 0; font-size: clamp(88px, 11vw, 148px); line-height: 0.9; font-weight: 700; letter-spacing: -0.06em; font-variant-numeric: tabular-nums;
+      background: linear-gradient(180deg, #f7dc96 0%, #e8b84a 55%, #b9862a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero-sub { margin: 16px 0 0; font-size: 15px; color: var(--fg); }
+    .cta { margin-top: 26px; display: inline-flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 18px; border: 1px solid var(--accent-line); border-radius: 999px;
+      background: var(--accent-soft); color: var(--accent); font: 600 14px var(--sans); cursor: pointer; transition: background 0.15s, transform 0.15s; }
+    .cta:hover { background: rgba(232, 184, 74, 0.2); transform: translateX(2px); }
+    .calm { margin: 26px 0 0; display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(232, 184, 74, 0.6); animation: pulse 2s ease-out infinite; }
+    .dot.ok { background: var(--ok); animation: none; }
+    @keyframes pulse { 70% { box-shadow: 0 0 0 10px rgba(232, 184, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(232, 184, 74, 0); } }
+    .hero-stats { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stat { padding: 4px 22px; border-left: 1px solid var(--border-2); }
+    .stat-value { margin: 8px 0 4px; font-size: 36px; font-weight: 700; letter-spacing: -0.035em; color: var(--strong); font-variant-numeric: tabular-nums; }
+    .dash .notice { margin-top: 32px; }
+
+    .chart svg { display: block; overflow: visible; }
+    .chart .grid { stroke: var(--border); stroke-dasharray: 2 6; }
+    .chart .axis { stroke: var(--border-2); }
+    .chart .stroke { stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s; }
+    .chart .area { opacity: 0; transition: opacity 1.2s ease 0.9s; }
+    .chart .point { opacity: 0; transition: opacity 0.5s ease var(--d, 0s); }
+    .chart .point circle:first-child { fill: var(--bg); stroke: var(--accent); stroke-width: 2.5; }
+    .chart .point .value { fill: var(--strong); font: 600 12px var(--sans); }
+    .chart .session { fill: rgba(143, 198, 255, 0.25); stroke: var(--c1); stroke-width: 1.5; }
+    .dash .in .chart .stroke { stroke-dashoffset: 0; }
+    .dash .in .chart .area, .dash .in .chart .point { opacity: 1; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+    .coverage { display: flex; align-items: center; gap: 28px; }
+    .coverage svg { flex: none; }
+    .coverage .arc { stroke-dashoffset: var(--from); transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.3s; }
+    .dash .in .coverage .arc { stroke-dashoffset: var(--to); }
+    .coverage .ring-value { fill: var(--strong); font: 700 30px var(--sans); letter-spacing: -0.03em; }
+
+    .stack { display: flex; gap: 3px; height: 14px; }
+    .stack span { height: 100%; width: 0; border-radius: 4px; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dash .in .stack span { width: var(--w); }
+    .dash .sub { margin-top: 24px; margin-bottom: 10px; color: var(--faint); }
+    .kinds { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kind { display: inline-flex; align-items: baseline; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-2); font: 12px var(--mono); color: var(--muted); }
+    .kind b { font: 700 14px var(--sans); color: var(--strong); }
+    .kind-trap { border-color: rgba(255, 138, 128, 0.4); } .kind-trap b { color: var(--danger); }
+    .kind-decision { border-color: var(--accent-line); } .kind-decision b { color: var(--accent); }
+    .kind-procedure { border-color: rgba(143, 198, 255, 0.4); } .kind-procedure b { color: var(--c1); }
+    .kind-fact { border-color: var(--ok-border); } .kind-fact b { color: var(--ok); }
+    .areas { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; line-height: 1.3; color: var(--strong); }
+    .areas sup { margin-left: 3px; font: 10px var(--mono); color: var(--faint); }
+
+    .funnel { display: grid; gap: 12px; }
+    .step { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 20px; }
+    .step-label { display: flex; align-items: baseline; justify-content: flex-end; gap: 12px; text-align: right; }
+    .step-num { font: 700 22px var(--sans); letter-spacing: -0.02em; color: var(--strong); font-variant-numeric: tabular-nums; }
+    .step-bar { height: 26px; width: 0; border-radius: 6px; opacity: 0.85; transition: width 1.1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dash .in .step-bar { width: var(--w); }
+
+    .track { height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; }
+    .fill { height: 100%; width: 0; border-radius: 4px; background: var(--c1); transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s; }
+    .dash .in .fill { width: var(--w); }
+    .dash.still *, .dash.still > section { transition: none !important; }
+    .bars { display: grid; grid-template-columns: minmax(80px, max-content) 1fr auto; gap: 12px 16px; align-items: center; font-size: 13px; }
+    .bars .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; color: var(--fg); }
+    .num { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+    .intro { margin: -14px 0 22px !important; }
+    .spots { display: grid; gap: 12px; }
+    .spot { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 190px; gap: 18px; align-items: center; }
+    .spot .path { font: 12.5px var(--mono); color: var(--strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .board { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    .board li { display: grid; grid-template-columns: 40px minmax(0, 1.5fr) minmax(0, 1fr) 150px; gap: 18px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .board li:last-child { border-bottom: none; }
+    .rank { font: 600 13px var(--mono); color: var(--accent); }
+    .board li:nth-child(n + 4) .rank { color: var(--faint); }
+    .board .name { border: none; background: none; padding: 0; color: var(--strong); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .board .name:hover { color: var(--link); }
+
+    .gauge { max-width: 720px; }
+    .gauge-track { position: relative; height: 14px; border-radius: 7px; background: var(--track); }
+    .gauge-track .fill { border-radius: 7px; }
+    .gauge .mark { position: absolute; top: -6px; width: 2px; height: 26px; background: var(--strong); border-radius: 1px; }
+    .gauge-scale { display: flex; justify-content: space-between; margin: 8px 0 18px; font: 11px var(--mono); color: var(--faint); }
+    svg text { fill: var(--faint); font: 11px var(--mono); }
+
+    /* Settings: a panel from the left, under the sidebar's button, the project's settings first, then this machine's. */
+    dialog.drawer { margin: 0 auto 0 0; width: min(500px, 100vw); max-width: 100vw; height: 100%; max-height: 100vh; border: none; border-right: 1px solid var(--border-2);
+      border-radius: 0; padding: 0; background: var(--bg); color: var(--fg); box-shadow: 24px 0 64px rgba(0, 0, 0, 0.5); }
     dialog.drawer[open] { display: flex; flex-direction: column; animation: slide 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
-    @keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+    @keyframes slide { from { transform: translateX(-40px); opacity: 0; } }
     dialog::backdrop { background: rgba(5, 6, 8, 0.6); backdrop-filter: blur(2px); }
     .drawer-head { display: flex; align-items: center; gap: 12px; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
     .drawer-head h2 { margin: 0; font-size: 20px; }
@@ -187,7 +260,7 @@
     .check { display: flex; gap: 10px; align-items: flex-start; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--fg); }
     .check input { width: auto; margin-top: 3px; }
 
-    @media (prefers-reduced-motion: reduce) { dialog.drawer[open] { animation: none; } * { transition: none !important; } }
+    @media (prefers-reduced-motion: reduce) { dialog.drawer[open], .hero::before, .dot { animation: none; } * { transition: none !important; } }
     @media (max-width: 900px) {
       body { overflow: auto; }
       main, main.full { height: auto; grid-template-columns: 1fr; }
@@ -200,8 +273,14 @@
       .foot { margin: 0 0 0 4px; padding: 0 0 0 8px; border-top: none; border-left: 1px solid var(--border); flex: 0 0 auto; }
       #list { max-height: 320px; }
       #detail, #view { overflow: visible; }
-      .dash { padding: 18px 16px; }
-      .cards { grid-template-columns: 1fr; }
+      .dash { padding: 0 16px 64px; }
+      .hero { grid-template-columns: 1fr; padding-top: 32px; }
+      .hero-stats .stat:first-child { border-left: none; padding-left: 0; }
+      .split { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 1fr; gap: 6px; } .step-label { justify-content: space-between; }
+      .spot, .board li { grid-template-columns: minmax(0, 1fr) auto; } .spot .track, .board li .track { grid-column: 1 / -1; grid-row: 2; }
+      .board li { grid-template-columns: 32px minmax(0, 1fr) auto; } .board li .track { grid-column: 2 / -1; }
+      .coverage { flex-direction: column; align-items: flex-start; }
       .bar, .pane { padding-left: 16px; padding-right: 16px; }
     }
   </style>
@@ -240,7 +319,8 @@
       if (key === 'on') for (const [event, fn] of Object.entries(value)) el.addEventListener(event, fn);
       else if (key === 'class') el.className = value;
       else if (key === 'value') el.value = value;
-      else if (key === 'style') Object.assign(el.style, value);
+      // Custom properties (--w, --i) drive the dashboard's animations; the rest are plain style properties.
+      else if (key === 'style') for (const [name, v] of Object.entries(value)) { if (name.startsWith('--')) el.style.setProperty(name, v); else el.style[name] = v; }
       else el.setAttribute(key, value === true ? '' : String(value));
     }
     for (const child of children.flat(Infinity)) {
@@ -373,95 +453,190 @@
       h('span', { class: 'meta' }, [fire.at, fire.kind, fire.via, fire.session].filter(Boolean).join(' · ')))));
   }
 
-  // Dashboard: the store, the review queues, use and capture, as the roll-up last saw them. Counts only, never content.
-  async function loadDashboard() {
+  // Dashboard: the store, what waits for a person, use and capture, as the roll-up last saw them. Counts only,
+  // never content. It plays in once when opened (numbers count up, bars grow, the chart draws itself); a live
+  // refresh redraws it still.
+  async function loadDashboard({ animate = true } = {}) {
     let d;
     try { [d] = await Promise.all([api('/api/dashboard'), state.overview ? null : loadOverview()]); } catch (err) { refused('Reading the dashboard', err); return; }
     const o = state.overview;
     if (!o) return;
     const st = o.status;
-    const tile = (label, value, note, wants = false) => h('div', { class: `tile${wants ? ' wants' : ''}` }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, String(value)), note ? h('div', { class: 'note' }, note) : null);
-    const waiting = (o.queues.candidates ?? 0) + (o.queues.from_agent ?? 0);
-    const card = (title, wide, ...body) => h('section', { class: `card${wide ? ' wide' : ''}` }, h('h3', {}, title), ...body);
-    const pct = (n, total) => (total && n ? `${Math.max(2, Math.round(n / total * 100))}%` : '0%');
-    // Horizontal bars, one row per entry: label, bar, number.
-    const bars = (entries, color = 'var(--c1)') => {
-      if (!entries.length) return h('p', { class: 'mono' }, 'Nothing rolled up yet.');
+    const fmt = n => Number(n ?? 0).toLocaleString('en-US');
+    const share = (n, total) => (total && n ? `${Math.max(2, Math.round(n / total * 100))}%` : '0%');
+    const count = (n, attrs = {}) => h('span', { ...attrs, 'data-count': String(n ?? 0) }, fmt(n));
+    const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : many}`;
+    let order = 0;
+    const block = (eyebrow, title, ...body) => h('section', { class: 'block', style: { '--i': String(order++) } },
+      h('div', { class: 'block-head' }, h('p', { class: 'eyebrow' }, eyebrow), title ? h('h3', { class: 'title' }, title) : null), ...body);
+    const fill = (value, max, color) => h('div', { class: 'track' }, h('div', { class: 'fill', style: { '--w': share(value, max), background: color } }));
+    const bars = (entries, color) => {
+      if (!entries.length) return h('p', { class: 'quiet' }, 'Nothing rolled up yet.');
       const max = Math.max(...entries.map(e => e.value), 1);
-      return h('div', { class: 'bars' }, entries.map(e => [
-        e.open ? h('button', { type: 'button', class: 'who', title: e.label, on: { click: e.open } }, e.label) : h('span', { class: 'who', title: e.label }, e.label),
-        h('div', { class: 'track' }, h('div', { class: 'fill', style: { width: pct(e.value, max), background: e.color ?? color } })),
-        h('span', { class: 'num' }, String(e.value))]));
+      return h('div', { class: 'bars' }, entries.map(e => [h('span', { class: 'who', title: e.label }, e.label), fill(e.value, max, color), h('span', { class: 'num' }, fmt(e.value))]));
     };
 
+    // The hero: what the store holds and what waits for a person.
+    const live = d.coverage.live, ever = d.coverage.delivered_ever;
+    const waiting = (o.queues.candidates ?? 0) + (o.queues.from_agent ?? 0);
+    const firstQueue = o.queues.candidates ? 'candidates' : 'from_agent';
+    const stat = (label, value, note) => h('div', { class: 'stat' }, h('p', { class: 'eyebrow' }, label), h('p', { class: 'stat-value' }, count(value)), h('p', { class: 'quiet' }, note));
+    const hero = h('section', { class: 'hero', style: { '--i': String(order++) } },
+      h('div', { class: 'hero-main' },
+        h('p', { class: 'eyebrow' }, 'Live memories'),
+        h('p', { class: 'big' }, count(live)),
+        h('p', { class: 'hero-sub' }, `${fmt(ever)} reached the agent · ${plural(st.total, 'memory', 'memories')} in the store`),
+        waiting ? h('button', { type: 'button', class: 'cta', on: { click: () => select(firstQueue) } },
+          h('span', { class: 'dot' }), `${plural(waiting, 'thing waits', 'things wait')} for you`, h('span', { 'aria-hidden': 'true' }, '→'))
+          : h('p', { class: 'calm' }, h('span', { class: 'dot ok' }), 'Nothing waits for you.')),
+      h('div', { class: 'hero-stats' },
+        stat('Sessions', d.sessions.total, `${fmt(d.sessions.with_deliveries)} with a delivery`),
+        stat('Deliveries', d.deliveries.total, `${d.deliveries.per_100_tool_calls} per 100 tool calls`),
+        stat('Tool calls', d.sessions.tool_calls, 'seen by the hooks')));
+
+    // Activity: deliveries as a drawn area, sessions as a row of marks beneath each day.
+    const days = d.by_day;
+    let activity = h('p', { class: 'quiet' }, 'Nothing rolled up yet.');
+    if (days.length) {
+      const W = 920, H = 200, padX = 30, top = 26, base = H - 30;
+      const peak = Math.max(...days.map(r => r.deliveries), 1);
+      const x = i => (days.length === 1 ? W / 2 : padX + i * (W - 2 * padX) / (days.length - 1));
+      const y = v => base - (v / peak) * (base - top);
+      const pts = days.map((r, i) => [x(i), y(r.deliveries)]);
+      const line = pts.map(([px, py], i) => {
+        if (!i) return `M${px},${py}`;
+        const [qx, qy] = pts[i - 1], mid = (qx + px) / 2;
+        return `C${mid},${qy} ${mid},${py} ${px},${py}`;
+      }).join(' ');
+      const area = `${line} L${pts.at(-1)[0]},${base} L${pts[0][0]},${base} Z`;
+      activity = h('div', { class: 'chart' },
+        s('svg', { viewBox: `0 0 ${W} ${H + 34}`, width: '100%', role: 'img', 'aria-label': days.map(r => `${r.day}: ${r.sessions} sessions, ${r.deliveries} deliveries`).join('; ') },
+          s('defs', {}, s('linearGradient', { id: 'area-fill', x1: 0, y1: 0, x2: 0, y2: 1 },
+            s('stop', { offset: '0', 'stop-color': '#e8b84a', 'stop-opacity': '0.35' }), s('stop', { offset: '1', 'stop-color': '#e8b84a', 'stop-opacity': '0' }))),
+          [0.5, 1].map(f => s('line', { x1: padX, x2: W - padX, y1: y(peak * f), y2: y(peak * f), class: 'grid' })),
+          s('line', { x1: padX, x2: W - padX, y1: base, y2: base, class: 'axis' }),
+          s('path', { d: area, fill: 'url(#area-fill)', class: 'area' }),
+          s('path', { d: line, fill: 'none', class: 'stroke', pathLength: '1' }),
+          days.map((r, i) => s('g', { class: 'point', style: `--d:${0.4 + i * 0.08}s` },
+            s('circle', { cx: x(i), cy: y(r.deliveries), r: 4.5 }, s('title', {}, `${r.deliveries} deliveries`)),
+            s('text', { x: x(i), y: y(r.deliveries) - 12, 'text-anchor': 'middle', class: 'value' }, String(r.deliveries)),
+            s('text', { x: x(i), y: base + 18, 'text-anchor': 'middle' }, r.day.slice(5)),
+            s('circle', { cx: x(i), cy: base + 32, r: Math.min(9, 3 + r.sessions * 1.5), class: 'session' }, s('title', {}, `${r.sessions} sessions`))))),
+        h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--c2)' } }), 'deliveries'),
+          h('span', {}, h('i', { style: { background: 'var(--c1)', borderRadius: '50%' } }), 'sessions, by size')));
+    }
+
+    // Coverage: of the live memories, how many ever reached the agent.
+    const R = 62, C = 2 * Math.PI * R, covered = live ? ever / live : 0;
+    const coverage = h('div', { class: 'coverage' },
+      s('svg', { width: 160, height: 160, viewBox: '0 0 160 160', role: 'img', 'aria-label': `${ever} of ${live} live memories delivered at least once` },
+        s('circle', { cx: 80, cy: 80, r: R, fill: 'none', stroke: 'var(--track)', 'stroke-width': 12 }),
+        s('circle', { cx: 80, cy: 80, r: R, fill: 'none', stroke: 'var(--c3)', 'stroke-width': 12, 'stroke-linecap': 'round', class: 'arc',
+          'stroke-dasharray': `${C}`, style: `--from:${C};--to:${C * (1 - covered)}`, transform: 'rotate(-90 80 80)' }),
+        s('text', { x: 80, y: 86, 'text-anchor': 'middle', class: 'ring-value' }, `${Math.round(covered * 100)}%`)),
+      h('div', {},
+        h('p', { class: 'lead' }, `${fmt(ever)} of ${fmt(live)} live memories reached the agent at least once.`),
+        h('p', { class: 'quiet' }, `${fmt(d.coverage.never_fired_with_opportunity)} never fired although their files were touched; ${fmt(d.coverage.no_opportunity)} never had the chance.`)));
+
+    // The store: statuses as one bar, kinds and areas beside it.
     const STATUS = [['active', 'var(--c3)'], ['contested', 'var(--c5)'], ['candidate', 'var(--c2)'], ['archived', 'var(--c4)'], ['superseded', 'var(--c6)']];
     const byStatus = st.by_status ?? {};
     const known = STATUS.map(([name]) => name);
-    const statusRows = [...STATUS, ...Object.keys(byStatus).filter(name => !known.includes(name)).map(name => [name, 'var(--c1)'])]
-      .filter(([name]) => byStatus[name]);
-    const statusCard = card('Memories by status', false,
+    const statusRows = [...STATUS, ...Object.keys(byStatus).filter(name => !known.includes(name)).map(name => [name, 'var(--c1)'])].filter(([name]) => byStatus[name]);
+    const areaMax = Math.max(...Object.values(d.areas), 1);
+    const store = h('div', { class: 'store' },
       h('div', { class: 'stack', role: 'img', 'aria-label': statusRows.map(([name]) => `${byStatus[name]} ${name}`).join(', ') },
-        statusRows.map(([name, color]) => h('span', { title: `${byStatus[name]} ${name}`, style: { width: `${byStatus[name] / Math.max(st.total, 1) * 100}%`, background: color } }))),
-      h('div', { class: 'legend' }, statusRows.map(([name, color]) => h('span', {}, h('i', { style: { background: color } }), `${name} ${byStatus[name]}`))));
+        statusRows.map(([name, color]) => h('span', { title: `${byStatus[name]} ${name}`, style: { '--w': `${byStatus[name] / Math.max(st.total, 1) * 100}%`, background: color } }))),
+      h('div', { class: 'legend' }, statusRows.map(([name, color]) => h('span', {}, h('i', { style: { background: color } }), `${name} ${byStatus[name]}`))),
+      h('p', { class: 'eyebrow sub' }, 'Live, by kind'),
+      h('div', { class: 'kinds' }, Object.entries(d.kinds).map(([kind, n]) => h('span', { class: `kind kind-${kind}` }, h('b', {}, fmt(n)), kind.replace('_', ' ')))),
+      h('p', { class: 'eyebrow sub' }, 'Live, by area'),
+      h('div', { class: 'areas' }, Object.entries(d.areas).map(([area, n]) => h('span', { style: { fontSize: `${12 + (n / areaMax) * 10}px`, opacity: String(0.55 + (n / areaMax) * 0.45) } }, area, h('sup', {}, n)))));
 
-    // Sessions and deliveries per day, as paired columns.
-    const days = d.by_day;
-    let dayChart = h('p', { class: 'mono' }, 'Nothing rolled up yet.');
-    if (days.length) {
-      const W = 560, H = 180, pad = 22, top = Math.max(...days.flatMap(r => [r.sessions, r.deliveries]), 1);
-      const slot = (W - pad) / days.length, bw = Math.min(18, slot / 3);
-      const y = v => H - pad - (v / top) * (H - pad - 22);
-      dayChart = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': days.map(r => `${r.day}: ${r.sessions} sessions, ${r.deliveries} deliveries`).join('; ') },
-        s('line', { x1: pad, y1: H - pad, x2: W, y2: H - pad, stroke: 'var(--border)' }),
-        days.map((r, i) => {
-          const x = pad + i * slot + slot / 2;
-          return s('g', {},
-            s('rect', { x: x - bw - 1, y: y(r.sessions), width: bw, height: H - pad - y(r.sessions), rx: 3, fill: 'var(--c1)' }, s('title', {}, `${r.sessions} sessions`)),
-            s('rect', { x: x + 1, y: y(r.deliveries), width: bw, height: H - pad - y(r.deliveries), rx: 3, fill: 'var(--c2)' }, s('title', {}, `${r.deliveries} deliveries`)),
-            r.sessions ? s('text', { x: x - bw / 2 - 1, y: y(r.sessions) - 4, 'text-anchor': 'middle' }, String(r.sessions)) : null,
-            r.deliveries ? s('text', { x: x + bw / 2 + 1, y: y(r.deliveries) - 4, 'text-anchor': 'middle' }, String(r.deliveries)) : null,
-            s('text', { x, y: H - 6, 'text-anchor': 'middle' }, r.day.slice(5)));
-        }));
-    }
-    const dayCard = card('Last days', false, dayChart,
-      h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--c1)' } }), 'sessions'), h('span', {}, h('i', { style: { background: 'var(--c2)' } }), 'deliveries')));
-
-    // Coverage: of the live memories, how many were ever delivered.
-    const live = d.coverage.live, ever = d.coverage.delivered_ever, share = live ? ever / live : 0, R = 34, C = 2 * Math.PI * R;
-    const coverageCard = card('Coverage', false, h('div', { class: 'ring' },
-      s('svg', { width: 88, height: 88, viewBox: '0 0 88 88', role: 'img', 'aria-label': `${ever} of ${live} live memories delivered at least once` },
-        s('circle', { cx: 44, cy: 44, r: R, fill: 'none', stroke: 'var(--track)', 'stroke-width': 10 }),
-        s('circle', { cx: 44, cy: 44, r: R, fill: 'none', stroke: 'var(--c3)', 'stroke-width': 10, 'stroke-linecap': 'round',
-          'stroke-dasharray': `${C * share} ${C}`, transform: 'rotate(-90 44 44)' })),
-      h('div', {}, h('div', { class: 'big' }, `${Math.round(share * 100)}%`),
-        h('div', { class: 'mono' }, `${ever} of ${live} live memories delivered at least once`),
-        h('div', { class: 'mono' }, `${d.coverage.never_fired_with_opportunity} never fired with the chance · ${d.coverage.no_opportunity} never had it`))));
-
+    // Capture: from DD asking to what was kept, as a funnel that narrows.
     const c = d.capture;
-    const captureCard = card('Capture', false, bars([
-      { label: 'asked to save', value: c.asked, color: 'var(--c1)' }, { label: 'corrections', value: c.corrections, color: 'var(--c1)' },
-      { label: 'proposals', value: c.proposals, color: 'var(--c2)' }, { label: 'active', value: c.active, color: 'var(--c3)' },
-      { label: 'candidates', value: c.candidates, color: 'var(--c2)' }, { label: 'rejected', value: c.rejected, color: 'var(--c5)' },
-      { label: 'agent requests', value: c.requests, color: 'var(--c4)' }]));
+    const steps = [['Asked to save', c.asked, 'var(--c1)'], ['Corrections', c.corrections, 'var(--c1)'], ['Proposals', c.proposals, 'var(--c2)'],
+      ['Became candidates', c.candidates, 'var(--c2)'], ['Became active', c.active, 'var(--c3)'], ['Rejected', c.rejected, 'var(--c5)']];
+    const stepMax = Math.max(...steps.map(([, n]) => n), 1);
+    const funnel = h('div', { class: 'funnel' }, steps.map(([label, n, color]) => h('div', { class: 'step' },
+      h('span', { class: 'step-label' }, h('span', { class: 'quiet' }, label), h('span', { class: 'step-num' }, count(n))),
+      h('div', { class: 'step-bar', style: { '--w': share(n, stepMax), background: color } }))));
 
+    // Blind spots: files the agent keeps opening that no memory covers.
+    const spotMax = Math.max(...d.blind_spots.map(b => b.sessions), 1);
+    const spots = d.blind_spots.length
+      ? h('div', { class: 'spots' }, d.blind_spots.map(b => h('div', { class: 'spot' },
+        h('span', { class: 'path' }, b.path), fill(b.sessions, spotMax, 'var(--c1)'),
+        h('span', { class: 'num' }, `${plural(b.sessions, 'session', 'sessions')}${b.changed ? ` · changed in ${b.changed}` : ''}`))))
+      : h('p', { class: 'quiet' }, 'Every file the agent kept coming back to is covered by a memory.');
+
+    // The memories that fire most, ranked.
+    const board = d.top.length ? h('ol', { class: 'board' }, d.top.map((row, i) => h('li', {},
+      h('span', { class: 'rank' }, String(i + 1).padStart(2, '0')),
+      h('button', { type: 'button', class: 'name', title: row.title, on: { click: () => openAnywhere(row.memory) } }, row.title),
+      fill(row.fires, d.top[0].fires, 'var(--c3)'),
+      h('span', { class: 'num' }, `${plural(row.fires, 'fire', 'fires')} · ${plural(row.sessions, 'session', 'sessions')}`))))
+      : h('p', { class: 'quiet' }, 'Nothing has fired yet.');
+
+    // Delivery size against the cap.
     const dv = d.deliveries;
+    const gauge = h('div', { class: 'gauge' },
+      h('div', { class: 'gauge-track' },
+        h('div', { class: 'fill', style: { '--w': share(dv.chars_avg, d.limit), background: 'var(--c2)' } }),
+        h('span', { class: 'mark', title: `largest ${fmt(dv.chars_max)}`, style: { left: share(dv.chars_max, d.limit) } })),
+      h('div', { class: 'gauge-scale' }, h('span', {}, '0'), h('span', {}, `cap ${fmt(d.limit)}`)),
+      h('p', { class: 'lead' }, `${fmt(dv.chars_avg)} characters on average, ${fmt(dv.chars_max)} at most; ${dv.memories_avg} memories a delivery.`),
+      h('p', { class: 'quiet' }, `The cap was reached in ${Math.round(dv.capped_share * 100)}% of deliveries. Checks: ${fmt(d.checks.fixed)} fixed, ${fmt(d.checks.ignored)} ignored, ${fmt(d.checks.repeated)} repeated.`));
+
     const conflicts = st.conflicts ?? [];
-    $('view').replaceChildren(h('div', { class: 'dash' },
-      h('div', { class: 'dash-head' }, h('h2', {}, 'Dashboard'),
-        h('span', { class: 'mono' }, `${st.total} memories · ${Object.entries(byStatus).map(([name, n]) => `${n} ${name}`).join(' · ')}`)),
-      h('div', { class: 'tiles' },
-        tile('Live memories', live, `${ever} delivered at least once`),
-        tile('Waiting for you', waiting, `${o.queues.candidates ?? 0} candidates · ${o.queues.from_agent ?? 0} from the agent`, waiting > 0),
-        tile('Sessions', d.sessions.total, `${d.sessions.with_deliveries} with a delivery`),
-        tile('Deliveries', dv.total, `${dv.per_100_tool_calls} per 100 tool calls`),
-        tile('Characters per delivery', dv.chars_avg, `max ${dv.chars_max} of a cap of ${d.limit}; cap reached ${Math.round(dv.capped_share * 100)}%`),
-        tile('Checks', d.checks.fixed + d.checks.ignored + d.checks.repeated, `fixed ${d.checks.fixed} · ignored ${d.checks.ignored} · repeated ${d.checks.repeated}`)),
-      conflicts.length ? h('div', { class: 'notice error conflicts' }, `Topics with more than one live memory: ${conflicts.map(x => x.topic).join(', ')}`) : null,
-      h('div', { class: 'cards' },
-        statusCard, coverageCard, dayCard, captureCard,
-        card('Fires by trigger', false, bars(Object.entries(d.by_via).map(([label, value]) => ({ label, value })), 'var(--c2)')),
-        card('Deliveries by event', false, bars(Object.entries(d.by_kind).map(([label, value]) => ({ label, value })), 'var(--c1)')),
-        card('Memories that fire most', true, bars(d.top.map(row => ({ label: row.title, value: row.fires, open: () => openAnywhere(row.memory) })), 'var(--c3)')))));
+    const dash = h('div', { class: `dash${animate ? '' : ' still'}` },
+      hero,
+      conflicts.length ? h('div', { class: 'notice error' }, `Topics with more than one live memory: ${conflicts.map(x => x.topic).join(', ')}`) : null,
+      block('Activity', 'The last seven days', activity),
+      h('div', { class: 'split' },
+        block('Coverage', 'How much of the store is used', coverage),
+        block('The store', `${plural(st.total, 'memory', 'memories')}`, store)),
+      block('Capture', 'From a fix to a memory', funnel),
+      block('Blind spots', 'Files the agent keeps opening that no memory covers', h('p', { class: 'quiet intro' }, 'Worth a memory only if something about them is not in the code.'), spots),
+      h('div', { class: 'split' },
+        block('How memories fire', 'By trigger', bars(Object.entries(d.by_via).map(([label, value]) => ({ label, value })), 'var(--c2)')),
+        block('Where they arrive', 'By event', bars(Object.entries(d.by_kind).map(([label, value]) => ({ label, value })), 'var(--c1)'))),
+      block('Most useful', 'The memories that fire most', board),
+      block('Delivery size', 'How much each delivery carries', gauge));
+    $('view').replaceChildren(dash);
+    playIn(dash, animate);
+  }
+
+  // Each section plays in once, as it scrolls into view: its numbers count up, its bars grow, the chart
+  // draws itself. With reduced motion, or on a refresh, every section is simply there.
+  function playIn(root, animate) {
+    const sections = [...root.querySelectorAll('section')];
+    if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches || typeof IntersectionObserver !== 'function') {
+      root.classList.add('still');
+      sections.forEach(section => section.classList.add('in'));
+      return;
+    }
+    const countUp = section => {
+      const numbers = [...section.querySelectorAll('[data-count]')].map(el => ({ el, to: Number(el.dataset.count) }));
+      if (!numbers.length) return;
+      const start = performance.now();
+      const tick = now => {
+        const t = Math.min(1, (now - start) / 1100);
+        for (const { el, to } of numbers) el.textContent = Math.round(to * (1 - (1 - t) ** 3)).toLocaleString('en-US');
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    // On a wide screen the view scrolls inside its own column; on a phone, the page does.
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        entry.target.classList.add('in');
+        countUp(entry.target);
+      }
+    }, { root: matchMedia('(max-width: 900px)').matches ? null : $('view'), threshold: 0.2 });
+    requestAnimationFrame(() => sections.forEach(section => observer.observe(section)));
   }
 
   // What the agent asked: one row per batch it named and per request no batch names. A row opens in the
@@ -849,7 +1024,7 @@
     refreshing = true;
     try {
       await loadOverview();
-      if (state.queue === 'dashboard') await loadDashboard();
+      if (state.queue === 'dashboard') await loadDashboard({ animate: false });
       else if (state.queue !== 'create') await loadList();
     } finally {
       refreshing = false;

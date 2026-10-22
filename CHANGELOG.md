@@ -14,7 +14,10 @@ when it reaches `main`, and CI refuses a version bump without a section here.
   what the harness sends each hook to `.dd/local/payloads.jsonl`. `DD_MAINTENANCE=0` and
   `DD_CAPTURE_PAYLOADS` still work for one process, as CI and tests need.
 - Review UI: the site's look (dark surfaces, gold for what waits for a person), views grouped in the
-  sidebar, and settings in a side panel.
+  sidebar, and settings in a panel from the left. The dashboard is one page of sections that play in as
+  they scroll into view: live memories and what waits for you, the last seven days drawn as a line,
+  coverage, the store by status, kind and area, the capture funnel, the memories that fire most, delivery
+  size against the cap, and blind spots: files the agent keeps opening that no memory covers.
 - Docs: the README keeps the install steps and points to the site for the rest. The reference pages say
   each thing once: the trigger fields and check rules live in Memories, Using DD well keeps the guidance,
   and the behavioural contract ends with DD's limits. No behavior changes.
