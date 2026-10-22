@@ -1,19 +1,22 @@
 # Changelog
 
-Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic versioning](https://semver.org/);
-before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
-when it reaches `main`, and CI refuses a version bump without a section here.
+Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic versioning](https://semver.org/):
+from 1.0 on, a change that breaks a memory, a setting or a command takes a major version. Each version is
+published to npm and released on GitHub when it reaches `main`, and CI refuses a version bump without a
+section here.
 
-## [0.9.15] - 2026-10-21
+## [1.0.0] - 2026-10-22
 
-- Codex and OpenCode move to preview: install, save, delivery and recall verified in live sessions
-  (codex-cli 0.163 and OpenCode 1.19.3). `deltadictum install --host opencode` writes the plugin entry
-  into `opencode.json`, the `dd-save`, `dd-recall` and `dd-review` skills into `.opencode/skills/` and the
-  AGENTS.md block. The OpenCode adapter now ingests a memory the agent writes into `.dd/inbox/` and adds
+The first stable release. Claude Code, Codex and OpenCode are supported; Grok Build is in preview.
+
+- Codex and OpenCode are supported: install, save, delivery and recall verified in live sessions
+  (codex-cli 0.163 and OpenCode 1.19.3), and a memory saved in one is recalled in the other.
+  `deltadictum install --host opencode` writes the plugin entry into `opencode.json`, the `dd-save`,
+  `dd-recall` and `dd-review` skills into `.opencode/skills/` and the AGENTS.md block. The OpenCode adapter now ingests a memory the agent writes into `.dd/inbox/` and adds
   DD's answer to that write's result; before, nothing read it.
 - Grok Build: its hooks run with `--grok`, and DD reads Grok's own payload (camelCase fields, `read_file`,
   `search_replace`, `run_terminal_command`), mapped from its hook guide in `src/hooks/grok.cjs`. Before, a
-  Grok tool call fired nothing. Not yet verified in a live session.
+  Grok tool call fired nothing. Grok Build is in preview: not yet verified in a live session.
 - Capture: a proposal whose `evidence` or `triggers` is a single object instead of a list is read as a list
   of one, as models other than Claude often write it.
 - Evidence: a file is hashed as text with CRLF line endings read as LF, so a checkout with

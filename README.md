@@ -27,14 +27,14 @@ the benchmark on its [landing page](https://cribbnicolas.github.io/deltadictum/#
 
 You need [Node.js](https://nodejs.org) 22.16 or later and a git repository.
 
-**Claude Code** (supported and measured):
+**Claude Code**:
 
 ```text
 /plugin marketplace add CribbNicolas/deltadictum
 /plugin install dd@deltadictum
 ```
 
-**Codex** (preview):
+**Codex**:
 
 ```bash
 npm install -g deltadictum
@@ -43,14 +43,14 @@ deltadictum install --host codex --project "<absolute-project-path>"
 
 Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`.
 
-**OpenCode** (preview):
+**OpenCode**:
 
 ```bash
 npm install -g deltadictum
 deltadictum install --host opencode --project "<absolute-project-path>"
 ```
 
-**Grok Build** (not yet verified live): `grok plugin install CribbNicolas/deltadictum --trust`.
+**Grok Build** (preview, not yet verified in a live session): `grok plugin install CribbNicolas/deltadictum --trust`.
 
 Then opt the project in from its root, and commit what it writes:
 

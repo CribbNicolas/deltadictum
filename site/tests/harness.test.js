@@ -7,8 +7,8 @@ const html = value => ({ type: 'html', value });
 const para = text => ({ type: 'paragraph', children: [{ type: 'text', value: text }] });
 const code = meta => ({ type: 'code', lang: 'text', meta, value: 'x' });
 
-// The one code block: a header with a tab per harness and a copy button, a strip per harness not
-// yet verified live, then the panels.
+// The one code block: a header with a tab per harness and a copy button, a strip per harness in
+// preview, then the panels.
 test('adjacent harness blocks become one code card with a tab for each harness they cover', () => {
   const [intro, group, outro] = run([para('Install:'), code('for=claude-code'), html('<!-- for: codex -->'), para('Codex steps'), html('<!-- /for -->'),
     code('for=opencode,grok'), para('Then start a session.')]);
@@ -22,7 +22,7 @@ test('adjacent harness blocks become one code card with a tab for each harness t
   assert.deepEqual(tabs.children.map(tab => tab.data.hProperties.dataSetHarness), ['claude-code', 'codex', 'opencode', 'grok']);
   assert.equal(tabs.data.hProperties.role, 'tablist');
   assert.equal(copy.data.hProperties.dataCopy, '');
-  assert.deepEqual(rest.slice(0, -1).map(strip => strip.data.hProperties.dataFor), ['codex', 'opencode', 'grok']);
+  assert.deepEqual(rest.slice(0, -1).map(strip => strip.data.hProperties.dataFor), ['grok']);
   const panels = body.children;
   assert.deepEqual(panels.map(p => p.data.hProperties.dataFor), ['claude-code', 'codex', 'opencode grok']);
   assert.equal(panels[0].children[0].meta, null);

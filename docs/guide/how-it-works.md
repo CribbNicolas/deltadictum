@@ -93,8 +93,8 @@ agent writes into `.dd/inbox/` is ingested at once, and DD's answer joins the re
 Grok Build runs the hooks Claude Code runs, with its own payload: DD reads its camelCase fields and its
 tool names (`read_file`, `search_replace`, `run_terminal_command`, `grep`, `list_dir`) as its hook guide
 documents them. Grok adds a hook's context after the tool call, as OpenCode does, and drops the context of
-a prompt hook, so a memory that fires only on a prompt's words does not reach the agent. No real Grok
-session has been recorded yet; the "Record hook payloads" setting
+a prompt hook, so a memory that fires only on a prompt's words does not reach the agent. Grok Build is in
+preview: no real Grok session has been recorded yet; the "Record hook payloads" setting
 ([Configuration](configuration.md#this-machine-ddlocalsettingsjson)) records one.
 
 <!-- /for -->

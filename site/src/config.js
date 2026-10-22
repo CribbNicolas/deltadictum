@@ -6,7 +6,7 @@ export const SITE = {
   repo: 'https://github.com/CribbNicolas/deltadictum',
   npm: 'https://www.npmjs.com/package/deltadictum',
   homeTitle: 'DeltaDictum: project knowledge for coding agents',
-  description: 'DeltaDictum gives coding agents the engineering knowledge the code does not show, at the action it applies to. A local plugin for Claude Code, shared through git.',
+  description: 'DeltaDictum gives coding agents the engineering knowledge the code does not show, at the action it applies to. A local plugin for Claude Code, Codex and OpenCode, shared through git.',
   // The landing's table: the average of these trials (Opus and Haiku), with the two guide conditions as one.
   featured: {
     title: 'Benchmark with blind judge',
@@ -39,7 +39,7 @@ export const LANDING = {
 export const LLMS = {
   summary: 'DeltaDictum (DD) is a local plugin for coding-agent harnesses that keeps the engineering knowledge a project\'s code does not show (decisions, traps, abandoned approaches, procedures, facts) as JSON memories in git, and delivers each one to the agent right before the tool call it applies to.',
   facts: [
-    'Harnesses: Claude Code is supported and measured; Codex and OpenCode are in preview (install, save, delivery and recall verified live); Grok Build follows its hook guide but is not yet verified live.',
+    'Harnesses: Claude Code, Codex and OpenCode are supported (install, save, delivery and recall verified in live sessions; Claude Code is where DD is measured). Grok Build is in preview: built from its hook guide, not yet verified live.',
     'Requirements: Node.js 22.16 or later and a git repository. No account, no model calls, no background process, no runtime dependency, no network request.',
     'A project opts in with a `.dd/` folder: `npx deltadictum init` writes `.dd/config.json`, `.dd/.gitignore` and `.dd/memories/`. A project without it is left alone.',
     'A memory is `.dd/memories/<id>.json`: kind, topic, title, body, `not_derivable` (why the code does not show it), triggers, an optional check, evidence.',

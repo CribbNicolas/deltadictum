@@ -3,15 +3,15 @@
 // those harnesses; adjacent panels form a group with a tab bar. The reader's choice (the
 // sidebar's select, or a tab) is one global value kept in localStorage: CSS shows the
 // panels for it. On GitHub, and without JavaScript, every panel shows.
-// `status` is set for a harness short of full support, and every code block for it says so with `note`:
-// preview (install, save, delivery and recall verified in a live session) or unverified (no live session yet).
+// `status` is set for a harness short of full support, and every code block for it says so with `note`.
+// Claude Code, Codex and OpenCode are supported: install, save, delivery and recall verified in live sessions.
 export const HARNESSES = [
   { id: 'claude-code', label: 'Claude Code' },
-  { id: 'codex', label: 'Codex', status: 'preview', note: 'Install, save, delivery and recall verified live with codex-cli 0.163 (2026-10-22).' },
-  { id: 'opencode', label: 'OpenCode', status: 'preview', note: 'Install, save, delivery and recall verified live with OpenCode 1.19.3 (2026-10-22).' },
-  { id: 'grok', label: 'Grok Build', status: 'unverified', note: "Built from Grok's hook guide (grok 1.0.41); no real session recorded yet." },
+  { id: 'codex', label: 'Codex' },
+  { id: 'opencode', label: 'OpenCode' },
+  { id: 'grok', label: 'Grok Build', status: 'preview', note: "Built from Grok's hook guide (grok 1.0.41); not yet verified in a live session." },
 ];
-export const STATUS_LABELS = { preview: 'Preview.', unverified: 'Not yet verified live.' };
+export const STATUS_LABELS = { preview: 'Preview.' };
 export const DEFAULT_HARNESS = 'claude-code';
 // The landing's install lines, the same steps Getting started gives: the hero shows `hero`, the
 // footer every step. A line starting with # is a note, not a command.

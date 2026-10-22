@@ -14,9 +14,9 @@ change it too.
 
 - [Node.js](https://nodejs.org) 22.16 or later on the machine's `PATH` (Windows, Linux or macOS).
 - A git repository. Memories are files you commit; DD does nothing with them outside a repository.
-- One of the harnesses DD runs in. Claude Code is supported in full and is where DD is measured. Codex and
-  OpenCode are in preview: install, save, delivery and recall verified in a live session. Grok Build is
-  built from its hook guide and not yet verified live.
+- One of the harnesses DD runs in. Claude Code, Codex and OpenCode are supported, each verified in a live
+  session; Claude Code is where DD is measured. Grok Build is in preview: built from its hook guide and not
+  yet verified in a live session.
 
 The memory store is the same for every harness: a project's `.dd/memories/` serves them all.
 
