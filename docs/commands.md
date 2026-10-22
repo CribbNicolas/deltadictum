@@ -48,8 +48,14 @@ plugin's prefix (`grok inspect` shows each name).
 
 <!-- for: opencode -->
 
-OpenCode has no DD commands. Ask the agent in words ("save this as a trap: …") and use the command line
-below for the rest.
+| Skill | Does |
+|---|---|
+| `dd-save` | Saves knowledge from the conversation as a memory, or asks for a change to one |
+| `dd-recall` | Shows what DD knows on a topic (`deltadictum recall`) |
+| `dd-review` | Runs doctor, then opens the review UI and prints its address |
+
+`deltadictum install --host opencode` writes them into `.opencode/skills/`; ask for one by name ("use the
+dd-recall skill on the store").
 
 <!-- /for -->
 
@@ -70,5 +76,5 @@ Run from the project's root, as `npx deltadictum <command>` or, installed global
 | `compile` | Rebuilds the index by hand (session start does it when the memories changed) |
 | `maintain` | The daily maintenance, by hand |
 | `import [--from DIR] [--dry-run]` | Turns `.claude/rules/` and `.cursor/rules/` files that name paths into memories; a second run updates the ones that changed |
-| `install --host codex --project PATH [--dry-run]` | Writes DD's Codex configuration into a project |
+| `install --host HOST --project PATH [--dry-run]` | Writes DD's configuration for HOST, `codex` or `opencode`, into a project |
 | `help`, `version` | The command list; the installed version |

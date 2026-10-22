@@ -125,11 +125,14 @@ corrected.
 
 ## Harnesses
 
-- Claude Code is supported in full. Codex receives the same delivery through its hooks: its shell tool is
-  classified as Claude Code's Bash is, `apply_patch` headers name the edited files, and Stop answers with
-  a block. OpenCode receives memories appended to the tool result, leaving the system prompt and its cache
-  alone. Grok Build runs the same hooks with Claude Code's payload shape, not yet checked against a recorded
-  session.
+- Claude Code is supported in full. Codex and OpenCode are in preview: install, save, delivery and recall
+  were verified in a live session (codex-cli 0.163 and OpenCode 1.19.3, 2026-10-22). Codex receives the same
+  delivery through its hooks: its shell tool is classified as Claude Code's Bash is, `apply_patch` headers
+  name the edited files, and Stop answers with a block (`src/hooks/codex.cjs`). OpenCode receives memories
+  appended to the tool result, leaving the system prompt and its cache alone, and its writes into the inbox
+  are ingested in the same result (`adapters/opencode/index.js`). `deltadictum install --host codex|opencode`
+  writes either project's configuration. Grok Build runs the same hooks with its own payload, mapped from
+  its hook guide (`src/hooks/grok.cjs`), not yet checked against a recorded session.
 - A hook that fails ends silently: DD never blocks the host.
 
 ## Import

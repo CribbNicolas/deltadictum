@@ -39,7 +39,7 @@ export const LANDING = {
 export const LLMS = {
   summary: 'DeltaDictum (DD) is a local plugin for coding-agent harnesses that keeps the engineering knowledge a project\'s code does not show (decisions, traps, abandoned approaches, procedures, facts) as JSON memories in git, and delivers each one to the agent right before the tool call it applies to.',
   facts: [
-    'Harnesses: Claude Code is supported and measured; Codex, OpenCode and Grok Build have adapters not yet verified in a live session.',
+    'Harnesses: Claude Code is supported and measured; Codex and OpenCode are in preview (install, save, delivery and recall verified live); Grok Build follows its hook guide but is not yet verified live.',
     'Requirements: Node.js 22.16 or later and a git repository. No account, no model calls, no background process, no runtime dependency, no network request.',
     'A project opts in with a `.dd/` folder: `npx deltadictum init` writes `.dd/config.json`, `.dd/.gitignore` and `.dd/memories/`. A project without it is left alone.',
     'A memory is `.dd/memories/<id>.json`: kind, topic, title, body, `not_derivable` (why the code does not show it), triggers, an optional check, evidence.',

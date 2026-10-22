@@ -6,6 +6,16 @@ when it reaches `main`, and CI refuses a version bump without a section here.
 
 ## [0.9.15] - 2026-10-21
 
+- Codex and OpenCode move to preview: install, save, delivery and recall verified in live sessions
+  (codex-cli 0.163 and OpenCode 1.19.3). `deltadictum install --host opencode` writes the plugin entry
+  into `opencode.json`, the `dd-save`, `dd-recall` and `dd-review` skills into `.opencode/skills/` and the
+  AGENTS.md block. The OpenCode adapter now ingests a memory the agent writes into `.dd/inbox/` and adds
+  DD's answer to that write's result; before, nothing read it.
+- Grok Build: its hooks run with `--grok`, and DD reads Grok's own payload (camelCase fields, `read_file`,
+  `search_replace`, `run_terminal_command`), mapped from its hook guide in `src/hooks/grok.cjs`. Before, a
+  Grok tool call fired nothing. Not yet verified in a live session.
+- Capture: a proposal whose `evidence` or `triggers` is a single object instead of a list is read as a list
+  of one, as models other than Claude often write it.
 - Evidence: a file is hashed as text with CRLF line endings read as LF, so a checkout with
   `core.autocrlf` no longer shows evidence as stale on one machine and fresh on another. Binary files are
   hashed as they are, and a hash recorded before still matches the file it was taken from.

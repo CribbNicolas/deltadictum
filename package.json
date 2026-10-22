@@ -1,7 +1,7 @@
 {
   "name": "deltadictum",
   "version": "0.9.15",
-  "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git; a plugin for Claude Code, with Codex, Grok Build and OpenCode in progress.",
+  "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git; a plugin for Claude Code, with Codex and OpenCode in preview.",
   "keywords": [
     "claude-code",
     "codex",

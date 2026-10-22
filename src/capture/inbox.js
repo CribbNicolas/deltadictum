@@ -223,6 +223,10 @@ async function ingest({ root, file, sessionId, now = new Date(), compile = compi
   const reasons = [];
   const notDerivable = String(proposal.not_derivable ?? '').trim();
   if (notDerivable.length < NOT_DERIVABLE_MIN || [proposal.title, proposal.body].includes(notDerivable)) reasons.push('not_derivable_required');
+  // A model often writes one evidence entry or one trigger clause without its list: read it as a list of one.
+  for (const key of ['evidence', 'triggers']) {
+    if (proposal[key] && typeof proposal[key] === 'object' && !Array.isArray(proposal[key])) proposal[key] = [proposal[key]];
+  }
   const { evidence, files, corrections, reasons: evidenceReasons } = resolveEvidence(root, proposal.evidence, footprint, listing);
   reasons.push(...evidenceReasons);
   let triggers = Array.isArray(proposal.triggers) ? proposal.triggers : [];

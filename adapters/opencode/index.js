@@ -22,8 +22,10 @@ import { ADVISORY_FRAME } from './frame.js';
 const HOOK = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
 // Hooks run outside the project folder: Windows cannot remove a folder a process is in.
 const HOOK_CWD = fileURLToPath(new URL('.', import.meta.url));
-// PreToolUse's limit on the other hosts; session start may compile the index.
-const TIMEOUTS = { 'pre-tool': 10000, 'session-start': 30000 };
+// PreToolUse's limit on the other hosts; session start may compile the index, and the inbox ingests.
+const TIMEOUTS = { 'pre-tool': 10000, 'session-start': 30000, inbox: 30000 };
+// A path into the project's inbox, in any tool's arguments (a write's path, a patch's headers).
+const INBOX = /\.dd(?:[\\/]|\\\\)inbox(?:[\\/]|\\\\)/;
 
 // OpenCode's tools as the Claude Code tool calls DD maps to events.
 const TOOLS = {
@@ -89,6 +91,13 @@ export default async function DeltaDictum({ directory }) {
         const payload = payloadOf(input, args);
         if (!payload) return;
         runHook('observe', payload, { wait: false });
+        // A memory the agent saved: DD ingests it now and answers in the same result (stored, or
+        // rejected with reasons), as the PostToolUse inbox hook does on the other hosts.
+        if (INBOX.test(JSON.stringify(payload.tool_input))) {
+          const reply = await runHook('inbox', payload);
+          if (reply && typeof output?.output === 'string') output.output = `${output.output}\n\n${reply}`;
+          return;
+        }
         const context = await runHook('pre-tool', payload);
         if (context && typeof output?.output === 'string') output.output = `${output.output}\n\n${ADVISORY_FRAME}\n\n${context}`;
       } catch {

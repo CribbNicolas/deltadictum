@@ -14,8 +14,9 @@ change it too.
 
 - [Node.js](https://nodejs.org) 22.16 or later on the machine's `PATH` (Windows, Linux or macOS).
 - A git repository. Memories are files you commit; DD does nothing with them outside a repository.
-- One of the harnesses DD runs in. Claude Code is supported in full and is where DD is measured; the others
-  are added one at a time, each verified against a recorded session before it is called supported.
+- One of the harnesses DD runs in. Claude Code is supported in full and is where DD is measured. Codex and
+  OpenCode are in preview: install, save, delivery and recall verified in a live session. Grok Build is
+  built from its hook guide and not yet verified live.
 
 The memory store is the same for every harness: a project's `.dd/memories/` serves them all.
 
@@ -61,18 +62,22 @@ command again; it refreshes DD's own handlers and keeps yours.
 
 <!-- for: opencode -->
 
-Add DD to the project's `opencode.json`:
+Install DD globally, then let it write the project's OpenCode configuration:
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["deltadictum"]
-}
+```bash
+npm install -g deltadictum
+deltadictum install --host opencode --project "<absolute-project-path>"
 ```
 
+It writes, keeping everything else in each file:
+
+- `opencode.json`: DD's plugin, beside any others;
+- `.opencode/skills/dd-save`, `dd-recall`, `dd-review`: the commands, as OpenCode skills;
+- `AGENTS.md`: a short managed block telling the agent what DD's deliveries are and how to save knowledge.
+
 OpenCode runs plugins in Bun, which has no `node:sqlite`, so the adapter imports nothing from DD: it runs
-DD's hooks in Node, which must be 22.16 or later on the `PATH`. OpenCode has no DD commands; ask the agent
-in words, and use `npx deltadictum` in a terminal for the rest.
+DD's hooks in Node, which must be 22.16 or later on the `PATH`. OpenCode needs 1.18 or later for its free
+models. After `npm update -g deltadictum`, run the install command again.
 
 <!-- /for -->
 
@@ -82,10 +87,10 @@ in words, and use `npx deltadictum` in a terminal for the rest.
 grok plugin install CribbNicolas/deltadictum --trust
 ```
 
-`--trust` is required for the hooks to load. The plugin runs the hooks Claude Code runs, assuming Claude
-Code's payload shape, so a tool name Grok spells differently fires nothing. `grok inspect`, run in the
-project, lists the plugin's hooks and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok
-keeps `/review` for its own).
+`--trust` is required for the hooks to load. The plugin runs the hooks Claude Code runs and reads Grok's
+own payload, as Grok's hook guide documents it; no real Grok session has been recorded yet. `grok inspect`,
+run in the project, lists the plugin's hooks and its three skills: `/save`, `/recall` and
+`/deltadictum:review` (Grok keeps `/review` for its own).
 
 <!-- /for -->
 
@@ -203,11 +208,14 @@ $dd-recall store
 /recall store
 ```
 
-<!-- for: opencode -->
+```text for=opencode
+Use the dd-recall skill: what does DD know about the store?
+```
 
-On OpenCode a memory arrives with the result of the tool call it applies to, not before the call: a read
-is unaffected, and an edit learns of its trap one step late. The system prompt is left alone, so the
-prompt cache holds.
+<!-- for: opencode grok -->
+
+Here a memory arrives with the result of the tool call it applies to, not before the call: a read is
+unaffected, and an edit learns of its trap one step late.
 
 <!-- /for -->
 
@@ -252,13 +260,12 @@ $dd-review
 /deltadictum:review
 ```
 
-```bash for=opencode
-npx deltadictum doctor
-npx deltadictum ui
+```text for=opencode
+Use the dd-review skill.
 ```
 
 The agent runs `deltadictum doctor`, tells you its summary, and starts the review UI in the background
-(on OpenCode you run both yourself). It prints an address like:
+(`npx deltadictum ui` starts it from a terminal too). It prints an address like:
 
 ```text
 DD - review UI: http://127.0.0.1:7733/?key=3f9a…

@@ -3,13 +3,15 @@
 // those harnesses; adjacent panels form a group with a tab bar. The reader's choice (the
 // sidebar's select, or a tab) is one global value kept in localStorage: CSS shows the
 // panels for it. On GitHub, and without JavaScript, every panel shows.
-// `note` is set for a harness not yet verified in a live session: every code block for it says so.
+// `status` is set for a harness short of full support, and every code block for it says so with `note`:
+// preview (install, save, delivery and recall verified in a live session) or unverified (no live session yet).
 export const HARNESSES = [
   { id: 'claude-code', label: 'Claude Code' },
-  { id: 'codex', label: 'Codex', note: 'Unit-tested against Codex payloads recorded in 2026-09 (codex-cli 0.154).' },
-  { id: 'opencode', label: 'OpenCode', note: "Unit-tested against OpenCode's plugin API." },
-  { id: 'grok', label: 'Grok Build', note: "Runs Claude Code's hooks; Grok's real payloads have not been recorded yet." },
+  { id: 'codex', label: 'Codex', status: 'preview', note: 'Install, save, delivery and recall verified live with codex-cli 0.163 (2026-10-22).' },
+  { id: 'opencode', label: 'OpenCode', status: 'preview', note: 'Install, save, delivery and recall verified live with OpenCode 1.19.3 (2026-10-22).' },
+  { id: 'grok', label: 'Grok Build', status: 'unverified', note: "Built from Grok's hook guide (grok 1.0.41); no real session recorded yet." },
 ];
+export const STATUS_LABELS = { preview: 'Preview.', unverified: 'Not yet verified live.' };
 export const DEFAULT_HARNESS = 'claude-code';
 // The landing's install lines, the same steps Getting started gives: the hero shows `hero`, the
 // footer every step. A line starting with # is a note, not a command.
@@ -18,8 +20,8 @@ export const INSTALL = {
     steps: ['/plugin marketplace add CribbNicolas/deltadictum', '/plugin install dd@deltadictum', 'npx deltadictum init'] },
   codex: { hero: 'deltadictum install --host codex --project <path>',
     steps: ['npm install -g deltadictum', 'deltadictum install --host codex --project <path>'] },
-  opencode: { hero: '# opencode.json: "plugin": ["deltadictum"]',
-    steps: ['# opencode.json: "plugin": ["deltadictum"]', 'npx deltadictum init'] },
+  opencode: { hero: 'deltadictum install --host opencode --project <path>',
+    steps: ['npm install -g deltadictum', 'deltadictum install --host opencode --project <path>'] },
   grok: { hero: 'grok plugin install CribbNicolas/deltadictum --trust',
     steps: ['grok plugin install CribbNicolas/deltadictum --trust', 'npx deltadictum init'] },
 };
@@ -53,14 +55,14 @@ const el = (name, props, children = []) => ({ type: 'harnessElement', children, 
 const text = value => ({ type: 'text', value });
 
 // The one code block of the docs and the landing: a header with the harness tabs and a copy button, a
-// strip for a harness not yet verified live, then the panels.
+// strip for a harness short of full support, then the panels.
 function codeCard(panels) {
   const covered = HARNESSES.filter(h => panels.some(p => p.ids.includes(h.id)));
   const tabs = el('div', { className: ['harness-bar'], role: 'tablist', ariaLabel: 'Harness' },
     covered.map(h => el('button', { type: 'button', role: 'tab', ariaSelected: 'false', className: ['harness-tab'], dataSetHarness: h.id }, [text(h.label)])));
   const head = el('div', { className: ['cb-head'] }, [tabs, el('button', { type: 'button', className: ['cb-copy'], dataCopy: '' }, [text('Copy')])]);
-  const strips = covered.filter(h => h.note).map(h => el('p', { className: ['cb-status'], dataFor: h.id },
-    [el('strong', {}, [text('Not yet verified live.')]), text(` ${h.note}`)]));
+  const strips = covered.filter(h => h.status).map(h => el('p', { className: ['cb-status'], dataFor: h.id },
+    [el('strong', {}, [text(STATUS_LABELS[h.status])]), text(` ${h.note}`)]));
   return { type: 'harnessGroup', children: [head, ...strips, el('div', { className: ['cb-body'] }, panels)],
     data: { hName: 'div', hProperties: { className: ['codeblock', 'harness-group'] } } };
 }

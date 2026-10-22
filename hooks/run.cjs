@@ -19,8 +19,9 @@ if (!supportedNode()) {
   }
   process.exit(0);
 }
-// Codex runs these hooks with --codex: its payloads are mapped in src/hooks/codex.cjs.
-const host = process.argv.includes('--codex') ? 'codex' : 'claude';
+// Codex runs these hooks with --codex and Grok Build with --grok: their payloads are mapped in
+// src/hooks/codex.cjs and src/hooks/grok.cjs.
+const host = process.argv.includes('--codex') ? 'codex' : process.argv.includes('--grok') ? 'grok' : 'claude';
 
 let payload;
 try { payload = JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { process.exit(0); }

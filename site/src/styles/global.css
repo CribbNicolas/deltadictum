@@ -18,7 +18,7 @@ img, svg { max-width: 100%; }
 .skip:focus { left: 16px; top: 16px; z-index: 10; background: var(--accent); color: var(--on-accent); padding: 8px 12px; border-radius: var(--radius-s); }
 
 /* The one code block of the site (docs and landing): a header with tabs or a label and a copy button,
-   an optional strip for a harness not yet verified live, then the code. */
+   an optional strip for a harness short of full support, then the code. */
 .codeblock { margin: 0 0 20px; border: 1px solid var(--border-2); border-radius: var(--radius-m); background: var(--surface-2); overflow: hidden; }
 .cb-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border-1); background: #0d1014; }
 /* On a narrow screen the tabs scroll sideways; the copy button keeps its place. */

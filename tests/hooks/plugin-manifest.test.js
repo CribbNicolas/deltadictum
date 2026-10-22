@@ -39,17 +39,19 @@ test('DD listens at session start, at prompts and before the tools that carry pr
 // Grok Build runs Claude Code's hooks: both
 // Grok files register the events, matchers and commands hooks/hooks.json does,
 // each with its own root. Found missing: inbox (so /dd:save was never ingested
-// on Grok), observe-prompt and PostToolUseFailure.
+// on Grok), observe-prompt and PostToolUseFailure. Each runs with --grok, and its
+// matcher adds Grok's own tool names (src/hooks/grok.cjs).
+const GROK_TOOLS = /\|(?:read_file|search_replace|run_terminal_command|grep|list_dir)\b/g;
 test('the Grok manifests register every hook hooks.json does, with the same matchers and flags', async () => {
   const shape = manifest => Object.entries(manifest.hooks).flatMap(([event, groups]) => groups.flatMap(group => group.hooks.map(hook =>
-    `${event} ${group.matcher ?? ''} ${/hooks\/run\.cjs"? ([a-z-]+)$/.exec(hook.command)?.[1]} async=${hook.async === true}`))).sort();
+    `${event} ${(group.matcher ?? '').replace(GROK_TOOLS, '')} ${/hooks\/run\.cjs"? ([a-z-]+)(?: --grok)?$/.exec(hook.command)?.[1]} async=${hook.async === true}`))).sort();
   const expected = shape(JSON.parse(await readFile(join(ROOT, 'hooks', 'hooks.json'), 'utf8')));
   for (const file of ['.grok-plugin/plugin.json', '.grok/hooks/dd.json']) {
     assert.deepEqual(shape(JSON.parse(await readFile(join(ROOT, file), 'utf8'))), expected, file);
   }
   const plugin = JSON.parse(await readFile(join(ROOT, '.grok-plugin', 'plugin.json'), 'utf8'));
   for (const hook of Object.values(plugin.hooks).flat().flatMap(group => group.hooks)) {
-    assert.match(hook.command, /^node "\$\{GROK_PLUGIN_ROOT\}\/hooks\/run\.cjs" [a-z-]+$/, hook.command);
+    assert.match(hook.command, /^node "\$\{GROK_PLUGIN_ROOT\}\/hooks\/run\.cjs" [a-z-]+ --grok$/, hook.command);
   }
 });
 

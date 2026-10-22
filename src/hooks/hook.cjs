@@ -132,7 +132,8 @@ async function handle(command, payload, { host = 'claude' } = {}) {
   const sent = findProjectRoot(payload.cwd || process.cwd());
   require('../engine/machine.cjs').recordPayload(localPaths(sent).local, command, payload);
   if (host === 'codex') payload = require('./codex.cjs').codexPayload(payload);
-  const root = host === 'codex' ? findProjectRoot(payload.cwd || process.cwd()) : sent;
+  if (host === 'grok') payload = require('./grok.cjs').grokPayload(payload);
+  const root = host === 'claude' ? sent : findProjectRoot(payload.cwd || process.cwd());
   if (CAPTURE.includes(command)) {
     const capturePath = pathToFileURL(join(__dirname, '..', 'capture', 'hooks.js')).href;
     // The inbox hook runs after every write; only a JSON file in .dd/inbox/ loads

@@ -34,7 +34,7 @@ You need [Node.js](https://nodejs.org) 22.16 or later and a git repository.
 /plugin install dd@deltadictum
 ```
 
-**Codex** (not yet verified live):
+**Codex** (preview):
 
 ```bash
 npm install -g deltadictum
@@ -43,7 +43,12 @@ deltadictum install --host codex --project "<absolute-project-path>"
 
 Then open the project in Codex, trust it, and trust DD's hooks in `/hooks`.
 
-**OpenCode** (not yet verified live): add `"plugin": ["deltadictum"]` to the project's `opencode.json`.
+**OpenCode** (preview):
+
+```bash
+npm install -g deltadictum
+deltadictum install --host opencode --project "<absolute-project-path>"
+```
 
 **Grok Build** (not yet verified live): `grok plugin install CribbNicolas/deltadictum --trust`.
 

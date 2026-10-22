@@ -83,15 +83,19 @@ OpenCode has no hook that adds context before a tool runs, and text added to the
 on every delivery, which invalidates the prompt cache. DD therefore appends the memories that fire at a
 tool call to that call's result, framed as advisory project knowledge, once per session; the system prompt
 is left alone. A memory arrives with the result of the call it applies to, not before it, and there is no
-Stop hook: DD does not ask the agent to save at the end of a turn, and turn checks do not run.
+Stop hook: DD does not ask the agent to save at the end of a turn, and turn checks do not run. A memory the
+agent writes into `.dd/inbox/` is ingested at once, and DD's answer joins the result of that write.
 
 <!-- /for -->
 
 <!-- for: grok -->
 
-Grok Build runs the hooks Claude Code runs, read with Claude Code's payload shape. Grok's real payloads
-have not been recorded yet, so a tool Grok names differently fires nothing; the "Record hook payloads"
-setting ([Configuration](configuration.md#this-machine-ddlocalsettingsjson)) records them.
+Grok Build runs the hooks Claude Code runs, with its own payload: DD reads its camelCase fields and its
+tool names (`read_file`, `search_replace`, `run_terminal_command`, `grep`, `list_dir`) as its hook guide
+documents them. Grok adds a hook's context after the tool call, as OpenCode does, and drops the context of
+a prompt hook, so a memory that fires only on a prompt's words does not reach the agent. No real Grok
+session has been recorded yet; the "Record hook payloads" setting
+([Configuration](configuration.md#this-machine-ddlocalsettingsjson)) records one.
 
 <!-- /for -->
 

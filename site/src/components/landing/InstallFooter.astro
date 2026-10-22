@@ -1,8 +1,8 @@
 ---
 // The install section and the page's footer. The install card is the docs' code block: a tab per
-// harness, a copy button, a strip for a harness not yet verified live, then that harness's steps.
+// harness, a copy button, a strip for a harness short of full support, then that harness's steps.
 import { SITE, href } from '../../config.js';
-import { HARNESSES, INSTALL } from '../../lib/harness.js';
+import { HARNESSES, INSTALL, STATUS_LABELS } from '../../lib/harness.js';
 ---
 <section id="install" class="install" aria-labelledby="install-title">
   <div class="wrap row">
@@ -19,8 +19,8 @@ import { HARNESSES, INSTALL } from '../../lib/harness.js';
         </div>
         <button type="button" class="cb-copy" data-copy aria-label="Copy the install commands">Copy</button>
       </div>
-      {HARNESSES.filter(h => h.note).map(h => (
-        <p class="cb-status" data-for={h.id}><strong>Not yet verified live.</strong> {h.note}</p>
+      {HARNESSES.filter(h => h.status).map(h => (
+        <p class="cb-status" data-for={h.id}><strong>{STATUS_LABELS[h.status]}</strong> {h.note}</p>
       ))}
       <div class="cb-body">
         {HARNESSES.map(h => (

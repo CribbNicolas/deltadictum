@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as adapter from '../../adapters/opencode/index.js';
 import { ADVISORY_FRAME } from '../../adapters/opencode/frame.js';
+import { applyOpencodeInstall, planOpencodeInstall } from '../../scripts/install-opencode.mjs';
 import { compileProject } from '../../src/engine/compile.js';
 import { createMemoryFiles } from '../../src/memory/store.js';
 
@@ -84,4 +86,37 @@ test('the OpenCode adapter imports nothing Bun cannot load, exports only the plu
   assert.deepEqual(Object.keys(adapter), ['default']);
   const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.exports['./server'], './adapters/opencode/index.js');
+});
+
+// A memory the agent writes into the inbox is ingested at once and the reply joins the write's result,
+// as the PostToolUse inbox hook does elsewhere (verified live with OpenCode 1.19.3, 2026-10-22).
+test('a memory written into the inbox is stored and the reply joins the write\'s result', async t => {
+  const root = await project(t);
+  execFileSync('git', ['-C', root, 'init', '-q']);
+  execFileSync('git', ['-C', root, 'add', '-A']);
+  mkdirSync(join(root, '.dd', 'inbox'), { recursive: true });
+  const file = join(root, '.dd', 'inbox', 'a.json');
+  const proposal = { topic: 'config/a-constant', kind: 'fact', title: 'a is one on purpose', body: 'Keep `a` in src/a.js at 1: the importer reads it as a version.',
+    not_derivable: 'The importer lives in another repository.', triggers: [{ on: ['edit'], paths: ['src/a.js'] }], evidence: [{ type: 'file', path: 'src/a.js' }] };
+  writeFileSync(file, JSON.stringify(proposal));
+  const hooks = await DeltaDictum({ directory: root });
+  const result = await toolCall(hooks, 's5', 'write', { filePath: file, content: JSON.stringify(proposal) });
+  assert.match(result, /^tool result\n\nDD - config\/a-constant: stored/);
+});
+
+// deltadictum install --host opencode: the plugin entry, the skills where OpenCode reads them, AGENTS.md.
+test('the OpenCode install names this adapter, keeps other plugins and writes the skills under .opencode', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'dd-opencode-install-'));
+  t.after(() => removeDir(root));
+  writeFileSync(join(root, 'opencode.json'), JSON.stringify({ model: 'x/y', plugin: ['other-plugin', 'deltadictum@0.9.0'] }));
+  const plan = await planOpencodeInstall(root);
+  await applyOpencodeInstall(plan);
+  const config = JSON.parse(readFileSync(join(root, 'opencode.json'), 'utf8'));
+  assert.equal(config.model, 'x/y');
+  assert.equal(config.plugin.length, 2);
+  assert.equal(config.plugin[0], 'other-plugin');
+  assert.match(config.plugin[1], /^file:\/\/\/.+\/adapters\/opencode\/index\.js$/);
+  for (const skill of ['dd-save', 'dd-recall', 'dd-review']) assert.match(readFileSync(join(root, '.opencode', 'skills', skill, 'SKILL.md'), 'utf8'), new RegExp(`^---\r?\nname: ${skill}`));
+  assert.match(readFileSync(join(root, 'AGENTS.md'), 'utf8'), /save it with the dd-save skill/);
+  assert.equal((await planOpencodeInstall(root)).operations.length, 0);
 });
