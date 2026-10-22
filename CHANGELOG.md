@@ -5,6 +5,12 @@ from 1.0 on, a change that breaks a memory, a setting or a command takes a major
 published to npm and released on GitHub when it reaches `main`, and CI refuses a version bump without a
 section here.
 
+## [1.0.1] - 2026-10-22
+
+- Review UI: the dashboard's large gradient number no longer cuts its last digit.
+- Site: on the landing, the seal's tick draws without a dot showing before it, each teammate in "The agent
+  gets it in time" lights up as its packet arrives, and the 1,883 counter no longer cuts its last digit.
+
 ## [1.0.0] - 2026-10-22
 
 The first stable release. Claude Code, Codex and OpenCode are supported; Grok Build is in preview.
