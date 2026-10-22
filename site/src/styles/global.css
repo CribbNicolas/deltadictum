@@ -34,7 +34,7 @@ img, svg { max-width: 100%; }
 .cb-status strong { color: var(--accent); font-weight: 600; margin-right: 4px; }
 .cb-body { padding: 14px 18px 16px; }
 .cb-body > :last-child, .cb-body .harness-panel > :last-child { margin-bottom: 0; }
-.codeblock pre { margin: 0; padding: 0; border: 0; background: transparent !important; overflow-x: auto; font-size: 14px; line-height: 1.75; }
+.codeblock pre { margin: 0; padding: 0; border: 0; background: transparent !important; overflow-x: visible; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.75; }
 .cb-body pre + p, .cb-body p + pre, .cb-body ul + pre { margin-top: 12px; }
 .codeblock .cb-code { padding: 14px 18px 16px; }
 

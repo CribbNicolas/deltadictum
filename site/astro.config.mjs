@@ -25,7 +25,8 @@ export default defineConfig({
   integrations: [sitemap({ filter: page => !OFF_SITE.some(folder => new URL(page).pathname.slice(SITE.base.length).split('/')[0] === folder), serialize: item => ({ ...item, url: sitemapUrl(item.url, { base: SITE.base, sections }) }) })],
   markdown: {
     processor: unified({ remarkPlugins: [remarkDocLinks({ docsRoot, repoRoot, base: SITE.base, offSite: OFF_SITE }), remarkCallouts, remarkHarness] }),
-    shikiConfig: { theme: 'github-dark-default' },
+    // Long lines wrap inside the code card; a reader never scrolls a code block sideways.
+    shikiConfig: { theme: 'github-dark-default', wrap: true },
   },
   vite: { server: { fs: { allow: [repoRoot] } } },
 });
