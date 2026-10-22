@@ -9,6 +9,10 @@ import '../styles/tokens.css';
 import '../styles/global.css';
 import { SITE, href } from '../config.js';
 import { harnessCss, headScript } from '../lib/harness.js';
+// The faces every page shows first, fetched with the page so text does not shift when they arrive.
+import sans400 from '@fontsource/geist-sans/files/geist-sans-latin-400-normal.woff2?url';
+import sans600 from '@fontsource/geist-sans/files/geist-sans-latin-600-normal.woff2?url';
+import mono400 from '@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff2?url';
 
 const { title, description, ogImage = 'og/index.png', jsonLd } = Astro.props;
 const fullTitle = title ? `${title} · ${SITE.name}` : SITE.homeTitle;
@@ -22,6 +26,7 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
+    {[sans400, sans600, mono400].map(font => <link rel="preload" href={font} as="font" type="font/woff2" crossorigin />)}
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <meta name="color-scheme" content="dark" />

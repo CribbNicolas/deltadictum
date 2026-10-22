@@ -99,8 +99,32 @@ function regroup(children, where) {
   return grouped;
 }
 
+// Every other code block gets the same card at build time, with a label for its language instead of tabs,
+// and every table a scroll box, so the page never moves once it has loaded. A terminal block outside a
+// harness group reads the same for every harness, and says so.
+const LABELS = { bash: 'Terminal', sh: 'Terminal', shell: 'Terminal', json: 'JSON', js: 'JavaScript', javascript: 'JavaScript', toml: 'TOML', yaml: 'YAML', text: 'Text' };
+
+function card(code) {
+  const label = LABELS[code.lang] ?? code.lang ?? 'Text';
+  const head = el('div', { className: ['cb-head'] }, [el('span', { className: ['cb-label'] }, [text(label)]),
+    ...(label === 'Terminal' ? [el('span', { className: ['cb-note'] }, [text('Same on every harness')])] : []),
+    el('button', { type: 'button', className: ['cb-copy'], dataCopy: '' }, [text('Copy')])]);
+  return { type: 'harnessGroup', children: [head, el('div', { className: ['cb-code'] }, [code])],
+    data: { hName: 'div', hProperties: { className: ['codeblock'] } } };
+}
+
+function frame(children) {
+  return children.map(node => {
+    if (node.type === 'harnessGroup') return node;
+    if (node.type === 'code') return card(node);
+    if (node.type === 'table') return el('div', { className: ['table-wrap'] }, [node]);
+    if (node.children) node.children = frame(node.children);
+    return node;
+  });
+}
+
 export function remarkHarness() {
   return (tree, file) => {
-    tree.children = regroup(tree.children, file?.path ?? 'markdown');
+    tree.children = frame(regroup(tree.children, file?.path ?? 'markdown'));
   };
 }

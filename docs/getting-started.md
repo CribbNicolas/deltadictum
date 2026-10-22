@@ -83,8 +83,9 @@ grok plugin install CribbNicolas/deltadictum --trust
 ```
 
 `--trust` is required for the hooks to load. The plugin runs the hooks Claude Code runs, assuming Claude
-Code's payload shape, so a tool name Grok spells differently fires nothing. `grok inspect`, run in the project, lists the plugin's hooks
-and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok keeps `/review` for its own).
+Code's payload shape, so a tool name Grok spells differently fires nothing. `grok inspect`, run in the
+project, lists the plugin's hooks and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok
+keeps `/review` for its own).
 
 <!-- /for -->
 
@@ -265,32 +266,24 @@ DD - review UI: http://127.0.0.1:7733/?key=3f9a…
 
 > **Open that exact URL.** The key is what lets your browser in; without it the UI answers 403.
 
-The UI lists candidates, memories DD accepted on
-its own, stale or unused memories, duplicates, the agent's requests and the last deliveries. For each
-memory it shows the evidence, how broad its triggers are, how often it fired and by which trigger, and it
-dry-runs the triggers over recent sessions so you can see what would have fired. Edit, accept, archive,
-merge or restore from there. [Using DD well](using-dd.md#the-review-ui) walks through it.
-
-Stop the UI with Ctrl+C in its terminal, or leave it; it serves one project on a loopback address only.
+Candidates, what DD accepted on its own and the agent's requests wait there for you; each memory shows
+its evidence, its use and a dry run of its triggers. [The review UI](using-dd.md#the-review-ui) walks
+through every view. Stop it with Ctrl+C, or leave it running: it serves one project, on a loopback address
+only.
 
 ## 8. Share with the team
 
-Memories are files under `.dd/memories/`. Commit and push them like code; a teammate who pulls and has the
-plugin installed receives the same deliveries. `.dd/local/` (the index, session files, counters) never
-leaves the machine and is rebuilt from the memories.
-
-Two people saving on the same topic produce two files, not a conflict; DD keeps at most one live memory
-per topic and shows the other as a duplicate to merge in the review UI.
+Commit and push `.dd/memories/` like code; a teammate who pulls and has the plugin installed receives the
+same deliveries. `.dd/local/` (the index, session files, counters) never leaves the machine. More in
+[Working as a team](using-dd.md#working-as-a-team).
 
 ## 9. Keep it healthy
 
 - `npx deltadictum doctor` whenever something seems off. A hook that fails never says so (it must not block
   the agent); doctor does.
-- Maintenance runs on its own once a day, detached from session start: it rolls session files up, prunes
-  them after seven days, and retires memories whose files keep being touched without them ever firing
-  (20 sessions by default). A memory a person reviewed is never retired this way.
-- `npx deltadictum health` lists dead triggers (a glob with no file, a symbol absent from the code), idle
-  memories, stale evidence and suspected false alarms.
+- Maintenance runs on its own once a day: it prunes session files after seven days and retires memories
+  whose files keep being touched without them ever firing. A memory a person reviewed is never retired.
+- `npx deltadictum health` lists dead triggers, idle memories, stale evidence and suspected false alarms.
 
 ## Coming from `CLAUDE.md` or `.claude/rules/`
 

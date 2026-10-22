@@ -19,14 +19,17 @@ const { groups, current } = Astro.props;
     ))}
   </nav>
 </details>
-<script>
+<script is:inline>
   // On a narrow screen the menu is closed behind its summary; on a wide one, where the summary is
   // hidden, it must be open, also after a rotation or a resize. Without JavaScript it stays open.
-  const sidebar = document.querySelector('[data-sidebar]');
-  const narrow = matchMedia('(max-width: 959px)');
-  const fit = () => { if (sidebar) sidebar.open = !narrow.matches; };
-  fit();
-  narrow.addEventListener('change', fit);
+  // Inline, right after the menu, so it is closed before the first paint and the page never jumps.
+  {
+    const sidebar = document.querySelector('[data-sidebar]');
+    const narrow = matchMedia('(max-width: 959px)');
+    const fit = () => { if (sidebar) sidebar.open = !narrow.matches; };
+    fit();
+    narrow.addEventListener('change', fit);
+  }
 </script>
 <style>
   .sidebar { padding: 32px 0; font-size: 14px; }

@@ -139,4 +139,15 @@ corrected.
   at its file (`review.issues: imported_truncated`). A second import updates the memories whose file
   changed and leaves the rest alone.
 
-**DD is a plugin for coding-agent harnesses, not a service.** These are the limits that follow.
+## Limits
+
+**DD is a plugin for coding-agent harnesses, not a service.** It follows that:
+
+- Hooks are short-lived Node processes, and one runs before every tool call: matching is rules over a
+  compiled index, never a search or a model.
+- There is no resident process. DD runs in the hooks, in a daily detached maintenance run, and in the
+  review UI a person starts.
+- There is no runtime dependency and no model: Node 22.16 or later is all DD needs.
+- Each harness's hook contract differs; its adapter translates events and output, nothing more.
+- A hook failure never blocks the host.
+- Everything is local: memories in git, everything derived in `.dd/local/`, no network request.

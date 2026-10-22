@@ -34,6 +34,21 @@ export const LANDING = {
   },
 };
 
+// The opening of llms.txt and llms-full.txt (src/lib/llms.js): what a model should know before it reads
+// any page. Every fact here is stated in the docs too; keep them in step.
+export const LLMS = {
+  summary: 'DeltaDictum (DD) is a local plugin for coding-agent harnesses that keeps the engineering knowledge a project\'s code does not show (decisions, traps, abandoned approaches, procedures, facts) as JSON memories in git, and delivers each one to the agent right before the tool call it applies to.',
+  facts: [
+    'Harnesses: Claude Code is supported and measured; Codex, OpenCode and Grok Build have adapters not yet verified in a live session.',
+    'Requirements: Node.js 22.16 or later and a git repository. No account, no model calls, no background process, no runtime dependency, no network request.',
+    'A project opts in with a `.dd/` folder: `npx deltadictum init` writes `.dd/config.json`, `.dd/.gitignore` and `.dd/memories/`. A project without it is left alone.',
+    'A memory is `.dd/memories/<id>.json`: kind, topic, title, body, `not_derivable` (why the code does not show it), triggers, an optional check, evidence.',
+    'Delivery is rule matching over a compiled index (paths, symbols, commands, keywords), not similarity search; each memory arrives at most once per session, framed as advice that never outranks the user.',
+    'The agent saves by writing a proposal to `.dd/inbox/`; DD validates it and activates it only when it verified the evidence itself (auto-accept, on by default), otherwise it waits for a person in the review UI (`npx deltadictum ui`).',
+    '`npx deltadictum doctor` says whether DD is working in a project; a failing hook never blocks the agent.',
+  ],
+};
+
 // Folders of docs/ the site does not publish (development notes and benchmark data, kept out of git).
 export const OFF_SITE = ['superpowers', 'research', 'benchmarks', 'architecture'];
 

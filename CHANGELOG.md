@@ -4,6 +4,14 @@ Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic ver
 before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
 when it reaches `main`, and CI refuses a version bump without a section here.
 
+## [0.9.15] - 2026-10-21
+
+- Docs: the README keeps the install steps and points to the site for the rest. The reference pages say
+  each thing once: the trigger fields and check rules live in Memories, Using DD well keeps the guidance,
+  and the behavioural contract ends with DD's limits. No behavior changes.
+- Site: a new landing and code blocks with harness tabs, built with the page so nothing shifts as it
+  loads; `llms.txt` and `llms-full.txt` give language models the docs in one place.
+
 ## [0.9.14] - 2026-10-21
 
 - Agent requests: besides archive and revise, the agent can ask to re-verify stale evidence, merge one

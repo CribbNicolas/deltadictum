@@ -101,14 +101,13 @@ The agent saves a memory by writing a JSON file into `.dd/inbox/` (the save comm
 it must write it with `apply_patch`, since a file written by a shell redirect is not ingested). DD ingests
 it in the same turn and answers:
 
-- **stored as active**, when DD verified the evidence itself (a file it hashed, or a correction it recorded that names the memory and follows something the agent did),
-  every trigger can fire, the memory has no check and duplicates nothing live (auto-accept, on by default);
+- **stored as active**, when DD verified the evidence itself (a file it hashed, or a correction it
+  recorded that names the memory and follows something the agent did), every trigger can fire, the memory
+  has no check and duplicates nothing live (auto-accept, on by default);
 - **stored as a candidate** for review, saying which condition was not met;
 - **rejected** with reasons, for example generic advice, a missing `not_derivable` or a secret in the text.
 
-When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive,
-revise, re-verify, merge or delete memories wait for a person in the review UI, which carries one out only
-when the person applies it (delete takes only memories already archived or superseded), and what DD activated on its own waits in the "Accepted
-by DD" queue until a person marks it reviewed. The review UI's dashboard shows the capture funnel (asks,
-proposals, stored, activated, rejected), and `deltadictum health` adds the rejection reasons and each
-memory's fires by the trigger dimension that matched.
+When no trigger is given, DD suggests one from what the session touched. The agent can also ask to
+archive, revise, re-verify, merge or delete memories; those requests, like what DD activated on its own,
+wait in the [review UI](../using-dd.md#the-review-ui) for a person. Delete takes only memories already
+archived or superseded.
