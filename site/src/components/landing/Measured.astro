@@ -80,7 +80,9 @@ const rows = LANDING.rows.map(row => row.map(id => cards[id]));
   .badge { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border: 1px solid rgba(232, 184, 74, 0.35); border-radius: 999px; font: 500 12px var(--font-mono); letter-spacing: 0.12em; color: var(--accent); }
   .badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   h2 { margin: 22px 0 0; display: flex; flex-direction: column; align-items: center; font-weight: inherit; }
-  .runs { font-size: clamp(76px, 14vw, 136px); line-height: 0.95; font-weight: 700; letter-spacing: -0.055em; font-variant-numeric: tabular-nums;
+  /* The gradient paints only the element's box: with negative letter spacing the last digit overhangs it and
+     would be cut, so the box gets room on both sides and below. */
+  .runs { padding: 0 0.08em 0.04em; font-size: clamp(76px, 14vw, 136px); line-height: 0.95; font-weight: 700; letter-spacing: -0.055em; font-variant-numeric: tabular-nums;
     background: linear-gradient(180deg, #f7dc96 0%, #e8b84a 55%, #b9862a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .unit { margin-top: 14px; font: 500 15px var(--font-mono); letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-heading); }
   .rule { display: block; width: 48px; height: 1px; margin-top: 28px; background: rgba(232, 184, 74, 0.5); }
