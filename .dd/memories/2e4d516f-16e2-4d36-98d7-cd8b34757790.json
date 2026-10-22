@@ -1,0 +1,54 @@
+{
+  "schema_version": 8,
+  "id": "2e4d516f-16e2-4d36-98d7-cd8b34757790",
+  "project_id": "supermem",
+  "topic": "integrations/grok/payload-shape",
+  "kind": "fact",
+  "status": "active",
+  "title": "Grok sends its own hook payload, and its docs are on this machine",
+  "body": "Grok Build's hook payload is camelCase (sessionId, toolName, toolInput, toolResult, stopHookActive) with its own tool names (read_file with path; search_replace with file_path, old_string, new_string; run_terminal_command); only a hook matcher maps Claude Code's names to Grok's. PreToolUse additionalContext reaches the model after the call, a UserPromptSubmit hook's context is discarded, and Stop also fires at session end with reason shutdown. The guide is local at ~/.grok/docs/user-guide/10-hooks.md; field names it omits were read from grok.exe's serde strings. src/hooks/grok.cjs maps it; no real session was recorded (no credits on 2026-10-22).",
+  "not_derivable": "Grok's guide lives outside the repository, and the binary field names were found by searching the executable; nothing in the code says where the mapping came from or that it is unconfirmed.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "src/hooks/grok.cjs",
+        ".grok-plugin/plugin.json",
+        ".grok/hooks/dd.json",
+        "tests/hooks/grok.test.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "grok"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/hooks/grok.cjs",
+      "sha256": "06d15db51780cf2e628222c03f54473da8f6e8fffc893c119b7fd78bcb6b8b51",
+      "summary": "The mapping from Grok's payload."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "dd",
+      "at": "2026-10-22T02:34:47.015Z"
+    }
+  },
+  "created": "2026-10-22T02:34:47.015Z",
+  "updated": "2026-10-22T02:34:47.170Z"
+}

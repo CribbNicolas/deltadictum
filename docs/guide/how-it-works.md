@@ -83,15 +83,19 @@ OpenCode has no hook that adds context before a tool runs, and text added to the
 on every delivery, which invalidates the prompt cache. DD therefore appends the memories that fire at a
 tool call to that call's result, framed as advisory project knowledge, once per session; the system prompt
 is left alone. A memory arrives with the result of the call it applies to, not before it, and there is no
-Stop hook: DD does not ask the agent to save at the end of a turn, and turn checks do not run.
+Stop hook: DD does not ask the agent to save at the end of a turn, and turn checks do not run. A memory the
+agent writes into `.dd/inbox/` is ingested at once, and DD's answer joins the result of that write.
 
 <!-- /for -->
 
 <!-- for: grok -->
 
-Grok Build runs the hooks Claude Code runs, read with Claude Code's payload shape. Grok's real payloads
-have not been recorded yet, so a tool Grok names differently fires nothing; `DD_CAPTURE_PAYLOADS` (in
-[Configuration](configuration.md)) records them.
+Grok Build runs the hooks Claude Code runs, with its own payload: DD reads its camelCase fields and its
+tool names (`read_file`, `search_replace`, `run_terminal_command`, `grep`, `list_dir`) as its hook guide
+documents them. Grok adds a hook's context after the tool call, as OpenCode does, and drops the context of
+a prompt hook, so a memory that fires only on a prompt's words does not reach the agent. Grok Build is in
+preview: no real Grok session has been recorded yet; the "Record hook payloads" setting
+([Configuration](configuration.md#this-machine-ddlocalsettingsjson)) records one.
 
 <!-- /for -->
 
@@ -101,14 +105,13 @@ The agent saves a memory by writing a JSON file into `.dd/inbox/` (the save comm
 it must write it with `apply_patch`, since a file written by a shell redirect is not ingested). DD ingests
 it in the same turn and answers:
 
-- **stored as active**, when DD verified the evidence itself (a file it hashed, or a correction it recorded that names the memory and follows something the agent did),
-  every trigger can fire, the memory has no check and duplicates nothing live (auto-accept, on by default);
+- **stored as active**, when DD verified the evidence itself (a file it hashed, or a correction it
+  recorded that names the memory and follows something the agent did), every trigger can fire, the memory
+  has no check and duplicates nothing live (auto-accept, on by default);
 - **stored as a candidate** for review, saying which condition was not met;
 - **rejected** with reasons, for example generic advice, a missing `not_derivable` or a secret in the text.
 
-When no trigger is given, DD suggests one from what the session touched. The agent's requests to archive,
-revise, re-verify, merge or delete memories wait for a person in the review UI, which carries one out only
-when the person applies it (delete takes only memories already archived or superseded), and what DD activated on its own waits in the "Accepted
-by DD" queue until a person marks it reviewed. The review UI's dashboard shows the capture funnel (asks,
-proposals, stored, activated, rejected), and `deltadictum health` adds the rejection reasons and each
-memory's fires by the trigger dimension that matched.
+When no trigger is given, DD suggests one from what the session touched. The agent can also ask to
+archive, revise, re-verify, merge or delete memories; those requests, like what DD activated on its own,
+wait in the [review UI](../using-dd.md#the-review-ui) for a person. Delete takes only memories already
+archived or superseded.

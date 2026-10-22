@@ -2,6 +2,7 @@
 import { findProjectRoot } from './engine/locate.cjs';
 import { compileProject } from './engine/compile.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
+import { planOpencodeInstall, applyOpencodeInstall } from '../scripts/install-opencode.mjs';
 import { VERSION } from './version.js';
 
 
@@ -13,8 +14,8 @@ Usage: deltadictum [command]
 
   init [--project-id NAME]
                       Opt this project in: write .dd/config.json, .dd/.gitignore and .dd/memories/, and compile
-  install --host codex --project PATH [--dry-run]
-                      Write DD's Codex configuration into a project
+  install --host codex|opencode --project PATH [--dry-run]
+                      Write DD's Codex or OpenCode configuration into a project
   import [--from DIR] [--dry-run]
                       Turn the project's .claude/rules/ and .cursor/rules/ files that name paths into memories
   compile             Compile this project's memories for delivery (.dd/local/compiled)
@@ -34,16 +35,23 @@ async function runInstall(args) {
   const projectIdx = args.indexOf('--project');
   const project = projectIdx >= 0 ? args[projectIdx + 1] : undefined;
   const dryRun = args.includes('--dry-run');
-  if (host !== 'codex') {
-    throw new Error(`install --host ${host ?? '<missing>'} is not supported. Only "codex" needs a scripted installer — Claude Code, Grok Build and OpenCode install through their own marketplace/npm mechanisms (see README).`);
+  // Claude Code and Grok Build install DD from their plugin marketplaces; Codex and OpenCode need their
+  // project configuration written.
+  const INSTALLS = {
+    codex: { plan: planCodexInstall, apply: applyCodexInstall, next: 'Start a new Codex thread in this project. Review DD hooks in /hooks before enabling them.' },
+    opencode: { plan: planOpencodeInstall, apply: applyOpencodeInstall, next: 'Start a new OpenCode session in this project; the dd-save, dd-recall and dd-review skills are available.' },
+  };
+  const install = INSTALLS[host];
+  if (!install) {
+    throw new Error(`install --host ${host ?? '<missing>'} is not supported. Use "codex" or "opencode"; Claude Code and Grok Build install DD from their plugin marketplaces (see Getting started).`);
   }
-  if (!project) throw new Error('Usage: deltadictum install --host codex --project PROJECT [--dry-run]');
-  const plan = await planCodexInstall(project);
-  if (!dryRun) await applyCodexInstall(plan);
+  if (!project) throw new Error(`Usage: deltadictum install --host ${host} --project PROJECT [--dry-run]`);
+  const plan = await install.plan(project);
+  if (!dryRun) await install.apply(plan);
   console.log(JSON.stringify({
     dry_run: dryRun, project: plan.projectRoot, data: plan.dataDir,
     files: plan.operations.map(op => op.path),
-    next: 'Start a new Codex thread in this project. Review DD hooks in /hooks before enabling them.',
+    next: install.next,
   }, null, 2));
 }
 

@@ -1,0 +1,55 @@
+{
+  "schema_version": 8,
+  "id": "8b2c42ae-ae86-451d-b885-f2ef7db90283",
+  "project_id": "supermem",
+  "topic": "development/hooks/capture-real-payloads",
+  "kind": "procedure",
+  "status": "active",
+  "title": "Record a host's real hook payloads, not from documentation",
+  "body": "To learn what a harness really sends a hook, turn on \"Record hook payloads\" in the review UI's Settings (this machine; .dd/local/settings.json record_payloads: true), trigger the tool call, read .dd/local/payloads.jsonl, then turn it off. In a project that has not opted in, set DD_CAPTURE_PAYLOADS=<file> in the environment the hooks run with instead: src/engine/machine.cjs appends every command and payload, as the harness sent it, as one JSON line. Do not trust a documentation summary for a payload's shape, and do not register new events from the agent in .claude/settings.local.json: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a --plugin-dir session.",
+  "not_derivable": "On 2026-09-24 a capture contradicted a docs-derived summary of Claude Code's payloads, and adding PostToolUseFailure to settings.local.json was denied by the permission classifier; neither shows in the code.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "hooks/run.cjs",
+        "src/engine/machine.cjs",
+        "src/hooks/codex.cjs",
+        "adapters/opencode/**"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "payload shape",
+        "real payloads"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "src/engine/machine.cjs",
+      "sha256": "84f4c877933645d9484c72cdbca43490aeeb712d5693f6a08738def0e3d8f4ea",
+      "summary": "recordPayload: the setting and the environment variable."
+    }
+  ],
+  "origin": "user_explicit",
+  "replaces": "1093c9ca-4ccd-413d-9bd2-e9d40e147140",
+  "revisit_when": [],
+  "review": {
+    "issues": [],
+    "batch": "settings-and-hashing-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-22T01:05:04.574Z"
+    }
+  },
+  "created": "2026-10-22T00:59:46.516Z",
+  "updated": "2026-10-22T01:05:04.664Z"
+}

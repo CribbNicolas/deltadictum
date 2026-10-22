@@ -5,157 +5,283 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DD review</title>
   <style>
+    /* The site's palette (cribbnicolas.github.io/deltadictum): near-black surfaces, gold for what wants
+       a person, green for what is healthy, blue for links. */
     :root {
-      color-scheme: light dark;
-      --bg: #f7f7f9; --panel: #ffffff; --hover: #eeeef3; --border: #dcdce4;
-      --fg: #18181f; --muted: #66667a; --accent: #3b5bdb; --accent-fg: #ffffff; --brand: #b7791f;
-      --danger: #b42318; --danger-bg: #fdecea; --danger-border: #f3b8b2;
-      --ok: #146c43; --ok-bg: #e6f4ea; --ok-border: #a6d9b8;
-      --warn: #8a5a00; --warn-bg: #fff4dc; --warn-border: #f0d08c;
-      --c1: #3b5bdb; --c2: #b7791f; --c3: #146c43; --c4: #a3a3b5; --c5: #b42318; --c6: #d6d6e0; --track: #ececf2;
-      --mono: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0b0b0f; --panel: #14141a; --hover: #1b1b22; --border: #26262f;
-        --fg: #e9e9ee; --muted: #8f8fa3; --accent: #7c9cff; --accent-fg: #0b0b0f; --brand: #e8b84a;
-        --danger: #ff9b9b; --danger-bg: #341717; --danger-border: #5c2a2a;
-        --ok: #7fe0b3; --ok-bg: #12321f; --ok-border: #1c4a2c;
-        --warn: #f0c674; --warn-bg: #201a10; --warn-border: #4a3a1c;
-        --c1: #7c9cff; --c2: #e8b84a; --c3: #7fe0b3; --c4: #5c5c6e; --c5: #ff9b9b; --c6: #3d3d4c; --track: #1f1f28;
-      }
+      color-scheme: dark;
+      --bg: #0b0d10; --panel: #0f1318; --panel-2: #12161c; --hover: #161b22; --field: #0d1014;
+      --border: #1d232b; --border-2: #2b333d;
+      --fg: #c3cad4; --strong: #f0f3f6; --muted: #9aa4b2; --faint: #8a94a3;
+      --accent: #e8b84a; --accent-fg: #0b0d10; --accent-soft: rgba(232, 184, 74, 0.12); --accent-line: rgba(232, 184, 74, 0.45);
+      --brand: #e8b84a; --link: #8fc6ff;
+      --danger: #ff8a80; --danger-bg: rgba(255, 138, 128, 0.08); --danger-border: rgba(255, 138, 128, 0.4);
+      --ok: #5fd08a; --ok-bg: rgba(95, 208, 138, 0.08); --ok-border: rgba(95, 208, 138, 0.4);
+      --warn: #e8b84a; --warn-bg: rgba(232, 184, 74, 0.08); --warn-border: rgba(232, 184, 74, 0.4);
+      --c1: #8fc6ff; --c2: #e8b84a; --c3: #5fd08a; --c4: #3a434f; --c5: #ff8a80; --c6: #2b333d; --track: #1d232b;
+      --sans: "Geist", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+      --mono: "Geist Mono", ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body { margin: 0; font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--fg); overflow: hidden; }
-    main { height: 100%; display: grid; grid-template-columns: 220px 330px minmax(0, 1fr); }
-    main.full { grid-template-columns: 220px minmax(0, 1fr); }
+    body { margin: 0; font: 14px/1.5 var(--sans); background: var(--bg); color: var(--fg); overflow: hidden; -webkit-font-smoothing: antialiased; }
+    main { height: 100%; display: grid; grid-template-columns: 236px 340px minmax(0, 1fr); }
+    main.full { grid-template-columns: 236px minmax(0, 1fr); }
     main.full #list, main.full #detail { display: none; }
     main:not(.full) #view { display: none; }
-    nav { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; background: var(--panel); }
-    nav button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border: none;
-      border-radius: 7px; background: transparent; color: var(--fg); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
-    nav button:hover { background: var(--hover); }
-    nav button[aria-current="true"] { background: var(--accent); color: var(--accent-fg); }
-    nav .count { font-family: var(--mono); font-size: 11.5px; opacity: 0.8; }
-    nav .count.zero { opacity: 0.4; }
-    nav hr { border: none; border-top: 1px solid var(--border); margin: 8px 2px; }
-    .foot { margin-top: auto; padding: 12px 4px 2px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-    .foot .name { font-weight: 600; font-size: 13px; }
-    .foot .live { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); }
+    ::selection { background: var(--accent-soft); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    * { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+
+    /* The sidebar: the brand, the views in their groups, then whether the page is live and the settings. */
+    nav { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: 14px 10px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--bg); }
+    nav .brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 16px; color: var(--strong); font-weight: 600; letter-spacing: -0.01em; }
+    nav .brand .sub { margin-left: auto; font: 11px var(--mono); color: var(--faint); }
+    nav .group { margin: 14px 8px 6px; font: 500 10.5px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    nav .group:first-of-type { margin-top: 0; }
+    nav button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 6px 10px; border: none;
+      border-radius: 8px; background: transparent; color: var(--fg); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
+    nav button:hover { background: var(--hover); color: var(--strong); }
+    nav button[aria-current="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+    nav .count { min-width: 22px; padding: 0 7px; border-radius: 999px; font: 500 11px/18px var(--mono); text-align: center; color: var(--muted); background: var(--panel-2); }
+    nav .count:empty { display: none; }
+    nav .count.zero { color: var(--faint); background: transparent; }
+    nav .count.wants { color: var(--accent-fg); background: var(--accent); font-weight: 600; }
+    nav hr { display: none; }
+    .foot { margin-top: auto; padding: 12px 6px 2px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .foot .live { display: inline-flex; align-items: center; gap: 6px; font: 11.5px var(--mono); color: var(--faint); }
     .foot .live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--c4); }
-    .foot .live.on::before { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
-    .foot .gear { margin-left: auto; width: 34px; height: 34px; padding: 0; justify-content: center; border: 1px solid var(--border); }
+    .foot .live.on { color: var(--muted); }
+    .foot .live.on::before { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .foot .gear { margin-left: auto; width: auto; min-height: 32px; gap: 7px; padding: 0 10px; border: 1px solid var(--border-2); color: var(--strong); font-size: 12.5px; }
     #content { min-height: 0; display: contents; }
-    #msg { position: fixed; top: 10px; right: 16px; z-index: 5; max-width: min(560px, calc(100vw - 32px)); }
+    #msg { position: fixed; top: 14px; right: 18px; z-index: 5; max-width: min(560px, calc(100vw - 32px)); }
     #msg:empty { display: none; }
-    #list { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); }
+
+    /* The list beside the detail. */
+    #list { min-height: 0; overflow-y: auto; border-right: 1px solid var(--border); background: var(--bg); }
     #view { min-height: 0; overflow-y: auto; }
-    .item { display: block; width: 100%; padding: 10px 14px; border: none; border-bottom: 1px solid var(--border); border-left: 3px solid transparent;
-      background: transparent; color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
-    .item:hover { background: var(--hover); }
-    .item.active { background: var(--panel); border-left-color: var(--accent); }
-    .item .meta, .mono { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
-    .item .meta { display: block; margin-top: 3px; }
-    .empty { padding: 28px 16px; color: var(--muted); text-align: center; }
+    .item { display: block; width: 100%; padding: 12px 16px; border: none; border-bottom: 1px solid var(--border); box-shadow: inset 3px 0 0 transparent;
+      background: transparent; color: var(--strong); font: inherit; font-size: 13.5px; line-height: 1.4; text-align: left; cursor: pointer; }
+    .item:hover { background: var(--panel); }
+    .item.active { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
+    .item .meta, .mono { font-family: var(--mono); font-size: 11.5px; color: var(--faint); overflow-wrap: anywhere; }
+    .item .meta { display: block; margin-top: 5px; }
+    .empty { padding: 40px 20px; color: var(--faint); text-align: center; }
     #detail { min-height: 0; overflow-y: auto; }
-    .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 20px;
-      border-bottom: 1px solid var(--border); background: var(--panel); }
-    .pane { padding: 16px 20px 40px; max-width: 980px; }
-    h2 { font-size: 16px; margin: 0 0 4px; overflow-wrap: anywhere; }
-    h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin: 22px 0 6px; }
-    .section { padding: 14px 14px 4px; margin: 0; }
-    label { display: block; margin: 14px 0 5px; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
-    input, textarea, select { width: 100%; background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 7px;
-      padding: 8px 10px; font: inherit; font-size: 13.5px; }
-    .bar input, .bar select { width: auto; flex: 0 1 180px; min-width: 0; }
-    textarea { min-height: 40px; resize: vertical; }
-    textarea.json { font-family: var(--mono); font-size: 12px; line-height: 1.5; }
-    button.act { height: 32px; padding: 0 13px; border-radius: 7px; border: 1px solid var(--border); background: var(--panel); color: var(--fg);
-      font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-    button.act:hover { background: var(--hover); }
+
+    /* The detail: a sticky bar of actions, then the memory. */
+    .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 24px;
+      border-bottom: 1px solid var(--border); background: rgba(11, 13, 16, 0.88); backdrop-filter: blur(10px); }
+    .pane { padding: 22px 24px 48px; max-width: 980px; }
+    h2 { font-size: 22px; line-height: 1.25; letter-spacing: -0.015em; font-weight: 600; color: var(--strong); margin: 10px 0 6px; overflow-wrap: anywhere; }
+    h3 { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin: 28px 0 10px; }
+    .section { padding: 16px 16px 6px; margin: 0; }
+    label { display: block; margin: 16px 0 6px; color: var(--muted); font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
+    input, textarea, select { width: 100%; background: var(--field); color: var(--strong); border: 1px solid var(--border-2); border-radius: 8px;
+      padding: 9px 11px; font: inherit; font-size: 13.5px; transition: border-color 0.15s, box-shadow 0.15s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .bar input, .bar select { width: auto; flex: 0 1 200px; min-width: 0; }
+    textarea { min-height: 40px; resize: vertical; line-height: 1.55; }
+    textarea.json { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; }
+    button.act { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border-2);
+      background: transparent; color: var(--strong); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s, border-color 0.15s; }
+    button.act:hover { background: var(--hover); border-color: var(--faint); }
     button.act:disabled { opacity: 0.5; cursor: default; }
     body[aria-busy="true"] { cursor: progress; }
     body[aria-busy="true"] button.act { pointer-events: none; opacity: 0.6; }
-    button.ok { border-color: var(--ok-border); background: var(--ok-bg); color: var(--ok); }
-    button.danger { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
-    button.small { height: 26px; padding: 0 9px; font-size: 12px; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-    .badge { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border);
-      background: var(--panel); letter-spacing: 0.3px; margin-right: 4px; }
+    button.ok { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+    button.ok:hover { background: #f0c662; border-color: #f0c662; }
+    button.danger { border-color: var(--danger-border); color: var(--danger); }
+    button.danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+    button.small { height: 28px; padding: 0 10px; font-size: 12px; }
+    .badge { display: inline-flex; align-items: center; font: 500 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px;
+      border-radius: 999px; border: 1px solid var(--border-2); color: var(--muted); margin-right: 6px; }
     .badge.warn { border-color: var(--warn-border); background: var(--warn-bg); color: var(--warn); }
     .badge.bad { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
     .badge.good { border-color: var(--ok-border); background: var(--ok-bg); color: var(--ok); }
-    .notice { margin: 10px 0; padding: 10px 12px; border-radius: 7px; border-left: 3px solid var(--accent); background: var(--panel); white-space: pre-wrap; font-size: 13px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); }
+    .notice { margin: 12px 0; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--border-2); border-left: 3px solid var(--accent); background: var(--panel);
+      white-space: pre-wrap; font-size: 13px; color: var(--strong); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); }
     .pane .notice { box-shadow: none; }
-    .notice.error { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
-    .notice.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+    .notice.error { border-color: var(--danger-border); border-left-color: var(--danger); background: #1a1214; color: var(--danger); }
+    .notice.ok { border-color: var(--ok-border); border-left-color: var(--ok); background: #0f1a14; color: var(--ok); }
     .notice ul { margin: 4px 0 0; padding-left: 18px; }
     ul.plain { list-style: none; margin: 0; padding: 0; }
-    ul.plain li { padding: 6px 0; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    ul.plain li { padding: 9px 0; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     ul.plain li:first-child { border-top: none; }
-    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--panel); border: 1px solid var(--border); border-radius: 7px; padding: 10px;
-      font-family: var(--mono); font-size: 12px; }
+    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+      font-family: var(--mono); font-size: 12.5px; color: var(--strong); }
     table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-    th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+    th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
     th { color: var(--muted); font-weight: 500; }
-    .request-card { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
-    .request-card p { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .request-card { margin: 0 0 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+    .request-card p { margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
     .request-card ul.plain { margin-top: 6px; }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .row input { flex: 1 1 260px; width: auto; min-width: 0; }
 
-    /* Dashboard */
-    .dash { padding: 22px 24px 48px; max-width: 1280px; }
-    .dash-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 18px; }
-    .dash-head h2 { font-size: 20px; margin: 0; }
-    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-    .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-    .tile .label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-    .tile .value { font-size: 26px; font-weight: 650; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-    .tile .note { font-size: 12px; color: var(--muted); }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; margin-top: 12px; }
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px 16px; min-width: 0; }
-    .card h3 { margin: 0 0 12px; }
-    .card.wide { grid-column: 1 / -1; }
-    .stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--track); }
-    .stack span { height: 100%; }
-    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; }
-    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
-    .bars { display: grid; grid-template-columns: minmax(80px, max-content) 1fr auto; gap: 7px 10px; align-items: center; font-size: 12.5px; }
-    .bars .track { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
-    .bars .fill { height: 100%; border-radius: 5px; background: var(--c1); }
-    .bars .num { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
-    .bars .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
-    .bars button.who { border: none; background: none; padding: 0; color: var(--accent); font: inherit; text-align: left; cursor: pointer; }
-    .ring { display: flex; align-items: center; gap: 16px; }
-    .ring .big { font-size: 22px; font-weight: 650; }
-    svg text { fill: var(--muted); font: 11px var(--mono); }
-    .conflicts { margin-top: 12px; }
+    /* Dashboard: one page of sections, no boxes, generous space; each section rises in turn, numbers count
+       up, bars grow, the activity line draws itself. .still skips all of it (a refresh, reduced motion). */
+    .dash { position: relative; padding: 0 48px 96px; max-width: 1180px; margin: 0 auto; }
+    .dash .eyebrow { margin: 0; font: 500 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+    .dash .quiet { margin: 0; font-size: 12.5px; color: var(--muted); }
+    .dash .lead { margin: 0 0 6px; font-size: 15px; color: var(--strong); }
+    .dash > section, .dash .split > section { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dash .split > section + section { transition-delay: 0.12s; }
+    .dash section.in { opacity: 1; transform: none; }
+    .dash .block { padding: 52px 0 0; margin-top: 52px; border-top: 1px solid var(--border); }
+    .block-head { margin-bottom: 26px; }
+    .block-head .title { margin: 8px 0 0; font: 600 22px/1.25 var(--sans); letter-spacing: -0.015em; color: var(--strong); text-transform: none; }
+    .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 72px; }
 
-    /* Settings */
-    dialog { width: min(560px, calc(100vw - 32px)); border: 1px solid var(--border); border-radius: 14px; padding: 0; background: var(--panel); color: var(--fg);
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35); }
-    dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
-    dialog .pane { padding: 20px 22px 8px; }
-    dialog .actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 22px 18px; }
+    .hero { position: relative; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px 64px; align-items: end; padding: 64px 0 8px; }
+    .hero::before { content: ''; position: absolute; left: -120px; top: -60px; width: 520px; height: 520px; pointer-events: none;
+      background: radial-gradient(closest-side, rgba(232, 184, 74, 0.13), transparent); animation: glow 7s ease-in-out infinite; }
+    @keyframes glow { 50% { transform: scale(1.08); opacity: 0.7; } }
+    .hero-main { position: relative; }
+    .big { margin: 6px 0 0; font-size: clamp(88px, 11vw, 148px); line-height: 0.9; font-weight: 700; letter-spacing: -0.06em; font-variant-numeric: tabular-nums;
+      background: linear-gradient(180deg, #f7dc96 0%, #e8b84a 55%, #b9862a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero-sub { margin: 16px 0 0; font-size: 15px; color: var(--fg); }
+    .cta { margin-top: 26px; display: inline-flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 18px; border: 1px solid var(--accent-line); border-radius: 999px;
+      background: var(--accent-soft); color: var(--accent); font: 600 14px var(--sans); cursor: pointer; transition: background 0.15s, transform 0.15s; }
+    .cta:hover { background: rgba(232, 184, 74, 0.2); transform: translateX(2px); }
+    .calm { margin: 26px 0 0; display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(232, 184, 74, 0.6); animation: pulse 2s ease-out infinite; }
+    .dot.ok { background: var(--ok); animation: none; }
+    @keyframes pulse { 70% { box-shadow: 0 0 0 10px rgba(232, 184, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(232, 184, 74, 0); } }
+    .hero-stats { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stat { padding: 4px 22px; border-left: 1px solid var(--border-2); }
+    .stat-value { margin: 8px 0 4px; font-size: 36px; font-weight: 700; letter-spacing: -0.035em; color: var(--strong); font-variant-numeric: tabular-nums; }
+    .dash .notice { margin-top: 32px; }
+
+    .chart svg { display: block; overflow: visible; }
+    .chart .grid { stroke: var(--border); stroke-dasharray: 2 6; }
+    .chart .axis { stroke: var(--border-2); }
+    .chart .stroke { stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s; }
+    .chart .area { opacity: 0; transition: opacity 1.2s ease 0.9s; }
+    .chart .point { opacity: 0; transition: opacity 0.5s ease var(--d, 0s); }
+    .chart .point circle:first-child { fill: var(--bg); stroke: var(--accent); stroke-width: 2.5; }
+    .chart .point .value { fill: var(--strong); font: 600 12px var(--sans); }
+    .chart .session { fill: rgba(143, 198, 255, 0.25); stroke: var(--c1); stroke-width: 1.5; }
+    .dash .in .chart .stroke { stroke-dashoffset: 0; }
+    .dash .in .chart .area, .dash .in .chart .point { opacity: 1; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+    .coverage { display: flex; align-items: center; gap: 28px; }
+    .coverage svg { flex: none; }
+    .coverage .arc { stroke-dashoffset: var(--from); transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.3s; }
+    .dash .in .coverage .arc { stroke-dashoffset: var(--to); }
+    .coverage .ring-value { fill: var(--strong); font: 700 30px var(--sans); letter-spacing: -0.03em; }
+
+    .stack { display: flex; gap: 3px; height: 14px; }
+    .stack span { height: 100%; width: 0; border-radius: 4px; transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dash .in .stack span { width: var(--w); }
+    .dash .sub { margin-top: 24px; margin-bottom: 10px; color: var(--faint); }
+    .kinds { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kind { display: inline-flex; align-items: baseline; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-2); font: 12px var(--mono); color: var(--muted); }
+    .kind b { font: 700 14px var(--sans); color: var(--strong); }
+    .kind-trap { border-color: rgba(255, 138, 128, 0.4); } .kind-trap b { color: var(--danger); }
+    .kind-decision { border-color: var(--accent-line); } .kind-decision b { color: var(--accent); }
+    .kind-procedure { border-color: rgba(143, 198, 255, 0.4); } .kind-procedure b { color: var(--c1); }
+    .kind-fact { border-color: var(--ok-border); } .kind-fact b { color: var(--ok); }
+    .areas { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; line-height: 1.3; color: var(--strong); }
+    .areas sup { margin-left: 3px; font: 10px var(--mono); color: var(--faint); }
+
+    .funnel { display: grid; gap: 12px; }
+    .step { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 20px; }
+    .step-label { display: flex; align-items: baseline; justify-content: flex-end; gap: 12px; text-align: right; }
+    .step-num { font: 700 22px var(--sans); letter-spacing: -0.02em; color: var(--strong); font-variant-numeric: tabular-nums; }
+    .step-bar { height: 26px; width: 0; border-radius: 6px; opacity: 0.85; transition: width 1.1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .dash .in .step-bar { width: var(--w); }
+
+    .track { height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; }
+    .fill { height: 100%; width: 0; border-radius: 4px; background: var(--c1); transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s; }
+    .dash .in .fill { width: var(--w); }
+    .dash.still *, .dash.still > section { transition: none !important; }
+    .bars { display: grid; grid-template-columns: minmax(80px, max-content) 1fr auto; gap: 12px 16px; align-items: center; font-size: 13px; }
+    .bars .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; color: var(--fg); }
+    .num { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+    .intro { margin: -14px 0 22px !important; }
+    .spots { display: grid; gap: 12px; }
+    .spot { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 190px; gap: 18px; align-items: center; }
+    .spot .path { font: 12.5px var(--mono); color: var(--strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .board { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    .board li { display: grid; grid-template-columns: 40px minmax(0, 1.5fr) minmax(0, 1fr) 150px; gap: 18px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .board li:last-child { border-bottom: none; }
+    .rank { font: 600 13px var(--mono); color: var(--accent); }
+    .board li:nth-child(n + 4) .rank { color: var(--faint); }
+    .board .name { border: none; background: none; padding: 0; color: var(--strong); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .board .name:hover { color: var(--link); }
+
+    .gauge { max-width: 720px; }
+    .gauge-track { position: relative; height: 14px; border-radius: 7px; background: var(--track); }
+    .gauge-track .fill { border-radius: 7px; }
+    .gauge .mark { position: absolute; top: -6px; width: 2px; height: 26px; background: var(--strong); border-radius: 1px; }
+    .gauge-scale { display: flex; justify-content: space-between; margin: 8px 0 18px; font: 11px var(--mono); color: var(--faint); }
+    svg text { fill: var(--faint); font: 11px var(--mono); }
+
+    /* Settings: a panel from the left, under the sidebar's button, the project's settings first, then this machine's. */
+    dialog.drawer { margin: 0 auto 0 0; width: min(500px, 100vw); max-width: 100vw; height: 100%; max-height: 100vh; border: none; border-right: 1px solid var(--border-2);
+      border-radius: 0; padding: 0; background: var(--bg); color: var(--fg); box-shadow: 24px 0 64px rgba(0, 0, 0, 0.5); }
+    dialog.drawer[open] { display: flex; flex-direction: column; animation: slide 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    @keyframes slide { from { transform: translateX(-40px); opacity: 0; } }
+    dialog::backdrop { background: rgba(5, 6, 8, 0.6); backdrop-filter: blur(2px); }
+    .drawer-head { display: flex; align-items: center; gap: 12px; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+    .drawer-head h2 { margin: 0; font-size: 20px; }
+    .drawer-head .close { margin-left: auto; width: 34px; padding: 0; justify-content: center; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 8px 24px 24px; }
+    .drawer-foot { display: flex; align-items: center; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--panel); }
+    .drawer-foot .mono { margin-right: auto; }
+    .set-group { margin-top: 22px; }
+    .set-group h3 { margin: 0 0 4px; }
+    .set-group .where { margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+    .set-group .where code { font: 11.5px var(--mono); color: var(--strong); background: var(--panel-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; }
+    .setting { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--border);
+      background: var(--panel); }
+    .setting + .setting { border-top: none; }
+    .setting:first-of-type { border-radius: 12px 12px 0 0; }
+    .setting:last-of-type { border-radius: 0 0 12px 12px; }
+    .setting:only-of-type { border-radius: 12px; }
+    .setting .name { margin: 0; color: var(--strong); font: 600 13.5px var(--sans); text-transform: none; letter-spacing: 0; }
+    .setting .help { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--muted); }
+    .setting .help code { font: 11.5px var(--mono); color: var(--fg); }
+    .setting input[type="number"], .setting input[type="text"] { width: 140px; text-align: right; font-family: var(--mono); }
+    .setting input[type="text"] { width: 180px; text-align: left; }
+    .unit { display: inline-flex; align-items: center; gap: 8px; font: 11.5px var(--mono); color: var(--faint); }
+    .switch { appearance: none; -webkit-appearance: none; position: relative; width: 40px; height: 22px; margin: 0; padding: 0; border-radius: 999px;
+      border: 1px solid var(--border-2); background: var(--panel-2); cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+    .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
+    .switch:checked { background: var(--accent); border-color: var(--accent); }
+    .switch:checked::after { transform: translateX(18px); background: var(--accent-fg); }
+    .switch:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
     .check { display: flex; gap: 10px; align-items: flex-start; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--fg); }
     .check input { width: auto; margin-top: 3px; }
 
+    @media (prefers-reduced-motion: reduce) { dialog.drawer[open], .hero::before, .dot { animation: none; } * { transition: none !important; } }
     @media (max-width: 900px) {
       body { overflow: auto; }
       main, main.full { height: auto; grid-template-columns: 1fr; }
       nav, #list { border-right: none; border-bottom: 1px solid var(--border); }
       /* On a phone the views are one scrolling row, so the content starts on the first screen. */
-      nav { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 4px; padding: 8px; position: sticky; top: 0; z-index: 3; }
+      nav { flex-direction: row; align-items: center; overflow-x: auto; overflow-y: hidden; gap: 4px; padding: 8px; position: sticky; top: 0; z-index: 3; }
+      nav .brand { padding: 0 8px 0 4px; }
+      nav .brand .sub, nav .group { display: none; }
       nav button { width: auto; flex: 0 0 auto; white-space: nowrap; }
-      nav hr { border-top: none; border-left: 1px solid var(--border); margin: 4px 2px; }
       .foot { margin: 0 0 0 4px; padding: 0 0 0 8px; border-top: none; border-left: 1px solid var(--border); flex: 0 0 auto; }
       #list { max-height: 320px; }
       #detail, #view { overflow: visible; }
-      .dash { padding: 16px; }
-      .cards { grid-template-columns: 1fr; }
+      .dash { padding: 0 16px 64px; }
+      .hero { grid-template-columns: 1fr; padding-top: 32px; }
+      .hero-stats .stat:first-child { border-left: none; padding-left: 0; }
+      .split { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 1fr; gap: 6px; } .step-label { justify-content: space-between; }
+      .spot, .board li { grid-template-columns: minmax(0, 1fr) auto; } .spot .track, .board li .track { grid-column: 1 / -1; grid-row: 2; }
+      .board li { grid-template-columns: 32px minmax(0, 1fr) auto; } .board li .track { grid-column: 2 / -1; }
+      .coverage { flex-direction: column; align-items: flex-start; }
+      .bar, .pane { padding-left: 16px; padding-right: 16px; }
     }
   </style>
 </head>
@@ -167,7 +293,7 @@
     <section id="detail" aria-live="polite"><p class="empty">Select a memory, or a request.</p></section>
     <section id="view" aria-live="polite"></section>
   </main>
-  <dialog id="settings" aria-labelledby="settings-title"></dialog>
+  <dialog id="settings" class="drawer" aria-labelledby="settings-title"></dialog>
   <script nonce="__NONCE__">
   'use strict';
   // Every string from the store reaches the DOM through text nodes or attributes,
@@ -178,6 +304,7 @@
     [['activity', 'Recent deliveries'], ['all', 'All memories'], ['stale', 'Stale evidence'], ['hubs', 'Hubs'], ['dead', 'Dead triggers'],
       ['false_alarms', 'Suspected false alarms'], ['duplicates', 'Duplicates']],
   ];
+  const GROUPS = ['Overview', 'Waiting for you', 'The store'];
   const LABELS = Object.fromEntries(SECTIONS.flat());
   // Views that take the whole width: no list of memories beside them.
   const FULL = new Set(['dashboard', 'create']);
@@ -192,7 +319,8 @@
       if (key === 'on') for (const [event, fn] of Object.entries(value)) el.addEventListener(event, fn);
       else if (key === 'class') el.className = value;
       else if (key === 'value') el.value = value;
-      else if (key === 'style') Object.assign(el.style, value);
+      // Custom properties (--w, --i) drive the dashboard's animations; the rest are plain style properties.
+      else if (key === 'style') for (const [name, v] of Object.entries(value)) { if (name.startsWith('--')) el.style.setProperty(name, v); else el.style[name] = v; }
       else el.setAttribute(key, value === true ? '' : String(value));
     }
     for (const child of children.flat(Infinity)) {
@@ -259,19 +387,21 @@
   function renderNav() {
     const queues = state.overview?.queues ?? {};
     const countOf = view => (view === 'activity' ? (state.overview?.recent?.length ?? 0) : FULL.has(view) ? '' : queues[view] ?? 0);
-    const button = ([view, label]) => h('button', { type: 'button', 'aria-current': state.queue === view ? 'true' : 'false', on: { click: () => select(view) } },
-      h('span', {}, label), h('span', { class: `count${countOf(view) ? '' : ' zero'}` }, countOf(view)));
+    // A count in the review group is work for a person: gold while it is not zero.
+    const button = wants => ([view, label]) => h('button', { type: 'button', 'aria-current': state.queue === view ? 'true' : 'false', on: { click: () => select(view) } },
+      h('span', {}, label), h('span', { class: `count${countOf(view) ? (wants ? ' wants' : '') : ' zero'}` }, countOf(view)));
     const mark = s('svg', { width: 22, height: 22, viewBox: '0 0 128 128', 'aria-hidden': 'true' },
       s('g', { fill: 'none', stroke: 'var(--brand)', 'stroke-width': 12, 'stroke-linejoin': 'round' },
         s('circle', { cx: 64, cy: 64, r: 36 }), s('line', { x1: 64, y1: 28, x2: 64, y2: 100, 'stroke-linecap': 'square' })));
     const gear = s('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'aria-hidden': 'true' },
       s('circle', { cx: 12, cy: 12, r: 3 }),
       s('path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z' }));
-    const sections = SECTIONS.map(section => section.map(button));
-    $('queues').replaceChildren(...sections[0], h('hr'), ...sections[1], h('hr'), ...sections[2],
-      h('div', { class: 'foot' }, mark, h('span', { class: 'name' }, 'DD'),
+    $('queues').replaceChildren(
+      h('div', { class: 'brand' }, mark, h('span', {}, 'DeltaDictum'), h('span', { class: 'sub' }, 'review')),
+      ...SECTIONS.flatMap((section, i) => [h('div', { class: 'group' }, GROUPS[i]), ...section.map(button(i === 1))]),
+      h('div', { class: 'foot' },
         h('span', { class: `live${state.live ? ' on' : ''}`, title: state.live ? 'Updates as the store changes' : 'Not receiving updates: reload to see changes' }, state.live ? 'live' : 'offline'),
-        h('button', { type: 'button', class: 'gear', 'aria-label': 'Settings', title: 'Settings', on: { click: showSettings } }, gear)));
+        h('button', { type: 'button', class: 'gear', title: 'Settings', on: { click: showSettings } }, gear, 'Settings')));
   }
 
   function select(view) {
@@ -323,94 +453,190 @@
       h('span', { class: 'meta' }, [fire.at, fire.kind, fire.via, fire.session].filter(Boolean).join(' · ')))));
   }
 
-  // Dashboard: the store, the review queues, use and capture, as the roll-up last saw them. Counts only, never content.
-  async function loadDashboard() {
+  // Dashboard: the store, what waits for a person, use and capture, as the roll-up last saw them. Counts only,
+  // never content. It plays in once when opened (numbers count up, bars grow, the chart draws itself); a live
+  // refresh redraws it still.
+  async function loadDashboard({ animate = true } = {}) {
     let d;
     try { [d] = await Promise.all([api('/api/dashboard'), state.overview ? null : loadOverview()]); } catch (err) { refused('Reading the dashboard', err); return; }
     const o = state.overview;
     if (!o) return;
     const st = o.status;
-    const tile = (label, value, note) => h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, String(value)), note ? h('div', { class: 'note' }, note) : null);
-    const card = (title, wide, ...body) => h('section', { class: `card${wide ? ' wide' : ''}` }, h('h3', {}, title), ...body);
-    const pct = (n, total) => (total && n ? `${Math.max(2, Math.round(n / total * 100))}%` : '0%');
-    // Horizontal bars, one row per entry: label, bar, number.
-    const bars = (entries, color = 'var(--c1)') => {
-      if (!entries.length) return h('p', { class: 'mono' }, 'Nothing rolled up yet.');
+    const fmt = n => Number(n ?? 0).toLocaleString('en-US');
+    const share = (n, total) => (total && n ? `${Math.max(2, Math.round(n / total * 100))}%` : '0%');
+    const count = (n, attrs = {}) => h('span', { ...attrs, 'data-count': String(n ?? 0) }, fmt(n));
+    const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : many}`;
+    let order = 0;
+    const block = (eyebrow, title, ...body) => h('section', { class: 'block', style: { '--i': String(order++) } },
+      h('div', { class: 'block-head' }, h('p', { class: 'eyebrow' }, eyebrow), title ? h('h3', { class: 'title' }, title) : null), ...body);
+    const fill = (value, max, color) => h('div', { class: 'track' }, h('div', { class: 'fill', style: { '--w': share(value, max), background: color } }));
+    const bars = (entries, color) => {
+      if (!entries.length) return h('p', { class: 'quiet' }, 'Nothing rolled up yet.');
       const max = Math.max(...entries.map(e => e.value), 1);
-      return h('div', { class: 'bars' }, entries.map(e => [
-        e.open ? h('button', { type: 'button', class: 'who', title: e.label, on: { click: e.open } }, e.label) : h('span', { class: 'who', title: e.label }, e.label),
-        h('div', { class: 'track' }, h('div', { class: 'fill', style: { width: pct(e.value, max), background: e.color ?? color } })),
-        h('span', { class: 'num' }, String(e.value))]));
+      return h('div', { class: 'bars' }, entries.map(e => [h('span', { class: 'who', title: e.label }, e.label), fill(e.value, max, color), h('span', { class: 'num' }, fmt(e.value))]));
     };
 
+    // The hero: what the store holds and what waits for a person.
+    const live = d.coverage.live, ever = d.coverage.delivered_ever;
+    const waiting = (o.queues.candidates ?? 0) + (o.queues.from_agent ?? 0);
+    const firstQueue = o.queues.candidates ? 'candidates' : 'from_agent';
+    const stat = (label, value, note) => h('div', { class: 'stat' }, h('p', { class: 'eyebrow' }, label), h('p', { class: 'stat-value' }, count(value)), h('p', { class: 'quiet' }, note));
+    const hero = h('section', { class: 'hero', style: { '--i': String(order++) } },
+      h('div', { class: 'hero-main' },
+        h('p', { class: 'eyebrow' }, 'Live memories'),
+        h('p', { class: 'big' }, count(live)),
+        h('p', { class: 'hero-sub' }, `${fmt(ever)} reached the agent · ${plural(st.total, 'memory', 'memories')} in the store`),
+        waiting ? h('button', { type: 'button', class: 'cta', on: { click: () => select(firstQueue) } },
+          h('span', { class: 'dot' }), `${plural(waiting, 'thing waits', 'things wait')} for you`, h('span', { 'aria-hidden': 'true' }, '→'))
+          : h('p', { class: 'calm' }, h('span', { class: 'dot ok' }), 'Nothing waits for you.')),
+      h('div', { class: 'hero-stats' },
+        stat('Sessions', d.sessions.total, `${fmt(d.sessions.with_deliveries)} with a delivery`),
+        stat('Deliveries', d.deliveries.total, `${d.deliveries.per_100_tool_calls} per 100 tool calls`),
+        stat('Tool calls', d.sessions.tool_calls, 'seen by the hooks')));
+
+    // Activity: deliveries as a drawn area, sessions as a row of marks beneath each day.
+    const days = d.by_day;
+    let activity = h('p', { class: 'quiet' }, 'Nothing rolled up yet.');
+    if (days.length) {
+      const W = 920, H = 200, padX = 30, top = 26, base = H - 30;
+      const peak = Math.max(...days.map(r => r.deliveries), 1);
+      const x = i => (days.length === 1 ? W / 2 : padX + i * (W - 2 * padX) / (days.length - 1));
+      const y = v => base - (v / peak) * (base - top);
+      const pts = days.map((r, i) => [x(i), y(r.deliveries)]);
+      const line = pts.map(([px, py], i) => {
+        if (!i) return `M${px},${py}`;
+        const [qx, qy] = pts[i - 1], mid = (qx + px) / 2;
+        return `C${mid},${qy} ${mid},${py} ${px},${py}`;
+      }).join(' ');
+      const area = `${line} L${pts.at(-1)[0]},${base} L${pts[0][0]},${base} Z`;
+      activity = h('div', { class: 'chart' },
+        s('svg', { viewBox: `0 0 ${W} ${H + 34}`, width: '100%', role: 'img', 'aria-label': days.map(r => `${r.day}: ${r.sessions} sessions, ${r.deliveries} deliveries`).join('; ') },
+          s('defs', {}, s('linearGradient', { id: 'area-fill', x1: 0, y1: 0, x2: 0, y2: 1 },
+            s('stop', { offset: '0', 'stop-color': '#e8b84a', 'stop-opacity': '0.35' }), s('stop', { offset: '1', 'stop-color': '#e8b84a', 'stop-opacity': '0' }))),
+          [0.5, 1].map(f => s('line', { x1: padX, x2: W - padX, y1: y(peak * f), y2: y(peak * f), class: 'grid' })),
+          s('line', { x1: padX, x2: W - padX, y1: base, y2: base, class: 'axis' }),
+          s('path', { d: area, fill: 'url(#area-fill)', class: 'area' }),
+          s('path', { d: line, fill: 'none', class: 'stroke', pathLength: '1' }),
+          days.map((r, i) => s('g', { class: 'point', style: `--d:${0.4 + i * 0.08}s` },
+            s('circle', { cx: x(i), cy: y(r.deliveries), r: 4.5 }, s('title', {}, `${r.deliveries} deliveries`)),
+            s('text', { x: x(i), y: y(r.deliveries) - 12, 'text-anchor': 'middle', class: 'value' }, String(r.deliveries)),
+            s('text', { x: x(i), y: base + 18, 'text-anchor': 'middle' }, r.day.slice(5)),
+            s('circle', { cx: x(i), cy: base + 32, r: Math.min(9, 3 + r.sessions * 1.5), class: 'session' }, s('title', {}, `${r.sessions} sessions`))))),
+        h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--c2)' } }), 'deliveries'),
+          h('span', {}, h('i', { style: { background: 'var(--c1)', borderRadius: '50%' } }), 'sessions, by size')));
+    }
+
+    // Coverage: of the live memories, how many ever reached the agent.
+    const R = 62, C = 2 * Math.PI * R, covered = live ? ever / live : 0;
+    const coverage = h('div', { class: 'coverage' },
+      s('svg', { width: 160, height: 160, viewBox: '0 0 160 160', role: 'img', 'aria-label': `${ever} of ${live} live memories delivered at least once` },
+        s('circle', { cx: 80, cy: 80, r: R, fill: 'none', stroke: 'var(--track)', 'stroke-width': 12 }),
+        s('circle', { cx: 80, cy: 80, r: R, fill: 'none', stroke: 'var(--c3)', 'stroke-width': 12, 'stroke-linecap': 'round', class: 'arc',
+          'stroke-dasharray': `${C}`, style: `--from:${C};--to:${C * (1 - covered)}`, transform: 'rotate(-90 80 80)' }),
+        s('text', { x: 80, y: 86, 'text-anchor': 'middle', class: 'ring-value' }, `${Math.round(covered * 100)}%`)),
+      h('div', {},
+        h('p', { class: 'lead' }, `${fmt(ever)} of ${fmt(live)} live memories reached the agent at least once.`),
+        h('p', { class: 'quiet' }, `${fmt(d.coverage.never_fired_with_opportunity)} never fired although their files were touched; ${fmt(d.coverage.no_opportunity)} never had the chance.`)));
+
+    // The store: statuses as one bar, kinds and areas beside it.
     const STATUS = [['active', 'var(--c3)'], ['contested', 'var(--c5)'], ['candidate', 'var(--c2)'], ['archived', 'var(--c4)'], ['superseded', 'var(--c6)']];
     const byStatus = st.by_status ?? {};
     const known = STATUS.map(([name]) => name);
-    const statusRows = [...STATUS, ...Object.keys(byStatus).filter(name => !known.includes(name)).map(name => [name, 'var(--c1)'])]
-      .filter(([name]) => byStatus[name]);
-    const statusCard = card('Memories by status', false,
+    const statusRows = [...STATUS, ...Object.keys(byStatus).filter(name => !known.includes(name)).map(name => [name, 'var(--c1)'])].filter(([name]) => byStatus[name]);
+    const areaMax = Math.max(...Object.values(d.areas), 1);
+    const store = h('div', { class: 'store' },
       h('div', { class: 'stack', role: 'img', 'aria-label': statusRows.map(([name]) => `${byStatus[name]} ${name}`).join(', ') },
-        statusRows.map(([name, color]) => h('span', { title: `${byStatus[name]} ${name}`, style: { width: `${byStatus[name] / Math.max(st.total, 1) * 100}%`, background: color } }))),
-      h('div', { class: 'legend' }, statusRows.map(([name, color]) => h('span', {}, h('i', { style: { background: color } }), `${name} ${byStatus[name]}`))));
+        statusRows.map(([name, color]) => h('span', { title: `${byStatus[name]} ${name}`, style: { '--w': `${byStatus[name] / Math.max(st.total, 1) * 100}%`, background: color } }))),
+      h('div', { class: 'legend' }, statusRows.map(([name, color]) => h('span', {}, h('i', { style: { background: color } }), `${name} ${byStatus[name]}`))),
+      h('p', { class: 'eyebrow sub' }, 'Live, by kind'),
+      h('div', { class: 'kinds' }, Object.entries(d.kinds).map(([kind, n]) => h('span', { class: `kind kind-${kind}` }, h('b', {}, fmt(n)), kind.replace('_', ' ')))),
+      h('p', { class: 'eyebrow sub' }, 'Live, by area'),
+      h('div', { class: 'areas' }, Object.entries(d.areas).map(([area, n]) => h('span', { style: { fontSize: `${12 + (n / areaMax) * 10}px`, opacity: String(0.55 + (n / areaMax) * 0.45) } }, area, h('sup', {}, n)))));
 
-    // Sessions and deliveries per day, as paired columns.
-    const days = d.by_day;
-    let dayChart = h('p', { class: 'mono' }, 'Nothing rolled up yet.');
-    if (days.length) {
-      const W = 560, H = 180, pad = 22, top = Math.max(...days.flatMap(r => [r.sessions, r.deliveries]), 1);
-      const slot = (W - pad) / days.length, bw = Math.min(18, slot / 3);
-      const y = v => H - pad - (v / top) * (H - pad - 22);
-      dayChart = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': days.map(r => `${r.day}: ${r.sessions} sessions, ${r.deliveries} deliveries`).join('; ') },
-        s('line', { x1: pad, y1: H - pad, x2: W, y2: H - pad, stroke: 'var(--border)' }),
-        days.map((r, i) => {
-          const x = pad + i * slot + slot / 2;
-          return s('g', {},
-            s('rect', { x: x - bw - 1, y: y(r.sessions), width: bw, height: H - pad - y(r.sessions), rx: 3, fill: 'var(--c1)' }, s('title', {}, `${r.sessions} sessions`)),
-            s('rect', { x: x + 1, y: y(r.deliveries), width: bw, height: H - pad - y(r.deliveries), rx: 3, fill: 'var(--c2)' }, s('title', {}, `${r.deliveries} deliveries`)),
-            r.sessions ? s('text', { x: x - bw / 2 - 1, y: y(r.sessions) - 4, 'text-anchor': 'middle' }, String(r.sessions)) : null,
-            r.deliveries ? s('text', { x: x + bw / 2 + 1, y: y(r.deliveries) - 4, 'text-anchor': 'middle' }, String(r.deliveries)) : null,
-            s('text', { x, y: H - 6, 'text-anchor': 'middle' }, r.day.slice(5)));
-        }));
-    }
-    const dayCard = card('Last days', false, dayChart,
-      h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--c1)' } }), 'sessions'), h('span', {}, h('i', { style: { background: 'var(--c2)' } }), 'deliveries')));
-
-    // Coverage: of the live memories, how many were ever delivered.
-    const live = d.coverage.live, ever = d.coverage.delivered_ever, share = live ? ever / live : 0, R = 34, C = 2 * Math.PI * R;
-    const coverageCard = card('Coverage', false, h('div', { class: 'ring' },
-      s('svg', { width: 88, height: 88, viewBox: '0 0 88 88', role: 'img', 'aria-label': `${ever} of ${live} live memories delivered at least once` },
-        s('circle', { cx: 44, cy: 44, r: R, fill: 'none', stroke: 'var(--track)', 'stroke-width': 10 }),
-        s('circle', { cx: 44, cy: 44, r: R, fill: 'none', stroke: 'var(--c3)', 'stroke-width': 10, 'stroke-linecap': 'round',
-          'stroke-dasharray': `${C * share} ${C}`, transform: 'rotate(-90 44 44)' })),
-      h('div', {}, h('div', { class: 'big' }, `${Math.round(share * 100)}%`),
-        h('div', { class: 'mono' }, `${ever} of ${live} live memories delivered at least once`),
-        h('div', { class: 'mono' }, `${d.coverage.never_fired_with_opportunity} never fired with the chance · ${d.coverage.no_opportunity} never had it`))));
-
+    // Capture: from DD asking to what was kept, as a funnel that narrows.
     const c = d.capture;
-    const captureCard = card('Capture', false, bars([
-      { label: 'asked to save', value: c.asked, color: 'var(--c1)' }, { label: 'corrections', value: c.corrections, color: 'var(--c1)' },
-      { label: 'proposals', value: c.proposals, color: 'var(--c2)' }, { label: 'active', value: c.active, color: 'var(--c3)' },
-      { label: 'candidates', value: c.candidates, color: 'var(--c2)' }, { label: 'rejected', value: c.rejected, color: 'var(--c5)' },
-      { label: 'agent requests', value: c.requests, color: 'var(--c4)' }]));
+    const steps = [['Asked to save', c.asked, 'var(--c1)'], ['Corrections', c.corrections, 'var(--c1)'], ['Proposals', c.proposals, 'var(--c2)'],
+      ['Became candidates', c.candidates, 'var(--c2)'], ['Became active', c.active, 'var(--c3)'], ['Rejected', c.rejected, 'var(--c5)']];
+    const stepMax = Math.max(...steps.map(([, n]) => n), 1);
+    const funnel = h('div', { class: 'funnel' }, steps.map(([label, n, color]) => h('div', { class: 'step' },
+      h('span', { class: 'step-label' }, h('span', { class: 'quiet' }, label), h('span', { class: 'step-num' }, count(n))),
+      h('div', { class: 'step-bar', style: { '--w': share(n, stepMax), background: color } }))));
 
+    // Blind spots: files the agent keeps opening that no memory covers.
+    const spotMax = Math.max(...d.blind_spots.map(b => b.sessions), 1);
+    const spots = d.blind_spots.length
+      ? h('div', { class: 'spots' }, d.blind_spots.map(b => h('div', { class: 'spot' },
+        h('span', { class: 'path' }, b.path), fill(b.sessions, spotMax, 'var(--c1)'),
+        h('span', { class: 'num' }, `${plural(b.sessions, 'session', 'sessions')}${b.changed ? ` · changed in ${b.changed}` : ''}`))))
+      : h('p', { class: 'quiet' }, 'Every file the agent kept coming back to is covered by a memory.');
+
+    // The memories that fire most, ranked.
+    const board = d.top.length ? h('ol', { class: 'board' }, d.top.map((row, i) => h('li', {},
+      h('span', { class: 'rank' }, String(i + 1).padStart(2, '0')),
+      h('button', { type: 'button', class: 'name', title: row.title, on: { click: () => openAnywhere(row.memory) } }, row.title),
+      fill(row.fires, d.top[0].fires, 'var(--c3)'),
+      h('span', { class: 'num' }, `${plural(row.fires, 'fire', 'fires')} · ${plural(row.sessions, 'session', 'sessions')}`))))
+      : h('p', { class: 'quiet' }, 'Nothing has fired yet.');
+
+    // Delivery size against the cap.
     const dv = d.deliveries;
+    const gauge = h('div', { class: 'gauge' },
+      h('div', { class: 'gauge-track' },
+        h('div', { class: 'fill', style: { '--w': share(dv.chars_avg, d.limit), background: 'var(--c2)' } }),
+        h('span', { class: 'mark', title: `largest ${fmt(dv.chars_max)}`, style: { left: share(dv.chars_max, d.limit) } })),
+      h('div', { class: 'gauge-scale' }, h('span', {}, '0'), h('span', {}, `cap ${fmt(d.limit)}`)),
+      h('p', { class: 'lead' }, `${fmt(dv.chars_avg)} characters on average, ${fmt(dv.chars_max)} at most; ${dv.memories_avg} memories a delivery.`),
+      h('p', { class: 'quiet' }, `The cap was reached in ${Math.round(dv.capped_share * 100)}% of deliveries. Checks: ${fmt(d.checks.fixed)} fixed, ${fmt(d.checks.ignored)} ignored, ${fmt(d.checks.repeated)} repeated.`));
+
     const conflicts = st.conflicts ?? [];
-    $('view').replaceChildren(h('div', { class: 'dash' },
-      h('div', { class: 'dash-head' }, h('h2', {}, 'Dashboard'),
-        h('span', { class: 'mono' }, `${st.total} memories · ${Object.entries(byStatus).map(([name, n]) => `${n} ${name}`).join(' · ')}`)),
-      h('div', { class: 'tiles' },
-        tile('Live memories', live, `${ever} delivered at least once`),
-        tile('Waiting for you', (o.queues.candidates ?? 0) + (o.queues.from_agent ?? 0), `${o.queues.candidates ?? 0} candidates · ${o.queues.from_agent ?? 0} from the agent`),
-        tile('Sessions', d.sessions.total, `${d.sessions.with_deliveries} with a delivery`),
-        tile('Deliveries', dv.total, `${dv.per_100_tool_calls} per 100 tool calls`),
-        tile('Characters per delivery', dv.chars_avg, `max ${dv.chars_max} of a cap of ${d.limit}; cap reached ${Math.round(dv.capped_share * 100)}%`),
-        tile('Checks', d.checks.fixed + d.checks.ignored + d.checks.repeated, `fixed ${d.checks.fixed} · ignored ${d.checks.ignored} · repeated ${d.checks.repeated}`)),
-      conflicts.length ? h('div', { class: 'notice error conflicts' }, `Topics with more than one live memory: ${conflicts.map(x => x.topic).join(', ')}`) : null,
-      h('div', { class: 'cards' },
-        statusCard, coverageCard, dayCard, captureCard,
-        card('Fires by trigger', false, bars(Object.entries(d.by_via).map(([label, value]) => ({ label, value })), 'var(--c2)')),
-        card('Deliveries by event', false, bars(Object.entries(d.by_kind).map(([label, value]) => ({ label, value })), 'var(--c1)')),
-        card('Memories that fire most', true, bars(d.top.map(row => ({ label: row.title, value: row.fires, open: () => openAnywhere(row.memory) })), 'var(--c3)')))));
+    const dash = h('div', { class: `dash${animate ? '' : ' still'}` },
+      hero,
+      conflicts.length ? h('div', { class: 'notice error' }, `Topics with more than one live memory: ${conflicts.map(x => x.topic).join(', ')}`) : null,
+      block('Activity', 'The last seven days', activity),
+      h('div', { class: 'split' },
+        block('Coverage', 'How much of the store is used', coverage),
+        block('The store', `${plural(st.total, 'memory', 'memories')}`, store)),
+      block('Capture', 'From a fix to a memory', funnel),
+      block('Blind spots', 'Files the agent keeps opening that no memory covers', h('p', { class: 'quiet intro' }, 'Worth a memory only if something about them is not in the code.'), spots),
+      h('div', { class: 'split' },
+        block('How memories fire', 'By trigger', bars(Object.entries(d.by_via).map(([label, value]) => ({ label, value })), 'var(--c2)')),
+        block('Where they arrive', 'By event', bars(Object.entries(d.by_kind).map(([label, value]) => ({ label, value })), 'var(--c1)'))),
+      block('Most useful', 'The memories that fire most', board),
+      block('Delivery size', 'How much each delivery carries', gauge));
+    $('view').replaceChildren(dash);
+    playIn(dash, animate);
+  }
+
+  // Each section plays in once, as it scrolls into view: its numbers count up, its bars grow, the chart
+  // draws itself. With reduced motion, or on a refresh, every section is simply there.
+  function playIn(root, animate) {
+    const sections = [...root.querySelectorAll('section')];
+    if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches || typeof IntersectionObserver !== 'function') {
+      root.classList.add('still');
+      sections.forEach(section => section.classList.add('in'));
+      return;
+    }
+    const countUp = section => {
+      const numbers = [...section.querySelectorAll('[data-count]')].map(el => ({ el, to: Number(el.dataset.count) }));
+      if (!numbers.length) return;
+      const start = performance.now();
+      const tick = now => {
+        const t = Math.min(1, (now - start) / 1100);
+        for (const { el, to } of numbers) el.textContent = Math.round(to * (1 - (1 - t) ** 3)).toLocaleString('en-US');
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    // On a wide screen the view scrolls inside its own column; on a phone, the page does.
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        entry.target.classList.add('in');
+        countUp(entry.target);
+      }
+    }, { root: matchMedia('(max-width: 900px)').matches ? null : $('view'), threshold: 0.2 });
+    requestAnimationFrame(() => sections.forEach(section => observer.observe(section)));
   }
 
   // What the agent asked: one row per batch it named and per request no batch names. A row opens in the
@@ -580,7 +806,8 @@
       // Evidence files changed since the memory was written: a person who judged the claim still holds re-anchors them.
       live && detail.stale.length ? h('button', { type: 'button', class: 'act', on: { click: change('Re-verify evidence', '/reverify') } }, 'Re-verify evidence') : null,
       m.status === 'candidate' || live ? reason : null,
-      h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save'),
+      // One gold button per bar: Accept on a candidate, Save otherwise.
+      h('button', { type: 'button', class: m.status === 'candidate' ? 'act' : 'act ok', on: { click: save } }, 'Save'),
       remove);
 
     const kind = h('select', { id: 'f-kind' }, KINDS.map(k => h('option', { value: k, selected: k === m.kind }, k)));
@@ -683,41 +910,72 @@
     $('detail').replaceChildren(bar, pane);
   }
 
-  // The project's settings (.dd/config.json), in a dialog over whatever is open: what DD reads,
-  // changed in place; other keys are kept.
+  // Every setting DD has, in a panel over whatever is open. The project's are committed in .dd/config.json
+  // and shared with the team (other keys of the file are kept); this machine's stay in .dd/local/settings.json.
   async function showSettings() {
     let settings;
     try { settings = await api('/api/config'); } catch (err) { refused('Reading the settings', err); return; }
     const dialog = $('settings');
-    const auto = h('input', { id: 's-auto', type: 'checkbox' });
-    auto.checked = settings.auto_accept;
-    const bounds = settings.limits.delivery_limit;
-    const limit = h('input', { id: 's-limit', type: 'number', min: String(bounds.min), max: String(bounds.max), step: '500' });
-    limit.value = String(settings.delivery_limit);
-    const sessionsBounds = settings.limits.retire_after_sessions;
-    const retire = h('input', { id: 's-retire', type: 'number', min: String(sessionsBounds.min), max: String(sessionsBounds.max), step: '1' });
-    retire.value = String(settings.retire_after_sessions);
+    const toggle = (id, on) => { const input = h('input', { id, type: 'checkbox', class: 'switch', role: 'switch' }); input.checked = on; return input; };
+    const number = (id, value, bounds, step) => h('input', { id, type: 'number', min: String(bounds.min), max: String(bounds.max), step, value: String(value) });
+    const code = text => h('code', {}, text);
+    const setting = (id, name, control, ...help) => h('div', { class: 'setting' },
+      h('label', { for: id, class: 'name' }, name), control, h('p', { class: 'help' }, ...help));
+    const group = (title, where, ...rows) => h('section', { class: 'set-group' }, h('h3', {}, title), h('p', { class: 'where' }, ...where), ...rows);
+
+    const limits = settings.limits;
+    const f = {
+      project_id: h('input', { id: 's-project', type: 'text', value: settings.project_id ?? '', spellcheck: 'false' }),
+      auto_accept: toggle('s-auto', settings.auto_accept),
+      delivery_limit: number('s-limit', settings.delivery_limit, limits.delivery_limit, '500'),
+      retire_after_sessions: number('s-retire', settings.retire_after_sessions, limits.retire_after_sessions, '1'),
+      maintenance: toggle('s-maintenance', settings.machine.maintenance),
+      record_payloads: toggle('s-payloads', settings.machine.record_payloads),
+    };
+    // Only what changed is written: an untouched setting keeps its place, or its absence, in the file.
+    function changes() {
+      const project = {};
+      if (f.project_id.value.trim() && f.project_id.value.trim() !== settings.project_id) project.project_id = f.project_id.value.trim();
+      if (f.auto_accept.checked !== settings.auto_accept) project.auto_accept = f.auto_accept.checked;
+      if (Number(f.delivery_limit.value) !== settings.delivery_limit) project.delivery_limit = Number(f.delivery_limit.value);
+      if (Number(f.retire_after_sessions.value) !== settings.retire_after_sessions) project.retire_after_sessions = Number(f.retire_after_sessions.value);
+      const machine = {};
+      for (const key of ['maintenance', 'record_payloads']) if (f[key].checked !== settings.machine[key]) machine[key] = f[key].checked;
+      return Object.keys(machine).length ? { ...project, machine } : project;
+    }
     async function save() {
-      try { settings = await api('/api/config', { method: 'PUT', body: { auto_accept: auto.checked, delivery_limit: Number(limit.value), retire_after_sessions: Number(retire.value) } }); }
+      const body = changes();
+      if (!Object.keys(body).length) { dialog.close(); return; }
+      try { settings = await api('/api/config', { method: 'PUT', body }); }
       catch (err) { refused('Saving the settings', err); return; }
       dialog.close();
-      say('ok', `Auto-accept ${settings.auto_accept ? 'on' : 'off'}; delivery cap ${settings.delivery_limit} characters; retire after ${settings.retire_after_sessions} sessions.`);
+      say('ok', 'Settings saved.');
       await loadOverview();
     }
+    const close = h('button', { type: 'button', class: 'act close', 'aria-label': 'Close', on: { click: () => dialog.close() } }, '✕');
     dialog.replaceChildren(
-      h('div', { class: 'pane' },
-        h('h2', { id: 'settings-title' }, 'Settings'),
-        h('div', { class: 'mono' }, `.dd/config.json · project ${settings.project_id ?? '(no project_id)'}`),
-        h('label', { for: 's-auto', class: 'check' }, auto, h('span', {}, 'Auto-accept: DD activates a proposal on its own when it verified the evidence itself, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits as a candidate.')),
-        h('label', { for: 's-limit' }, `Delivery cap, in characters (${bounds.min} to ${bounds.max}; default ${bounds.default})`), limit,
-        h('p', { class: 'mono' }, 'What does not fit whole is named and arrives at its next event.'),
-        h('label', { for: 's-retire' }, `Retire after, in sessions (${sessionsBounds.min} to ${sessionsBounds.max}; default ${sessionsBounds.default})`), retire,
-        h('p', { class: 'mono' }, 'Maintenance archives a memory whose files that many sessions touched without it ever firing; never one a person reviewed. Other keys in the file are kept as they are.')),
-      h('div', { class: 'actions' },
+      h('div', { class: 'drawer-head' }, h('h2', { id: 'settings-title' }, 'Settings'), close),
+      h('div', { class: 'drawer-body' },
+        group('Project', ['Shared with the team: ', code('.dd/config.json'), ', committed with the repository.'],
+          setting('s-auto', 'Auto-accept', f.auto_accept,
+            'Activate a proposal on its own when DD verified its evidence, every trigger is live, it has no check and it duplicates or revises nothing. Off: every proposal waits here as a candidate.'),
+          setting('s-limit', 'Delivery cap', h('span', { class: 'unit' }, f.delivery_limit, 'chars'),
+            `Most characters one delivery may hold (${limits.delivery_limit.min.toLocaleString('en-US')} to ${limits.delivery_limit.max.toLocaleString('en-US')}, default ${limits.delivery_limit.default.toLocaleString('en-US')}). What does not fit whole is named and arrives at its next event.`),
+          setting('s-retire', 'Retire after', h('span', { class: 'unit' }, f.retire_after_sessions, 'sessions'),
+            `Sessions that touch a memory's files without it firing before maintenance archives it (${limits.retire_after_sessions.min} to ${limits.retire_after_sessions.max}, default ${limits.retire_after_sessions.default}). A memory a person reviewed is never retired.`),
+          setting('s-project', 'Project id', f.project_id,
+            'The label written into new memories. Memories already saved keep the one they have.')),
+        group('This machine', ['Only for you: ', code('.dd/local/settings.json'), ', never committed.'],
+          setting('s-maintenance', 'Daily maintenance', f.maintenance,
+            'Once a day, session start rolls up the session files, prunes them after seven days and retires unused memories, in the background. Off: run ', code('deltadictum maintain'), ' yourself.'),
+          setting('s-payloads', 'Record hook payloads', f.record_payloads,
+            'Append what the harness sends each hook to ', code(settings.machine.payloads_file), ', to check a harness against a real session. Turn it off again when done: the file grows with every tool call.'))),
+      h('div', { class: 'drawer-foot' },
+        h('span', { class: 'mono' }, 'Other keys in the files are kept.'),
         h('button', { type: 'button', class: 'act', on: { click: () => dialog.close() } }, 'Cancel'),
         h('button', { type: 'button', class: 'act ok', on: { click: save } }, 'Save')));
     dialog.showModal();
-    auto.focus();
+    f.auto_accept.focus();
   }
 
   function showCreate() {
@@ -766,7 +1024,7 @@
     refreshing = true;
     try {
       await loadOverview();
-      if (state.queue === 'dashboard') await loadDashboard();
+      if (state.queue === 'dashboard') await loadDashboard({ animate: false });
       else if (state.queue !== 'create') await loadList();
     } finally {
       refreshing = false;

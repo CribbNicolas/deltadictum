@@ -14,8 +14,9 @@ change it too.
 
 - [Node.js](https://nodejs.org) 22.16 or later on the machine's `PATH` (Windows, Linux or macOS).
 - A git repository. Memories are files you commit; DD does nothing with them outside a repository.
-- One of the harnesses DD runs in. Claude Code is supported in full and is where DD is measured; the others
-  are added one at a time, each verified against a recorded session before it is called supported.
+- One of the harnesses DD runs in. Claude Code, Codex and OpenCode are supported, each verified in a live
+  session; Claude Code is where DD is measured. Grok Build is in preview: built from its hook guide and not
+  yet verified in a live session.
 
 The memory store is the same for every harness: a project's `.dd/memories/` serves them all.
 
@@ -36,9 +37,6 @@ every tool call. Update later from `/plugin`.
 <!-- /for -->
 
 <!-- for: codex -->
-
-> **Status:** the adapter is unit-tested against Codex payloads recorded in 2026-09 (codex-cli 0.154); it
-> is not yet verified in a live session.
 
 Codex has no plugin marketplace, so DD writes the project's Codex configuration. Install DD globally
 first, so the configuration points at a directory that stays (an `npx` cache can be cleared):
@@ -64,36 +62,35 @@ command again; it refreshes DD's own handlers and keeps yours.
 
 <!-- for: opencode -->
 
-> **Status:** the adapter is unit-tested against OpenCode's plugin API; it is not yet verified in a live
-> session.
+Install DD globally, then let it write the project's OpenCode configuration:
 
-Add DD to the project's `opencode.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["deltadictum"]
-}
+```bash
+npm install -g deltadictum
+deltadictum install --host opencode --project "<absolute-project-path>"
 ```
 
+It writes, keeping everything else in each file:
+
+- `opencode.json`: DD's plugin, beside any others;
+- `.opencode/skills/dd-save`, `dd-recall`, `dd-review`: the commands, as OpenCode skills;
+- `AGENTS.md`: a short managed block telling the agent what DD's deliveries are and how to save knowledge.
+
 OpenCode runs plugins in Bun, which has no `node:sqlite`, so the adapter imports nothing from DD: it runs
-DD's hooks in Node, which must be 22.16 or later on the `PATH`. OpenCode has no DD commands; ask the agent
-in words, and use `npx deltadictum` in a terminal for the rest.
+DD's hooks in Node, which must be 22.16 or later on the `PATH`. OpenCode needs 1.18 or later for its free
+models. After `npm update -g deltadictum`, run the install command again.
 
 <!-- /for -->
 
 <!-- for: grok -->
 
-> **Status:** not verified. The plugin runs the hooks Claude Code runs, assuming Claude Code's payload
-> shape; Grok's real payloads have not been recorded yet, so a tool name Grok spells differently fires
-> nothing.
-
 ```bash
 grok plugin install CribbNicolas/deltadictum --trust
 ```
 
-`--trust` is required for the hooks to load. `grok inspect`, run in the project, lists the plugin's hooks
-and its three skills: `/save`, `/recall` and `/deltadictum:review` (Grok keeps `/review` for its own).
+`--trust` is required for the hooks to load. The plugin runs the hooks Claude Code runs and reads Grok's
+own payload, as Grok's hook guide documents it; no real Grok session has been recorded yet. `grok inspect`,
+run in the project, lists the plugin's hooks and its three skills: `/save`, `/recall` and
+`/deltadictum:review` (Grok keeps `/review` for its own).
 
 <!-- /for -->
 
@@ -211,11 +208,14 @@ $dd-recall store
 /recall store
 ```
 
-<!-- for: opencode -->
+```text for=opencode
+Use the dd-recall skill: what does DD know about the store?
+```
 
-On OpenCode a memory arrives with the result of the tool call it applies to, not before the call: a read
-is unaffected, and an edit learns of its trap one step late. The system prompt is left alone, so the
-prompt cache holds.
+<!-- for: opencode grok -->
+
+Here a memory arrives with the result of the tool call it applies to, not before the call: a read is
+unaffected, and an edit learns of its trap one step late.
 
 <!-- /for -->
 
@@ -260,13 +260,12 @@ $dd-review
 /deltadictum:review
 ```
 
-```bash for=opencode
-npx deltadictum doctor
-npx deltadictum ui
+```text for=opencode
+Use the dd-review skill.
 ```
 
 The agent runs `deltadictum doctor`, tells you its summary, and starts the review UI in the background
-(on OpenCode you run both yourself). It prints an address like:
+(`npx deltadictum ui` starts it from a terminal too). It prints an address like:
 
 ```text
 DD - review UI: http://127.0.0.1:7733/?key=3f9a…
@@ -274,32 +273,24 @@ DD - review UI: http://127.0.0.1:7733/?key=3f9a…
 
 > **Open that exact URL.** The key is what lets your browser in; without it the UI answers 403.
 
-The UI lists candidates, memories DD accepted on
-its own, stale or unused memories, duplicates, the agent's requests and the last deliveries. For each
-memory it shows the evidence, how broad its triggers are, how often it fired and by which trigger, and it
-dry-runs the triggers over recent sessions so you can see what would have fired. Edit, accept, archive,
-merge or restore from there. [Using DD well](using-dd.md#the-review-ui) walks through it.
-
-Stop the UI with Ctrl+C in its terminal, or leave it; it serves one project on a loopback address only.
+Candidates, what DD accepted on its own and the agent's requests wait there for you; each memory shows
+its evidence, its use and a dry run of its triggers. [The review UI](using-dd.md#the-review-ui) walks
+through every view. Stop it with Ctrl+C, or leave it running: it serves one project, on a loopback address
+only.
 
 ## 8. Share with the team
 
-Memories are files under `.dd/memories/`. Commit and push them like code; a teammate who pulls and has the
-plugin installed receives the same deliveries. `.dd/local/` (the index, session files, counters) never
-leaves the machine and is rebuilt from the memories.
-
-Two people saving on the same topic produce two files, not a conflict; DD keeps at most one live memory
-per topic and shows the other as a duplicate to merge in the review UI.
+Commit and push `.dd/memories/` like code; a teammate who pulls and has the plugin installed receives the
+same deliveries. `.dd/local/` (the index, session files, counters) never leaves the machine. More in
+[Working as a team](using-dd.md#working-as-a-team).
 
 ## 9. Keep it healthy
 
 - `npx deltadictum doctor` whenever something seems off. A hook that fails never says so (it must not block
   the agent); doctor does.
-- Maintenance runs on its own once a day, detached from session start: it rolls session files up, prunes
-  them after seven days, and retires memories whose files keep being touched without them ever firing
-  (20 sessions by default). A memory a person reviewed is never retired this way.
-- `npx deltadictum health` lists dead triggers (a glob with no file, a symbol absent from the code), idle
-  memories, stale evidence and suspected false alarms.
+- Maintenance runs on its own once a day: it prunes session files after seven days and retires memories
+  whose files keep being touched without them ever firing. A memory a person reviewed is never retired.
+- `npx deltadictum health` lists dead triggers, idle memories, stale evidence and suspected false alarms.
 
 ## Coming from `CLAUDE.md` or `.claude/rules/`
 

@@ -1,10 +1,11 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { lstatSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
 import { codeSymbols, compileProject, repoFilesOf, triggerWarnings, untrackedFilesOf } from '../engine/compile.js';
 import { globToRegExp } from '../engine/clause.cjs';
+import { fileHash } from '../engine/file-hash.cjs';
 import { localPaths } from '../engine/locate.cjs';
 import { words } from '../engine/text.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from '../memory/schema.js';
@@ -77,7 +78,7 @@ function resolveEvidence(root, cited, footprint, listing) {
       try { info = lstatSync(join(root, path)); } catch { reasons.push(`evidence_file_missing:${path}`); continue; }
       if (outside || !info.isFile()) { reasons.push(`evidence_not_a_repository_file:${path}`); continue; }
       if (info.size > EVIDENCE_FILE_MAX) { reasons.push(`evidence_file_too_large:${path}`); continue; }
-      evidence.push({ type: 'file', path, sha256: createHash('sha256').update(readFileSync(join(root, path))).digest('hex'),
+      evidence.push({ type: 'file', path, sha256: fileHash(join(root, path)),
         summary: String(entry.summary ?? 'Cited when this memory was saved.').slice(0, 500) });
       files.push(path);
     } else if (entry?.type === 'observation' || entry?.type === 'correction') {
@@ -222,6 +223,10 @@ async function ingest({ root, file, sessionId, now = new Date(), compile = compi
   const reasons = [];
   const notDerivable = String(proposal.not_derivable ?? '').trim();
   if (notDerivable.length < NOT_DERIVABLE_MIN || [proposal.title, proposal.body].includes(notDerivable)) reasons.push('not_derivable_required');
+  // A model often writes one evidence entry or one trigger clause without its list: read it as a list of one.
+  for (const key of ['evidence', 'triggers']) {
+    if (proposal[key] && typeof proposal[key] === 'object' && !Array.isArray(proposal[key])) proposal[key] = [proposal[key]];
+  }
   const { evidence, files, corrections, reasons: evidenceReasons } = resolveEvidence(root, proposal.evidence, footprint, listing);
   reasons.push(...evidenceReasons);
   let triggers = Array.isArray(proposal.triggers) ? proposal.triggers : [];

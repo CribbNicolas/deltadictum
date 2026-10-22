@@ -4,6 +4,7 @@
   --surface-2: #0f1318;
   --surface-3: #12161c;
   --surface-code: #161b22;
+  --surface-chip: #1a1f26;
   --border-1: #1d232b;
   --border-2: #222a33;
   --border-3: #2b333d;
@@ -25,4 +26,5 @@
   --radius-l: 14px;
   --content: 1120px;
   --gutter: 24px;
+  --header-h: 64px;
 }

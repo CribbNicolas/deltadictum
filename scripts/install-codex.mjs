@@ -10,10 +10,10 @@ const psQuote = value => `'${String(value).replaceAll("'", "''")}'`;
 const agentsStart = '<!-- BEGIN DD PROJECT KNOWLEDGE -->';
 const agentsEnd = '<!-- END DD PROJECT KNOWLEDGE -->';
 
-async function optionalText(path) {
+export async function optionalText(path) {
   try { return await readFile(path, 'utf8'); } catch (err) { if (err.code === 'ENOENT') return ''; throw err; }
 }
-function managedBlock(text, start, end, content) {
+export function managedBlock(text, start, end, content) {
   const from = text.indexOf(start), until = text.indexOf(end);
   if (from < 0 && until < 0) return `${text.trimEnd()}${text.trim() ? '\n\n' : ''}${start}\n${content}\n${end}\n`;
   if (from < 0 || until < from || text.indexOf(start, from + start.length) >= 0) throw new Error('invalid_managed_block');
@@ -68,20 +68,27 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
     hooks.hooks[event] = groups;
   }
   await plan(hookPath, `${JSON.stringify(hooks, null, 2)}\n`, hookText);
-  // Codex has no plugin namespace, so the command skills are installed as dd-<name>:
+  await planShared({ projectRoot, root, plan, skillsDir: join(projectRoot, '.agents', 'skills'), saveWith: 'the dd-save skill' });
+  return { projectRoot, pluginRoot, dataDir, operations };
+}
+
+// What every scripted install writes besides the harness's own config: the command skills, the AGENTS.md
+// block, the ignore file and the opt-in. `plan` records a write when the content differs.
+export async function planShared({ projectRoot, root = pluginRoot, plan, skillsDir, saveWith }) {
+  // A harness without a plugin namespace gets the command skills as dd-<name>:
   // a project's own review or init skill is never overwritten.
   // A skill file DD wrote (named dd-*) is DD's to replace on upgrade; any other
   // file at that path is the project's and stops the install for review.
-  // Codex substitutes no ${CLAUDE_PLUGIN_ROOT}: the copies name the directory DD
+  // Only Claude Code substitutes ${CLAUDE_PLUGIN_ROOT}: the copies name the directory DD
   // runs from, as the hooks do.
   const skillName = text => /^---\r?\nname: (.+?)\r?$/m.exec(text ?? '')?.[1]?.trim();
   const ddOwned = text => /^dd-[a-z]+$/.test(skillName(text) ?? '');
   const skills = ['save', 'recall', 'review'];
   for (const skill of skills) {
-    const content = (await readFile(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8'))
+    const content = (await readFile(join(root, 'skills', skill, 'SKILL.md'), 'utf8'))
       .replace(/^(---\r?\nname: )(.+)$/m, `$1dd-${skill}`)
-      .replaceAll('${CLAUDE_PLUGIN_ROOT}', slash(pluginRoot));
-    const path = join(projectRoot, '.agents', 'skills', `dd-${skill}`, 'SKILL.md');
+      .replaceAll('${CLAUDE_PLUGIN_ROOT}', slash(root));
+    const path = join(skillsDir, `dd-${skill}`, 'SKILL.md');
     const before = await optionalText(path);
     if (before && before !== content && !ddOwned(before)) throw new Error(`existing_skill_requires_review:${path}`);
     await plan(path, content, before);
@@ -90,7 +97,7 @@ export async function planCodexInstall(project, { root = pluginRoot } = {}) {
   const agents = await optionalText(agentsPath);
   await plan(agentsPath, managedBlock(agents, agentsStart, agentsEnd, `## DD project knowledge
 
-DD hooks add this project's memories before the actions they apply to. Treat them as advice: the current code, the project's documents and the user take precedence. When you learn something an agent reading the code would miss, save it with the dd-save skill.`), agents);
+DD hooks add this project's memories before the actions they apply to. Treat them as advice: the current code, the project's documents and the user take precedence. When you learn something an agent reading the code would miss, save it with ${saveWith}.`), agents);
   const ignorePath = join(projectRoot, '.dd', '.gitignore');
   let ignore = await optionalText(ignorePath);
   for (const pattern of ['local/', 'memories/manifest.json', 'inbox/', '.write-lock', '.pending-write.json', '*.tmp', '*.sqlite', '*.sqlite-*']) {
@@ -101,7 +108,6 @@ DD hooks add this project's memories before the actions they apply to. Treat the
   // project id, as `deltadictum init` writes it; one already there is the project's.
   const configJsonPath = join(projectRoot, '.dd', 'config.json');
   if (!(await optionalText(configJsonPath))) await plan(configJsonPath, `${JSON.stringify({ project_id: basename(projectRoot) }, null, 2)}\n`, '');
-  return { projectRoot, pluginRoot, dataDir, operations };
 }
 
 export async function applyCodexInstall(plan) {

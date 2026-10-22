@@ -37,7 +37,7 @@
     {
       "type": "file",
       "path": "docs/getting-started.md",
-      "sha256": "4cca002795946e211a49197d7b4d8d6feee0a3a525de639f14c5e510bc206960",
+      "sha256": "b8513b254c0927b0edbec532e0ee937118f43415a08b2e160fb8f81f9dcb3ad1",
       "summary": "Grok Build install and status, moved from docs/integrations/grok-build.md on 2026-10-21."
     },
     {
@@ -61,9 +61,9 @@
     "batch": "unversioned-memories-2026-10-21",
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T20:37:09.238Z"
+      "at": "2026-10-22T01:05:12.994Z"
     }
   },
   "created": "2026-10-21T20:31:57.018Z",
-  "updated": "2026-10-21T20:37:09.318Z"
+  "updated": "2026-10-22T01:05:12.996Z"
 }

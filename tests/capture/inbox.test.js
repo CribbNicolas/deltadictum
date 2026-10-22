@@ -48,6 +48,17 @@ test('a proposal with a hashed file, live triggers and no check is stored active
   assert.ok(loadIndex(root).memories[stored.id]);
 });
 
+// Models other than Claude often write a single evidence entry or trigger clause without its list
+// (seen with OpenCode's free models, 2026-10-22): it is read as a list of one, not refused.
+test('one evidence entry or one trigger clause without its list is read as a list of one', async t => {
+  const root = repo(t);
+  const { stored } = await ingestInboxFile({ root, sessionId: 's1',
+    file: write(root, 'one.json', proposal({ evidence: { type: 'file', path: 'src/config.js' }, triggers: { on: ['edit'], paths: ['src/config.js'] } })) });
+  assert.equal(stored.status, 'active');
+  assert.equal(stored.evidence.length, 1);
+  assert.deepEqual(stored.triggers[0].paths, ['src/config.js']);
+});
+
 // A correction is verified evidence only when it is about the memory and follows
 // something the agent did (owner, 2026-10-13): "No, gracias" or a "No," that opens
 // the session corrects no work.

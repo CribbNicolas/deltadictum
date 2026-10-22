@@ -24,7 +24,11 @@ corrected.
 - Writes go through one journaled, locked transaction (`src/store/transactions.js`); an interrupted one is
   rolled forward before the next. Validation (schema, secrets, unsafe content, glob safety, sizes) runs before
   anything is written.
-- `.dd/local/` is derived and git-ignored: the compiled index, session files, telemetry. `deltadictum
+- An evidence file is hashed as text with CRLF line endings read as LF (`src/engine/file-hash.cjs`), so a
+  checkout with CRLF and one with LF agree; a binary file is hashed as it is. A hash recorded from the raw
+  bytes before still matches the file it was taken from.
+- `.dd/local/` is derived and git-ignored: the compiled index, session files, telemetry, this machine's
+  settings. `deltadictum
   compile` rebuilds the index; session start rebuilds a stale one.
 
 ## Delivery
@@ -84,7 +88,7 @@ corrected.
   applies. A proposal on a topic whose candidate is still pending replaces it; the replaced candidate is
   archived, never deleted. Every ingestion leaves one telemetry line with its outcome and reasons
   (`.dd/local/telemetry/inbox.jsonl`), never the content.
-- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings pane, turns it off) activates a candidate only
+- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings panel, turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
 - The agent's requests to archive, revise, re-verify, merge or delete memories wait for a person in the
@@ -97,7 +101,8 @@ corrected.
 
 ## Maintenance and review
 
-- Maintenance runs detached from session start at most once a day (`deltadictum maintain` by hand): session
+- Maintenance runs detached from session start at most once a day, unless this machine's `maintenance` setting
+  or `DD_MAINTENANCE=0` turns that off (`deltadictum maintain` by hand): session
   files are rolled up into `.dd/local/telemetry.sqlite` and pruned after seven days, unused memories are
   retired, and the similarity index is refreshed.
 - An active memory whose paths were touched in at least 20 sessions (`retire.after_sessions`) without it firing
@@ -120,11 +125,15 @@ corrected.
 
 ## Harnesses
 
-- Claude Code is supported in full. Codex receives the same delivery through its hooks: its shell tool is
-  classified as Claude Code's Bash is, `apply_patch` headers name the edited files, and Stop answers with
-  a block. OpenCode receives memories appended to the tool result, leaving the system prompt and its cache
-  alone. Grok Build runs the same hooks with Claude Code's payload shape, not yet checked against a recorded
-  session.
+- Claude Code, Codex and OpenCode are supported: install, save, delivery and recall were verified in live
+  sessions (Codex with codex-cli 0.163 and OpenCode 1.19.3, 2026-10-22). Codex receives the same delivery
+  through its hooks: its shell tool is classified as Claude Code's Bash is, `apply_patch` headers name the
+  edited files, and Stop answers with a block (`src/hooks/codex.cjs`). OpenCode receives memories appended
+  to the tool result, leaving the system prompt and its cache alone, and its writes into the inbox are
+  ingested in the same result (`adapters/opencode/index.js`). `deltadictum install --host codex|opencode`
+  writes either project's configuration.
+- Grok Build is in preview: it runs the same hooks with its own payload, mapped from its hook guide
+  (`src/hooks/grok.cjs`), not yet checked against a recorded session.
 - A hook that fails ends silently: DD never blocks the host.
 
 ## Import
@@ -139,4 +148,15 @@ corrected.
   at its file (`review.issues: imported_truncated`). A second import updates the memories whose file
   changed and leaves the rest alone.
 
-**DD is a plugin for coding-agent harnesses, not a service.** These are the limits that follow.
+## Limits
+
+**DD is a plugin for coding-agent harnesses, not a service.** It follows that:
+
+- Hooks are short-lived Node processes, and one runs before every tool call: matching is rules over a
+  compiled index, never a search or a model.
+- There is no resident process. DD runs in the hooks, in a daily detached maintenance run, and in the
+  review UI a person starts.
+- There is no runtime dependency and no model: Node 22.16 or later is all DD needs.
+- Each harness's hook contract differs; its adapter translates events and output, nothing more.
+- A hook failure never blocks the host.
+- Everything is local: memories in git, everything derived in `.dd/local/`, no network request.

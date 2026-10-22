@@ -1,8 +1,9 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 import { globToRegExp } from '../engine/clause.cjs';
 import { compileProject, presentFilesOf } from '../engine/compile.js';
+import { fileHash } from '../engine/file-hash.cjs';
 import { localPaths } from '../engine/locate.cjs';
 import { BODY_MAX, LIMITS, LIVE_STATUSES, SCHEMA_VERSION, validateMemory, validRelativePath } from './schema.js';
 import { createMemoryFiles } from './store.js';
@@ -68,7 +69,7 @@ function triggerGlob(glob) {
 
 const slug = file => basename(file, extname(file)).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'rule';
 const humanize = file => { const stem = basename(file, extname(file)).replace(/[-_]+/g, ' ').trim(); return stem.charAt(0).toUpperCase() + stem.slice(1); };
-const sha256 = path => createHash('sha256').update(readFileSync(path)).digest('hex');
+const sha256 = fileHash;
 
 // A rule longer than a body is cut at a paragraph and points at its file, which
 // the agent can read; the memory records that it was cut.

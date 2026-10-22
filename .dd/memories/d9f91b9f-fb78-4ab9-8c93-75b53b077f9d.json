@@ -1,0 +1,56 @@
+{
+  "schema_version": 8,
+  "id": "d9f91b9f-fb78-4ab9-8c93-75b53b077f9d",
+  "project_id": "supermem",
+  "topic": "distribution/harness-native-install-mechanisms",
+  "kind": "fact",
+  "status": "candidate",
+  "title": "How each harness loads DD, and which OpenCode hooks can carry text",
+  "body": "Claude Code and Grok Build install plugins from a marketplace that auto-discovers skills/ (Grok mirrors Claude Code's layout almost exactly). Codex and OpenCode get their project configuration written by `deltadictum install --host codex|opencode`: Codex has no marketplace or npm pull, and OpenCode reads project skills only from .opencode/skills/. OpenCode has no hook shaped like PreToolUse: tool.execute.before outputs {args} only and session events return void. Text reaches its model two ways: experimental.chat.system.transform (once per turn; it rewrites the system prompt and breaks the prompt cache) and the output of tool.execute.after ({title, output, metadata}), which DD uses to append the memories that fired, and the inbox's reply, to the tool's own result; that output carries no exit status, so outcomes cannot be read there.",
+  "not_derivable": "Verified 2026-09-19 against @opencode-ai/plugin@1.18.31's type definitions and a real plugin's compiled source, and on 2026-10-22 in live OpenCode 1.19.3 sessions; a first version written from a documentation summary got the signatures wrong.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/**",
+        "scripts/install-codex.mjs",
+        "scripts/install-opencode.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "OpenCode",
+        "Grok Build",
+        "tool.execute",
+        "system.transform",
+        "marketplace",
+        "install mechanism"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "scripts/install-opencode.mjs",
+      "sha256": "da7a808357adc65f48ffc2b20efeafcae87e10215b93a848ed340ca20fdc443c",
+      "summary": "The OpenCode installer."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "462af759-5cf7-4c8e-9421-02657a400572",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "batch": "harness-preview-2026-10-22"
+  },
+  "created": "2026-10-22T02:35:09.587Z",
+  "updated": "2026-10-22T02:35:09.731Z"
+}

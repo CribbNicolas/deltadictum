@@ -49,26 +49,10 @@ const jsonLd = [
     <div class="toc-col"><Toc headings={headings} /></div>
   </div>
   <script>
-    // A copy button on every code block, a scroll box around every table, an anchor on every section heading.
+    // An anchor on every section heading. Code cards and table boxes are built with the page
+    // (src/lib/harness.js); the copy buttons work through site-client.js.
     for (const heading of document.querySelectorAll('.prose h2[id], .prose h3[id]')) {
       heading.append(Object.assign(document.createElement('a'), { className: 'anchor', href: `#${heading.id}`, textContent: '#', ariaLabel: `Link to ${heading.textContent}` }));
-    }
-    for (const pre of document.querySelectorAll('.prose pre')) {
-      const button = Object.assign(document.createElement('button'), { type: 'button', className: 'copy', textContent: 'Copy' });
-      button.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(pre.querySelector('code')?.innerText ?? pre.innerText);
-        button.textContent = 'Copied';
-        setTimeout(() => { button.textContent = 'Copy'; }, 1500);
-      });
-      // The button sits on a wrapper, not in the scrolling block, so long lines never pass under it.
-      const wrap = Object.assign(document.createElement('div'), { className: 'code' });
-      pre.replaceWith(wrap);
-      wrap.append(pre, button);
-    }
-    for (const table of document.querySelectorAll('.prose table')) {
-      const wrap = Object.assign(document.createElement('div'), { className: 'table-wrap' });
-      table.replaceWith(wrap);
-      wrap.append(table);
     }
   </script>
 </Base>
@@ -78,7 +62,7 @@ const jsonLd = [
   .main { flex: 999 1 560px; min-width: 0; max-width: 760px; padding: 40px 0 80px; }
   .toc-col { flex: 1 1 180px; max-width: 220px; }
   /* The columns themselves stick: a sticky child of a column only as tall as itself has nowhere to go. */
-  @media (min-width: 960px) { .side, .toc-col { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; } }
+  @media (min-width: 960px) { .side, .toc-col { position: sticky; top: var(--header-h); max-height: calc(100vh - var(--header-h)); overflow-y: auto; } }
   .crumbs { margin: 0 0 10px; font-size: 14px; color: var(--text-faint); }
   .edit { margin: 22px 0 0; font-size: 14px; }
   .edit a { color: var(--text-muted); }

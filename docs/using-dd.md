@@ -29,15 +29,8 @@ but never earns its place: `deltadictum health` shows it idle and maintenance re
 
 ## Choose the kind
 
-| Kind | Use it for | Delivered as |
-|---|---|---|
-| `trap` | Something that breaks, and how to avoid it | `[TRAP]` |
-| `decision` | A choice the project made, with the why, so the agent does not undo it | `[DECISION]` |
-| `failed_approach` | Something tried and abandoned, so nobody tries it again | `[ABANDONED]` |
-| `procedure` | Steps for a recurring task that nothing enforces | `[PROCEDURE]` |
-| `fact` | A fact about the project or its environment the code does not show | `[FACT]` |
-
-When in doubt between `trap` and `fact`: if ignoring it breaks something, it is a trap.
+`trap`, `decision`, `failed_approach`, `procedure` or `fact` ([Kinds](guide/memories.md#kinds)). When in doubt
+between `trap` and `fact`: if ignoring it breaks something, it is a trap.
 
 ## Write the memory
 
@@ -74,16 +67,9 @@ A complete example, as the agent writes it into `.dd/inbox/`:
 
 ## Triggers that fire when they should
 
-A trigger clause names the events it applies to (`on`: `prompt`, `read`, `edit`, `write`, `search`, `run`)
-and at least one way to narrow them. A memory fires when any clause matches, once per session.
-
-| Narrow by | Fires when | Use for |
-|---|---|---|
-| `paths` | The event touches a file matching the glob | Knowledge about particular files or folders (most memories) |
-| `symbols` | The edited or written text contains the identifier | Knowledge about a function or class, wherever it is used |
-| `commands` | The command the agent runs contains the word | Traps around `npm test`, `git push`, `docker`, a script |
-| `keywords` | The prompt or the tool call contains the word or phrase | Decisions the user is likely to ask about ("why not Postgres") |
-| `not`, `not_paths` | Cancels the clause | Excluding fixtures, generated files, one subfolder |
+A trigger clause names the events it applies to (`on`) and narrows them by `paths`, `symbols`, `commands`
+or `keywords`; a memory fires when any clause matches, once per session. Every field, with what each is
+for: [Triggers](guide/memories.md#triggers).
 
 Guidance that holds up in practice:
 
@@ -128,14 +114,8 @@ What the agent sees, at the end of the turn, for a file it changed:
 DD - check (Close stores in t.after): This test opens a store without closing it in t.after. (tests/a.test.js)
 ```
 
-Rules for checks:
-
-- `examples` are required and must behave as stated; a check whose examples fail is left out of the index.
-- `when: turn` (the default for files) runs once at the end of the turn over the final state of the
-  files; `when: edit` runs at each edit; command checks run at the command.
-- A violation already in the last commit is not reported: checks speak about what the agent changed.
-- A check is reported at most twice per file per session. A memory with a check is never auto-accepted;
-  a person enables it in the review UI.
+A check needs `examples` that behave as stated, speaks only about what the change introduced, and is never
+auto-accepted: a person enables it in the review UI. Every field and rule: [Checks](guide/memories.md#checks).
 
 > **When to write one.** The rule is mechanical and the cost of missing it is real. Not for style: a
 > linter does that better, and every check line costs the agent context.
@@ -143,13 +123,13 @@ Rules for checks:
 ## The review UI
 
 The review command (`/dd:review` in Claude Code; every harness's in [Commands](commands.md)) runs
-`deltadictum doctor`, shows its summary, and starts the UI; `npx deltadictum ui` starts it from a terminal. Open the printed address,
-key included. The page updates itself as the store changes (a memory saved, a request from the agent, a
-session recorded); the "live" mark beside the DD logo says it is connected. The views, in three groups:
+`deltadictum doctor`, shows its summary, and starts the UI; `npx deltadictum ui` starts it from a terminal.
+Open the printed address, key included. The page updates itself as the store changes; the "live" mark
+at the foot of the sidebar says it is connected. The views, in the sidebar's order:
 
 | View | What it shows |
 |---|---|
-| **Dashboard** | The store by status, what waits for you, sessions, deliveries, coverage, the capture funnel, fires by trigger and by event, and the memories that fire most |
+| **Dashboard** | What waits for you, the last seven days, coverage, the store by status, kind and area, the capture funnel, fires by trigger and by event, the memories that fire most, delivery size, and blind spots: files the agent keeps opening that no memory covers |
 | **+ New memory** | A memory written by hand, validated as the agent's proposals are |
 | **Candidates** | Proposals waiting for a person: accept, edit, or archive |
 | **Agent requests** | What the agent asked: batches of proposals saved under one name (accept or reject the lot in one action), then requests to archive, revise, re-verify, merge or delete memories, with their reasons; Apply carries one out |
@@ -161,16 +141,14 @@ session recorded); the "live" mark beside the DD logo says it is connected. The 
 | **Suspected false alarms** | Checks that fired on a file the agent then left unchanged |
 | **Duplicates** | Pairs of memories that say the same thing: merge |
 
-The dashboard's capture card shows the funnel: how often DD asked the agent for a memory, and how many proposals
-were stored, activated or rejected, with the rejection reasons. A funnel with many asks and no proposals
-means the agent is declining; with many rejections, read the reasons.
-
 Each memory opens with its evidence (verified or stale), its breadth (how much of the repository its
-triggers cover), its use (fires by the trigger dimension that matched), similar memories, and the dry run.
-Every edit is validated as ingestion validates, and followed by a recompile.
+triggers cover), its use (fires by the trigger that matched), similar memories, and the dry run. Every
+edit is validated as ingestion validates, then recompiled. The Settings button at the foot of the sidebar
+opens every setting in [Configuration](guide/configuration.md).
 
-Settings, the gear beside the DD logo: every setting in [Configuration](guide/configuration.md), each
-changed in place.
+The dashboard's capture funnel counts how often DD asked for a memory and how many proposals were stored,
+activated or rejected. Many asks and no proposals: the agent is declining. Many rejections: read the
+reasons.
 
 ## A working rhythm
 
@@ -188,13 +166,10 @@ changed in place.
 
 ## Working as a team
 
-- Memories are JSON files under `.dd/memories/`, so they merge, diff and review like code. A pull request
-  that adds a memory can be read in full by the reviewer.
-- Two people saving on one topic yields two files; the review UI's Duplicates queue shows them to merge.
-- `.dd/local/` is per machine. Counters, deliveries and health are each person's view; the memories are
-  shared.
-- Set `{ "auto_accept": false }` in `.dd/config.json` if the team prefers every memory to pass a person
-  before it fires.
+Memories merge, diff and review like code: a pull request that adds one can be read in full. Two people
+saving on one topic yields two files, and the Duplicates queue shows them to merge. `.dd/local/` is per
+machine, so counters, deliveries and health are each person's view. Set `{ "auto_accept": false }` if the
+team prefers every memory to pass a person before it fires.
 
 ## Troubleshooting
 

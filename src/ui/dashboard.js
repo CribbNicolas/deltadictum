@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+import { presentFilesOf } from '../engine/compile.js';
 import { localPaths } from '../engine/locate.cjs';
 import { captureFunnel, healthReport } from '../maintenance/health.js';
 import { openTelemetry } from '../maintenance/telemetry.js';
@@ -5,8 +7,11 @@ import { LIVE_STATUSES } from '../memory/schema.js';
 import { createMemoryFiles } from '../memory/store.js';
 import { readSettings } from './config.js';
 
+const { globToRegExp } = createRequire(import.meta.url)('../engine/clause.cjs');
+
 const TOP = 10;
 const DAYS = 7;
+const SPOTS = 8;
 const round = (value, places = 0) => { const k = 10 ** places; return Math.round(value * k) / k; };
 
 // What DD's telemetry says about use, for the review UI's dashboard: how much a
@@ -15,7 +20,10 @@ const round = (value, places = 0) => { const k = 10 ** places; return Math.round
 export async function dashboard(root) {
   const memories = await createMemoryFiles(localPaths(root).dd).list();
   const titles = new Map(memories.map(memory => [memory.id, memory.title]));
-  const live = memories.filter(memory => LIVE_STATUSES.includes(memory.status)).map(memory => memory.id);
+  const liveMemories = memories.filter(memory => LIVE_STATUSES.includes(memory.status));
+  const live = liveMemories.map(memory => memory.id);
+  const tally = key => Object.fromEntries([...liveMemories.reduce((counts, memory) => counts.set(key(memory), (counts.get(key(memory)) ?? 0) + 1), new Map())]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])));
   // The health report rolls the telemetry up and judges each memory (never fired with opportunity, no opportunity).
   const health = await healthReport(root);
   const withSignal = signal => health.memories.filter(memory => live.includes(memory.id) && memory.signals.some(s => s.signal === signal)).length;
@@ -27,8 +35,10 @@ export async function dashboard(root) {
     const toolCalls = one('SELECT COALESCE(SUM(count), 0) AS n FROM events').n;
     const totals = one('SELECT COUNT(*) AS total, COALESCE(AVG(memories), 0) AS memories_avg, COALESCE(AVG(chars), 0) AS chars_avg, COALESCE(MAX(chars), 0) AS chars_max, COALESCE(SUM(named > 0), 0) AS capped FROM deliveries');
     const byKind = Object.fromEntries(db.prepare('SELECT kind, COUNT(*) AS n FROM deliveries GROUP BY kind ORDER BY kind').all().map(row => [row.kind, row.n]));
-    const top = db.prepare('SELECT memory, COUNT(*) AS fires, COUNT(DISTINCT session) AS sessions FROM fire_events GROUP BY memory ORDER BY fires DESC, memory ASC LIMIT ?').all(TOP)
-      .map(row => ({ memory: row.memory, title: titles.get(row.memory) ?? row.memory, fires: row.fires, sessions: row.sessions }));
+    const top = db.prepare('SELECT memory, COUNT(*) AS fires, COUNT(DISTINCT session) AS sessions FROM fire_events GROUP BY memory ORDER BY fires DESC, memory ASC').all()
+      // A memory deleted since it fired is history, not something a person can open.
+      .filter(row => titles.has(row.memory)).slice(0, TOP)
+      .map(row => ({ memory: row.memory, title: titles.get(row.memory), fires: row.fires, sessions: row.sessions }));
     const byVia = Object.fromEntries(db.prepare("SELECT COALESCE(NULLIF(via, ''), 'unknown') AS via, COUNT(*) AS n FROM fire_events GROUP BY 1 ORDER BY 1").all().map(row => [row.via, row.n]));
     const checks = { fixed: 0, ignored: 0, repeated: 0 };
     for (const row of db.prepare('SELECT outcome, COUNT(*) AS n FROM checks GROUP BY outcome').all()) if (row.outcome in checks) checks[row.outcome] = row.n;
@@ -55,6 +65,23 @@ export async function dashboard(root) {
       coverage: { live: live.length, delivered_ever: deliveredEver, never_fired_with_opportunity: withSignal('never_fired_with_opportunity'), no_opportunity: withSignal('no_opportunity') },
       by_day: byDay,
       capture: captureFunnel(db),
+      kinds: tally(memory => memory.kind),
+      areas: tally(memory => memory.topic.split('/')[0]),
+      blind_spots: blindSpots(root, db, liveMemories),
     };
   } finally { db.close(); }
+}
+
+// Files the agent keeps reading or changing that no live memory's paths cover: where knowledge the code
+// does not show may be missing. A hint for a person, never a memory: most such files need none. Only
+// repository files count (a run's tokens are not paths), and DD's own folder never does.
+function blindSpots(root, db, liveMemories) {
+  const files = presentFilesOf(root);
+  if (!files) return [];
+  const present = new Set(files);
+  const covered = liveMemories.flatMap(memory => memory.triggers.flatMap(clause => clause.paths ?? [])).map(glob => globToRegExp(glob));
+  return db.prepare(`SELECT path, COUNT(DISTINCT session) AS sessions, COUNT(DISTINCT CASE WHEN kind IN ('edit', 'write') THEN session END) AS changed
+    FROM touches WHERE kind IN ('read', 'edit', 'write') GROUP BY path ORDER BY sessions DESC, changed DESC, path ASC`).all()
+    .filter(row => row.sessions > 1 && present.has(row.path) && !row.path.startsWith('.dd/') && !covered.some(regex => regex.test(row.path)))
+    .slice(0, SPOTS).map(row => ({ path: row.path, sessions: row.sessions, changed: row.changed }));
 }

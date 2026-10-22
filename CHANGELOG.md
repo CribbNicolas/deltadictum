@@ -1,8 +1,41 @@
 # Changelog
 
-Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic versioning](https://semver.org/);
-before 1.0 a minor version may change behavior. Each version is published to npm and released on GitHub
-when it reaches `main`, and CI refuses a version bump without a section here.
+Notable changes to DeltaDictum (DD), newest first. Versions follow [semantic versioning](https://semver.org/):
+from 1.0 on, a change that breaks a memory, a setting or a command takes a major version. Each version is
+published to npm and released on GitHub when it reaches `main`, and CI refuses a version bump without a
+section here.
+
+## [1.0.0] - 2026-10-22
+
+The first stable release. Claude Code, Codex and OpenCode are supported; Grok Build is in preview.
+
+- Codex and OpenCode are supported: install, save, delivery and recall verified in live sessions
+  (codex-cli 0.163 and OpenCode 1.19.3), and a memory saved in one is recalled in the other.
+  `deltadictum install --host opencode` writes the plugin entry into `opencode.json`, the `dd-save`,
+  `dd-recall` and `dd-review` skills into `.opencode/skills/` and the AGENTS.md block. The OpenCode adapter now ingests a memory the agent writes into `.dd/inbox/` and adds
+  DD's answer to that write's result; before, nothing read it.
+- Grok Build: its hooks run with `--grok`, and DD reads Grok's own payload (camelCase fields, `read_file`,
+  `search_replace`, `run_terminal_command`), mapped from its hook guide in `src/hooks/grok.cjs`. Before, a
+  Grok tool call fired nothing. Grok Build is in preview: not yet verified in a live session.
+- Capture: a proposal whose `evidence` or `triggers` is a single object instead of a list is read as a list
+  of one, as models other than Claude often write it.
+- Evidence: a file is hashed as text with CRLF line endings read as LF, so a checkout with
+  `core.autocrlf` no longer shows evidence as stale on one machine and fresh on another. Binary files are
+  hashed as they are, and a hash recorded before still matches the file it was taken from.
+- Settings: the review UI's Settings panel changes every setting, the project id included, and this
+  machine's own in `.dd/local/settings.json` (never committed): daily maintenance on or off, and recording
+  what the harness sends each hook to `.dd/local/payloads.jsonl`. `DD_MAINTENANCE=0` and
+  `DD_CAPTURE_PAYLOADS` still work for one process, as CI and tests need.
+- Review UI: the site's look (dark surfaces, gold for what waits for a person), views grouped in the
+  sidebar, and settings in a panel from the left. The dashboard is one page of sections that play in as
+  they scroll into view: live memories and what waits for you, the last seven days drawn as a line,
+  coverage, the store by status, kind and area, the capture funnel, the memories that fire most, delivery
+  size against the cap, and blind spots: files the agent keeps opening that no memory covers.
+- Docs: the README keeps the install steps and points to the site for the rest. The reference pages say
+  each thing once: the trigger fields and check rules live in Memories, Using DD well keeps the guidance,
+  and the behavioural contract ends with DD's limits. No behavior changes.
+- Site: a new landing and code blocks with harness tabs, built with the page so nothing shifts as it
+  loads; `llms.txt` and `llms-full.txt` give language models the docs in one place.
 
 ## [0.9.14] - 2026-10-21
 

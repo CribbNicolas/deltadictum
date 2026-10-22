@@ -40,19 +40,19 @@
     {
       "type": "file",
       "path": "docs/benchmarks/data/bench-2026-10-fix-opus.summary.json",
-      "sha256": "88ad17b6aa88d6c940f7749d27287803397d1d97d91f2b1096cc33bfe6a6a6cb",
+      "sha256": "ef02b66007372ada5a45be9169f9631a1e81c37d1bcbdfb94b043b134d512c91",
       "summary": "Opus: requirements 69 -> 100, quality 92 -> 98, cost $0.428 -> $0.4344; the caveat on task selection."
     },
     {
       "type": "file",
       "path": "docs/benchmarks/data/bench-2026-10-fix-haiku.summary.json",
-      "sha256": "1ca1d637dabbffd1a1e383e4ea14f378640cd72d42c8906f8bb6c24c107ef630",
+      "sha256": "320228190a815fdf33ec97ca299cf4776b34094459b46c213698022781812e54",
       "summary": "Haiku: requirements 43 -> 98, quality 85 -> 97, cost $0.0205 -> $0.0236."
     },
     {
       "type": "file",
       "path": "site/src/config.js",
-      "sha256": "396e690d70cb19873545292f8924027ee83b8e22e35766435fbbd252aac800f3",
+      "sha256": "8d288a0059c2d97030e5723d327ce5e0f8dad3137bc123783874bab91453d718",
       "summary": "The landing reads the two summaries (featured.trials)."
     }
   ],
@@ -72,9 +72,9 @@
     "batch": "unversioned-memories-2026-10-21",
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T20:37:09.732Z"
+      "at": "2026-10-22T01:05:12.637Z"
     }
   },
   "created": "2026-10-21T20:32:24.807Z",
-  "updated": "2026-10-21T20:37:09.814Z"
+  "updated": "2026-10-22T01:05:12.639Z"
 }

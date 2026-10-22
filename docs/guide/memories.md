@@ -59,21 +59,24 @@ definition is `src/memory/schema.js`.
 ## Triggers
 
 A trigger clause names the events it applies to in `on`: `prompt`, `read`, `edit`, `write`, `search` or
-`run`. At least one more field narrows it:
+`run`. At least one more field narrows it; fields in one clause must all match, and a memory fires when
+any of its clauses matches.
 
-- `paths`: globs of repository files the event touches (`*`, `**`, `?` and `{a,b}` alternatives);
-- `symbols`: identifiers the edited or written text contains;
-- `commands`: words of a command the agent runs;
-- `keywords`: words or phrases of the prompt or tool call;
-- `not`, `not_paths`: phrases or globs that cancel the clause.
+| Field | Matches | Use for |
+|---|---|---|
+| `paths` | Repository files the event touches, as globs (`*`, `**`, `?`, `{a,b}`) | Knowledge about particular files or folders (most memories) |
+| `symbols` | Identifiers in the edited or written text | A function or class, wherever it is used |
+| `commands` | Words of a command the agent runs | Traps around `npm test`, `git push`, a script |
+| `keywords` | Words or phrases of the prompt or tool call | Decisions a person is likely to ask about |
+| `not`, `not_paths` | Phrases or globs that cancel the clause | Excluding fixtures, generated files, a subfolder |
 
-A memory fires when any of its clauses matches. `deltadictum health` and the review UI report triggers that
-can never fire (a glob with no file, a symbol absent from the code) and globs so broad they match much of
-the repository.
+`deltadictum health` and the review UI report triggers that can never fire (a glob with no file, a symbol
+absent from the code) and globs so broad they match much of the repository. How to choose them:
+[Triggers that fire when they should](../using-dd.md#triggers-that-fire-when-they-should).
 
 ## Checks
 
-A check states a rule DD verifies itself:
+A check states a rule DD verifies itself, as regular expressions; it never runs code.
 
 | Field | Meaning |
 |---|---|
@@ -81,12 +84,13 @@ A check states a rule DD verifies itself:
 | `paths` | The files it applies to (edit and write) |
 | `if_content`, `unless_content` | A violation when the changed file matches the first and not the second |
 | `if_command`, `unless_command` | The same over a command |
-| `when` | `turn` (the default for files: once, at the end of the turn), `edit` or `run` |
+| `when` | `turn` (the default for files: once, at the end of the turn, over the files' final state), `edit` or `run` |
 | `say` | What the agent is told, up to 200 characters |
-| `examples` | `violates` and `passes` samples, required: a check whose examples fail is left out |
+| `examples` | `violates` and `passes` samples, required: a check whose examples fail is left out of the index |
 
-DD reports only violations the change introduced, at most twice per file per epoch (a session until its
-next compaction or `/clear`), and never runs code.
+DD reports only violations the change introduced (one already in the last commit is not), at most twice
+per file per epoch (a session until its next compaction or `/clear`). A memory with a check is never
+auto-accepted: a person enables it in the review UI.
 
 ## Statuses
 

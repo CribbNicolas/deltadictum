@@ -44,7 +44,7 @@
     {
       "type": "file",
       "path": "docs/guide/how-it-works.md",
-      "sha256": "8958f4bc744c866dc2b93ae58a9e160bc20538c1e5d2c6d167adf16d8a4b1fda",
+      "sha256": "044594719f49686646ad3fc6f4e12c252148b4b1c5314d4788bbec89c01d3ab9",
       "summary": "How DD reaches the agent on OpenCode, moved from docs/integrations/opencode.md on 2026-10-21."
     }
   ],
@@ -58,9 +58,9 @@
     "batch": "unversioned-memories-2026-10-21",
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T20:37:08.497Z"
+      "at": "2026-10-22T01:05:12.459Z"
     }
   },
   "created": "2026-10-21T20:31:58.444Z",
-  "updated": "2026-10-21T20:37:08.580Z"
+  "updated": "2026-10-22T01:05:12.460Z"
 }

@@ -1,50 +1,129 @@
 ---
-import { tableFor } from '../../lib/bench.js';
+// The landing's results: every agent run recorded since the first benchmark, then the latest benchmark
+// averaged across its models, one card per metric. The featured metric leads, centred; the others
+// follow two to a row. A card's change is against the agent alone; for context and cost it also gives
+// the documentation's, the comparison that makes the number mean something.
+import { cardsFor } from '../../lib/bench.js';
+import { LANDING } from '../../config.js';
 const { summary } = Astro.props;
-const table = tableFor(summary);
-const last = table.columns.at(-1).id;
+const cards = Object.fromEntries(cardsFor(summary, { highlight: LANDING.highlight, headlines: LANDING.headlines }).map(card => [card.id, card]));
+const others = card => card.bars.filter(bar => bar.change && !bar.highlight).map(bar => `${bar.label.replace(/^With /, '')} ${bar.change.text}`);
+const delta = (card, featured = false) => card.unit === 'pct'
+  ? `${card.change.text}${featured ? ' over the agent alone' : ''}`
+  : [card.change.text, ...others(card)].join(' · ');
+const featured = cards[LANDING.featured];
+const rows = LANDING.rows.map(row => row.map(id => cards[id]));
 ---
-<section class="measured wrap" aria-labelledby="measured-title">
-  <p class="eyebrow">TABLE 1 · MEASURED</p>
-  <h2 id="measured-title">{summary.title}</h2>
-  <p class="sub">{summary.tasks} tasks, {summary.runs_per_condition} {summary.runs_per_condition === 1 ? 'run' : 'runs'} per condition, different models. {summary.note}</p>
-  <div class="table">
-    <table>
-      <thead>
-        <tr><th scope="col"><span class="visually-hidden">Metric</span></th>{table.columns.map(c => <th scope="col" class:list={{ strong: c.id === last }}>{c.label}</th>)}</tr>
-      </thead>
-      <tbody>
-        {table.rows.map(row => (
-          <tr>
-            <th scope="row">{row.label}</th>
-            {row.cells.map((cell, i) => (
-              <td class:list={{ base: table.columns[i].base, [cell.tone ?? '']: Boolean(cell.tone) }}>
-                {cell.text}{cell.change && <span class="change">({cell.change})</span>}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+<section id="measured" class="measured wrap" aria-labelledby="measured-title">
+  <div class="total">
+    <svg class="rings" aria-hidden="true" viewBox="0 0 600 600">
+      <defs><radialGradient id="runs-glow"><stop offset="0" stop-color="#e8b84a" stop-opacity="0.16" /><stop offset="1" stop-color="#e8b84a" stop-opacity="0" /></radialGradient></defs>
+      <circle cx="300" cy="300" r="280" fill="url(#runs-glow)" />
+      <circle class="ring" cx="300" cy="300" r="170" fill="none" stroke="#e8b84a" stroke-opacity="0.18" stroke-width="1" />
+      <circle class="ring" cx="300" cy="300" r="230" fill="none" stroke="#e8b84a" stroke-opacity="0.1" stroke-width="1" style="animation-delay: 1.5s" />
+      <circle cx="300" cy="300" r="290" fill="none" stroke="#e8b84a" stroke-opacity="0.06" stroke-width="1" stroke-dasharray="2 10" />
+    </svg>
+    <p class="badge"><span aria-hidden="true"></span>MEASURED</p>
+    <h2 id="measured-title"><span class="runs" data-count-to={LANDING.totalRuns}>{LANDING.totalRuns.toLocaleString('en-US')}</span> <span class="unit">agent runs</span></h2>
+    <span class="rule" aria-hidden="true"></span>
+    <p class="says">The latest benchmark, averaged across models, tells us this:</p>
   </div>
-  <p class="legend">Changes in parentheses are against the agent alone: points for percentages, share of the base for context and cost. <span class="first">Gold</span>: best in its row. <span class="second">Green</span>: second.</p>
+
+  <div class="results">
+    <article class="card featured" data-reveal>
+      <p class="label">{featured.label}</p>
+      <h3>{featured.headline}</h3>
+      <p class="value">{featured.value}</p>
+      <p class="delta">{delta(featured, true)}</p>
+      <div class="bars">
+        {featured.bars.map(bar => (
+          <Fragment>
+            <span class:list={['name', { hl: bar.highlight }]}>{bar.label}</span>
+            <span class="track"><span class:list={['fill', { hl: bar.highlight }]} style={`width: ${bar.share}%`}></span></span>
+            <span class:list={['num', { hl: bar.highlight }]}>{bar.value}</span>
+          </Fragment>
+        ))}
+      </div>
+    </article>
+    {rows.map(row => (
+      <div class="row" data-reveal>
+        {row.map(card => (
+          <article class="card">
+            <p class="label">{card.label}</p>
+            <h3>{card.headline}</h3>
+            <div class="figure">
+              <span class="value">{card.value}</span>
+              <span class="delta">{delta(card)}</span>
+            </div>
+            <div class="bars">
+              {card.bars.map(bar => (
+                <Fragment>
+                  <span class:list={['name', { hl: bar.highlight }]}>{bar.label}</span>
+                  <span class="track"><span class:list={['fill', { hl: bar.highlight }]} style={`width: ${bar.share}%`}></span></span>
+                  <span class:list={['num', { hl: bar.highlight }]}>{bar.value}</span>
+                </Fragment>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    ))}
+  </div>
 </section>
 <style>
-  .measured { padding-top: 96px; padding-bottom: 96px; }
-  h2 { margin: 0; font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.025em; color: var(--text-strong); font-weight: 600; }
-  .sub { margin: 10px 0 0; color: var(--text-muted); }
-  .table { margin-top: 28px; overflow-x: auto; background: var(--surface-2); border: 1px solid var(--border-3); border-radius: var(--radius-m); }
-  table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 760px; }
-  th, td { padding: 13px 20px; text-align: left; border-bottom: 1px solid var(--border-1); }
-  thead th { font-weight: 500; color: var(--text-muted); border-bottom-color: var(--border-3); }
-  thead th.strong { color: var(--text-heading); font-weight: 600; }
-  tbody th { font-weight: 400; color: var(--text); }
-  tbody tr:last-child > * { border-bottom: 0; }
-  td { font-family: var(--font-mono); color: var(--text-heading); }
-  td.base { color: var(--text); }
-  .change { margin-left: 8px; color: var(--text-faint); font-weight: 400; }
-  td.first, .legend .first { color: var(--accent); font-weight: 500; }
-  td.second, .legend .second { color: var(--gain); font-weight: 500; }
-  td.first .change, td.second .change { color: inherit; opacity: 0.8; }
-  .legend { margin: 12px 0 0; font-size: 14px; color: var(--text-muted); }
+  .measured { max-width: 1200px; padding-top: 96px; padding-bottom: 96px; overflow: hidden; }
+  .total { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 56px 0 24px; }
+  .total > :not(.rings) { position: relative; }
+  .rings { position: absolute; top: 50%; left: 50%; width: 560px; height: 560px; max-width: none; transform: translate(-50%, -54%); pointer-events: none; }
+  .ring { transform-box: fill-box; transform-origin: center; animation: ring 6s ease-in-out infinite; }
+  @keyframes ring { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.06); opacity: 0.4; } }
+  .badge { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border: 1px solid rgba(232, 184, 74, 0.35); border-radius: 999px; font: 500 12px var(--font-mono); letter-spacing: 0.12em; color: var(--accent); }
+  .badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h2 { margin: 22px 0 0; display: flex; flex-direction: column; align-items: center; font-weight: inherit; }
+  .runs { font-size: clamp(76px, 14vw, 136px); line-height: 0.95; font-weight: 700; letter-spacing: -0.055em; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #f7dc96 0%, #e8b84a 55%, #b9862a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .unit { margin-top: 14px; font: 500 15px var(--font-mono); letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-heading); }
+  .rule { display: block; width: 48px; height: 1px; margin-top: 28px; background: rgba(232, 184, 74, 0.5); }
+  .says { margin: 24px 0 0; max-width: 620px; font-size: 20px; color: var(--text); }
+
+  .results { margin-top: 72px; display: flex; flex-direction: column; gap: 96px; }
+  .card { min-width: 0; }
+  .label { margin: 0; font: 500 12px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+  h3 { margin: 10px 0 0; font-size: 24px; line-height: 1.25; letter-spacing: -0.015em; color: var(--text-heading); font-weight: 600; }
+  .figure { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .value { font-size: 44px; font-weight: 700; letter-spacing: -0.035em; color: var(--text-strong); }
+  .delta { font: 13px var(--font-mono); color: var(--gain); }
+  .bars { margin-top: 18px; display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 8px 12px; align-items: center; font-size: 13px; }
+  .name, .num { color: var(--text-muted); }
+  .num { font-family: var(--font-mono); }
+  .name.hl, .num.hl { color: var(--text-heading); }
+  .track { height: 8px; border-radius: 4px; background: var(--border-1); overflow: hidden; }
+  .fill { display: block; height: 100%; border-radius: inherit; background: #3a434f; }
+  .fill.hl { background: var(--accent); }
+
+  .featured { max-width: 640px; width: 100%; margin: 0 auto; text-align: center; }
+  .featured .label { color: var(--accent); }
+  .featured h3 { margin-top: 12px; font-size: clamp(26px, 3.4vw, 34px); line-height: 1.15; letter-spacing: -0.025em; color: var(--text-strong); }
+  .featured .value { display: block; margin: 18px 0 0; font-size: clamp(64px, 10vw, 88px); line-height: 1; letter-spacing: -0.05em; color: var(--accent); }
+  .featured .delta { display: block; margin: 10px 0 0; font-size: 15px; color: var(--text); }
+  .featured .bars { margin: 28px auto 0; max-width: 520px; gap: 10px 14px; font-size: 14px; text-align: left; }
+  .featured .track { height: 10px; border-radius: 5px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 48px 80px; }
+  @media (prefers-reduced-motion: reduce) { .ring { animation: none; } }
+  @media (max-width: 640px) {
+    .measured { padding-top: 64px; padding-bottom: 64px; }
+    .total { padding-top: 32px; }
+    .rings { width: 420px; height: 420px; }
+    .unit { font-size: 13px; letter-spacing: 0.24em; }
+    .says { font-size: 17px; }
+    .results { margin-top: 56px; gap: 64px; }
+    /* Two cards side by side, as on the desktop, only smaller. */
+    .row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 20px; }
+    .row h3 { font-size: 17px; }
+    .row .value { font-size: 32px; }
+    .row .delta { font-size: 11.5px; }
+    /* Each bar under its name and value, which share a line. */
+    .row .bars { grid-template-columns: minmax(0, 1fr) max-content; grid-auto-flow: row dense; gap: 4px 8px; font-size: 11.5px; }
+    .row .bars .track { grid-column: 1 / -1; margin-bottom: 6px; }
+  }
 </style>

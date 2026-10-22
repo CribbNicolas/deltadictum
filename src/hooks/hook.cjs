@@ -107,8 +107,8 @@ async function sessionStart(root, payload, session) {
   // Maintenance (roll-up, then pruning) runs detached at most once a day; session
   // start never waits for it.
   const { maintenanceDue } = require('../maintenance/due.cjs');
-  // DD_MAINTENANCE=0 turns it off (tests, CI).
-  if (process.env.DD_MAINTENANCE !== '0' && maintenanceDue(root)) {
+  // This machine's setting turns it off, and DD_MAINTENANCE=0 for one process (tests, CI).
+  if (require('../engine/machine.cjs').maintenanceOn(paths.local) && maintenanceDue(root)) {
     try {
       const { spawn } = require('node:child_process');
       spawn(process.execPath, [join(__dirname, '..', 'cli.js'), 'maintain'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref();
@@ -128,8 +128,12 @@ async function sessionStart(root, payload, session) {
 
 async function handle(command, payload, { host = 'claude' } = {}) {
   if (!(EVENT_NAMES[command] || CAPTURE.includes(command)) || !payload || typeof payload !== 'object') return '';
+  // What the harness sent, as it sent it, when this machine records payloads (src/engine/machine.cjs).
+  const sent = findProjectRoot(payload.cwd || process.cwd());
+  require('../engine/machine.cjs').recordPayload(localPaths(sent).local, command, payload);
   if (host === 'codex') payload = require('./codex.cjs').codexPayload(payload);
-  const root = findProjectRoot(payload.cwd || process.cwd());
+  if (host === 'grok') payload = require('./grok.cjs').grokPayload(payload);
+  const root = host === 'claude' ? sent : findProjectRoot(payload.cwd || process.cwd());
   if (CAPTURE.includes(command)) {
     const capturePath = pathToFileURL(join(__dirname, '..', 'capture', 'hooks.js')).href;
     // The inbox hook runs after every write; only a JSON file in .dd/inbox/ loads

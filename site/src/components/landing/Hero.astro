@@ -1,122 +1,138 @@
 ---
 import { href } from '../../config.js';
-import HarnessSelect from '../HarnessSelect.astro';
-import { HARNESSES, INSTALL } from '../../lib/harness.js';
+const checks = ['No account, no model calls', 'Memories are files in your repo', 'Silent when nothing applies'];
+const prompt = "add a test for the store's close() method";
 ---
 <section class="hero wrap">
   <div class="copy">
-    <p class="eyebrow">PLUGIN FOR CLAUDE CODE · CODEX, OPENCODE AND GROK BUILD IN PROGRESS</p>
+    <p class="pill"><span class="live" aria-hidden="true"></span>Plugin for Claude Code, Codex and OpenCode · Grok Build in preview</p>
     <h1>What your code doesn't say, said at the right moment.</h1>
     <p class="lede">DeltaDictum keeps the decisions, traps and unwritten steps of your project as memories in git, and hands each one to the agent right before the tool call it applies to.</p>
     <div class="actions">
-      <a class="btn btn-primary" href={href('getting-started.html')}>Get started</a>
-      <a class="btn btn-ghost" href={href('guide/how-it-works.html')}>How it works</a>
+      <a class="btn btn-primary" href="#install">Get started</a>
+      <a class="btn btn-ghost" href="#how">See how it works</a>
     </div>
-    <div class="install-row">
-      <HarnessSelect compact />
-      {HARNESSES.map(h => (
-        <p class="install" data-for={h.id}>
-          {!INSTALL[h.id].hero.startsWith('#') && <span aria-hidden="true">$</span>} <code>{INSTALL[h.id].hero}</code>
-        </p>
+    <ul class="checks">
+      {checks.map(check => (
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gain)" stroke-width="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>{check}</li>
       ))}
-    </div>
+    </ul>
   </div>
-  <figure class="terminal" data-terminal aria-label="An agent session: DD adds a memory to the edit it applies to">
-    <div class="chrome" aria-hidden="true">
-      <i></i><i></i><i></i><span>claude · my-project</span>
-      <b class="dd" data-dd>DD</b>
-    </div>
+  <figure class="terminal" data-terminal aria-label="A Claude Code session: DD adds a memory to the edit it applies to">
+    <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>~/my-project — claude</span></div>
     <div class="screen">
-      <p class="dim step" data-step>DD - 12 memories live in this project. Review UI: /dd:review</p>
-      <p class="step" data-step><span class="accent">&gt;</span> <span data-type>add a test for the store's close() method</span></p>
-      <p class="muted step" data-step>● Edit <span class="path" data-match>tests/store.test.js</span></p>
-      <div class="delivery step" data-step>
-        <p class="accent">DD - project knowledge (<span class="path hit">tests/store.test.js</span>):</p>
-        <p>[TRAP] Close stores in t.after</p>
-        <p class="muted">A failing assertion otherwise leaves the handle open and node --test never ends.</p>
+      <div class="welcome">
+        <p><span class="claude">✻</span> Welcome to <strong>Claude Code</strong>!</p>
+        <p class="gray indent">cwd: ~/my-project</p>
       </div>
-      <p class="muted step" data-step><span class="ok">✓</span> Wrote t.after(() =&gt; store.close())</p>
+      <p class="tl gray" data-step="1">⎿  DD - 12 memories live in this project. Review UI: /dd:review</p>
+      <p class="tl prompt" data-step="2">&gt; <span data-type>{prompt}</span><span class="caret typing" aria-hidden="true"></span></p>
+      <div class="swap">
+        <p class="tl" data-step="3" data-until="4"><span class="claude spin">✻</span> <span class="gray">Thinking…</span></p>
+        <p class="tl" data-step="4"><span class="white">⏺</span> I'll add the test in tests/store.test.js.</p>
+      </div>
+      <p class="tl gap" data-step="5"><span class="green">⏺</span> <strong>Update</strong>(tests/store.test.js)</p>
+      <div class="tl" data-step="6">
+        <p class="gray">⎿  PreToolUse:Edit hook additional context:</p>
+        <p class="gray nest">DD - project knowledge (tests/store.test.js):</p>
+        <p class="nest memory">[TRAP] Close stores in t.after - A failing assertion otherwise leaves the handle open and node --test never ends.</p>
+      </div>
+      <div class="tl" data-step="7">
+        <p class="gray">⎿  Updated tests/store.test.js with 3 additions</p>
+        <p class="nest add">+  const store = openStore(dir);</p>
+        <p class="nest add">+  t.after(() =&gt; store.close());</p>
+      </div>
+      <p class="tl gap" data-step="8"><span class="white">⏺</span> Done: the store closes in t.after, so a failing assertion can't hang node --test.</p>
+      <div class="input" aria-hidden="true">&gt; <span class="caret"></span></div>
+      <p class="hint" aria-hidden="true">? for shortcuts</p>
     </div>
   </figure>
 </section>
 <script>
-  // Plays the session once every few seconds: the prompt is typed, the edit's path matches a
-  // memory's trigger, the memory arrives with the tool call, the agent writes the fix. Without
-  // JavaScript, or with reduced motion asked for, the whole session shows still.
+  // The hero's session, step by step: 1 the DD line, 2 the prompt typed, 3 thinking, 4 the answer,
+  // 5 the Update call, 6 DD's context, 7 the diff, 8 done; a pause, then again. Every line keeps its
+  // place while hidden, so the page never moves. Without JavaScript, or with reduced motion asked for,
+  // the whole session shows still.
   const terminal = document.querySelector('[data-terminal]');
   if (terminal && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const steps = [...terminal.querySelectorAll('[data-step]')];
+    const lines = [...terminal.querySelectorAll('[data-step]')];
     const typed = terminal.querySelector('[data-type]');
-    const match = terminal.querySelector('[data-match]');
-    const dd = terminal.querySelector('[data-dd]');
+    const caret = terminal.querySelector('.typing');
     const prompt = typed.textContent;
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-    const show = i => steps[i].classList.add('on');
+    const show = step => { for (const line of lines) line.classList.toggle('on', Number(line.dataset.step) <= step && !(Number(line.dataset.until) <= step)); };
     terminal.classList.add('animated');
     const play = async () => {
       for (;;) {
-        steps.forEach(step => step.classList.remove('on'));
-        match.classList.remove('hit');
-        dd.classList.remove('hit');
-        typed.textContent = '';
-        typed.classList.add('typing');
-        await wait(500); show(0);
-        await wait(900); show(1);
-        for (let n = 1; n <= prompt.length; n += 1) { typed.textContent = prompt.slice(0, n); await wait(32); }
-        typed.classList.remove('typing');
-        await wait(600); show(2);
-        await wait(700); match.classList.add('hit'); dd.classList.add('hit');
-        await wait(700); show(3);
-        await wait(1600); show(4);
+        show(0); typed.textContent = ''; caret.hidden = true;
+        await wait(500); show(1);
+        await wait(900); show(2); caret.hidden = false;
+        for (let n = 1; n <= prompt.length; n += 1) { typed.textContent = prompt.slice(0, n); await wait(38); }
+        caret.hidden = true;
+        for (const [step, ms] of [[3, 600], [4, 1300], [5, 800], [6, 900], [7, 1400], [8, 1100]]) { await wait(ms); show(step); }
         await wait(4200);
-        terminal.classList.add('fade');
-        await wait(500);
-        terminal.classList.remove('fade');
+        show(0);
+        await wait(700);
       }
     };
     play();
   }
 </script>
 <style>
-  .hero { padding-top: 72px; padding-bottom: 88px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center; }
-  .copy { flex: 1 1 420px; min-width: 0; }
-  h1 { margin: 0; font-size: clamp(36px, 6vw, 60px); line-height: 1.04; letter-spacing: -0.035em; color: var(--text-strong); font-weight: 700; }
-  .lede { margin: 24px 0 0; font-size: 19px; color: var(--text-muted); max-width: 520px; }
-  .actions { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
-  .install-row { margin: 28px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 100%; }
-  .install { margin: 0; display: inline-flex; gap: 12px; max-width: 100%; font-family: var(--font-mono); font-size: 14px; background: var(--surface-3); border: 1px solid var(--border-1); border-radius: 8px; padding: 10px 14px; color: var(--text); overflow-x: auto; }
-  .install span { color: var(--text-faint); }
-  .install code { font-size: inherit; white-space: nowrap; }
-  .terminal { flex: 1 1 460px; min-width: 0; margin: 0; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); overflow: hidden; transition: opacity 0.45s ease; }
-  .terminal.fade { opacity: 0.25; }
-  .chrome { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-1); }
-  .chrome i { width: 11px; height: 11px; border-radius: 50%; background: var(--border-3); }
-  .chrome span { margin-left: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
-  .dd { margin-left: auto; font: 600 11px var(--font-mono); letter-spacing: 0.06em; color: var(--text-faint); border: 1px solid var(--border-3); border-radius: 999px; padding: 2px 8px; transition: color 0.3s, border-color 0.3s, box-shadow 0.3s; }
-  .dd.hit { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px rgba(232, 184, 74, 0.45); }
-  .screen { padding: 22px 22px 26px; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; color: #e6e9ee; overflow-wrap: anywhere; }
+  .hero { max-width: 1200px; padding-top: 88px; padding-bottom: 72px; display: flex; flex-wrap: wrap; align-items: center; gap: 56px; }
+  .copy { flex: 1 1 460px; min-width: 0; }
+  .pill { margin: 0 0 18px; display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid var(--border-3); border-radius: 999px; font: 500 12px/1.6 var(--font-mono); color: var(--text-muted); }
+  .live { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--gain); }
+  h1 { margin: 0; font-size: clamp(38px, 5.4vw, 56px); line-height: 1.04; letter-spacing: -0.035em; color: var(--text-strong); font-weight: 700; }
+  .lede { margin: 22px 0 0; max-width: 540px; font-size: 18px; color: var(--text-muted); }
+  .actions { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .actions .btn { border-radius: 10px; }
+  .checks { margin: 28px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--text-muted); }
+  .checks li { display: flex; align-items: center; gap: 8px; }
+
+  .terminal { flex: 1 1 500px; min-width: 0; margin: 0; background: #101214; border: 1px solid #2a2e34; border-radius: 12px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); overflow: hidden; }
+  .chrome { display: flex; align-items: center; gap: 8px; padding: 11px 16px; background: #15181c; border-bottom: 1px solid var(--border-1); font: 12px var(--font-mono); color: var(--text-faint); }
+  .chrome i { flex: none; width: 11px; height: 11px; border-radius: 50%; background: #3a3f46; }
+  .chrome span { margin: 0 auto; padding-right: 50px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .screen { padding: 18px 20px 20px; font: 13.5px/1.7 var(--font-mono); color: #d6d9de; overflow-wrap: anywhere; }
   .screen p { margin: 0; }
-  .screen > * + * { margin-top: 14px; }
-  .dim { color: var(--text-faint); }
-  .muted { color: var(--text-muted); }
-  .accent { color: var(--accent); }
-  .ok { color: #7ee2a8; }
-  .delivery { margin-top: 10px !important; border-left: 2px solid var(--accent); padding: 10px 14px; background: #151a21; border-radius: 0 6px 6px 0; }
-  .path { border-radius: 3px; padding: 0 2px; transition: background 0.35s, color 0.35s, box-shadow 0.35s; }
-  .path.hit { background: rgba(232, 184, 74, 0.16); color: var(--accent); box-shadow: 0 0 0 1px rgba(232, 184, 74, 0.45); }
-  .animated .step { opacity: 0; transform: translateY(6px); transition: opacity 0.4s ease, transform 0.4s ease; }
-  .animated .step.on { opacity: 1; transform: none; }
-  .animated .delivery.on { animation: arrive 1.4s ease-out; }
-  .typing::after { content: ''; display: inline-block; width: 0.55em; height: 1.05em; margin-left: 1px; vertical-align: text-bottom; background: var(--accent); animation: blink 0.9s steps(1) infinite; }
-  @keyframes arrive {
-    0% { box-shadow: 0 0 0 0 rgba(232, 184, 74, 0.5); background: #1d1a12; }
-    100% { box-shadow: 0 0 0 16px rgba(232, 184, 74, 0); background: #151a21; }
-  }
-  @keyframes blink { 50% { opacity: 0; } }
-  @media (max-width: 520px) {
-    .hero { padding-top: 40px; padding-bottom: 56px; gap: 40px; }
+  .screen strong { font-weight: 600; color: var(--text-heading); }
+  .welcome { padding: 10px 14px; border: 1px solid #d77757; border-radius: 8px; color: var(--text-heading); }
+  .indent { margin-left: 18px !important; }
+  .claude { display: inline-block; color: #d77757; }
+  .gray { color: #8a8f98; }
+  .white { color: var(--text-heading); }
+  .green { color: #5fb672; }
+  .memory { color: #b4b8bf; }
+  .nest { margin-left: 36px !important; }
+  .add { padding: 0 6px; background: rgba(95, 182, 114, 0.14); color: #b6e3bf; }
+  [data-step='1'] { margin: 10px 0 0 2px !important; }
+  .prompt { margin-top: 14px !important; padding: 2px 8px; border-radius: 4px; background: #23262b; color: #c4c8cf; min-height: 1.7em; }
+  /* Thinking and the answer share one line: the answer replaces it. */
+  .swap { margin-top: 14px; display: grid; }
+  .swap > * { grid-area: 1 / 1; }
+  [data-step='6'] { margin-top: 2px; }
+  [data-step='7'] { margin-top: 6px; }
+  .gap { margin-top: 12px !important; }
+  .input { margin-top: 16px; padding: 7px 12px; border: 1px solid #4a4f57; border-radius: 8px; color: #8a8f98; }
+  .hint { margin: 6px 0 0 4px !important; font-size: 12px; color: #8a8f98; }
+  .caret { display: inline-block; width: 8px; height: 15px; margin-left: 2px; vertical-align: -2px; background: #c4c8cf; animation: caret 1s steps(1) infinite; }
+  .caret[hidden] { display: none; }
+  .spin { animation: spin 1.2s linear infinite; }
+  .animated .tl { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease, transform 0.35s ease; }
+  .animated .tl.on { opacity: 1; transform: none; }
+  /* Still, the session shows its end: the answer, not the thinking it replaced. */
+  .terminal:not(.animated) [data-until], .terminal:not(.animated) .typing { display: none; }
+  @keyframes caret { 50% { opacity: 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .caret, .spin { animation: none; } }
+  @media (max-width: 640px) {
+    .hero { padding-top: 40px; padding-bottom: 48px; gap: 40px; }
     .lede { font-size: 17px; }
-    .screen { padding: 18px 16px 20px; font-size: 12.5px; }
-    .delivery { padding: 8px 10px; }
+    .actions .btn { flex: 1 1 100%; justify-content: center; }
+    .terminal { flex-basis: 100%; }
+    .chrome span { padding-right: 0; margin-left: 8px; }
+    .screen { padding: 14px 14px 16px; font-size: 11.5px; }
+    .nest { margin-left: 20px !important; }
   }
 </style>

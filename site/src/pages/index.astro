@@ -3,7 +3,7 @@ import pkg from '../../../package.json';
 import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/landing/Hero.astro';
-import Features from '../components/landing/Features.astro';
+import Steps from '../components/landing/Steps.astro';
 import Measured from '../components/landing/Measured.astro';
 import InstallFooter from '../components/landing/InstallFooter.astro';
 import { loadSummaries } from '../lib/summaries.js';
@@ -22,7 +22,7 @@ const jsonLd = {
   <Header />
   <main id="main">
     <Hero />
-    <Features />
+    <Steps />
     <Measured summary={summary} />
   </main>
   <InstallFooter />
