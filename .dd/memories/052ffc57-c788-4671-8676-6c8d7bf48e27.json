@@ -1,0 +1,58 @@
+{
+  "schema_version": 8,
+  "id": "052ffc57-c788-4671-8676-6c8d7bf48e27",
+  "project_id": "supermem",
+  "topic": "environment/dev-machine-harness-clis",
+  "kind": "fact",
+  "status": "candidate",
+  "title": "Codex, Grok Build and OpenCode CLIs are installed on this development machine",
+  "body": "Run harness checks directly: codex-cli 0.163, grok 1.0.41 and OpenCode 1.19.3 are installed (2026-10-22; OpenCode was upgraded from 1.16.2 for its free models). Codex answers `codex exec -s workspace-write \"...\" < /dev/null` (without the redirect it waits on stdin); its hooks run only after the owner trusts the project and approves them in /hooks. Grok is not signed in and has no credits, so `grok -p` fails; `grok inspect` still lists a plugin's hooks and skills. Useful: `grok plugin validate <path>` (passes manifests Grok then ignores, so confirm with inspect), `opencode debug startup` and `opencode debug skill`.",
+  "not_derivable": "The installed versions, the sign-in state and the owner-only trust step are facts of this machine on 2026-10-22, not of the repository.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit",
+        "write"
+      ],
+      "paths": [
+        "adapters/opencode/**",
+        ".grok-plugin/**",
+        "scripts/install-codex.mjs",
+        "scripts/install-opencode.mjs"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "grok inspect",
+        "opencode debug",
+        "codex exec",
+        "live Grok",
+        "live OpenCode",
+        "live Codex",
+        "verify the integration"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "scripts/install-opencode.mjs",
+      "sha256": "da7a808357adc65f48ffc2b20efeafcae87e10215b93a848ed340ca20fdc443c",
+      "summary": "The installer used in the live checks."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": "18686b03-7e10-49ec-b700-8bd7a503e8a7",
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "batch": "harness-preview-2026-10-22"
+  },
+  "created": "2026-10-22T02:35:10.120Z",
+  "updated": "2026-10-22T02:35:10.266Z"
+}

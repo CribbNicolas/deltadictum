@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "site/landing-benchmark-table",
   "kind": "decision",
-  "status": "candidate",
+  "status": "active",
   "title": "The landing's results show three conditions and the summaries are the only benchmark files in git",
   "body": "The landing's results (one card per metric, built by cardsFor in site/src/lib/bench.js) show Agent alone, With documentation (docref and doc merged) and With DD, nothing else: the owner removed the 'With documentation + DD' (docdd) condition on 2026-10-20 after it was added. When regenerating docs/benchmarks/data/bench-2026-10-fix-{opus,haiku}.summary.json with src/eval/agent/summary.js, pass --compare=docref,doc,dd2, never docdd, even when the report has it. Those two summaries are the only benchmark files committed: write-ups, reports, judge and audit files, totals and calibration stay on disk (git-ignored) and must never be force-added, because the owner had them removed from the whole git history.",
   "not_derivable": "The report files carry a docdd condition and summary.js accepts it; nothing in the code says the owner rejected that condition or that benchmark data was purged from history on purpose.",
@@ -37,8 +37,12 @@
   "review": {
     "migrated": false,
     "issues": [],
-    "batch": "docs-refresh-2026-10-21"
+    "batch": "docs-refresh-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-22T01:05:07.606Z"
+    }
   },
   "created": "2026-10-22T00:24:29.415Z",
-  "updated": "2026-10-22T00:24:29.576Z"
+  "updated": "2026-10-22T01:05:07.692Z"
 }

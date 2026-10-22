@@ -50,7 +50,7 @@
     {
       "type": "file",
       "path": "package.json",
-      "sha256": "0d906fd9887ac99b900b6b654ced4c6bf054b8082b6c58bacaa1b8a24b5a9cc3",
+      "sha256": "6183b3ea4a9689898613d71c913546e2df3984a88a1520b547186e342da73a46",
       "summary": "Test scripts with quoted globs."
     }
   ],
@@ -61,9 +61,9 @@
     "issues": [],
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T20:37:13.585Z"
+      "at": "2026-10-22T01:05:13.169Z"
     }
   },
   "created": "2026-09-27T02:37:09.360Z",
-  "updated": "2026-10-21T20:37:13.586Z"
+  "updated": "2026-10-22T01:05:13.170Z"
 }

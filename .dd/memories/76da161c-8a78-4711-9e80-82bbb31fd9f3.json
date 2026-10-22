@@ -1,0 +1,53 @@
+{
+  "schema_version": 8,
+  "id": "76da161c-8a78-4711-9e80-82bbb31fd9f3",
+  "project_id": "supermem",
+  "topic": "integrations/opencode/live-check",
+  "kind": "procedure",
+  "status": "active",
+  "title": "Check OpenCode live with a free model, edits allowed in the project only",
+  "body": "To verify DD on OpenCode: run `deltadictum install --host opencode --project <scratch>` (skills go to .opencode/skills/: OpenCode reads project skills there, and .agents/skills only from the home folder), then `opencode run -m opencode/deepseek-v4.1-flash-free \"...\" < /dev/null` from the scratch project. The free models need OpenCode 1.18 or later. `opencode run` auto-rejects every permission prompt, so add `\"permission\": { \"edit\": \"allow\" }` to the scratch project's opencode.json rather than passing --auto, which approves everything. `opencode debug skill` lists the skills a project sees.",
+  "not_derivable": "Found on 2026-10-22 by running OpenCode 1.16.2 and 1.19.3: the free-tier version floor, the skill folders and the auto-rejected edits show only when a session runs.",
+  "triggers": [
+    {
+      "on": [
+        "read",
+        "edit"
+      ],
+      "paths": [
+        "adapters/opencode/**",
+        "scripts/install-opencode.mjs",
+        "tests/hooks/opencode.test.js"
+      ]
+    },
+    {
+      "on": [
+        "prompt"
+      ],
+      "keywords": [
+        "opencode"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "type": "file",
+      "path": "scripts/install-opencode.mjs",
+      "sha256": "da7a808357adc65f48ffc2b20efeafcae87e10215b93a848ed340ca20fdc443c",
+      "summary": "Writes the skills under .opencode/skills."
+    }
+  ],
+  "origin": "model_initiated",
+  "replaces": null,
+  "revisit_when": [],
+  "review": {
+    "migrated": false,
+    "issues": [],
+    "accepted": {
+      "by": "dd",
+      "at": "2026-10-22T02:34:46.472Z"
+    }
+  },
+  "created": "2026-10-22T02:34:46.472Z",
+  "updated": "2026-10-22T02:34:46.625Z"
+}

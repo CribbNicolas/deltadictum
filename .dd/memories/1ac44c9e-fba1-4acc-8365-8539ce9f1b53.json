@@ -37,13 +37,13 @@
     {
       "type": "file",
       "path": "docs/getting-started.md",
-      "sha256": "4cca002795946e211a49197d7b4d8d6feee0a3a525de639f14c5e510bc206960",
+      "sha256": "b8513b254c0927b0edbec532e0ee937118f43415a08b2e160fb8f81f9dcb3ad1",
       "summary": "Codex install, trusting the project and its hooks, moved from docs/integrations/codex.md on 2026-10-21."
     },
     {
       "type": "file",
       "path": "README.md",
-      "sha256": "8d043dbde0daf771e74ec27a1475f10071acf9de427562e090e7f0fb6d1bab97",
+      "sha256": "18bb43cd9704e5d480da2a75716ca778eb8885e255e9ba24850756c30423a41d",
       "summary": "Codex install steps include trusting the project and hooks."
     },
     {
@@ -61,9 +61,9 @@
     "batch": "unversioned-memories-2026-10-21",
     "accepted": {
       "by": "person",
-      "at": "2026-10-21T20:37:07.754Z"
+      "at": "2026-10-22T01:05:12.289Z"
     }
   },
   "created": "2026-10-21T20:31:58.164Z",
-  "updated": "2026-10-21T20:37:07.835Z"
+  "updated": "2026-10-22T01:05:12.290Z"
 }

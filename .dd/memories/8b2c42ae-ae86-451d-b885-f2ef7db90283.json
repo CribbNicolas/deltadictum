@@ -4,7 +4,7 @@
   "project_id": "supermem",
   "topic": "development/hooks/capture-real-payloads",
   "kind": "procedure",
-  "status": "candidate",
+  "status": "active",
   "title": "Record a host's real hook payloads, not from documentation",
   "body": "To learn what a harness really sends a hook, turn on \"Record hook payloads\" in the review UI's Settings (this machine; .dd/local/settings.json record_payloads: true), trigger the tool call, read .dd/local/payloads.jsonl, then turn it off. In a project that has not opted in, set DD_CAPTURE_PAYLOADS=<file> in the environment the hooks run with instead: src/engine/machine.cjs appends every command and payload, as the harness sent it, as one JSON line. Do not trust a documentation summary for a payload's shape, and do not register new events from the agent in .claude/settings.local.json: auto mode refuses that edit as self-modification, so an event not yet registered needs the user or a --plugin-dir session.",
   "not_derivable": "On 2026-09-24 a capture contradicted a docs-derived summary of Claude Code's payloads, and adding PostToolUseFailure to settings.local.json was denied by the permission classifier; neither shows in the code.",
@@ -44,8 +44,12 @@
   "revisit_when": [],
   "review": {
     "issues": [],
-    "batch": "settings-and-hashing-2026-10-21"
+    "batch": "settings-and-hashing-2026-10-21",
+    "accepted": {
+      "by": "person",
+      "at": "2026-10-22T01:05:04.574Z"
+    }
   },
   "created": "2026-10-22T00:59:46.516Z",
-  "updated": "2026-10-22T00:59:46.661Z"
+  "updated": "2026-10-22T01:05:04.664Z"
 }
