@@ -90,8 +90,8 @@ Stop hook: DD does not ask the agent to save at the end of a turn, and turn chec
 <!-- for: grok -->
 
 Grok Build runs the hooks Claude Code runs, read with Claude Code's payload shape. Grok's real payloads
-have not been recorded yet, so a tool Grok names differently fires nothing; `DD_CAPTURE_PAYLOADS` (in
-[Configuration](configuration.md)) records them.
+have not been recorded yet, so a tool Grok names differently fires nothing; the "Record hook payloads"
+setting ([Configuration](configuration.md#this-machine-ddlocalsettingsjson)) records them.
 
 <!-- /for -->
 

@@ -1,6 +1,5 @@
 'use strict';
 
-const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 // What reaches the agent (spec section 3): each memory complete, asking for
@@ -18,11 +17,10 @@ const LABELS = { trap: 'TRAP', decision: 'DECISION', fact: 'FACT', failed_approa
 function staleEvidence(root, evidence) {
   const stale = [];
   if (!evidence?.length) return stale;
-  // Loaded only when there is evidence to hash: node:crypto costs a hook 2 ms to load.
-  const { createHash } = require('node:crypto');
+  const { hashMatches } = require('./file-hash.cjs');
   for (const entry of evidence) {
     try {
-      if (createHash('sha256').update(readFileSync(join(root, entry.path))).digest('hex') !== entry.sha256) stale.push(entry.path);
+      if (!hashMatches(join(root, entry.path), entry.sha256)) stale.push(entry.path);
     } catch { stale.push(entry.path); }
   }
   return stale;

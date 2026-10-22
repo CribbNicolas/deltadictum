@@ -6,6 +6,15 @@ when it reaches `main`, and CI refuses a version bump without a section here.
 
 ## [0.9.15] - 2026-10-21
 
+- Evidence: a file is hashed as text with CRLF line endings read as LF, so a checkout with
+  `core.autocrlf` no longer shows evidence as stale on one machine and fresh on another. Binary files are
+  hashed as they are, and a hash recorded before still matches the file it was taken from.
+- Settings: the review UI's Settings panel changes every setting, the project id included, and this
+  machine's own in `.dd/local/settings.json` (never committed): daily maintenance on or off, and recording
+  what the harness sends each hook to `.dd/local/payloads.jsonl`. `DD_MAINTENANCE=0` and
+  `DD_CAPTURE_PAYLOADS` still work for one process, as CI and tests need.
+- Review UI: the site's look (dark surfaces, gold for what waits for a person), views grouped in the
+  sidebar, and settings in a side panel.
 - Docs: the README keeps the install steps and points to the site for the rest. The reference pages say
   each thing once: the trigger fields and check rules live in Memories, Using DD well keeps the guidance,
   and the behavioural contract ends with DD's limits. No behavior changes.

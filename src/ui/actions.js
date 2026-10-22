@@ -1,9 +1,10 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { exampleProblems } from '../checks/check.cjs';
 import { createMatcher } from '../checks/pattern.cjs';
 import { codeSymbols, compileProject, presentFilesOf, triggerWarnings } from '../engine/compile.js';
+import { fileHash } from '../engine/file-hash.cjs';
 import { localPaths } from '../engine/locate.cjs';
 import { LIVE_STATUSES, SCHEMA_VERSION, validateMemory } from '../memory/schema.js';
 import { listBatches } from './batches.js';
@@ -125,7 +126,7 @@ export async function reverifyEvidence(root, id) {
   const stale = [];
   const evidence = memory.evidence.map(entry => {
     if (entry.type !== 'file' || !entry.sha256) return entry;
-    try { return { ...entry, sha256: createHash('sha256').update(readFileSync(join(root, entry.path))).digest('hex') }; }
+    try { return { ...entry, sha256: fileHash(join(root, entry.path)) }; }
     catch { stale.push(entry.path); return entry; }
   });
   const at = now();

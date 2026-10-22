@@ -21,6 +21,8 @@ Everything DD keeps for a project lives in its `.dd/` folder.
 | `.dd/local/telemetry/` | No | Check outcomes and ingestion outcomes, one JSON line each, rolled up into the database below |
 | `.dd/local/telemetry.sqlite` | No | Counters (fires by dimension, touches, capture signals, inbox outcomes), the similarity index and check outcomes, for health and retirement |
 | `.dd/local/requests/` | No | The agent's requests waiting for a person in the review UI |
+| `.dd/local/settings.json` | No | This machine's settings ([Configuration](configuration.md#this-machine-ddlocalsettingsjson)) |
+| `.dd/local/payloads.jsonl` | No | What the harness sent each hook, while this machine records payloads |
 
 Writes to `.dd/memories/` go through one journaled transaction (`.dd/.pending-write.json`, under
 `.dd/.write-lock`), so an interrupted write is completed before the next one. Losing `.dd/local/` loses

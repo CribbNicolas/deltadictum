@@ -24,7 +24,11 @@ corrected.
 - Writes go through one journaled, locked transaction (`src/store/transactions.js`); an interrupted one is
   rolled forward before the next. Validation (schema, secrets, unsafe content, glob safety, sizes) runs before
   anything is written.
-- `.dd/local/` is derived and git-ignored: the compiled index, session files, telemetry. `deltadictum
+- An evidence file is hashed as text with CRLF line endings read as LF (`src/engine/file-hash.cjs`), so a
+  checkout with CRLF and one with LF agree; a binary file is hashed as it is. A hash recorded from the raw
+  bytes before still matches the file it was taken from.
+- `.dd/local/` is derived and git-ignored: the compiled index, session files, telemetry, this machine's
+  settings. `deltadictum
   compile` rebuilds the index; session start rebuilds a stale one.
 
 ## Delivery
@@ -84,7 +88,7 @@ corrected.
   applies. A proposal on a topic whose candidate is still pending replaces it; the replaced candidate is
   archived, never deleted. Every ingestion leaves one telemetry line with its outcome and reasons
   (`.dd/local/telemetry/inbox.jsonl`), never the content.
-- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings pane, turns it off) activates a candidate only
+- Auto-accept (on by default; `.dd/config.json` `"auto_accept": false`, or the review UI's Settings panel, turns it off) activates a candidate only
   when DD verified its grounds itself (a repository file it hashed, or a correction it recorded that names the memory and follows something the agent did), every trigger is
   live, it has no check, and it neither duplicates nor revises a live memory. A reported success never counts.
 - The agent's requests to archive, revise, re-verify, merge or delete memories wait for a person in the
@@ -97,7 +101,8 @@ corrected.
 
 ## Maintenance and review
 
-- Maintenance runs detached from session start at most once a day (`deltadictum maintain` by hand): session
+- Maintenance runs detached from session start at most once a day, unless this machine's `maintenance` setting
+  or `DD_MAINTENANCE=0` turns that off (`deltadictum maintain` by hand): session
   files are rolled up into `.dd/local/telemetry.sqlite` and pruned after seven days, unused memories are
   retired, and the similarity index is refreshed.
 - An active memory whose paths were touched in at least 20 sessions (`retire.after_sessions`) without it firing

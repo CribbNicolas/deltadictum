@@ -62,3 +62,31 @@ test('DD_MAINTENANCE=0 keeps session start from starting maintenance', async t =
   await new Promise(resolve => setTimeout(resolve, 1500));
   assert.equal(existsSync(join(root, '.dd', 'local', 'maintenance.json')), false);
 });
+
+test('this machine\'s setting keeps session start from starting maintenance', async t => {
+  const root = await project(t);
+  mkdirSync(join(root, '.dd', 'local'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'local', 'settings.json'), JSON.stringify({ maintenance: false }));
+  const run = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
+  spawnSync(process.execPath, [run, 'session-start'], { input: JSON.stringify({ session_id: 's', cwd: root, source: 'startup' }), encoding: 'utf8',
+    env: { ...process.env, DD_MAINTENANCE: '1' } });
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  assert.equal(existsSync(join(root, '.dd', 'local', 'maintenance.json')), false);
+});
+
+// What the harness sent, as it sent it: into .dd/local/payloads.jsonl when this machine records payloads.
+test('a hook records the payload it was sent when this machine records payloads', async t => {
+  const root = await project(t);
+  const run = fileURLToPath(new URL('../../hooks/run.cjs', import.meta.url));
+  const payload = { session_id: 's', cwd: root, tool_name: 'Read', tool_input: { file_path: join(root, 'a.js') } };
+  const hook = () => spawnSync(process.execPath, [run, 'pre-tool'], { input: JSON.stringify(payload), encoding: 'utf8' });
+  const file = join(root, '.dd', 'local', 'payloads.jsonl');
+  hook();
+  assert.equal(existsSync(file), false);
+  mkdirSync(join(root, '.dd', 'local'), { recursive: true });
+  writeFileSync(join(root, '.dd', 'local', 'settings.json'), JSON.stringify({ record_payloads: true }));
+  hook();
+  const [line] = readFileSync(file, 'utf8').trim().split('\n').map(JSON.parse);
+  assert.equal(line.command, 'pre-tool');
+  assert.deepEqual(line.payload, payload);
+});

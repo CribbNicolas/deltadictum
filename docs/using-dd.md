@@ -125,7 +125,7 @@ auto-accepted: a person enables it in the review UI. Every field and rule: [Chec
 The review command (`/dd:review` in Claude Code; every harness's in [Commands](commands.md)) runs
 `deltadictum doctor`, shows its summary, and starts the UI; `npx deltadictum ui` starts it from a terminal.
 Open the printed address, key included. The page updates itself as the store changes; the "live" mark
-beside the DD logo says it is connected. The views, grouped in the sidebar as here:
+at the foot of the sidebar says it is connected. The views, in the sidebar's order:
 
 | View | What it shows |
 |---|---|
@@ -143,8 +143,8 @@ beside the DD logo says it is connected. The views, grouped in the sidebar as he
 
 Each memory opens with its evidence (verified or stale), its breadth (how much of the repository its
 triggers cover), its use (fires by the trigger that matched), similar memories, and the dry run. Every
-edit is validated as ingestion validates, then recompiled. The gear beside the logo opens every setting
-in [Configuration](guide/configuration.md).
+edit is validated as ingestion validates, then recompiled. The Settings button at the foot of the sidebar
+opens every setting in [Configuration](guide/configuration.md).
 
 The dashboard's capture funnel counts how often DD asked for a memory and how many proposals were stored,
 activated or rejected. Many asks and no proposals: the agent is declining. Many rejections: read the

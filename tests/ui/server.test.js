@@ -88,7 +88,8 @@ test('the settings are read and changed through the API; unknown keys are kept a
   const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
   writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p', custom: 1 }));
   const before = JSON.parse((await json('/api/config')).text);
-  assert.deepEqual({ ...before, limits: undefined }, { project_id: 'p', auto_accept: true, delivery_limit: 10000, retire_after_sessions: 20, limits: undefined, file: { project_id: 'p', custom: 1 } });
+  assert.deepEqual({ ...before, limits: undefined, machine: undefined },
+    { project_id: 'p', auto_accept: true, delivery_limit: 10000, retire_after_sessions: 20, limits: undefined, machine: undefined, file: { project_id: 'p', custom: 1 } });
   assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: false }) })).status, 200);
   assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')), { project_id: 'p', custom: 1, auto_accept: false });
   assert.equal(JSON.parse((await json('/api/config')).text).auto_accept, false);
@@ -102,9 +103,28 @@ test('the settings are read and changed through the API; unknown keys are kept a
   const bad = await json('/api/config', { method: 'PUT', body: JSON.stringify({ auto_accept: 'yes' }) });
   assert.equal(bad.status, 400);
   assert.ok(JSON.parse(bad.text).problems.includes('invalid_setting:auto_accept'));
-  const unknown = await json('/api/config', { method: 'PUT', body: JSON.stringify({ project_id: 'other' }) });
+  const unknown = await json('/api/config', { method: 'PUT', body: JSON.stringify({ colour: 'red' }) });
   assert.equal(unknown.status, 400);
-  assert.ok(JSON.parse(unknown.text).problems.includes('not_a_setting:project_id'));
+  assert.ok(JSON.parse(unknown.text).problems.includes('not_a_setting:colour'));
+  // The project id labels new memories; it is trimmed, and an empty one is refused.
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ project_id: ' other ' }) })).status, 200);
+  assert.equal(JSON.parse(readFileSync(join(root, '.dd', 'config.json'), 'utf8')).project_id, 'other');
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ project_id: '  ' }) })).status, 400);
+});
+
+// This machine's settings live in .dd/local/settings.json, out of git, and never touch the project's file.
+test('this machine\'s settings are changed apart from the project\'s', async t => {
+  const { server, cookie, root } = await serve(t);
+  const json = (path, init = {}) => call(server, path, { ...init, headers: { cookie, 'content-type': 'application/json', ...init.headers } });
+  assert.deepEqual(JSON.parse((await json('/api/config')).text).machine, { maintenance: true, record_payloads: false, payloads_file: '.dd/local/payloads.jsonl' });
+  writeFileSync(join(root, '.dd', 'config.json'), JSON.stringify({ project_id: 'p' }));
+  const project = readFileSync(join(root, '.dd', 'config.json'), 'utf8');
+  assert.equal((await json('/api/config', { method: 'PUT', body: JSON.stringify({ machine: { record_payloads: true } }) })).status, 200);
+  assert.deepEqual(JSON.parse(readFileSync(join(root, '.dd', 'local', 'settings.json'), 'utf8')), { record_payloads: true });
+  assert.equal(readFileSync(join(root, '.dd', 'config.json'), 'utf8'), project);
+  assert.equal(JSON.parse((await json('/api/config')).text).machine.record_payloads, true);
+  const bad = await json('/api/config', { method: 'PUT', body: JSON.stringify({ machine: { maintenance: 'no', colour: true } }) });
+  assert.deepEqual(JSON.parse(bad.text).problems, ['invalid_setting:machine.maintenance', 'not_a_setting:machine.colour']);
 });
 
 test('delivery_limit is a setting with bounds, compiled into the index when changed', async t => {
