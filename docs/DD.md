@@ -134,6 +134,11 @@ corrected.
   writes either project's configuration.
 - Grok Build is in preview: it runs the same hooks with its own payload, mapped from its hook guide
   (`src/hooks/grok.cjs`), not yet checked against a recorded session.
+- Cursor is in preview: `deltadictum install --host cursor` writes its project hooks (`.cursor/hooks.json`),
+  which run with `--cursor`; DD reads Cursor's payload (`src/hooks/cursor.cjs`) and answers with
+  `additional_context` before a tool call and at the prompt, never with a permission, and with a
+  `followup_message` at Stop. A delivery stays within the 10,000 characters Cursor accepts. The shapes come
+  from the Cursor CLI's source (2026.10.19), not yet from a recorded session.
 - A hook that fails ends silently: DD never blocks the host.
 
 ## Import

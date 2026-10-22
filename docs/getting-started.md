@@ -1,6 +1,6 @@
 ---
 title: Getting started
-description: Install DeltaDictum in Claude Code, Codex, OpenCode or Grok Build, opt a project in, save a first memory, see it fire, review it and share it with the team.
+description: Install DeltaDictum in Claude Code, Codex, OpenCode, Grok Build or Cursor, opt a project in, save a first memory, see it fire, review it and share it with the team.
 nav_order: 2
 ---
 
@@ -15,8 +15,8 @@ change it too.
 - [Node.js](https://nodejs.org) 22.16 or later on the machine's `PATH` (Windows, Linux or macOS).
 - A git repository. Memories are files you commit; DD does nothing with them outside a repository.
 - One of the harnesses DD runs in. Claude Code, Codex and OpenCode are supported, each verified in a live
-  session; Claude Code is where DD is measured. Grok Build is in preview: built from its hook guide and not
-  yet verified in a live session.
+  session; Claude Code is where DD is measured. Grok Build and Cursor are in preview: built from Grok's
+  hook guide and from the Cursor CLI's own source, neither yet verified in a live session.
 
 The memory store is the same for every harness: a project's `.dd/memories/` serves them all.
 
@@ -94,6 +94,30 @@ run in the project, lists the plugin's hooks and its three skills: `/save`, `/re
 
 <!-- /for -->
 
+<!-- for: cursor -->
+
+Install DD globally, then let it write the project's Cursor configuration:
+
+```bash
+npm install -g deltadictum
+deltadictum install --host cursor --project "<absolute-project-path>" --dry-run   # what it would write
+deltadictum install --host cursor --project "<absolute-project-path>"
+```
+
+It writes, keeping everything else in each file:
+
+- `.cursor/hooks.json`: DD's hooks (session start, prompt, every tool call before and after, a failed
+  call, and Stop), each running `hooks/run.cjs <command> --cursor`, through PowerShell on Windows;
+- `AGENTS.md`: a short managed block telling the agent what DD's deliveries are and how to save knowledge;
+- `.agents/skills/dd-save`, `dd-recall`, `dd-review`: the commands, as skills Cursor discovers there.
+
+Then open the project in Cursor and trust the workspace: Cursor runs a project's hooks only in a trusted
+one, and lists them under Settings → Hooks. Cursor is in preview: the payloads were read from the Cursor
+CLI's source (2026.10.19), not yet recorded from a live session. After `npm update -g deltadictum`, run the
+install command again.
+
+<!-- /for -->
+
 **What you will see:** nothing yet. A project without a `.dd/` folder is left alone.
 
 ## 3. Opt the project in
@@ -132,7 +156,7 @@ agent's context gets nothing at session start.
 
 <!-- /for -->
 
-<!-- for: codex opencode grok -->
+<!-- for: codex opencode grok cursor -->
 
 **What you will see:** nothing at session start; the agent's context gets nothing then either. The check
 below is how you know DD is on.
@@ -212,6 +236,10 @@ $dd-recall store
 Use the dd-recall skill: what does DD know about the store?
 ```
 
+```text for=cursor
+/dd-recall store
+```
+
 <!-- for: opencode grok -->
 
 Here a memory arrives with the result of the tool call it applies to, not before the call: a read is
@@ -246,6 +274,12 @@ end of a turn do not run. The agent still saves knowledge when you ask for it.
 
 <!-- /for -->
 
+<!-- for: cursor -->
+
+In Cursor the question arrives as the turn's next message (a Stop hook's `followup_message`), once per turn.
+
+<!-- /for -->
+
 ## 7. Review
 
 ```text for=claude-code
@@ -262,6 +296,10 @@ $dd-review
 
 ```text for=opencode
 Use the dd-review skill.
+```
+
+```text for=cursor
+/dd-review
 ```
 
 The agent runs `deltadictum doctor`, tells you its summary, and starts the review UI in the background

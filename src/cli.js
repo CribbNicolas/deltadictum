@@ -3,6 +3,7 @@ import { findProjectRoot } from './engine/locate.cjs';
 import { compileProject } from './engine/compile.js';
 import { planCodexInstall, applyCodexInstall } from '../scripts/install-codex.mjs';
 import { planOpencodeInstall, applyOpencodeInstall } from '../scripts/install-opencode.mjs';
+import { planCursorInstall, applyCursorInstall } from '../scripts/install-cursor.mjs';
 import { VERSION } from './version.js';
 
 
@@ -14,8 +15,8 @@ Usage: deltadictum [command]
 
   init [--project-id NAME]
                       Opt this project in: write .dd/config.json, .dd/.gitignore and .dd/memories/, and compile
-  install --host codex|opencode --project PATH [--dry-run]
-                      Write DD's Codex or OpenCode configuration into a project
+  install --host codex|opencode|cursor --project PATH [--dry-run]
+                      Write DD's Codex, OpenCode or Cursor (preview) configuration into a project
   import [--from DIR] [--dry-run]
                       Turn the project's .claude/rules/ and .cursor/rules/ files that name paths into memories
   compile             Compile this project's memories for delivery (.dd/local/compiled)
@@ -35,15 +36,16 @@ async function runInstall(args) {
   const projectIdx = args.indexOf('--project');
   const project = projectIdx >= 0 ? args[projectIdx + 1] : undefined;
   const dryRun = args.includes('--dry-run');
-  // Claude Code and Grok Build install DD from their plugin marketplaces; Codex and OpenCode need their
-  // project configuration written.
+  // Claude Code and Grok Build install DD from their plugin marketplaces; Codex, OpenCode and Cursor need
+  // their project configuration written.
   const INSTALLS = {
     codex: { plan: planCodexInstall, apply: applyCodexInstall, next: 'Start a new Codex thread in this project. Review DD hooks in /hooks before enabling them.' },
     opencode: { plan: planOpencodeInstall, apply: applyOpencodeInstall, next: 'Start a new OpenCode session in this project; the dd-save, dd-recall and dd-review skills are available.' },
+    cursor: { plan: planCursorInstall, apply: applyCursorInstall, next: 'Open the project in Cursor and trust the workspace; DD\'s hooks show in Cursor Settings → Hooks. Cursor support is in preview.' },
   };
   const install = INSTALLS[host];
   if (!install) {
-    throw new Error(`install --host ${host ?? '<missing>'} is not supported. Use "codex" or "opencode"; Claude Code and Grok Build install DD from their plugin marketplaces (see Getting started).`);
+    throw new Error(`install --host ${host ?? '<missing>'} is not supported. Use "codex", "opencode" or "cursor"; Claude Code and Grok Build install DD from their plugin marketplaces (see Getting started).`);
   }
   if (!project) throw new Error(`Usage: deltadictum install --host ${host} --project PROJECT [--dry-run]`);
   const plan = await install.plan(project);

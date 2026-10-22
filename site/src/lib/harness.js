@@ -10,6 +10,7 @@ export const HARNESSES = [
   { id: 'codex', label: 'Codex' },
   { id: 'opencode', label: 'OpenCode' },
   { id: 'grok', label: 'Grok Build', status: 'preview', note: "Built from Grok's hook guide (grok 1.0.41); not yet verified in a live session." },
+  { id: 'cursor', label: 'Cursor', status: 'preview', note: "Built from the Cursor CLI's source (2026.10.19); not yet verified in a live session." },
 ];
 export const STATUS_LABELS = { preview: 'Preview.' };
 export const DEFAULT_HARNESS = 'claude-code';
@@ -24,6 +25,8 @@ export const INSTALL = {
     steps: ['npm install -g deltadictum', 'deltadictum install --host opencode --project <path>'] },
   grok: { hero: 'grok plugin install CribbNicolas/deltadictum --trust',
     steps: ['grok plugin install CribbNicolas/deltadictum --trust', 'npx deltadictum init'] },
+  cursor: { hero: 'deltadictum install --host cursor --project <path>',
+    steps: ['npm install -g deltadictum', 'deltadictum install --host cursor --project <path>'] },
 };
 export const STORAGE_KEY = 'dd-harness';
 const IDS = new Set(HARNESSES.map(h => h.id));

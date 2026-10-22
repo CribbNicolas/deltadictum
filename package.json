@@ -1,12 +1,13 @@
 {
   "name": "deltadictum",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "DeltaDictum (DD): the engineering knowledge your code does not show, delivered to coding agents at the action it applies to. Local, shared via git; a plugin for Claude Code, Codex and OpenCode, with Grok Build in preview.",
   "keywords": [
     "claude-code",
     "codex",
     "grok",
     "opencode",
+    "cursor",
     "coding-agents",
     "agent-memory"
   ],
