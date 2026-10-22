@@ -17,6 +17,10 @@ section here.
   delivery stays within the 10,000 characters Cursor accepts, and every answer is valid JSON, so a
   Cursor permission hook is never blocked by DD. The shapes were read from the Cursor CLI's source
   (2026.10.19), not yet from a recorded session.
+- Review UI: an internal error no longer returns the exception's message to the page. The page says to look
+  at the terminal running the UI, and the error is written there (a CodeQL finding, stack-trace exposure).
+- Site: `fflate` is overridden to 0.7.5, the patched release of the line `satori` pins, for
+  GHSA-px8p-9vwx-vf98. It only ran while the site was built; nothing published to npm used it.
 
 ## [1.0.1] - 2026-10-22
 

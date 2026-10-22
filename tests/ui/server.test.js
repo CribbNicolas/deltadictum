@@ -82,6 +82,17 @@ test('a malformed percent-encoding in an API path is refused, not an internal er
   assert.equal(bad.status, 400);
 });
 
+test('an internal error tells the page where to look and keeps its details in the terminal', async t => {
+  const { server, cookie } = await serve(t);
+  const logged = t.mock.method(console, 'error', () => {});
+  const failed = await call(server, '/api/memories/m1/dry-run', { method: 'POST', body: JSON.stringify({ triggers: [null] }),
+    headers: { cookie, 'content-type': 'application/json' } });
+  assert.equal(failed.status, 500);
+  assert.deepEqual(JSON.parse(failed.text), { error: 'internal', message: 'Internal error: see the terminal running the review UI.' });
+  assert.equal(logged.mock.callCount(), 1);
+  assert.ok(logged.mock.calls[0].arguments[1] instanceof Error);
+});
+
 // The project's settings, read and changed from the UI: .dd/config.json keeps every key it has.
 test('the settings are read and changed through the API; unknown keys are kept and bad values refused', async t => {
   const { server, cookie, root } = await serve(t);
