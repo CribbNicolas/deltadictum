@@ -99,6 +99,20 @@ preview: no real Grok session has been recorded yet; the "Record hook payloads" 
 
 <!-- /for -->
 
+<!-- for: cursor -->
+
+Cursor runs the hooks `deltadictum install --host cursor` writes into `.cursor/hooks.json`, with its own
+payload: DD reads `conversation_id` as the session and Cursor's tools (`Read`, `Write`, `Shell`, `Grep`,
+`List`, `Delete`). Cursor makes every edit a `Write` of the whole file, so a `Write` to a file that exists is
+an edit. Memories reach the agent before the call, through `preToolUse`'s `additional_context`, and at the
+prompt through `beforeSubmitPrompt`'s; DD never answers a permission. Cursor drops a hook's context past
+10,000 characters, so a delivery stays within that whatever `delivery_limit` says. A failed call arrives as
+`postToolUseFailure`, and Stop's message as a `followup_message`, the turn's next message. Cursor is in
+preview: these shapes were read from the Cursor CLI's source (2026.10.19), not yet from a recorded session;
+the "Record hook payloads" setting records one.
+
+<!-- /for -->
+
 ## Saving knowledge
 
 The agent saves a memory by writing a JSON file into `.dd/inbox/` (the save command tells it how; on Codex

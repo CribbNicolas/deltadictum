@@ -13,12 +13,17 @@ const EVENT_NAMES = { 'session-start': 'SessionStart', prompt: 'UserPromptSubmit
 // Capture (spec section 7) is ES modules off the PreToolUse path, loaded only for these.
 const CAPTURE = ['observe', 'observe-prompt', 'stop', 'inbox'];
 
-// Codex takes Stop's message as a block with the reason (spec section 5).
+// Codex takes Stop's message as a block with the reason (spec section 5). Cursor reads additional_context at
+// every event and a Stop's followup_message, which it submits as the turn's next message.
 function respond(command, text, host = 'claude') {
   if (!text) return '';
   if (host === 'codex' && command === 'stop') return JSON.stringify({ decision: 'block', reason: text });
+  if (host === 'cursor') return JSON.stringify(command === 'stop' ? { followup_message: text } : { additional_context: text });
   return JSON.stringify({ hookSpecificOutput: { hookEventName: EVENT_NAMES[command], additionalContext: text } });
 }
+// Cursor drops a hook's additional_context past 10,000 characters (its CLI's source, 2026.10.19), whatever
+// the project's delivery_limit.
+const CURSOR_LIMIT = 10000;
 const INBOX_FILE = /^\.dd\/inbox\/[^/]+\.json$/i;
 
 // What the delivery is about: the event's first paths, never a list that fills the field.
@@ -31,7 +36,7 @@ function labelFor(event) {
 }
 
 // Memories that fire at this event and checks that speak at it (spec sections 3 and 6).
-function deliverFor(root, event, session, payload = {}) {
+function deliverFor(root, event, session, payload = {}, { cap = Infinity } = {}) {
   const { loadIndex, readBodies } = require('../engine/index-file.cjs');
   const index = event ? loadIndex(root) : null;
   if (!index) return '';
@@ -53,8 +58,8 @@ function deliverFor(root, event, session, payload = {}) {
   const parts = [violations];
   // Never a headline (spec section 2): without its body a memory is neither delivered nor claimed.
   if (fired.length && bodiesOf()) {
-    const cap = (validLimit(index.limit) ? index.limit : LIMIT) - reserve;
-    parts.push(delivery(root, index, event, fired, ledger, bodiesOf(), violations ? cap - violations.length - 2 : cap));
+    const room = Math.min(cap, validLimit(index.limit) ? index.limit : LIMIT) - reserve;
+    parts.push(delivery(root, index, event, fired, ledger, bodiesOf(), violations ? room - violations.length - 2 : room));
   }
   const text = parts.filter(Boolean).join('\n\n');
   return text ? `${text}\n${ON_CONFLICT}` : '';
@@ -133,6 +138,7 @@ async function handle(command, payload, { host = 'claude' } = {}) {
   require('../engine/machine.cjs').recordPayload(localPaths(sent).local, command, payload);
   if (host === 'codex') payload = require('./codex.cjs').codexPayload(payload);
   if (host === 'grok') payload = require('./grok.cjs').grokPayload(payload);
+  if (host === 'cursor') payload = require('./cursor.cjs').cursorPayload(payload, command);
   const root = host === 'claude' ? sent : findProjectRoot(payload.cwd || process.cwd());
   if (CAPTURE.includes(command)) {
     const capturePath = pathToFileURL(join(__dirname, '..', 'capture', 'hooks.js')).href;
@@ -164,7 +170,7 @@ async function handle(command, payload, { host = 'claude' } = {}) {
   const event = command === 'prompt'
     ? { kind: 'prompt', paths: [], text: String(payload.prompt ?? '') }
     : require('./events.cjs').toolEvent(payload.tool_name, payload.tool_input ?? {}, root, payload.cwd || root);
-  return respond(command, deliverFor(root, event, session, payload), host);
+  return respond(command, deliverFor(root, event, session, payload, { cap: host === 'cursor' ? CURSOR_LIMIT : Infinity }), host);
 }
 
 module.exports = { handle, deliverFor, respond };

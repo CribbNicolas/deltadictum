@@ -59,6 +59,19 @@ dd-recall skill on the store").
 
 <!-- /for -->
 
+<!-- for: cursor -->
+
+| Skill | Does |
+|---|---|
+| `/dd-save` | Saves knowledge from the conversation as a memory, or asks for a change to one |
+| `/dd-recall <topic>` | Shows what DD knows on a topic (`deltadictum recall`) |
+| `/dd-review` | Runs doctor, then opens the review UI and prints its address |
+
+`deltadictum install --host cursor` writes them into `.agents/skills/`, where Cursor finds them; Cursor
+invokes a skill with `/` and its name.
+
+<!-- /for -->
+
 Saying it in words works everywhere too: "save this as a decision", "what does DD know about the store?".
 
 ## Command line
@@ -76,5 +89,5 @@ Run from the project's root, as `npx deltadictum <command>` or, installed global
 | `compile` | Rebuilds the index by hand (session start does it when the memories changed) |
 | `maintain` | The daily maintenance, by hand |
 | `import [--from DIR] [--dry-run]` | Turns `.claude/rules/` and `.cursor/rules/` files that name paths into memories; a second run updates the ones that changed |
-| `install --host HOST --project PATH [--dry-run]` | Writes DD's configuration for HOST, `codex` or `opencode`, into a project |
+| `install --host HOST --project PATH [--dry-run]` | Writes DD's configuration for HOST, `codex`, `opencode` or `cursor` (preview), into a project |
 | `help`, `version` | The command list; the installed version |

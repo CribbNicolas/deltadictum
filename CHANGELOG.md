@@ -5,6 +5,23 @@ from 1.0 on, a change that breaks a memory, a setting or a command takes a major
 published to npm and released on GitHub when it reaches `main`, and CI refuses a version bump without a
 section here.
 
+## [1.1.0] - 2026-10-22
+
+- Cursor, in preview: `deltadictum install --host cursor --project PATH` writes DD's hooks into the
+  project's `.cursor/hooks.json` (PowerShell commands on Windows, as Cursor runs them), the `dd-save`,
+  `dd-recall` and `dd-review` skills into `.agents/skills/`, where Cursor discovers them, and the AGENTS.md
+  block. The hooks run with `--cursor`, and DD reads Cursor's payload (`src/hooks/cursor.cjs`): memories
+  reach the agent before the tool call through `preToolUse`'s `additional_context` and at the prompt
+  through `beforeSubmitPrompt`'s, a `Write` to an existing file is an edit, failures arrive through
+  `postToolUseFailure`, and Stop answers with a `followup_message`. DD never answers a permission, a
+  delivery stays within the 10,000 characters Cursor accepts, and every answer is valid JSON, so a
+  Cursor permission hook is never blocked by DD. The shapes were read from the Cursor CLI's source
+  (2026.10.19), not yet from a recorded session.
+- Review UI: an internal error no longer returns the exception's message to the page. The page says to look
+  at the terminal running the UI, and the error is written there (a CodeQL finding, stack-trace exposure).
+- Site: `fflate` is overridden to 0.7.5, the patched release of the line `satori` pins, for
+  GHSA-px8p-9vwx-vf98. It only ran while the site was built; nothing published to npm used it.
+
 ## [1.0.1] - 2026-10-22
 
 - Review UI: the dashboard's large gradient number no longer cuts its last digit.

@@ -2,7 +2,7 @@
 
 ## The governing constraint
 
-**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode — not a service.**
+**DD is a plugin for coding-agent harnesses — Claude Code, Codex, Grok, opencode, Cursor — not a service.**
 
 These seven limits, each verified against the code, bound every architecture proposal. A proposal that
 fails one of them is rejected on that basis alone, however good the idea is:
@@ -53,4 +53,5 @@ npm run bench:replay  # delivery over the recorded trial and hook latency; read 
 
 The hot path is `PreToolUse`, once per tool call, with the cost dominated by Node start-up. Measure
 matching changes there (`npm run bench:replay` reports it), not in a microbenchmark. Check changes to the hook
-contract against Claude Code, the `--codex` path (`src/hooks/codex.cjs`) and the OpenCode adapter.
+contract against Claude Code, the `--codex` path (`src/hooks/codex.cjs`), the `--cursor` path
+(`src/hooks/cursor.cjs`) and the OpenCode adapter.

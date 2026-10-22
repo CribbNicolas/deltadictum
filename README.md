@@ -52,6 +52,15 @@ deltadictum install --host opencode --project "<absolute-project-path>"
 
 **Grok Build** (preview, not yet verified in a live session): `grok plugin install CribbNicolas/deltadictum --trust`.
 
+**Cursor** (preview, not yet verified in a live session):
+
+```bash
+npm install -g deltadictum
+deltadictum install --host cursor --project "<absolute-project-path>"
+```
+
+Then open the project in Cursor and trust the workspace: Cursor runs a project's hooks only in a trusted one.
+
 Then opt the project in from its root, and commit what it writes:
 
 ```bash

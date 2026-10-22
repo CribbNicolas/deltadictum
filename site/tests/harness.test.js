@@ -37,7 +37,7 @@ test('a lone block is content for its harnesses only, without tabs, also inside 
 });
 
 test('an unknown harness or an unclosed block fails the build, naming the page', () => {
-  assert.throws(() => run([code('for=cursor')]), /x\.md: unknown harness "cursor"/);
+  assert.throws(() => run([code('for=windsurf')]), /x\.md: unknown harness "windsurf"/);
   assert.throws(() => run([html('<!-- for: codex -->'), para('x')]), /never closed/);
   assert.throws(() => run([html('<!-- /for -->')]), /closes nothing/);
 });

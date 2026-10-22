@@ -18,5 +18,9 @@
     "astro": "7.3.5",
     "pagefind": "1.5.2",
     "satori": "0.33.5"
+  },
+  "//": "overrides: satori pins fflate 0.7.3, open to GHSA-px8p-9vwx-vf98 (an endless loop on a malformed ZIP64); 0.7.5 is the patched release of the same line. Drop it once satori moves on.",
+  "overrides": {
+    "fflate": "0.7.5"
   }
 }

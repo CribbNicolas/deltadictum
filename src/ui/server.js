@@ -170,7 +170,9 @@ export async function startReviewServer({ root, port = 0, host = '127.0.0.1' }) 
       if (err instanceof ReviewError) return send(res, err.problems.includes('memory_not_found') ? 404 : 400, { error: 'refused', problems: err.problems });
       if (err instanceof URIError) return send(res, 400, { error: 'refused', problems: ['invalid_path'] });
       if (['request_not_found', 'invalid_outcome'].includes(err?.message)) return send(res, 400, { error: 'refused', problems: [err.message] });
-      return send(res, 500, { error: 'internal', message: String(err?.message ?? err).slice(0, 200) });
+      // The details go to the terminal that started the UI, never into the response: a page only learns where to look.
+      console.error('DD review UI:', err);
+      return send(res, 500, { error: 'internal', message: 'Internal error: see the terminal running the review UI.' });
     }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
