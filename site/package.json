@@ -10,14 +10,14 @@
     "test": "node --test \"tests/**/*.test.js\""
   },
   "devDependencies": {
-    "@astrojs/markdown-remark": "7.3.1",
+    "@astrojs/markdown-remark": "7.3.3",
     "@astrojs/sitemap": "3.7.4",
     "@fontsource/geist-mono": "5.3.0",
     "@fontsource/geist-sans": "5.3.0",
     "@resvg/resvg-js": "2.6.2",
-    "astro": "7.3.5",
+    "astro": "7.4.1",
     "pagefind": "1.5.2",
-    "satori": "0.33.5"
+    "satori": "0.63.1"
   },
   "//": "overrides: satori pins fflate 0.7.3, open to GHSA-px8p-9vwx-vf98 (an endless loop on a malformed ZIP64); 0.7.5 is the patched release of the same line. Drop it once satori moves on.",
   "overrides": {
